@@ -3,7 +3,7 @@
 import React, { useState, FormEvent, useRef } from 'react';
 import { Aviso, AvisoFormData, Categoria } from '@/types';
 import { saveAviso } from '@/lib/storage';
-import { LIMITS, formatPhoneNumber, validatePhoneNumber } from '@/lib/utils';
+import { LIMITS, formatPhoneNumber, validatePhoneNumber, generarIdUnico } from '@/lib/utils';
 import {
   IconEmpleos,
   IconInmuebles,
@@ -177,8 +177,8 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
       const fecha = ahora.toISOString().split('T')[0];
       const hora = ahora.toTimeString().split(' ')[0].substring(0, 5);
 
-      // Generar ID único
-      const idUnico = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      // Generar ID único y amigable
+      const idUnico = generarIdUnico();
 
       // Crear aviso INMEDIATAMENTE con previews locales
       // Las imágenes se mostrarán desde el preview local mientras se suben en background

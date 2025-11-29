@@ -1,3 +1,5 @@
+import { generarIdUnico } from './utils';
+
 export interface Feedback {
   id: string;
   tipo: 'sugerencia' | 'problema';
@@ -16,7 +18,7 @@ export function guardarFeedbackLocal(feedback: Omit<Feedback, 'id' | 'fecha' | '
 
   const nuevoFeedback: Feedback = {
     ...feedback,
-    id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    id: generarIdUnico(),
     fecha: new Date().toISOString().split('T')[0],
     hora: new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }),
     url: window.location.href,
@@ -83,7 +85,7 @@ export async function enviarFeedbackInmediato(feedback: Omit<Feedback, 'id' | 'f
 
   const nuevoFeedback: Feedback = {
     ...feedback,
-    id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    id: generarIdUnico(),
     fecha: new Date().toISOString().split('T')[0],
     hora: new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }),
     url: window.location.href,

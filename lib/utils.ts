@@ -1,3 +1,5 @@
+import { nanoid } from 'nanoid';
+
 export const formatFecha = (fecha: string, hora: string): string => {
   const date = new Date(`${fecha}T${hora}`);
   
@@ -89,5 +91,13 @@ export const LIMITS = {
   TITULO_MAX: 100,
   DESCRIPCION_MAX: 1000,
   UBICACION_MAX: 100,
+};
+
+// Generar ID único y amigable usando NanoID
+export const generarIdUnico = (): string => {
+  // Usar NanoID con tamaño personalizado (10 caracteres = ~73 años antes de colisión al 1% con 1000 IDs/día)
+  // URL-safe, más corto y legible que UUID o timestamp+random
+  // Ejemplo: "V1StGXR8_Z" (10 caracteres) vs "1764436785116-tjrfgcu9g" (25 caracteres)
+  return nanoid(10);
 };
 

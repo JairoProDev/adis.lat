@@ -4,6 +4,7 @@ import {
   createAvisoInSupabase 
 } from '@/lib/supabase';
 import { Aviso } from '@/types';
+import { generarIdUnico } from '@/lib/utils';
 
 // Esta función maneja GET para obtener todos los avisos
 export async function GET() {
@@ -41,8 +42,8 @@ export async function POST(request: NextRequest) {
     const fecha = ahora.toISOString().split('T')[0];
     const hora = ahora.toTimeString().split(' ')[0].substring(0, 5);
 
-    // Generar ID único
-    const idUnico = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    // Generar ID único y amigable
+    const idUnico = generarIdUnico();
 
     const nuevoAviso: Aviso = {
       id: idUnico,
