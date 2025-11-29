@@ -1,4 +1,5 @@
 import { nanoid } from 'nanoid';
+import { Categoria } from '@/types';
 
 export const formatFecha = (fecha: string, hora: string): string => {
   const date = new Date(`${fecha}T${hora}`);
@@ -12,21 +13,26 @@ export const formatFecha = (fecha: string, hora: string): string => {
   });
 };
 
+// Generar URL de aviso con categoría
+export const getAvisoUrl = (categoria: string, id: string): string => {
+  return `${typeof window !== 'undefined' ? window.location.origin : ''}/${categoria}/${id}`;
+};
+
 export const getWhatsAppUrl = (contacto: string, titulo: string, categoria: string, id: string): string => {
-  const url = `${window.location.origin}/?aviso=${id}`;
+  const url = getAvisoUrl(categoria, id);
   const mensajeBase = `Hola, vi tu aviso de ${categoria} "${titulo}" en ${url} y me interesa. ¿Podrías brindarme más información, por favor?`;
   const mensaje = encodeURIComponent(mensajeBase);
   const numero = contacto.replace(/\D/g, ''); // Solo números
   return `https://wa.me/${numero}?text=${mensaje}`;
 };
 
-export const copiarLink = (id: string): Promise<void> => {
-  const url = `${window.location.origin}/?aviso=${id}`;
+export const copiarLink = (categoria: string, id: string): Promise<void> => {
+  const url = getAvisoUrl(categoria, id);
   return navigator.clipboard.writeText(url);
 };
 
-export const compartirNativo = async (id: string, titulo: string): Promise<void> => {
-  const url = `${window.location.origin}/?aviso=${id}`;
+export const compartirNativo = async (categoria: string, id: string, titulo: string): Promise<void> => {
+  const url = getAvisoUrl(categoria, id);
   
   if (navigator.share) {
     try {
@@ -41,8 +47,21 @@ export const compartirNativo = async (id: string, titulo: string): Promise<void>
     }
   } else {
     // Fallback: copiar al portapapeles
-    await copiarLink(id);
+    await copiarLink(categoria, id);
   }
+};
+
+// Generar URL para compartir búsqueda
+export const getBusquedaUrl = (categoria?: Categoria | 'todos', buscar?: string): string => {
+  const params = new URLSearchParams();
+  if (categoria && categoria !== 'todos') {
+    params.set('categoria', categoria);
+  }
+  if (buscar && buscar.trim()) {
+    params.set('buscar', buscar.trim());
+  }
+  const query = params.toString();
+  return `${typeof window !== 'undefined' ? window.location.origin : ''}${query ? `/?${query}` : '/'}`;
 };
 
 // Validación y formateo de teléfono
@@ -95,7 +114,17 @@ export const LIMITS = {
 
 // Generar ID único y amigable usando NanoID
 export const generarIdUnico = (): string => {
-  // Usar NanoID con tamaño personalizado (10 caracteres = ~73 años antes de colisión al 1% con 1000 IDs/día)
+  // NanoID con 10 caracteres (64 caracteres posibles: A-Z, a-z, 0-9, _, -)
+  // Combinaciones posibles: 64^10 = 1,152,921,504,606,846,976 (más de 1 quintillón)
+  // 
+  // Probabilidad de colisión:
+  // - Con 1 millón de publicaciones/día: ~3,157,000 años para 1% de probabilidad
+  // - Con 10 millones/día: ~315,700 años para 1% de probabilidad
+  // - Con 100 millones/día: ~31,570 años para 1% de probabilidad
+  //
+  // Conclusión: Es prácticamente imposible que se acaben las combinaciones.
+  // Incluso con miles de millones de publicaciones, tomaría millones de años.
+  //
   // URL-safe, más corto y legible que UUID o timestamp+random
   // Ejemplo: "V1StGXR8_Z" (10 caracteres) vs "1764436785116-tjrfgcu9g" (25 caracteres)
   return nanoid(10);

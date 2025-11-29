@@ -135,6 +135,18 @@ export async function createAvisoInSupabase(aviso: Aviso): Promise<Aviso> {
   }
 
   try {
+    // Verificar si el aviso ya existe
+    const { data: existing } = await supabase
+      .from('avisos')
+      .select('*')
+      .eq('id', aviso.id)
+      .single();
+
+    // Si existe, actualizarlo en lugar de crear uno nuevo
+    if (existing) {
+      return await updateAvisoInSupabase(aviso);
+    }
+
     const { data, error } = await supabase
       .from('avisos')
       .insert(avisoToDb(aviso))
@@ -150,7 +162,8 @@ export async function createAvisoInSupabase(aviso: Aviso): Promise<Aviso> {
       }
       
       if (error.code === '23505') {
-        throw new Error('Este aviso ya existe (ID duplicado).');
+        // Si es duplicado, intentar actualizar
+        return await updateAvisoInSupabase(aviso);
       }
       
       throw error;
@@ -158,6 +171,44 @@ export async function createAvisoInSupabase(aviso: Aviso): Promise<Aviso> {
 
     if (!data) {
       throw new Error('No se recibió respuesta al crear el aviso');
+    }
+
+    return dbToAviso(data);
+  } catch (error: any) {
+    throw error;
+  }
+}
+
+export async function updateAvisoInSupabase(aviso: Aviso): Promise<Aviso> {
+  if (!supabase) {
+    throw new Error('Supabase no está configurado');
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('avisos')
+      .update(avisoToDb(aviso))
+      .eq('id', aviso.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error al actualizar aviso:', error);
+      
+      // Errores comunes con mensajes más claros
+      if (error.code === 'PGRST301' || error.message?.includes('permission denied')) {
+        throw new Error('No tienes permiso para actualizar avisos. Verifica las políticas de seguridad en Supabase.');
+      }
+      
+      if (error.code === 'PGRST116') {
+        throw new Error('Aviso no encontrado.');
+      }
+      
+      throw error;
+    }
+
+    if (!data) {
+      throw new Error('No se recibió respuesta al actualizar el aviso');
     }
 
     return dbToAviso(data);

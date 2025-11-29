@@ -35,7 +35,7 @@ export async function fetchAvisoById(id: string): Promise<Aviso | null> {
   }
 }
 
-export async function createAviso(aviso: Omit<Aviso, 'id' | 'fechaPublicacion' | 'horaPublicacion'>): Promise<Aviso> {
+export async function createAviso(aviso: Omit<Aviso, 'id' | 'fechaPublicacion' | 'horaPublicacion'> | Aviso): Promise<Aviso> {
   try {
     const response = await fetch(`${API_URL}/avisos`, {
       method: 'POST',
@@ -45,11 +45,35 @@ export async function createAviso(aviso: Omit<Aviso, 'id' | 'fechaPublicacion' |
       body: JSON.stringify(aviso),
     });
     if (!response.ok) {
+      // Si el error es 409 (conflict), el aviso ya existe, intentar actualizar
+      if (response.status === 409 && 'id' in aviso) {
+        // Intentar actualizar en lugar de crear
+        return await updateAviso(aviso as Aviso);
+      }
       throw new Error('Error al crear aviso');
     }
     return await response.json();
   } catch (error) {
     console.error('Error creating aviso:', error);
+    throw error;
+  }
+}
+
+export async function updateAviso(aviso: Aviso): Promise<Aviso> {
+  try {
+    const response = await fetch(`${API_URL}/avisos/${aviso.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(aviso),
+    });
+    if (!response.ok) {
+      throw new Error('Error al actualizar aviso');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating aviso:', error);
     throw error;
   }
 }

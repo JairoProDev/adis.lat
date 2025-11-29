@@ -11,6 +11,7 @@ import { getAvisos, getAvisoById, saveAviso, getAvisosCache } from '@/lib/storag
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useToast } from '@/hooks/useToast';
 import { useDebounce } from '@/hooks/useDebounce';
+import { getBusquedaUrl } from '@/lib/utils';
 import Header from '@/components/Header';
 import Buscador from '@/components/Buscador';
 import FiltrosCategoria from '@/components/FiltrosCategoria';
@@ -26,13 +27,15 @@ function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const avisoId = searchParams.get('aviso');
+  const categoriaUrl = searchParams.get('categoria') as Categoria | null;
+  const buscarUrl = searchParams.get('buscar') || '';
   const cargadoInicialmente = useRef(false);
   
   const [avisos, setAvisos] = useState<Aviso[]>([]);
   const [avisosFiltrados, setAvisosFiltrados] = useState<Aviso[]>([]);
-  const [busqueda, setBusqueda] = useState('');
+  const [busqueda, setBusqueda] = useState(buscarUrl);
   const busquedaDebounced = useDebounce(busqueda, 300);
-  const [categoriaFiltro, setCategoriaFiltro] = useState<Categoria | 'todos'>('todos');
+  const [categoriaFiltro, setCategoriaFiltro] = useState<Categoria | 'todos'>(categoriaUrl && ['empleos', 'inmuebles', 'vehiculos', 'servicios', 'productos', 'eventos', 'negocios', 'comunidad'].includes(categoriaUrl) ? categoriaUrl : 'todos');
   const [avisoAbierto, setAvisoAbierto] = useState<Aviso | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [indiceAvisoActual, setIndiceAvisoActual] = useState(0);
@@ -77,18 +80,40 @@ function HomeContent() {
       try {
         const avisosDesdeAPI = await getAvisos();
         if (avisosDesdeAPI.length > 0 || cache.length === 0) {
-          setAvisos(avisosDesdeAPI.length > 0 ? avisosDesdeAPI : cache);
-          setAvisosFiltrados(avisosDesdeAPI.length > 0 ? avisosDesdeAPI : cache);
+          // Merge inteligente: mantener avisos locales que no están en API (avisos recién publicados)
+          setAvisos(prev => {
+            const avisosMergeados = [...avisosDesdeAPI];
+            // Agregar avisos locales que no están en API (pueden ser recién publicados)
+            prev.forEach(avisoLocal => {
+              if (!avisosDesdeAPI.find(a => a.id === avisoLocal.id)) {
+                avisosMergeados.unshift(avisoLocal);
+              }
+            });
+            return avisosMergeados;
+          });
+          
+          setAvisosFiltrados(prev => {
+            const avisosMergeados = [...avisosDesdeAPI];
+            // Agregar avisos locales que no están en API
+            prev.forEach(avisoLocal => {
+              if (!avisosDesdeAPI.find(a => a.id === avisoLocal.id)) {
+                avisosMergeados.unshift(avisoLocal);
+              }
+            });
+            return avisosMergeados;
+          });
           
           // Si hay avisoId, buscar en la lista actualizada
           if (avisoId) {
-            const avisosActualizados = avisosDesdeAPI.length > 0 ? avisosDesdeAPI : cache;
-            const avisoEncontrado = avisosActualizados.find(a => a.id === avisoId);
-            if (avisoEncontrado) {
-              setAvisoAbierto(avisoEncontrado);
-              const indice = avisosActualizados.findIndex(a => a.id === avisoId);
-              setIndiceAvisoActual(indice >= 0 ? indice : 0);
-            }
+            setAvisos(prev => {
+              const avisoEncontrado = prev.find(a => a.id === avisoId);
+              if (avisoEncontrado) {
+                setAvisoAbierto(avisoEncontrado);
+                const indice = prev.findIndex(a => a.id === avisoId);
+                setIndiceAvisoActual(indice >= 0 ? indice : 0);
+              }
+              return prev;
+            });
           }
         }
       } catch (error) {
@@ -101,13 +126,16 @@ function HomeContent() {
     cargarTodo();
   }, []);
 
-  // Manejar cambios en avisoId cuando ya está cargado
+  // Manejar cambios en avisoId cuando ya está cargado (solo actualizar modal, no recargar página)
   useEffect(() => {
-    if (cargando || !avisoId) {
-      if (!avisoId) setAvisoAbierto(null);
+    if (cargando) return; // Esperar a que termine la carga inicial
+    
+    if (!avisoId) {
+      setAvisoAbierto(null);
       return;
     }
 
+    // Buscar en avisos actuales primero (más rápido)
     const avisoLocal = avisos.find(a => a.id === avisoId);
     if (avisoLocal) {
       setAvisoAbierto(avisoLocal);
@@ -116,10 +144,11 @@ function HomeContent() {
       return;
     }
 
-    // Si no está en local, cargarlo
+    // Si no está en local, cargarlo en background (sin bloquear UI)
     getAvisoById(avisoId).then(aviso => {
       if (aviso) {
         setAvisoAbierto(aviso);
+        // Agregar a la lista si no existe
         setAvisos(prev => {
           if (!prev.find(a => a.id === avisoId)) {
             return [aviso, ...prev];
@@ -132,7 +161,8 @@ function HomeContent() {
           }
           return prev;
         });
-        setIndiceAvisoActual(0);
+        const indice = avisosFiltrados.findIndex(a => a.id === avisoId);
+        setIndiceAvisoActual(indice >= 0 ? indice : 0);
       }
     }).catch(console.error);
   }, [avisoId, avisos, avisosFiltrados, cargando]);
@@ -182,6 +212,39 @@ function HomeContent() {
     }
   }, [busquedaDebounced, categoriaFiltro, avisos, avisoAbierto]);
 
+  // Actualizar URL cuando cambian búsqueda o categoría (después del debounce)
+  useEffect(() => {
+    const params = new URLSearchParams();
+    
+    // Agregar categoría si no es "todos"
+    if (categoriaFiltro !== 'todos') {
+      params.set('categoria', categoriaFiltro);
+    }
+    
+    // Agregar búsqueda si existe
+    if (busquedaDebounced.trim()) {
+      params.set('buscar', busquedaDebounced.trim());
+    }
+    
+    // Mantener aviso si está abierto
+    if (avisoId) {
+      params.set('aviso', avisoId);
+    }
+    
+    const newUrl = params.toString() ? `/?${params.toString()}` : '/';
+    const currentUrl = window.location.search;
+    const currentParams = new URLSearchParams(currentUrl);
+    
+    // Solo actualizar si hay cambios
+    const hasChanges = 
+      (categoriaFiltro === 'todos' ? currentParams.has('categoria') : currentParams.get('categoria') !== categoriaFiltro) ||
+      (busquedaDebounced.trim() ? currentParams.get('buscar') !== busquedaDebounced.trim() : currentParams.has('buscar'));
+    
+    if (hasChanges) {
+      router.replace(newUrl, { scroll: false });
+    }
+  }, [busquedaDebounced, categoriaFiltro, avisoId, router]);
+
   const handlePublicar = (nuevoAviso: Aviso) => {
     // Optimistic update: mostrar inmediatamente
     // Prevenir duplicados: verificar si el aviso ya existe
@@ -205,7 +268,10 @@ function HomeContent() {
       setMostrarFormulario(false);
       setAvisoAbierto(nuevoAviso);
       setIndiceAvisoActual(0);
-      router.push(`/?aviso=${nuevoAviso.id}`, { scroll: false });
+      // Actualizar URL sin recargar la página
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('aviso', nuevoAviso.id);
+      router.replace(`/?${params.toString()}`, { scroll: false });
       success('¡Aviso publicado exitosamente!');
     } else {
       // Si es una actualización (con imagen), actualizar el modal si está abierto
@@ -219,7 +285,10 @@ function HomeContent() {
     const indice = avisosFiltrados.findIndex(a => a.id === aviso.id);
     setIndiceAvisoActual(indice >= 0 ? indice : 0);
     setAvisoAbierto(aviso);
-    router.push(`/?aviso=${aviso.id}`, { scroll: false });
+    // Actualizar URL sin recargar la página
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('aviso', aviso.id);
+    router.replace(`/?${params.toString()}`, { scroll: false });
   };
 
   const handleCerrarAviso = () => {
@@ -233,7 +302,10 @@ function HomeContent() {
       const aviso = avisosFiltrados[nuevoIndice];
       setIndiceAvisoActual(nuevoIndice);
       setAvisoAbierto(aviso);
-      router.push(`/?aviso=${aviso.id}`, { scroll: false });
+      // Actualizar URL sin recargar la página
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('aviso', aviso.id);
+      router.replace(`/?${params.toString()}`, { scroll: false });
     }
   };
 
@@ -243,7 +315,10 @@ function HomeContent() {
       const aviso = avisosFiltrados[nuevoIndice];
       setIndiceAvisoActual(nuevoIndice);
       setAvisoAbierto(aviso);
-      router.push(`/?aviso=${aviso.id}`, { scroll: false });
+      // Actualizar URL sin recargar la página
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('aviso', aviso.id);
+      router.replace(`/?${params.toString()}`, { scroll: false });
     }
   };
 
@@ -260,12 +335,42 @@ function HomeContent() {
         ...(avisoAbierto && isDesktop && { marginRight: '420px' })
       }}>
         <div style={{ marginBottom: '1.5rem' }}>
-          <Buscador value={busqueda} onChange={setBusqueda} />
+          <Buscador 
+            value={busqueda} 
+            onChange={(value) => {
+              setBusqueda(value);
+              // Actualizar URL cuando el usuario deja de escribir (debounce)
+              // Esto se hace en un useEffect separado para evitar demasiadas actualizaciones
+            }} 
+          />
         </div>
         <div style={{ marginBottom: '1.5rem' }}>
           <FiltrosCategoria
             categoriaSeleccionada={categoriaFiltro}
-            onChange={setCategoriaFiltro}
+            onChange={(categoria) => {
+              setCategoriaFiltro(categoria);
+              // Actualizar URL sin recargar
+              const params = new URLSearchParams(searchParams.toString());
+              if (categoria === 'todos') {
+                params.delete('categoria');
+              } else {
+                params.set('categoria', categoria);
+              }
+              // Mantener búsqueda si existe
+              if (busqueda.trim()) {
+                params.set('buscar', busqueda.trim());
+              } else {
+                params.delete('buscar');
+              }
+              // Mantener aviso si está abierto
+              if (avisoId) {
+                params.set('aviso', avisoId);
+              } else {
+                params.delete('aviso');
+              }
+              const newUrl = params.toString() ? `/?${params.toString()}` : '/';
+              router.push(newUrl, { scroll: false });
+            }}
           />
         </div>
         {cargando ? (
@@ -275,14 +380,54 @@ function HomeContent() {
               {avisosFiltrados.length > 0 && (
                 <div style={{
                   marginBottom: '1rem',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
                   fontSize: '0.875rem',
                   color: 'var(--text-secondary)',
-                  padding: '0.5rem 0'
+                  padding: '0.5rem 0',
+                  flexWrap: 'wrap',
+                  gap: '0.5rem'
                 }}>
                   <span>
                     Mostrando {avisosFiltrados.length} {avisosFiltrados.length === 1 ? 'aviso' : 'avisos'}
                     {(busqueda || categoriaFiltro !== 'todos') && ` (de ${avisos.length} total)`}
                   </span>
+                  {(busqueda.trim() || categoriaFiltro !== 'todos') && (
+                    <button
+                      onClick={async () => {
+                        const url = getBusquedaUrl(categoriaFiltro, busqueda);
+                        try {
+                          await navigator.clipboard.writeText(url);
+                          success('Link de búsqueda copiado');
+                        } catch (err) {
+                          console.error('Error al copiar:', err);
+                          error('Error al copiar link');
+                        }
+                      }}
+                      style={{
+                        padding: '0.375rem 0.75rem',
+                        fontSize: '0.75rem',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '6px',
+                        backgroundColor: 'var(--bg-primary)',
+                        color: 'var(--text-primary)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
+                      }}
+                    >
+                      📋 Compartir búsqueda
+                    </button>
+                  )}
                 </div>
               )}
               <GrillaAvisos

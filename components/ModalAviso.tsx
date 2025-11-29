@@ -102,23 +102,23 @@ export default function ModalAviso({
     }
   };
 
-  const handleCopiarLink = async () => {
-    try {
-      await copiarLink(aviso.id);
-      setCopiado(true);
-      setTimeout(() => setCopiado(false), 2000);
-    } catch (error) {
-      console.error('Error al copiar:', error);
-    }
-  };
+    const handleCopiarLink = async () => {
+      try {
+        await copiarLink(aviso.categoria, aviso.id);
+        setCopiado(true);
+        setTimeout(() => setCopiado(false), 2000);
+      } catch (error) {
+        console.error('Error al copiar:', error);
+      }
+    };
 
-  const handleCompartir = async () => {
-    await compartirNativo(aviso.id, aviso.titulo);
-  };
+    const handleCompartir = async () => {
+      await compartirNativo(aviso.categoria, aviso.id, aviso.titulo);
+    };
 
-  const handleContactar = () => {
-    window.open(getWhatsAppUrl(aviso.contacto, aviso.titulo, aviso.categoria, aviso.id), '_blank');
-  };
+    const handleContactar = () => {
+      window.open(getWhatsAppUrl(aviso.contacto, aviso.titulo, aviso.categoria, aviso.id), '_blank');
+    };
 
   const overlayStyle: React.CSSProperties = {
     position: 'fixed',
