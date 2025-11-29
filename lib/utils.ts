@@ -43,3 +43,51 @@ export const compartirNativo = async (id: string, titulo: string): Promise<void>
   }
 };
 
+// Validación y formateo de teléfono
+export const formatPhoneNumber = (value: string): string => {
+  // Remover todo excepto números, + y espacios
+  const cleaned = value.replace(/[^\d+\s]/g, '');
+  
+  // Si empieza con +, mantenerlo
+  if (cleaned.startsWith('+')) {
+    // Formato: +XX XXX XXX XXX
+    const numbers = cleaned.replace(/\D/g, '').slice(1); // Quitar el +
+    if (numbers.length <= 3) {
+      return `+${numbers}`;
+    } else if (numbers.length <= 6) {
+      return `+${numbers.slice(0, 3)} ${numbers.slice(3)}`;
+    } else if (numbers.length <= 9) {
+      return `+${numbers.slice(0, 3)} ${numbers.slice(3, 6)} ${numbers.slice(6)}`;
+    } else {
+      return `+${numbers.slice(0, 3)} ${numbers.slice(3, 6)} ${numbers.slice(6, 9)} ${numbers.slice(9, 12)}`;
+    }
+  } else {
+    // Formato sin +: XXX XXX XXX
+    const numbers = cleaned.replace(/\D/g, '');
+    if (numbers.length <= 3) {
+      return numbers;
+    } else if (numbers.length <= 6) {
+      return `${numbers.slice(0, 3)} ${numbers.slice(3)}`;
+    } else if (numbers.length <= 9) {
+      return `${numbers.slice(0, 3)} ${numbers.slice(3, 6)} ${numbers.slice(6)}`;
+    } else {
+      return `${numbers.slice(0, 3)} ${numbers.slice(3, 6)} ${numbers.slice(6, 9)} ${numbers.slice(9, 12)}`;
+    }
+  }
+};
+
+export const validatePhoneNumber = (phone: string): boolean => {
+  // Remover espacios y validar
+  const cleaned = phone.replace(/\s/g, '');
+  // Debe tener al menos 8 dígitos (con o sin código de país)
+  const digits = cleaned.replace(/\D/g, '');
+  return digits.length >= 8 && digits.length <= 15;
+};
+
+// Límites de caracteres
+export const LIMITS = {
+  TITULO_MAX: 100,
+  DESCRIPCION_MAX: 1000,
+  UBICACION_MAX: 100,
+};
+
