@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, FormEvent } from 'react';
+import React, { useState, FormEvent, useRef } from 'react';
 import { Aviso, AvisoFormData, Categoria } from '@/types';
 import { saveAviso } from '@/lib/storage';
 import { LIMITS, formatPhoneNumber, validatePhoneNumber } from '@/lib/utils';
@@ -19,13 +19,18 @@ import {
   IconPhone,
   IconMegaphone
 } from './Icons';
-import { FaImage, FaTrash } from 'react-icons/fa';
+import { FaImage, FaTrash, FaPlus } from 'react-icons/fa';
 
 interface FormularioPublicarProps {
   onPublicar: (aviso: Aviso) => void;
   onCerrar: () => void;
   onError?: (message: string) => void;
   onSuccess?: (message: string) => void;
+}
+
+interface ImagenPreview {
+  file: File;
+  preview: string; // URL local del preview
 }
 
 const CATEGORIAS: Categoria[] = [
@@ -72,12 +77,10 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
     contacto: '',
     ubicacion: ''
   });
-  const [imagenPreview, setImagenPreview] = useState<string | null>(null);
-  const [imagenFile, setImagenFile] = useState<File | null>(null);
-  const [subiendoImagen, setSubiendoImagen] = useState(false);
+  const [imagenesPreviews, setImagenesPreviews] = useState<ImagenPreview[]>([]);
   const [enviando, setEnviando] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof AvisoFormData, string>>>({});
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof AvisoFormData, string>> = {};
@@ -111,44 +114,56 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
-    // Validar tamaño (máximo 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      onError?.('La imagen es demasiado grande. Máximo 5MB.');
-      return;
-    }
+    const nuevasImagenes: ImagenPreview[] = [];
 
-    // Validar tipo
-    if (!file.type.startsWith('image/')) {
-      onError?.('Por favor selecciona una imagen válida.');
-      return;
-    }
+    files.forEach((file) => {
+      // Validar tamaño (máximo 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        onError?.('Una o más imágenes son demasiado grandes. Máximo 5MB por imagen.');
+        return;
+      }
 
-    setImagenFile(file);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagenPreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
-  };
+      // Validar tipo
+      if (!file.type.startsWith('image/')) {
+        onError?.('Por favor selecciona solo imágenes válidas.');
+        return;
+      }
 
-  const handleRemoveImage = () => {
-    setImagenPreview(null);
-    setImagenFile(null);
+      // Crear preview local inmediatamente
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const preview: ImagenPreview = {
+          file,
+          preview: reader.result as string
+        };
+        setImagenesPreviews(prev => [...prev, preview]);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Limpiar input para permitir seleccionar la misma imagen de nuevo
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
 
+  const handleRemoveImage = (index: number) => {
+    setImagenesPreviews(prev => {
+      const nuevas = [...prev];
+      // Revocar URL del preview para liberar memoria
+      URL.revokeObjectURL(nuevas[index].preview);
+      nuevas.splice(index, 1);
+      return nuevas;
+    });
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
-    // Prevenir múltiples submits
-    if (enviando) {
-      return;
-    }
+    if (enviando) return;
     
     if (!validateForm()) {
       onError?.('Por favor corrige los errores en el formulario');
@@ -162,15 +177,21 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
       const fecha = ahora.toISOString().split('T')[0];
       const hora = ahora.toTimeString().split(' ')[0].substring(0, 5);
 
-      // Generar ID único (timestamp + random para evitar duplicados)
+      // Generar ID único
       const idUnico = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-      // Crear aviso INMEDIATAMENTE sin esperar la imagen
-      // Si hay imagen, se subirá en background y se actualizará después
+      // Crear aviso INMEDIATAMENTE con previews locales
+      // Las imágenes se mostrarán desde el preview local mientras se suben en background
+      const previewsUrls = imagenesPreviews.map(img => img.preview);
+      
       const nuevoAviso: Aviso = {
         id: idUnico,
-        ...formData,
-        imagenUrl: undefined, // Se actualizará cuando termine la subida
+        categoria: formData.categoria,
+        titulo: formData.titulo,
+        descripcion: formData.descripcion,
+        contacto: formData.contacto,
+        ubicacion: formData.ubicacion,
+        imagenesUrls: previewsUrls, // Usar previews locales inmediatamente
         fechaPublicacion: fecha,
         horaPublicacion: hora
       };
@@ -185,44 +206,53 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
         console.error('Error al guardar:', error);
       });
 
-      // Subir imagen en background y actualizar el aviso cuando termine
-      if (imagenFile) {
-        // No bloqueamos la UI, subimos en background
+      // Subir imágenes en background y actualizar el aviso cuando terminen
+      if (imagenesPreviews.length > 0) {
         (async () => {
-          try {
-            const formDataUpload = new FormData();
-            formDataUpload.append('image', imagenFile);
-            
-            const uploadResponse = await fetch('/api/upload-image', {
-              method: 'POST',
-              headers: {
-                'x-upload-type': 'avisos'
-              },
-              body: formDataUpload
-            });
-
-            if (uploadResponse.ok) {
-              const uploadData = await uploadResponse.json();
-              const imagenUrl = uploadData.url;
+          const urlsSubidas: string[] = [];
+          
+          // Subir todas las imágenes en paralelo
+          const uploadPromises = imagenesPreviews.map(async (imgPreview) => {
+            try {
+              const formDataUpload = new FormData();
+              formDataUpload.append('image', imgPreview.file);
+              formDataUpload.append('bucket', 'avisos-images');
               
-              // Actualizar el aviso con la imagen
-              const avisoActualizado: Aviso = {
-                ...nuevoAviso,
-                imagenUrl
-              };
-              
-              // Actualizar en el estado local
-              onPublicar(avisoActualizado);
-              
-              // Guardar actualización en background
-              saveAviso(avisoActualizado).catch(error => {
-                console.error('Error al actualizar con imagen:', error);
+              const uploadResponse = await fetch('/api/upload-image', {
+                method: 'POST',
+                body: formDataUpload
               });
-            } else {
-              console.warn('Error al subir imagen, el aviso se publicó sin imagen');
+
+              if (uploadResponse.ok) {
+                const uploadData = await uploadResponse.json();
+                return uploadData.url;
+              } else {
+                console.warn('Error al subir una imagen');
+                return null;
+              }
+            } catch (err) {
+              console.warn('Error al subir imagen:', err);
+              return null;
             }
-          } catch (err) {
-            console.warn('Error al subir imagen:', err);
+          });
+
+          const resultados = await Promise.all(uploadPromises);
+          urlsSubidas.push(...resultados.filter((url): url is string => url !== null));
+
+          // Actualizar el aviso con las URLs reales de Supabase
+          if (urlsSubidas.length > 0) {
+            const avisoActualizado: Aviso = {
+              ...nuevoAviso,
+              imagenesUrls: urlsSubidas
+            };
+            
+            // Actualizar en el estado local
+            onPublicar(avisoActualizado);
+            
+            // Guardar actualización en background
+            saveAviso(avisoActualizado).catch(error => {
+              console.error('Error al actualizar con imágenes:', error);
+            });
           }
         })();
       }
@@ -536,7 +566,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
             </div>
           </div>
 
-          {/* Input de imagen */}
+          {/* Input de múltiples imágenes */}
           <div style={{ marginBottom: '1.5rem' }}>
             <label style={{
               display: 'flex',
@@ -548,18 +578,19 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
               color: 'var(--text-primary)'
             }}>
               <FaImage size={16} />
-              Imagen del aviso (opcional)
+              Imágenes del aviso (opcional, máx. 5MB cada una)
             </label>
             <input
               ref={fileInputRef}
               type="file"
               accept="image/*"
+              multiple
               onChange={handleImageChange}
               style={{ display: 'none' }}
-              id="aviso-image-input"
+              id="aviso-images-input"
             />
             <label
-              htmlFor="aviso-image-input"
+              htmlFor="aviso-images-input"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -570,7 +601,8 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
                 cursor: 'pointer',
                 fontSize: '0.875rem',
                 color: 'var(--text-secondary)',
-                transition: 'all 0.2s'
+                transition: 'all 0.2s',
+                justifyContent: 'center'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = 'var(--text-primary)';
@@ -581,47 +613,62 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
                 e.currentTarget.style.color = 'var(--text-secondary)';
               }}
             >
-              <FaImage size={16} />
-              {imagenPreview ? 'Cambiar imagen' : 'Agregar imagen (máx. 5MB)'}
+              <FaPlus size={16} />
+              Agregar imágenes
             </label>
             
-            {imagenPreview && (
+            {imagenesPreviews.length > 0 && (
               <div style={{
                 marginTop: '0.75rem',
-                position: 'relative',
-                display: 'inline-block'
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
+                gap: '0.75rem'
               }}>
-                <img
-                  src={imagenPreview}
-                  alt="Preview"
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: '300px',
-                    borderRadius: '8px',
-                    border: '1px solid var(--border-color)'
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={handleRemoveImage}
-                  style={{
-                    position: 'absolute',
-                    top: '0.5rem',
-                    right: '0.5rem',
-                    background: 'rgba(0, 0, 0, 0.7)',
-                    border: 'none',
-                    borderRadius: '50%',
-                    width: '28px',
-                    height: '28px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    color: 'white'
-                  }}
-                >
-                  <FaTrash size={12} />
-                </button>
+                {imagenesPreviews.map((imgPreview, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      position: 'relative',
+                      aspectRatio: '1',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      border: '1px solid var(--border-color)'
+                    }}
+                  >
+                    <img
+                      src={imgPreview.preview}
+                      alt={`Preview ${index + 1}`}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        display: 'block'
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(index)}
+                      style={{
+                        position: 'absolute',
+                        top: '0.25rem',
+                        right: '0.25rem',
+                        background: 'rgba(0, 0, 0, 0.7)',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: '24px',
+                        height: '24px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        color: 'white',
+                        padding: 0
+                      }}
+                    >
+                      <FaTrash size={10} />
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -675,4 +722,3 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
     </div>
   );
 }
-

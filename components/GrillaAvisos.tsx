@@ -75,19 +75,23 @@ export default function GrillaAvisos({ avisos, onAbrirAviso }: GrillaAvisosProps
               e.currentTarget.style.boxShadow = 'none';
             }}
           >
-            {aviso.imagenUrl && (
-              <img
-                src={aviso.imagenUrl}
-                alt={aviso.titulo}
-                style={{
-                  width: '100%',
-                  height: '150px',
-                  objectFit: 'cover',
-                  borderRadius: '6px',
-                  marginBottom: '0.5rem'
-                }}
-              />
-            )}
+            {(() => {
+              // Mostrar primera imagen si hay múltiples o imagen única
+              const imagenUrl = aviso.imagenesUrls?.[0] || aviso.imagenUrl;
+              return imagenUrl ? (
+                <img
+                  src={imagenUrl}
+                  alt={aviso.titulo}
+                  style={{
+                    width: '100%',
+                    height: '150px',
+                    objectFit: 'cover',
+                    borderRadius: '6px',
+                    marginBottom: '0.5rem'
+                  }}
+                />
+              ) : null;
+            })()}
             <div style={{
               fontSize: '0.75rem',
               color: 'var(--text-tertiary)',

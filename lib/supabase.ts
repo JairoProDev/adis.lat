@@ -19,6 +19,22 @@ export const supabase = supabaseUrl && supabaseAnonKey
 
 // Función para convertir de la base de datos a Aviso
 function dbToAviso(row: any): Aviso {
+  // Soporte para múltiples imágenes (array JSON) o imagen única (string)
+  let imagenesUrls: string[] | undefined;
+  if (row.imagenes_urls) {
+    // Si es un array JSON
+    try {
+      imagenesUrls = typeof row.imagenes_urls === 'string' 
+        ? JSON.parse(row.imagenes_urls) 
+        : row.imagenes_urls;
+    } catch {
+      imagenesUrls = undefined;
+    }
+  } else if (row.imagen_url) {
+    // Compatibilidad hacia atrás: imagen única
+    imagenesUrls = [row.imagen_url];
+  }
+
   return {
     id: row.id,
     categoria: row.categoria,
@@ -28,12 +44,19 @@ function dbToAviso(row: any): Aviso {
     ubicacion: row.ubicacion,
     fechaPublicacion: row.fecha_publicacion,
     horaPublicacion: row.hora_publicacion,
-    imagenUrl: row.imagen_url || undefined
+    imagenesUrls,
+    // Compatibilidad hacia atrás
+    imagenUrl: imagenesUrls?.[0]
   };
 }
 
 // Función para convertir de Aviso a la base de datos
 function avisoToDb(aviso: Aviso): any {
+  // Convertir array de imágenes a JSON
+  const imagenesUrlsJson = aviso.imagenesUrls && aviso.imagenesUrls.length > 0
+    ? JSON.stringify(aviso.imagenesUrls)
+    : null;
+
   return {
     id: aviso.id,
     categoria: aviso.categoria,
@@ -43,7 +66,9 @@ function avisoToDb(aviso: Aviso): any {
     ubicacion: aviso.ubicacion,
     fecha_publicacion: aviso.fechaPublicacion,
     hora_publicacion: aviso.horaPublicacion,
-    imagen_url: aviso.imagenUrl || null
+    imagenes_urls: imagenesUrlsJson,
+    // Mantener imagen_url para compatibilidad
+    imagen_url: aviso.imagenUrl || aviso.imagenesUrls?.[0] || null
   };
 }
 

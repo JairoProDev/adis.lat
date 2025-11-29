@@ -22,6 +22,33 @@ interface ProgresoEntry {
 
 const progresoData: ProgresoEntry[] = [
   {
+    version: '1.6.0',
+    date: '2025-11-29',
+    time: '11:45',
+    type: 'feature',
+    title: 'Múltiples Imágenes y Preview Local Instantáneo',
+    description: 'Soporte para múltiples imágenes por aviso con preview local inmediato, sin esperas',
+    userBenefits: [
+      'Sube múltiples imágenes para mostrar mejor tu producto o servicio',
+      'Las imágenes aparecen instantáneamente al publicar (preview local)',
+      'No más esperas: las imágenes se suben en background sin bloquear',
+      'Ahorro de costos: solo se suben a Supabase cuando es necesario',
+      'Experiencia ultra fluida: todo se siente instantáneo',
+    ],
+    technicalDetails: [
+      'Soporte para múltiples imágenes: array `imagenesUrls` en tipo `Aviso`',
+      'Preview local inmediato usando `FileReader` y `URL.createObjectURL`',
+      'Columna `imagenes_urls` (TEXT/JSON) agregada a tabla `avisos` en Supabase',
+      'Subida de imágenes en paralelo usando `Promise.all`',
+      'Actualización automática del aviso cuando las imágenes terminan de subirse',
+      'Compatibilidad hacia atrás: avisos antiguos con `imagen_url` siguen funcionando',
+      'Grid responsive para mostrar múltiples imágenes en el modal',
+      'Validación de tamaño (5MB por imagen) y tipo de archivo',
+      'Gestión de memoria: revocación de URLs de preview cuando se eliminan',
+    ],
+    impact: 'major'
+  },
+  {
     version: '1.5.1',
     date: '2025-11-29',
     time: '11:15',

@@ -219,25 +219,72 @@ export default function ModalAviso({
           }}>
             {aviso.titulo}
           </h2>
-          {aviso.imagenUrl && (
-            <div style={{
-              marginBottom: '1rem',
-              borderRadius: '8px',
-              overflow: 'hidden',
-              border: '1px solid var(--border-color)'
-            }}>
-              <img
-                src={aviso.imagenUrl}
-                alt={aviso.titulo}
-                style={{
-                  width: '100%',
-                  maxHeight: '400px',
-                  objectFit: 'cover',
-                  display: 'block'
-                }}
-              />
-            </div>
-          )}
+          {(() => {
+            // Mostrar todas las imágenes si hay múltiples, o imagen única
+            const imagenes = aviso.imagenesUrls && aviso.imagenesUrls.length > 0
+              ? aviso.imagenesUrls
+              : aviso.imagenUrl
+                ? [aviso.imagenUrl]
+                : [];
+
+            if (imagenes.length === 0) return null;
+
+            return (
+              <div style={{ marginBottom: '1rem' }}>
+                {imagenes.length === 1 ? (
+                  // Una sola imagen: mostrar grande
+                  <div style={{
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    border: '1px solid var(--border-color)'
+                  }}>
+                    <img
+                      src={imagenes[0]}
+                      alt={aviso.titulo}
+                      style={{
+                        width: '100%',
+                        maxHeight: '400px',
+                        objectFit: 'cover',
+                        display: 'block'
+                      }}
+                    />
+                  </div>
+                ) : (
+                  // Múltiples imágenes: mostrar en grid
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: imagenes.length === 2 ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
+                    gap: '0.5rem',
+                    borderRadius: '8px',
+                    overflow: 'hidden'
+                  }}>
+                    {imagenes.map((url, index) => (
+                      <div
+                        key={index}
+                        style={{
+                          aspectRatio: '1',
+                          overflow: 'hidden',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '4px'
+                        }}
+                      >
+                        <img
+                          src={url}
+                          alt={`${aviso.titulo} - Imagen ${index + 1}`}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            display: 'block'
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
           <div style={{
             fontSize: '0.875rem',
             color: 'var(--text-secondary)',

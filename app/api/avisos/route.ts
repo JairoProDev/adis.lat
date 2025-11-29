@@ -53,7 +53,9 @@ export async function POST(request: NextRequest) {
       ubicacion: body.ubicacion,
       fechaPublicacion: fecha,
       horaPublicacion: hora,
-      imagenUrl: body.imagenUrl || undefined
+      imagenesUrls: body.imagenesUrls || undefined,
+      // Compatibilidad hacia atrás
+      imagenUrl: body.imagenUrl || body.imagenesUrls?.[0] || undefined
     };
 
     const avisoCreado = await createAvisoInSupabase(nuevoAviso);
