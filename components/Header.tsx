@@ -1,4 +1,4 @@
-import { FaHistory } from 'react-icons/fa';
+import { FaChartLine } from 'react-icons/fa';
 
 interface HeaderProps {
   onChangelogClick?: () => void;
@@ -48,8 +48,8 @@ export default function Header({ onChangelogClick }: HeaderProps) {
             e.currentTarget.style.color = 'var(--text-secondary)';
           }}
         >
-          <FaHistory size={14} />
-          Changelog
+          <FaChartLine size={14} />
+          Nuestro Progreso
         </button>
       )}
     </header>
