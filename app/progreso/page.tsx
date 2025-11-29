@@ -22,6 +22,29 @@ interface ProgresoEntry {
 
 const progresoData: ProgresoEntry[] = [
   {
+    version: '1.5.1',
+    date: '2025-11-29',
+    time: '11:15',
+    type: 'improvement',
+    title: 'Optimización de Velocidad de Publicación',
+    description: 'Mejora crítica de UX: publicación instantánea sin esperar la subida de imágenes',
+    userBenefits: [
+      'Publicación instantánea: tu aviso aparece inmediatamente al hacer clic en "Publicar"',
+      'No más esperas: la imagen se sube en segundo plano sin bloquear la publicación',
+      'Experiencia fluida: sientes que todo es instantáneo',
+      'Si hay imagen, aparece automáticamente cuando termine de subirse',
+    ],
+    technicalDetails: [
+      'Publicación optimista: el aviso se muestra inmediatamente sin esperar la API',
+      'Subida de imágenes en background: no bloquea la UI',
+      'Actualización automática: cuando la imagen termina de subirse, el aviso se actualiza',
+      'Eliminado estado "subiendoImagen" que bloqueaba el botón',
+      'Flujo asíncrono: publicación → mostrar → subir imagen → actualizar',
+      'Mejora en handlePublicar para manejar actualizaciones de avisos existentes',
+    ],
+    impact: 'major'
+  },
+  {
     version: '1.5.0',
     date: '2025-11-29',
     time: '11:00',

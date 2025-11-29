@@ -177,14 +177,47 @@ function HomeContent() {
 
   const handlePublicar = (nuevoAviso: Aviso) => {
     // Optimistic update: mostrar inmediatamente
-    const avisosActualizados = [nuevoAviso, ...avisos];
+    // Si el aviso ya existe (actualización con imagen), reemplazarlo
+    const avisosActualizados = avisos.find(a => a.id === nuevoAviso.id)
+      ? avisos.map(a => a.id === nuevoAviso.id ? nuevoAviso : a)
+      : [nuevoAviso, ...avisos];
+    
     setAvisos(avisosActualizados);
-    setAvisosFiltrados(avisosActualizados);
-    setMostrarFormulario(false);
-    setAvisoAbierto(nuevoAviso);
-    setIndiceAvisoActual(0);
-    router.push(`/?aviso=${nuevoAviso.id}`, { scroll: false });
-    success('¡Aviso publicado exitosamente!');
+    
+    // Recalcular filtrados
+    let filtrados = [...avisosActualizados];
+    if (categoriaFiltro !== 'todos') {
+      filtrados = filtrados.filter(a => a.categoria === categoriaFiltro);
+    }
+    if (busquedaDebounced.trim()) {
+      const busquedaLower = busquedaDebounced.toLowerCase();
+      filtrados = filtrados.filter(
+        a =>
+          a.titulo.toLowerCase().includes(busquedaLower) ||
+          a.descripcion.toLowerCase().includes(busquedaLower) ||
+          a.ubicacion.toLowerCase().includes(busquedaLower)
+      );
+    }
+    filtrados.sort((a, b) => {
+      const fechaA = new Date(`${a.fechaPublicacion}T${a.horaPublicacion}`).getTime();
+      const fechaB = new Date(`${b.fechaPublicacion}T${b.horaPublicacion}`).getTime();
+      return ordenamiento === 'recientes' ? fechaB - fechaA : fechaA - fechaB;
+    });
+    setAvisosFiltrados(filtrados);
+    
+    // Solo cerrar formulario y abrir modal si es un aviso nuevo
+    if (!avisos.find(a => a.id === nuevoAviso.id)) {
+      setMostrarFormulario(false);
+      setAvisoAbierto(nuevoAviso);
+      setIndiceAvisoActual(0);
+      router.push(`/?aviso=${nuevoAviso.id}`, { scroll: false });
+      success('¡Aviso publicado exitosamente!');
+    } else {
+      // Si es una actualización (con imagen), actualizar el modal si está abierto
+      if (avisoAbierto?.id === nuevoAviso.id) {
+        setAvisoAbierto(nuevoAviso);
+      }
+    }
   };
 
   const handleAbrirAviso = (aviso: Aviso) => {

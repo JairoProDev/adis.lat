@@ -146,7 +146,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
     e.preventDefault();
     
     // Prevenir múltiples submits
-    if (enviando || subiendoImagen) {
+    if (enviando) {
       return;
     }
     
@@ -158,37 +158,6 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
     setEnviando(true);
 
     try {
-      // Subir imagen si existe
-      let imagenUrl: string | undefined = undefined;
-      if (imagenFile) {
-        setSubiendoImagen(true);
-        try {
-          const formDataUpload = new FormData();
-          formDataUpload.append('image', imagenFile);
-          
-          const uploadResponse = await fetch('/api/upload-image', {
-            method: 'POST',
-            headers: {
-              'x-upload-type': 'avisos'
-            },
-            body: formDataUpload
-          });
-
-          if (uploadResponse.ok) {
-            const uploadData = await uploadResponse.json();
-            imagenUrl = uploadData.url;
-          } else {
-            console.warn('Error al subir imagen, continuando sin imagen');
-            onError?.('Error al subir la imagen. El aviso se publicará sin imagen.');
-          }
-        } catch (err) {
-          console.warn('Error al subir imagen:', err);
-          onError?.('Error al subir la imagen. El aviso se publicará sin imagen.');
-        } finally {
-          setSubiendoImagen(false);
-        }
-      }
-
       const ahora = new Date();
       const fecha = ahora.toISOString().split('T')[0];
       const hora = ahora.toTimeString().split(' ')[0].substring(0, 5);
@@ -196,24 +165,67 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
       // Generar ID único (timestamp + random para evitar duplicados)
       const idUnico = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
+      // Crear aviso INMEDIATAMENTE sin esperar la imagen
+      // Si hay imagen, se subirá en background y se actualizará después
       const nuevoAviso: Aviso = {
         id: idUnico,
         ...formData,
-        imagenUrl,
+        imagenUrl: undefined, // Se actualizará cuando termine la subida
         fechaPublicacion: fecha,
         horaPublicacion: hora
       };
 
-      // Cerrar formulario inmediatamente
+      // PUBLICAR INMEDIATAMENTE (sin esperar nada)
       setEnviando(false);
       onPublicar(nuevoAviso);
       onSuccess?.('¡Aviso publicado con éxito!');
       
-      // Guardar en background después de mostrar (carga optimista)
+      // Guardar en background (sin esperar)
       saveAviso(nuevoAviso).catch(error => {
         console.error('Error al guardar:', error);
-        onError?.('Hubo un error al guardar. El aviso se mostró pero puede no haberse guardado.');
       });
+
+      // Subir imagen en background y actualizar el aviso cuando termine
+      if (imagenFile) {
+        // No bloqueamos la UI, subimos en background
+        (async () => {
+          try {
+            const formDataUpload = new FormData();
+            formDataUpload.append('image', imagenFile);
+            
+            const uploadResponse = await fetch('/api/upload-image', {
+              method: 'POST',
+              headers: {
+                'x-upload-type': 'avisos'
+              },
+              body: formDataUpload
+            });
+
+            if (uploadResponse.ok) {
+              const uploadData = await uploadResponse.json();
+              const imagenUrl = uploadData.url;
+              
+              // Actualizar el aviso con la imagen
+              const avisoActualizado: Aviso = {
+                ...nuevoAviso,
+                imagenUrl
+              };
+              
+              // Actualizar en el estado local
+              onPublicar(avisoActualizado);
+              
+              // Guardar actualización en background
+              saveAviso(avisoActualizado).catch(error => {
+                console.error('Error al actualizar con imagen:', error);
+              });
+            } else {
+              console.warn('Error al subir imagen, el aviso se publicó sin imagen');
+            }
+          } catch (err) {
+            console.warn('Error al subir imagen:', err);
+          }
+        })();
+      }
     } catch (error) {
       console.error('Error al publicar:', error);
       onError?.('Hubo un error al publicar el aviso. Por favor intenta nuevamente.');
@@ -612,15 +624,6 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
                 </button>
               </div>
             )}
-            {subiendoImagen && (
-              <div style={{
-                marginTop: '0.5rem',
-                fontSize: '0.75rem',
-                color: 'var(--text-secondary)'
-              }}>
-                Subiendo imagen...
-              </div>
-            )}
           </div>
 
           <div style={{
@@ -645,7 +648,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
             </button>
             <button
               type="submit"
-              disabled={enviando || subiendoImagen}
+              disabled={enviando}
               style={{
                 flex: 1,
                 padding: '0.75rem',
@@ -654,9 +657,9 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
                 borderRadius: '8px',
                 backgroundColor: 'var(--text-primary)',
                 color: 'var(--bg-primary)',
-                cursor: (enviando || subiendoImagen) ? 'not-allowed' : 'pointer',
-                opacity: (enviando || subiendoImagen) ? 0.6 : 1,
-                pointerEvents: (enviando || subiendoImagen) ? 'none' : 'auto',
+                cursor: enviando ? 'not-allowed' : 'pointer',
+                opacity: enviando ? 0.6 : 1,
+                pointerEvents: enviando ? 'none' : 'auto',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -664,7 +667,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
               }}
             >
               <IconMegaphone />
-              {subiendoImagen ? 'Subiendo imagen...' : enviando ? 'Publicando...' : 'Publicar'}
+              {enviando ? 'Publicando...' : 'Publicar'}
             </button>
           </div>
         </form>
