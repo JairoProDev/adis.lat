@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Aviso, Categoria } from '@/types';
 import { 
   IconEmpleos, 
@@ -34,6 +34,25 @@ interface GrillaAvisosProps {
 }
 
 export default function GrillaAvisos({ avisos, onAbrirAviso, avisoSeleccionadoId }: GrillaAvisosProps) {
+  const avisoRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
+
+  // Scroll automático cuando cambia el aviso seleccionado
+  useEffect(() => {
+    if (avisoSeleccionadoId && avisoRefs.current[avisoSeleccionadoId]) {
+      const elemento = avisoRefs.current[avisoSeleccionadoId];
+      if (elemento) {
+        // Esperar un poco para que el DOM se actualice
+        setTimeout(() => {
+          elemento.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center', // Centrar verticalmente en la vista
+            inline: 'nearest' // No hacer scroll horizontal a menos que sea necesario
+          });
+        }, 100);
+      }
+    }
+  }, [avisoSeleccionadoId]);
+
   return (
     <>
       <style jsx>{`
@@ -54,6 +73,9 @@ export default function GrillaAvisos({ avisos, onAbrirAviso, avisoSeleccionadoId
           return (
             <button
               key={aviso.id}
+              ref={(el) => {
+                avisoRefs.current[aviso.id] = el;
+              }}
               onClick={() => onAbrirAviso(aviso)}
               style={{
                 backgroundColor: estaSeleccionado ? 'var(--hover-bg)' : 'var(--bg-primary)',
