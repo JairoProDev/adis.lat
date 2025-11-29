@@ -433,6 +433,7 @@ function HomeContent() {
               <GrillaAvisos
                 avisos={avisosFiltrados}
                 onAbrirAviso={handleAbrirAviso}
+                avisoSeleccionadoId={avisoAbierto?.id}
               />
               {avisosFiltrados.length === 0 && (
                 <div style={{

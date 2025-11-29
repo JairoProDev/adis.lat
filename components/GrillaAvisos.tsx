@@ -30,9 +30,10 @@ const getCategoriaIcon = (categoria: Categoria): React.ComponentType<{ size?: nu
 interface GrillaAvisosProps {
   avisos: Aviso[];
   onAbrirAviso: (aviso: Aviso) => void;
+  avisoSeleccionadoId?: string | null;
 }
 
-export default function GrillaAvisos({ avisos, onAbrirAviso }: GrillaAvisosProps) {
+export default function GrillaAvisos({ avisos, onAbrirAviso, avisoSeleccionadoId }: GrillaAvisosProps) {
   return (
     <>
       <style jsx>{`
@@ -48,33 +49,47 @@ export default function GrillaAvisos({ avisos, onAbrirAviso }: GrillaAvisosProps
         }
       `}</style>
       <div className="grilla-avisos">
-        {avisos.map((aviso) => (
-          <button
-            key={aviso.id}
-            onClick={() => onAbrirAviso(aviso)}
-            style={{
-              backgroundColor: 'var(--bg-primary)',
-              border: '1px solid var(--border-color)',
-              borderRadius: '8px',
-              padding: '1rem',
-              textAlign: 'left',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.5rem'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 4px 8px var(--shadow)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
-          >
+        {avisos.map((aviso) => {
+          const estaSeleccionado = aviso.id === avisoSeleccionadoId;
+          return (
+            <button
+              key={aviso.id}
+              onClick={() => onAbrirAviso(aviso)}
+              style={{
+                backgroundColor: estaSeleccionado ? 'var(--hover-bg)' : 'var(--bg-primary)',
+                border: estaSeleccionado 
+                  ? '2px solid var(--text-primary)' 
+                  : '1px solid var(--border-color)',
+                borderRadius: '8px',
+                padding: '1rem',
+                textAlign: 'left',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.5rem',
+                position: 'relative',
+                boxShadow: estaSeleccionado ? '0 4px 12px rgba(0, 0, 0, 0.15)' : 'none'
+              }}
+              onMouseEnter={(e) => {
+                if (!estaSeleccionado) {
+                  e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 8px var(--shadow)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!estaSeleccionado) {
+                  e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
+                } else {
+                  e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+                }
+              }}
+            >
             {(() => {
               // Mostrar primera imagen si hay múltiples o imagen única
               const imagenUrl = aviso.imagenesUrls?.[0] || aviso.imagenUrl;
@@ -118,8 +133,21 @@ export default function GrillaAvisos({ avisos, onAbrirAviso }: GrillaAvisosProps
             }}>
               {aviso.titulo}
             </h3>
+            {estaSeleccionado && (
+              <div style={{
+                position: 'absolute',
+                top: '0.5rem',
+                right: '0.5rem',
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--text-primary)',
+                boxShadow: '0 0 0 2px var(--bg-primary)'
+              }} />
+            )}
           </button>
-        ))}
+          );
+        })}
       </div>
     </>
   );
