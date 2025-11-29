@@ -1,5 +1,9 @@
 'use client';
 
+// Forzar renderizado dinámico para evitar errores de prerender con useSearchParams en Vercel
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Aviso, Categoria } from '@/types';
