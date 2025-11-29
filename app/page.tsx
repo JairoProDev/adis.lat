@@ -21,6 +21,7 @@ import BotonPublicar from '@/components/BotonPublicar';
 import FormularioPublicar from '@/components/FormularioPublicar';
 import SkeletonAvisos from '@/components/SkeletonAvisos';
 import { ToastContainer } from '@/components/Toast';
+import FeedbackButton from '@/components/FeedbackButton';
 
 function HomeContent() {
   const router = useRouter();
@@ -279,6 +280,7 @@ function HomeContent() {
         )}
       </main>
       <BotonPublicar onClick={() => setMostrarFormulario(true)} />
+      <FeedbackButton />
         {mostrarFormulario && (
           <FormularioPublicar
             onPublicar={handlePublicar}

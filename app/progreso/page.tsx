@@ -1,9 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FaTimes, FaRocket, FaCheckCircle, FaBug, FaStar, FaCog, FaLightbulb, FaExclamationTriangle, FaArrowLeft, FaHeart } from 'react-icons/fa';
 import Header from '@/components/Header';
+import { useToast } from '@/hooks/useToast';
+import { ToastContainer } from '@/components/Toast';
+import { enviarFeedbackInmediato, enviarFeedbacksAAPI } from '@/lib/feedback';
 
 interface ProgresoEntry {
   version: string;
@@ -20,8 +23,8 @@ interface ProgresoEntry {
 const progresoData: ProgresoEntry[] = [
   {
     version: '1.3.0',
-    date: '2024-11-29',
-    time: '22:30',
+    date: '2025-11-29',
+    time: '09:48',
     type: 'feature',
     title: 'Sistema de Notificaciones y Validación Avanzada',
     description: 'Implementación de sistema de notificaciones toast y validación en tiempo real del formulario',
@@ -44,8 +47,8 @@ const progresoData: ProgresoEntry[] = [
   },
   {
     version: '1.2.0',
-    date: '2024-11-29',
-    time: '21:15',
+    date: '2025-11-29',
+    time: '08:30',
     type: 'feature',
     title: 'Ordenamiento y Contador de Resultados',
     description: 'Nuevas funcionalidades para mejorar la experiencia de búsqueda',
@@ -64,8 +67,8 @@ const progresoData: ProgresoEntry[] = [
   },
   {
     version: '1.1.0',
-    date: '2024-11-29',
-    time: '20:00',
+    date: '2025-11-29',
+    time: '07:15',
     type: 'ui',
     title: 'Iconografía Profesional',
     description: 'Actualización completa del sistema de iconos',
@@ -85,8 +88,8 @@ const progresoData: ProgresoEntry[] = [
   },
   {
     version: '1.0.1',
-    date: '2024-11-29',
-    time: '19:00',
+    date: '2025-11-29',
+    time: '06:45',
     type: 'fix',
     title: 'Corrección de Ordenamiento',
     description: 'Arreglo del sistema de ordenamiento que no funcionaba correctamente',
@@ -101,8 +104,8 @@ const progresoData: ProgresoEntry[] = [
   },
   {
     version: '1.0.0',
-    date: '2024-11-28',
-    time: '18:00',
+    date: '2025-11-28',
+    time: '16:00',
     type: 'feature',
     title: 'Lanzamiento Inicial - MVP Completo',
     description: 'Primera versión funcional de buscadis.com',
@@ -135,9 +138,19 @@ const progresoData: ProgresoEntry[] = [
 
 export default function ProgresoPage() {
   const router = useRouter();
+  const { toasts, removeToast, success } = useToast();
+  
+  // Enviar feedbacks pendientes periódicamente (cada 30 segundos)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      enviarFeedbacksAAPI();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
   const [mostrarFeedback, setMostrarFeedback] = useState(false);
-  const [feedbackTipo, setFeedbackTipo] = useState<'sugerencia' | 'problema' | 'idea'>('sugerencia');
+  const [feedbackTipo, setFeedbackTipo] = useState<'sugerencia' | 'problema'>('sugerencia');
   const [feedbackTexto, setFeedbackTexto] = useState('');
+  const [enviado, setEnviado] = useState(false);
 
   const getTypeIcon = (type: ProgresoEntry['type']) => {
     switch (type) {
@@ -190,14 +203,29 @@ export default function ProgresoPage() {
     );
   };
 
-  const handleFeedbackSubmit = () => {
+  const handleFeedbackSubmit = async () => {
     if (!feedbackTexto.trim()) return;
     
-    // Aquí podrías enviar a una API o guardar en localStorage
-    console.log('Feedback:', { tipo: feedbackTipo, texto: feedbackTexto });
-    alert('¡Gracias por tu feedback! Lo tomaremos en cuenta.');
-    setFeedbackTexto('');
-    setMostrarFeedback(false);
+    setEnviado(true);
+    
+    // Intentar enviar inmediatamente
+    const enviado = await enviarFeedbackInmediato({
+      tipo: feedbackTipo,
+      texto: feedbackTexto.trim()
+    });
+
+    if (enviado) {
+      success('¡Gracias por tu feedback! Lo revisaremos pronto.');
+    } else {
+      success('¡Gracias por tu feedback! Se guardó localmente y se enviará pronto.');
+    }
+    
+    setTimeout(() => {
+      setFeedbackTexto('');
+      setMostrarFeedback(false);
+      setEnviado(false);
+      setFeedbackTipo('sugerencia');
+    }, 2000);
   };
 
   return (
@@ -537,7 +565,7 @@ export default function ProgresoPage() {
             justifyContent: 'center',
             padding: '1rem'
           }}
-          onClick={() => setMostrarFeedback(false)}
+          onClick={() => !enviado && setMostrarFeedback(false)}
         >
           <div
             style={{
@@ -550,97 +578,163 @@ export default function ProgresoPage() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '1.5rem'
-            }}>
-              <h3 style={{
-                fontSize: '1.25rem',
-                fontWeight: 600,
-                color: 'var(--text-primary)',
-                margin: 0
-              }}>
-                {feedbackTipo === 'problema' ? 'Reportar un problema' : 'Sugerir una mejora'}
-              </h3>
-              <button
-                onClick={() => setMostrarFeedback(false)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--text-secondary)',
-                  cursor: 'pointer',
-                  padding: '0.5rem',
-                  borderRadius: '6px',
+            {!enviado ? (
+              <>
+                <div style={{
                   display: 'flex',
+                  justifyContent: 'space-between',
                   alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                <FaTimes size={20} />
-              </button>
-            </div>
-            <textarea
-              value={feedbackTexto}
-              onChange={(e) => setFeedbackTexto(e.target.value)}
-              placeholder={feedbackTipo === 'problema' 
-                ? 'Describe el problema que encontraste...' 
-                : 'Cuéntanos tu idea o sugerencia...'}
-              rows={6}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                fontSize: '0.875rem',
-                border: '1px solid var(--border-color)',
-                borderRadius: '8px',
-                backgroundColor: 'var(--bg-primary)',
-                color: 'var(--text-primary)',
-                outline: 'none',
-                resize: 'vertical',
-                fontFamily: 'inherit',
-                marginBottom: '1rem'
-              }}
-            />
-            <div style={{
-              display: 'flex',
-              gap: '0.75rem',
-              justifyContent: 'flex-end'
-            }}>
-              <button
-                onClick={() => setMostrarFeedback(false)}
-                style={{
-                  padding: '0.75rem 1.5rem',
-                  borderRadius: '8px',
-                  border: '1px solid var(--border-color)',
-                  backgroundColor: 'var(--bg-primary)',
-                  color: 'var(--text-primary)',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem'
-                }}
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleFeedbackSubmit}
-                disabled={!feedbackTexto.trim()}
-                style={{
-                  padding: '0.75rem 1.5rem',
-                  borderRadius: '8px',
-                  border: 'none',
-                  backgroundColor: feedbackTexto.trim() ? 'var(--text-primary)' : 'var(--bg-secondary)',
-                  color: feedbackTexto.trim() ? 'var(--bg-primary)' : 'var(--text-tertiary)',
-                  cursor: feedbackTexto.trim() ? 'pointer' : 'not-allowed',
+                  marginBottom: '1.5rem'
+                }}>
+                  <h3 style={{
+                    fontSize: '1.25rem',
+                    fontWeight: 600,
+                    color: 'var(--text-primary)',
+                    margin: 0
+                  }}>
+                    {feedbackTipo === 'problema' ? '🚨 Reportar un problema' : '✨ Sugerir una mejora'}
+                  </h3>
+                  <button
+                    onClick={() => setMostrarFeedback(false)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      padding: '0.5rem',
+                      borderRadius: '6px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <FaTimes size={20} />
+                  </button>
+                </div>
+
+                <p style={{
                   fontSize: '0.875rem',
-                  fontWeight: 600
-                }}
-              >
-                Enviar
-              </button>
-            </div>
+                  color: 'var(--text-secondary)',
+                  marginBottom: '1rem',
+                  lineHeight: 1.6
+                }}>
+                  {feedbackTipo === 'problema'
+                    ? 'Ayúdanos a mejorar reportando cualquier problema que encuentres.'
+                    : 'Tu opinión es valiosa. ¿Qué te gustaría ver en la plataforma?'
+                  }
+                </p>
+
+                <div style={{
+                  display: 'flex',
+                  gap: '0.5rem',
+                  marginBottom: '1rem'
+                }}>
+                  {(['sugerencia', 'problema'] as const).map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setFeedbackTipo(t)}
+                      style={{
+                        flex: 1,
+                        padding: '0.5rem',
+                        borderRadius: '6px',
+                        border: `1px solid ${feedbackTipo === t ? 'var(--text-primary)' : 'var(--border-color)'}`,
+                        backgroundColor: feedbackTipo === t ? 'var(--text-primary)' : 'var(--bg-primary)',
+                        color: feedbackTipo === t ? 'var(--bg-primary)' : 'var(--text-primary)',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem',
+                        fontWeight: 500,
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {t === 'sugerencia' ? '💡 Sugerencia' : '🚨 Problema'}
+                    </button>
+                  ))}
+                </div>
+
+                <textarea
+                  value={feedbackTexto}
+                  onChange={(e) => setFeedbackTexto(e.target.value)}
+                  placeholder={feedbackTipo === 'problema' 
+                    ? 'Describe el problema que encontraste...' 
+                    : 'Cuéntanos tu sugerencia...'}
+                  rows={6}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    fontSize: '0.875rem',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '8px',
+                    backgroundColor: 'var(--bg-primary)',
+                    color: 'var(--text-primary)',
+                    outline: 'none',
+                    resize: 'vertical',
+                    fontFamily: 'inherit',
+                    marginBottom: '1rem'
+                  }}
+                />
+                <div style={{
+                  display: 'flex',
+                  gap: '0.75rem',
+                  justifyContent: 'flex-end'
+                }}>
+                  <button
+                    onClick={() => setMostrarFeedback(false)}
+                    style={{
+                      padding: '0.75rem 1.5rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      backgroundColor: 'var(--bg-primary)',
+                      color: 'var(--text-primary)',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem'
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleFeedbackSubmit}
+                    disabled={!feedbackTexto.trim()}
+                    style={{
+                      padding: '0.75rem 1.5rem',
+                      borderRadius: '8px',
+                      border: 'none',
+                      backgroundColor: feedbackTexto.trim() ? 'var(--text-primary)' : 'var(--bg-secondary)',
+                      color: feedbackTexto.trim() ? 'var(--bg-primary)' : 'var(--text-tertiary)',
+                      cursor: feedbackTexto.trim() ? 'pointer' : 'not-allowed',
+                      fontSize: '0.875rem',
+                      fontWeight: 600
+                    }}
+                  >
+                    Enviar
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div style={{
+                textAlign: 'center',
+                padding: '2rem 0'
+              }}>
+                <FaCheckCircle size={48} color="#10b981" style={{ marginBottom: '1rem' }} />
+                <h3 style={{
+                  fontSize: '1.25rem',
+                  fontWeight: 600,
+                  color: 'var(--text-primary)',
+                  marginBottom: '0.5rem'
+                }}>
+                  ¡Gracias!
+                </h3>
+                <p style={{
+                  fontSize: '0.875rem',
+                  color: 'var(--text-secondary)'
+                }}>
+                  Tu feedback ha sido guardado. Lo revisaremos pronto.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </div>
   );
 }
