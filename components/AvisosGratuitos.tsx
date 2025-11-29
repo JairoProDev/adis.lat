@@ -68,16 +68,10 @@ export default function AvisosGratuitos({ onPublicarGratuito }: AvisosGratuitosP
     }
 
     try {
-      const ahora = new Date();
-      const fechaCreacion = ahora.toISOString();
-      const fechaExpiracion = new Date(ahora.getTime() + 24 * 60 * 60 * 1000).toISOString(); // 1 día después
-
       const nuevoAviso = await createAvisoGratuito({
         categoria: formData.categoria,
         titulo: formData.titulo.trim(),
-        contacto: formData.contacto.trim(),
-        fechaCreacion,
-        fechaExpiracion
+        contacto: formData.contacto.trim()
       });
 
       setAvisosGratuitos(prev => [nuevoAviso, ...prev]);

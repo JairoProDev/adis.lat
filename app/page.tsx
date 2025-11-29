@@ -45,6 +45,7 @@ function HomeContent() {
   const [modalMobileAbierto, setModalMobileAbierto] = useState(false);
   const [seccionMobileInicial, setSeccionMobileInicial] = useState<SeccionMobile>('aviso');
   const [seccionSidebarInicial, setSeccionSidebarInicial] = useState<SeccionSidebar | undefined>(undefined);
+  const [isSidebarMinimizado, setIsSidebarMinimizado] = useState(false);
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const { toasts, removeToast, success, error } = useToast();
 
@@ -338,11 +339,13 @@ function HomeContent() {
       <main style={{
         flex: 1,
         padding: '1rem',
-        maxWidth: isDesktop ? 'calc(100% - 420px)' : '1400px',
+        maxWidth: isDesktop 
+          ? `calc(100% - ${isSidebarMinimizado ? 60 : 420}px)` 
+          : '1400px',
         margin: '0 auto',
         width: '100%',
-        transition: 'max-width 0.3s ease',
-        ...(isDesktop && { marginRight: '420px' })
+        transition: 'max-width 0.3s ease, margin-right 0.3s ease',
+        ...(isDesktop && { marginRight: `${isSidebarMinimizado ? 60 : 420}px` })
       }}>
         <div style={{ marginBottom: '1.5rem' }}>
           <Buscador 
@@ -444,6 +447,7 @@ function HomeContent() {
                 avisos={avisosFiltrados}
                 onAbrirAviso={handleAbrirAviso}
                 avisoSeleccionadoId={avisoAbierto?.id}
+                espacioAdicional={isSidebarMinimizado ? 360 : 0}
               />
               {avisosFiltrados.length === 0 && (
                 <div style={{
@@ -474,6 +478,7 @@ function HomeContent() {
           onError={(msg) => error(msg)}
           onSuccess={(msg) => success(msg)}
           seccionInicial={seccionSidebarInicial}
+          onMinimizadoChange={setIsSidebarMinimizado}
         />
       )}
 

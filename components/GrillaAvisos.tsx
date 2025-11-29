@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { Aviso, Categoria, PAQUETES } from '@/types';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { 
   IconEmpleos, 
   IconInmuebles, 
@@ -31,10 +32,28 @@ interface GrillaAvisosProps {
   avisos: Aviso[];
   onAbrirAviso: (aviso: Aviso) => void;
   avisoSeleccionadoId?: string | null;
+  espacioAdicional?: number; // Espacio adicional disponible (píxeles) cuando el sidebar está minimizado
 }
 
-export default function GrillaAvisos({ avisos, onAbrirAviso, avisoSeleccionadoId }: GrillaAvisosProps) {
+export default function GrillaAvisos({ avisos, onAbrirAviso, avisoSeleccionadoId, espacioAdicional = 0 }: GrillaAvisosProps) {
   const avisoRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
+  const isDesktop = useMediaQuery('(min-width: 768px)');
+  
+  // Calcular número de columnas basado en el espacio disponible
+  // En desktop, con sidebar expandido (420px): 4 columnas
+  // En desktop, con sidebar minimizado (60px): más columnas (hasta 6-7)
+  // En mobile: 2 columnas
+  const getColumnas = () => {
+    if (!isDesktop) return 2;
+    
+    // Si hay espacio adicional (sidebar minimizado), calcular más columnas
+    // Estimamos ~180px por columna (incluyendo gaps y padding)
+    const columnasBase = 4;
+    const columnasAdicionales = Math.floor(espacioAdicional / 180);
+    return Math.min(columnasBase + columnasAdicionales, 7); // Máximo 7 columnas
+  };
+  
+  const columnas = getColumnas();
 
   // Scroll automático cuando cambia el aviso seleccionado
   useEffect(() => {
@@ -45,8 +64,8 @@ export default function GrillaAvisos({ avisos, onAbrirAviso, avisoSeleccionadoId
         setTimeout(() => {
           elemento.scrollIntoView({
             behavior: 'smooth',
-            block: 'center', // Centrar verticalmente en la vista
-            inline: 'nearest' // No hacer scroll horizontal a menos que sea necesario
+            block: 'center',
+            inline: 'nearest'
           });
         }, 100);
       }
@@ -58,15 +77,9 @@ export default function GrillaAvisos({ avisos, onAbrirAviso, avisoSeleccionadoId
       <style jsx>{`
         .grilla-avisos {
           display: grid;
-          grid-template-columns: repeat(2, 1fr);
+          grid-template-columns: repeat(${isDesktop ? columnas : 2}, 1fr);
           gap: 0.5rem;
-          grid-auto-rows: minmax(80px, auto);
-        }
-        @media (min-width: 768px) {
-          .grilla-avisos {
-            grid-template-columns: repeat(4, 1fr);
-            grid-auto-rows: minmax(100px, auto);
-          }
+          grid-auto-rows: minmax(${isDesktop ? '100px' : '80px'}, auto);
         }
       `}</style>
       <div className="grilla-avisos">
