@@ -17,7 +17,7 @@ interface FiltrosCategoriaProps {
   onChange: (categoria: Categoria | 'todos') => void;
 }
 
-const CATEGORIAS: Array<{ value: Categoria | 'todos'; label: string; icon: React.ComponentType }> = [
+const CATEGORIAS: Array<{ value: Categoria | 'todos'; label: string; icon: React.ComponentType<{ size?: number; color?: string }> }> = [
   { value: 'todos', label: 'Todos', icon: IconTodos },
   { value: 'empleos', label: 'Empleos', icon: IconEmpleos },
   { value: 'inmuebles', label: 'Inmuebles', icon: IconInmuebles },
@@ -72,7 +72,10 @@ export default function FiltrosCategoria({ categoriaSeleccionada, onChange }: Fi
             }
           }}
         >
-          {React.createElement(cat.icon)}
+          {(() => {
+            const IconComponent = cat.icon;
+            return <IconComponent color={categoriaSeleccionada === cat.value ? 'var(--bg-primary)' : 'var(--text-primary)'} />;
+          })()}
           {cat.label}
         </button>
       ))}

@@ -1,8 +1,23 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import React, { useState, FormEvent } from 'react';
 import { Aviso, AvisoFormData, Categoria } from '@/types';
 import { saveAviso } from '@/lib/storage';
+import {
+  IconEmpleos,
+  IconInmuebles,
+  IconVehiculos,
+  IconServicios,
+  IconProductos,
+  IconEventos,
+  IconNegocios,
+  IconComunidad,
+  IconTitle,
+  IconDescription,
+  IconLocation,
+  IconPhone,
+  IconMegaphone
+} from './Icons';
 
 interface FormularioPublicarProps {
   onPublicar: (aviso: Aviso) => void;
@@ -20,9 +35,34 @@ const CATEGORIAS: Categoria[] = [
   'comunidad'
 ];
 
+const CATEGORIA_PLACEHOLDERS: Record<Categoria, string> = {
+  empleos: 'Ej: Busco desarrollador web full-time',
+  inmuebles: 'Ej: Vendo departamento 2 habitaciones',
+  vehiculos: 'Ej: Vendo auto 2020 en excelente estado',
+  servicios: 'Ej: Ofrezco servicios de plomería',
+  productos: 'Ej: Vendo bicicleta en buen estado',
+  eventos: 'Ej: Concierto de rock este sábado',
+  negocios: 'Ej: Oportunidad de negocio rentable',
+  comunidad: 'Ej: Busco compañero de piso'
+};
+
+const getCategoriaIcon = (categoria: Categoria): React.ComponentType<{ size?: number; color?: string }> => {
+  const iconMap: Record<Categoria, React.ComponentType<{ size?: number; color?: string }>> = {
+    empleos: IconEmpleos,
+    inmuebles: IconInmuebles,
+    vehiculos: IconVehiculos,
+    servicios: IconServicios,
+    productos: IconProductos,
+    eventos: IconEventos,
+    negocios: IconNegocios,
+    comunidad: IconComunidad,
+  };
+  return iconMap[categoria];
+};
+
 export default function FormularioPublicar({ onPublicar, onCerrar }: FormularioPublicarProps) {
   const [formData, setFormData] = useState<AvisoFormData>({
-    categoria: 'productos',
+    categoria: 'empleos',
     titulo: '',
     descripcion: '',
     contacto: '',
@@ -137,12 +177,18 @@ export default function FormularioPublicar({ onPublicar, onCerrar }: FormularioP
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '1rem' }}>
             <label style={{
-              display: 'block',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
               marginBottom: '0.5rem',
               fontSize: '0.875rem',
               fontWeight: 500,
               color: 'var(--text-primary)'
             }}>
+              {(() => {
+                const IconComponent = getCategoriaIcon(formData.categoria);
+                return <IconComponent size={16} />;
+              })()}
               Categoría
             </label>
             <select
@@ -170,12 +216,15 @@ export default function FormularioPublicar({ onPublicar, onCerrar }: FormularioP
 
           <div style={{ marginBottom: '1rem' }}>
             <label style={{
-              display: 'block',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
               marginBottom: '0.5rem',
               fontSize: '0.875rem',
               fontWeight: 500,
               color: 'var(--text-primary)'
             }}>
+              <IconTitle />
               Título
             </label>
             <input
@@ -183,7 +232,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar }: FormularioP
               value={formData.titulo}
               onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
               required
-              placeholder="Ej: Vendo bicicleta en buen estado"
+              placeholder={CATEGORIA_PLACEHOLDERS[formData.categoria]}
               style={{
                 width: '100%',
                 padding: '0.75rem',
@@ -199,12 +248,15 @@ export default function FormularioPublicar({ onPublicar, onCerrar }: FormularioP
 
           <div style={{ marginBottom: '1rem' }}>
             <label style={{
-              display: 'block',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
               marginBottom: '0.5rem',
               fontSize: '0.875rem',
               fontWeight: 500,
               color: 'var(--text-primary)'
             }}>
+              <IconDescription />
               Descripción
             </label>
             <textarea
@@ -230,12 +282,15 @@ export default function FormularioPublicar({ onPublicar, onCerrar }: FormularioP
 
           <div style={{ marginBottom: '1rem' }}>
             <label style={{
-              display: 'block',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
               marginBottom: '0.5rem',
               fontSize: '0.875rem',
               fontWeight: 500,
               color: 'var(--text-primary)'
             }}>
+              <IconLocation />
               Ubicación
             </label>
             <input
@@ -259,12 +314,15 @@ export default function FormularioPublicar({ onPublicar, onCerrar }: FormularioP
 
           <div style={{ marginBottom: '1.5rem' }}>
             <label style={{
-              display: 'block',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
               marginBottom: '0.5rem',
               fontSize: '0.875rem',
               fontWeight: 500,
               color: 'var(--text-primary)'
             }}>
+              <IconPhone />
               Número de contacto (WhatsApp)
             </label>
             <input
@@ -272,7 +330,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar }: FormularioP
               value={formData.contacto}
               onChange={(e) => setFormData({ ...formData, contacto: e.target.value })}
               required
-              placeholder="Ej: +1234567890"
+              placeholder="+51 987 654 321"
               style={{
                 width: '100%',
                 padding: '0.75rem',
@@ -326,9 +384,14 @@ export default function FormularioPublicar({ onPublicar, onCerrar }: FormularioP
                 color: 'var(--bg-primary)',
                 cursor: enviando ? 'not-allowed' : 'pointer',
                 opacity: enviando ? 0.6 : 1,
-                pointerEvents: enviando ? 'none' : 'auto'
+                pointerEvents: enviando ? 'none' : 'auto',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem'
               }}
             >
+              <IconMegaphone />
               {enviando ? 'Publicando...' : 'Publicar'}
             </button>
           </div>

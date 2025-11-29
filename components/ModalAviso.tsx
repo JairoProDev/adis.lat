@@ -50,8 +50,8 @@ export default function ModalAviso({
 
   const minSwipeDistance = 50;
 
-  const getCategoriaIcon = (categoria: Categoria) => {
-    const iconMap: Record<Categoria, React.ComponentType> = {
+  const getCategoriaIcon = (categoria: Categoria): React.ComponentType<{ size?: number; color?: string }> => {
+    const iconMap: Record<Categoria, React.ComponentType<{ size?: number; color?: string }>> = {
       empleos: IconEmpleos,
       inmuebles: IconInmuebles,
       vehiculos: IconVehiculos,
@@ -199,7 +199,10 @@ export default function ModalAviso({
               gap: '0.35rem'
             }}
           >
-            {React.createElement(getCategoriaIcon(aviso.categoria))}
+            {(() => {
+              const IconComponent = getCategoriaIcon(aviso.categoria);
+              return <IconComponent size={14} />;
+            })()}
             {aviso.categoria}
           </div>
           <h2 style={{

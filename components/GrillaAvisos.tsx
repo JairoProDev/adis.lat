@@ -13,8 +13,8 @@ import {
   IconComunidad 
 } from './Icons';
 
-const getCategoriaIcon = (categoria: Categoria) => {
-  const iconMap: Record<Categoria, React.ComponentType> = {
+const getCategoriaIcon = (categoria: Categoria): React.ComponentType<{ size?: number; color?: string }> => {
+  const iconMap: Record<Categoria, React.ComponentType<{ size?: number; color?: string }>> = {
     empleos: IconEmpleos,
     inmuebles: IconInmuebles,
     vehiculos: IconVehiculos,
@@ -83,7 +83,10 @@ export default function GrillaAvisos({ avisos, onAbrirAviso }: GrillaAvisosProps
               alignItems: 'center',
               gap: '0.35rem'
             }}>
-              {React.createElement(getCategoriaIcon(aviso.categoria))}
+              {(() => {
+                const IconComponent = getCategoriaIcon(aviso.categoria);
+                return <IconComponent size={14} />;
+              })()}
               {aviso.categoria}
             </div>
             <h3 style={{
