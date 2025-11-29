@@ -220,8 +220,10 @@ export default function SidebarDesktop({
                         zIndex: 2000,
                         pointerEvents: 'none',
                         animation: 'fadeInTooltipDown 0.2s ease-out',
-                        maxWidth: '220px',
-                        lineHeight: 1.4,
+                        maxWidth: '300px',
+                        minWidth: '250px',
+                        width: 'max-content',
+                        lineHeight: 1.5,
                         whiteSpace: 'normal',
                         textAlign: 'center'
                       }}
@@ -233,7 +235,9 @@ export default function SidebarDesktop({
                         fontSize: '0.75rem', 
                         color: 'var(--text-secondary)',
                         fontWeight: 400,
-                        lineHeight: 1.4
+                        lineHeight: 1.5,
+                        wordWrap: 'break-word',
+                        overflowWrap: 'break-word'
                       }}>
                         {seccion.descripcion}
                       </div>
@@ -454,8 +458,10 @@ export default function SidebarDesktop({
                         zIndex: 2000,
                         pointerEvents: 'none',
                         animation: 'fadeInTooltipLeft 0.2s ease-out',
-                        maxWidth: '220px',
-                        lineHeight: 1.4,
+                        maxWidth: '300px',
+                        minWidth: '250px',
+                        width: 'max-content',
+                        lineHeight: 1.5,
                         whiteSpace: 'normal'
                       }}
                     >
@@ -466,7 +472,9 @@ export default function SidebarDesktop({
                         fontSize: '0.75rem', 
                         color: 'var(--text-secondary)',
                         fontWeight: 400,
-                        lineHeight: 1.4
+                        lineHeight: 1.5,
+                        wordWrap: 'break-word',
+                        overflowWrap: 'break-word'
                       }}>
                         {seccion.descripcion}
                       </div>
