@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, FormEvent, useRef } from 'react';
-import { Aviso, AvisoFormData, Categoria } from '@/types';
+import { Aviso, AvisoFormData, Categoria, TamañoPaquete, PAQUETES, PaqueteInfo } from '@/types';
 import { saveAviso } from '@/lib/storage';
 import { LIMITS, formatPhoneNumber, validatePhoneNumber, generarIdUnico } from '@/lib/utils';
 import {
@@ -29,6 +29,7 @@ interface FormularioPublicarProps {
 }
 
 interface ImagenPreview {
+  id: string;
   file: File;
   preview: string; // URL local del preview
 }
@@ -75,7 +76,8 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
     titulo: '',
     descripcion: '',
     contacto: '',
-    ubicacion: ''
+    ubicacion: '',
+    tamaño: 'miniatura' // Por defecto miniatura (gratis)
   });
   const [imagenesPreviews, setImagenesPreviews] = useState<ImagenPreview[]>([]);
   const [enviando, setEnviando] = useState(false);
@@ -108,6 +110,12 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
     } else if (formData.ubicacion.length > LIMITS.UBICACION_MAX) {
       newErrors.ubicacion = `La ubicación no puede exceder ${LIMITS.UBICACION_MAX} caracteres`;
     }
+
+    // Validar número de imágenes según el paquete
+    const paqueteSeleccionado = formData.tamaño ? PAQUETES[formData.tamaño] : PAQUETES.miniatura;
+    if (imagenesPreviews.length > paqueteSeleccionado.maxImagenes) {
+      newErrors.tamaño = `El paquete "${paqueteSeleccionado.nombre}" permite máximo ${paqueteSeleccionado.maxImagenes} imagen${paqueteSeleccionado.maxImagenes !== 1 ? 'es' : ''}`;
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -116,6 +124,18 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
+
+    const paqueteSeleccionado = formData.tamaño ? PAQUETES[formData.tamaño] : PAQUETES.miniatura;
+    const maxImagenes = paqueteSeleccionado.maxImagenes;
+    const totalImagenes = imagenesPreviews.length + files.length;
+
+    if (totalImagenes > maxImagenes) {
+      onError?.(`El paquete "${paqueteSeleccionado.nombre}" permite máximo ${maxImagenes} imagen${maxImagenes !== 1 ? 'es' : ''}.`);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      return;
+    }
 
     const nuevasImagenes: ImagenPreview[] = [];
 
@@ -136,6 +156,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
       const reader = new FileReader();
       reader.onloadend = () => {
         const preview: ImagenPreview = {
+          id: generarIdUnico(),
           file,
           preview: reader.result as string
         };
@@ -150,12 +171,14 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
     }
   };
 
-  const handleRemoveImage = (index: number) => {
+  const handleRemoveImage = (idToRemove: string) => {
     setImagenesPreviews(prev => {
-      const nuevas = [...prev];
+      const nuevas = prev.filter(img => img.id !== idToRemove);
       // Revocar URL del preview para liberar memoria
-      URL.revokeObjectURL(nuevas[index].preview);
-      nuevas.splice(index, 1);
+      const removedImage = prev.find(img => img.id === idToRemove);
+      if (removedImage) {
+        URL.revokeObjectURL(removedImage.preview);
+      }
       return nuevas;
     });
   };
@@ -191,6 +214,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
         descripcion: formData.descripcion,
         contacto: formData.contacto,
         ubicacion: formData.ubicacion,
+        tamaño: formData.tamaño || 'miniatura',
         imagenesUrls: previewsUrls, // Usar previews locales inmediatamente
         fechaPublicacion: fecha,
         horaPublicacion: hora
@@ -359,6 +383,114 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* Selector de Paquete */}
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              marginBottom: '0.75rem',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              color: 'var(--text-primary)'
+            }}>
+              📦 Paquete de Publicación
+            </label>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+              gap: '0.75rem'
+            }}>
+              {(Object.values(PAQUETES) as PaqueteInfo[]).map((paquete) => {
+                const estaSeleccionado = formData.tamaño === paquete.tamaño;
+                const paqueteInfo = PAQUETES[paquete.tamaño];
+                return (
+                  <button
+                    key={paquete.tamaño}
+                    type="button"
+                    onClick={() => {
+                      const nuevoTamaño = paquete.tamaño;
+                      setFormData({ ...formData, tamaño: nuevoTamaño });
+                      // Si el nuevo paquete tiene menos imágenes permitidas, eliminar las excedentes
+                      if (imagenesPreviews.length > paqueteInfo.maxImagenes) {
+                        setImagenesPreviews(prev => {
+                          const nuevas = prev.slice(0, paqueteInfo.maxImagenes);
+                          // Revocar URLs de las imágenes eliminadas
+                          prev.slice(paqueteInfo.maxImagenes).forEach(img => {
+                            URL.revokeObjectURL(img.preview);
+                          });
+                          return nuevas;
+                        });
+                      }
+                      if (errors.tamaño) {
+                        setErrors({ ...errors, tamaño: undefined });
+                      }
+                    }}
+                    style={{
+                      padding: '1rem',
+                      border: `2px solid ${estaSeleccionado ? 'var(--text-primary)' : 'var(--border-color)'}`,
+                      borderRadius: '8px',
+                      backgroundColor: estaSeleccionado ? 'var(--text-primary)' : 'var(--bg-primary)',
+                      color: estaSeleccionado ? 'var(--bg-primary)' : 'var(--text-primary)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      textAlign: 'left',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.5rem'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!estaSeleccionado) {
+                        e.currentTarget.style.borderColor = 'var(--text-primary)';
+                        e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!estaSeleccionado) {
+                        e.currentTarget.style.borderColor = 'var(--border-color)';
+                        e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
+                      }
+                    }}
+                  >
+                    <div style={{
+                      fontSize: '1rem',
+                      fontWeight: 600,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}>
+                      <span>{paquete.nombre}</span>
+                      <span style={{ fontSize: '0.875rem', opacity: 0.9 }}>
+                        S/ {paquete.precio}
+                      </span>
+                    </div>
+                    <div style={{
+                      fontSize: '0.75rem',
+                      opacity: 0.8,
+                      lineHeight: 1.4
+                    }}>
+                      {paquete.descripcion}
+                    </div>
+                    {paquete.maxImagenes > 0 && (
+                      <div style={{
+                        fontSize: '0.7rem',
+                        opacity: 0.7,
+                        marginTop: '0.25rem'
+                      }}>
+                        {paquete.maxImagenes} imagen{paquete.maxImagenes !== 1 ? 'es' : ''}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            {errors.tamaño && (
+              <span style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '0.5rem', display: 'block' }}>
+                {errors.tamaño}
+              </span>
+            )}
           </div>
 
           <div style={{ marginBottom: '1rem' }}>
@@ -598,19 +730,30 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
                 padding: '0.75rem',
                 border: '1px dashed var(--border-color)',
                 borderRadius: '8px',
-                cursor: 'pointer',
+                cursor: formData.tamaño && PAQUETES[formData.tamaño].maxImagenes > 0 ? 'pointer' : 'not-allowed',
                 fontSize: '0.875rem',
-                color: 'var(--text-secondary)',
+                color: formData.tamaño && PAQUETES[formData.tamaño].maxImagenes > 0 ? 'var(--text-secondary)' : 'var(--text-tertiary)',
                 transition: 'all 0.2s',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                opacity: formData.tamaño && PAQUETES[formData.tamaño].maxImagenes > 0 ? 1 : 0.5
+              }}
+              onClick={(e) => {
+                if (!formData.tamaño || PAQUETES[formData.tamaño].maxImagenes === 0) {
+                  e.preventDefault();
+                  onError?.('El paquete "Miniatura" no permite imágenes. Selecciona otro paquete.');
+                }
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = 'var(--text-primary)';
-                e.currentTarget.style.color = 'var(--text-primary)';
+                if (formData.tamaño && PAQUETES[formData.tamaño].maxImagenes > 0) {
+                  e.currentTarget.style.borderColor = 'var(--text-primary)';
+                  e.currentTarget.style.color = 'var(--text-primary)';
+                }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'var(--border-color)';
-                e.currentTarget.style.color = 'var(--text-secondary)';
+                if (formData.tamaño && PAQUETES[formData.tamaño].maxImagenes > 0) {
+                  e.currentTarget.style.borderColor = 'var(--border-color)';
+                  e.currentTarget.style.color = 'var(--text-secondary)';
+                }
               }}
             >
               <FaPlus size={16} />
@@ -624,9 +767,9 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
                 gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
                 gap: '0.75rem'
               }}>
-                {imagenesPreviews.map((imgPreview, index) => (
+                {imagenesPreviews.map((imgPreview) => (
                   <div
-                    key={index}
+                    key={imgPreview.id}
                     style={{
                       position: 'relative',
                       aspectRatio: '1',
@@ -637,7 +780,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
                   >
                     <img
                       src={imgPreview.preview}
-                      alt={`Preview ${index + 1}`}
+                      alt={`Preview ${imgPreview.id}`}
                       style={{
                         width: '100%',
                         height: '100%',
@@ -647,7 +790,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
                     />
                     <button
                       type="button"
-                      onClick={() => handleRemoveImage(index)}
+                      onClick={() => handleRemoveImage(imgPreview.id)}
                       style={{
                         position: 'absolute',
                         top: '0.25rem',

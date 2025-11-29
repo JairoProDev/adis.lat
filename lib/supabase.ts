@@ -44,6 +44,7 @@ function dbToAviso(row: any): Aviso {
     ubicacion: row.ubicacion,
     fechaPublicacion: row.fecha_publicacion,
     horaPublicacion: row.hora_publicacion,
+    tamaño: row.tamaño || 'miniatura',
     imagenesUrls,
     // Compatibilidad hacia atrás
     imagenUrl: imagenesUrls?.[0]
@@ -66,6 +67,7 @@ function avisoToDb(aviso: Aviso): any {
     ubicacion: aviso.ubicacion,
     fecha_publicacion: aviso.fechaPublicacion,
     hora_publicacion: aviso.horaPublicacion,
+    tamaño: aviso.tamaño || 'miniatura',
     imagenes_urls: imagenesUrlsJson,
     // Mantener imagen_url para compatibilidad
     imagen_url: aviso.imagenUrl || aviso.imagenesUrls?.[0] || null

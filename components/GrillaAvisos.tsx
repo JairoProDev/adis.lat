@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { Aviso, Categoria } from '@/types';
+import { Aviso, Categoria, PAQUETES } from '@/types';
 import { 
   IconEmpleos, 
   IconInmuebles, 
@@ -59,17 +59,26 @@ export default function GrillaAvisos({ avisos, onAbrirAviso, avisoSeleccionadoId
         .grilla-avisos {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
-          gap: 1rem;
+          gap: 0.5rem;
+          grid-auto-rows: minmax(60px, auto);
         }
         @media (min-width: 768px) {
           .grilla-avisos {
             grid-template-columns: repeat(4, 1fr);
+            grid-auto-rows: minmax(75px, auto);
           }
         }
       `}</style>
       <div className="grilla-avisos">
         {avisos.map((aviso) => {
           const estaSeleccionado = aviso.id === avisoSeleccionadoId;
+          const tamaño = aviso.tamaño || 'miniatura';
+          const paquete = PAQUETES[tamaño];
+          
+          // Calcular grid span según el tamaño
+          const gridColumnSpan = paquete.columnas;
+          const gridRowSpan = paquete.filas;
+          
           return (
             <button
               key={aviso.id}
@@ -82,16 +91,20 @@ export default function GrillaAvisos({ avisos, onAbrirAviso, avisoSeleccionadoId
                 border: estaSeleccionado 
                   ? '2px solid var(--text-primary)' 
                   : '1px solid var(--border-color)',
-                borderRadius: '8px',
-                padding: '1rem',
+                borderRadius: '6px',
+                padding: tamaño === 'miniatura' ? '0.5rem' : tamaño === 'pequeño' ? '0.625rem' : '0.75rem',
                 textAlign: 'left',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '0.5rem',
+                gap: tamaño === 'miniatura' ? '0.2rem' : tamaño === 'pequeño' ? '0.3rem' : '0.4rem',
                 position: 'relative',
-                boxShadow: estaSeleccionado ? '0 4px 12px rgba(0, 0, 0, 0.15)' : 'none'
+                boxShadow: estaSeleccionado ? '0 4px 12px rgba(0, 0, 0, 0.15)' : 'none',
+                gridColumn: `span ${gridColumnSpan}`,
+                gridRow: `span ${gridRowSpan}`,
+                height: '100%',
+                justifyContent: 'flex-start'
               }}
               onMouseEnter={(e) => {
                 if (!estaSeleccionado) {
@@ -113,6 +126,11 @@ export default function GrillaAvisos({ avisos, onAbrirAviso, avisoSeleccionadoId
               }}
             >
             {(() => {
+              // Miniaturas nunca tienen imagen
+              if (tamaño === 'miniatura') {
+                return null;
+              }
+              
               // Mostrar primera imagen si hay múltiples o imagen única
               const imagenUrl = aviso.imagenesUrls?.[0] || aviso.imagenUrl;
               return imagenUrl ? (
@@ -121,37 +139,39 @@ export default function GrillaAvisos({ avisos, onAbrirAviso, avisoSeleccionadoId
                   alt={aviso.titulo}
                   style={{
                     width: '100%',
-                    height: '150px',
+                    height: tamaño === 'pequeño' ? '80px' : tamaño === 'mediano' ? '100px' : tamaño === 'grande' ? '140px' : '180px',
                     objectFit: 'cover',
-                    borderRadius: '6px',
-                    marginBottom: '0.5rem'
+                    borderRadius: '4px',
+                    marginBottom: '0.3rem'
                   }}
                 />
               ) : null;
             })()}
             <div style={{
-              fontSize: '0.75rem',
+              fontSize: tamaño === 'miniatura' ? '0.6rem' : tamaño === 'pequeño' ? '0.65rem' : '0.7rem',
               color: 'var(--text-tertiary)',
               textTransform: 'capitalize',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.35rem'
+              gap: '0.25rem',
+              marginBottom: tamaño === 'miniatura' ? '0.1rem' : '0.15rem'
             }}>
               {(() => {
                 const IconComponent = getCategoriaIcon(aviso.categoria);
-                return <IconComponent size={14} />;
+                return <IconComponent size={tamaño === 'miniatura' ? 10 : tamaño === 'pequeño' ? 11 : 12} />;
               })()}
               {aviso.categoria}
             </div>
             <h3 style={{
-              fontSize: '1rem',
+              fontSize: tamaño === 'miniatura' ? '0.75rem' : tamaño === 'pequeño' ? '0.8125rem' : tamaño === 'mediano' ? '0.875rem' : tamaño === 'grande' ? '0.9375rem' : '1rem',
               fontWeight: 600,
               color: 'var(--text-primary)',
-              lineHeight: 1.4,
+              lineHeight: 1.3,
               display: '-webkit-box',
-              WebkitLineClamp: 2,
+              WebkitLineClamp: tamaño === 'miniatura' ? 1 : tamaño === 'pequeño' ? 1 : tamaño === 'mediano' ? 2 : tamaño === 'grande' ? 2 : 3,
               WebkitBoxOrient: 'vertical',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              margin: 0
             }}>
               {aviso.titulo}
             </h3>
@@ -174,4 +194,3 @@ export default function GrillaAvisos({ avisos, onAbrirAviso, avisoSeleccionadoId
     </>
   );
 }
-

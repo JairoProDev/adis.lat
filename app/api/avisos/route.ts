@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
       descripcion: body.descripcion,
       contacto: body.contacto,
       ubicacion: body.ubicacion,
+      tamaño: body.tamaño || 'miniatura',
       fechaPublicacion: fecha,
       horaPublicacion: hora,
       imagenesUrls: body.imagenesUrls || undefined,

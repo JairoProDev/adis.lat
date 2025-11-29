@@ -22,6 +22,37 @@ interface ProgresoEntry {
 
 const progresoData: ProgresoEntry[] = [
   {
+    version: '2.0.0',
+    date: '2025-11-29',
+    time: '15:00',
+    type: 'feature',
+    title: 'Sistema de Paquetes de Publicación',
+    description: 'Sistema completo de tamaños de publicaciones según el precio pagado, incentivando a los usuarios a pagar más por mayor visibilidad',
+    userBenefits: [
+      '5 tamaños diferentes de publicaciones: Miniatura (S/15), Pequeño (S/25), Mediano (S/45), Grande (S/85), Gigante (S/125)',
+      'Mayor visibilidad = mayor tamaño: mientras más pagues, más grande y destacado será tu aviso',
+      'Miniaturas sin imágenes: el paquete básico no permite imágenes para incentivar upgrades',
+      'Límites de imágenes escalonados: Pequeño (1), Mediano (3), Grande (5), Gigante (10)',
+      'Selector visual de paquetes en el formulario con precios y descripciones claras',
+      'Validación automática: no puedes subir más imágenes de las permitidas por tu paquete',
+      'Grid responsive: los avisos se adaptan automáticamente según su tamaño en mobile y desktop',
+    ],
+    technicalDetails: [
+      'Nuevo tipo `TamañoPaquete` con 5 opciones: miniatura, pequeño, mediano, grande, gigante',
+      'Constante `PAQUETES` con información completa de cada paquete (precio, dimensiones, límites)',
+      'Campo `tamaño` agregado a la interfaz `Aviso` y tabla `avisos` en Supabase',
+      'CSS Grid con `grid-column: span` y `grid-row: span` para diferentes tamaños',
+      'Validación en tiempo real: el formulario previene subir más imágenes de las permitidas',
+      'Selector de paquetes con diseño visual atractivo y feedback inmediato',
+      'Miniaturas nunca muestran imágenes (validación en `GrillaAvisos`)',
+      'Altura de imágenes adaptativa según el tamaño del paquete',
+      'Tamaños de fuente y líneas de texto escalables según el paquete',
+      'Script SQL `supabase-avisos-tamaño.sql` para agregar el campo a la base de datos',
+      'Compatibilidad hacia atrás: avisos sin tamaño se tratan como "miniatura"',
+    ],
+    impact: 'major'
+  },
+  {
     version: '1.7.0',
     date: '2025-11-29',
     time: '13:30',
