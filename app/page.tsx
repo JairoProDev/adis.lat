@@ -21,6 +21,7 @@ import BotonPublicar from '@/components/BotonPublicar';
 import FormularioPublicar from '@/components/FormularioPublicar';
 import SkeletonAvisos from '@/components/SkeletonAvisos';
 import { ToastContainer } from '@/components/Toast';
+import Changelog from '@/components/Changelog';
 
 function HomeContent() {
   const router = useRouter();
@@ -36,6 +37,7 @@ function HomeContent() {
   const [ordenamiento, setOrdenamiento] = useState<'recientes' | 'antiguos'>('recientes');
   const [avisoAbierto, setAvisoAbierto] = useState<Aviso | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [mostrarChangelog, setMostrarChangelog] = useState(false);
   const [indiceAvisoActual, setIndiceAvisoActual] = useState(0);
   const [cargando, setCargando] = useState(true);
   const isDesktop = useMediaQuery('(min-width: 768px)');
@@ -220,7 +222,7 @@ function HomeContent() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <Header />
+      <Header onChangelogClick={() => setMostrarChangelog(true)} />
       <main style={{
         flex: 1,
         padding: '1rem',
@@ -297,6 +299,8 @@ function HomeContent() {
           puedeSiguiente={indiceAvisoActual < avisosFiltrados.length - 1}
         />
       )}
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+      <Changelog isOpen={mostrarChangelog} onClose={() => setMostrarChangelog(false)} />
     </div>
   );
 }
