@@ -22,6 +22,10 @@ import FormularioPublicar from '@/components/FormularioPublicar';
 import SkeletonAvisos from '@/components/SkeletonAvisos';
 import { ToastContainer } from '@/components/Toast';
 import FeedbackButton from '@/components/FeedbackButton';
+import SidebarDesktop, { SeccionSidebar } from '@/components/SidebarDesktop';
+import ModalNavegacionMobile from '@/components/ModalNavegacionMobile';
+
+type SeccionMobile = 'aviso' | 'mapa' | 'publicar' | 'chatbot' | 'gratuitos';
 
 function HomeContent() {
   const router = useRouter();
@@ -40,6 +44,9 @@ function HomeContent() {
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [indiceAvisoActual, setIndiceAvisoActual] = useState(0);
   const [cargando, setCargando] = useState(true);
+  const [modalMobileAbierto, setModalMobileAbierto] = useState(false);
+  const [seccionMobileInicial, setSeccionMobileInicial] = useState<SeccionMobile>('aviso');
+  const [seccionSidebarInicial, setSeccionSidebarInicial] = useState<SeccionSidebar | undefined>(undefined);
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const { toasts, removeToast, success, error } = useToast();
 
@@ -285,6 +292,12 @@ function HomeContent() {
     const indice = avisosFiltrados.findIndex(a => a.id === aviso.id);
     setIndiceAvisoActual(indice >= 0 ? indice : 0);
     setAvisoAbierto(aviso);
+    
+    // En mobile, abrir modal de navegación
+    if (!isDesktop) {
+      setModalMobileAbierto(true);
+    }
+    
     // Actualizar URL sin recargar la página
     const params = new URLSearchParams(searchParams.toString());
     params.set('aviso', aviso.id);
@@ -328,11 +341,11 @@ function HomeContent() {
       <main style={{
         flex: 1,
         padding: '1rem',
-        maxWidth: avisoAbierto && isDesktop ? 'calc(100% - 420px)' : '1400px',
+        maxWidth: isDesktop ? 'calc(100% - 420px)' : '1400px',
         margin: '0 auto',
         width: '100%',
         transition: 'max-width 0.3s ease',
-        ...(avisoAbierto && isDesktop && { marginRight: '420px' })
+        ...(isDesktop && { marginRight: '420px' })
       }}>
         <div style={{ marginBottom: '1.5rem' }}>
           <Buscador 
@@ -449,17 +462,69 @@ function HomeContent() {
             </>
         )}
       </main>
-      <BotonPublicar onClick={() => setMostrarFormulario(true)} />
+      <BotonPublicar onClick={() => {
+        if (isDesktop) {
+          // En desktop, abrir la sección de publicar en el sidebar
+          setSeccionSidebarInicial('publicar');
+        } else {
+          // En mobile, abrir modal de navegación en sección publicar
+          setModalMobileAbierto(true);
+          setSeccionMobileInicial('publicar');
+        }
+      }} />
       <FeedbackButton />
-        {mostrarFormulario && (
-          <FormularioPublicar
-            onPublicar={handlePublicar}
-            onCerrar={() => setMostrarFormulario(false)}
-            onError={(msg) => error(msg)}
-            onSuccess={(msg) => success(msg)}
-          />
-        )}
-      {avisoAbierto && (
+      
+      {/* Sidebar Desktop - siempre visible */}
+      {isDesktop && (
+        <SidebarDesktop
+          avisoAbierto={avisoAbierto}
+          onCerrarAviso={handleCerrarAviso}
+          onAnterior={handleAnterior}
+          onSiguiente={handleSiguiente}
+          puedeAnterior={indiceAvisoActual > 0}
+          puedeSiguiente={indiceAvisoActual < avisosFiltrados.length - 1}
+          onPublicar={handlePublicar}
+          onError={(msg) => error(msg)}
+          onSuccess={(msg) => success(msg)}
+          seccionInicial={seccionSidebarInicial}
+        />
+      )}
+
+      {/* Modal Mobile - solo cuando está abierto */}
+      {!isDesktop && (
+        <ModalNavegacionMobile
+          abierto={modalMobileAbierto || !!avisoAbierto}
+          onCerrar={() => {
+            setModalMobileAbierto(false);
+            if (!avisoAbierto) {
+              handleCerrarAviso();
+            }
+          }}
+          seccionInicial={avisoAbierto ? 'aviso' : 'publicar'}
+          avisoAbierto={avisoAbierto}
+          onCerrarAviso={handleCerrarAviso}
+          onAnterior={handleAnterior}
+          onSiguiente={handleSiguiente}
+          puedeAnterior={indiceAvisoActual > 0}
+          puedeSiguiente={indiceAvisoActual < avisosFiltrados.length - 1}
+          onPublicar={handlePublicar}
+          onError={(msg) => error(msg)}
+          onSuccess={(msg) => success(msg)}
+        />
+      )}
+
+      {/* Formulario legacy (solo para casos especiales) */}
+      {mostrarFormulario && !isDesktop && (
+        <FormularioPublicar
+          onPublicar={handlePublicar}
+          onCerrar={() => setMostrarFormulario(false)}
+          onError={(msg) => error(msg)}
+          onSuccess={(msg) => success(msg)}
+        />
+      )}
+
+      {/* Modal Aviso legacy (solo si no está en sidebar/modal mobile) */}
+      {avisoAbierto && !isDesktop && !modalMobileAbierto && (
         <ModalAviso
           aviso={avisoAbierto}
           onCerrar={handleCerrarAviso}
@@ -469,6 +534,7 @@ function HomeContent() {
           puedeSiguiente={indiceAvisoActual < avisosFiltrados.length - 1}
         />
       )}
+      
       <ToastContainer toasts={toasts} removeToast={removeToast} />
     </div>
   );

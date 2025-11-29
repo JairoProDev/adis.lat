@@ -26,6 +26,7 @@ interface FormularioPublicarProps {
   onCerrar: () => void;
   onError?: (message: string) => void;
   onSuccess?: (message: string) => void;
+  modoGratuito?: boolean; // Si es true, solo permite campos básicos (solo desktop)
 }
 
 interface ImagenPreview {
@@ -70,7 +71,7 @@ const getCategoriaIcon = (categoria: Categoria): React.ComponentType<{ size?: nu
   return iconMap[categoria];
 };
 
-export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSuccess }: FormularioPublicarProps) {
+export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSuccess, modoGratuito = false }: FormularioPublicarProps) {
   const [formData, setFormData] = useState<AvisoFormData>({
     categoria: 'empleos',
     titulo: '',
@@ -89,14 +90,19 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
     
     if (!formData.titulo.trim()) {
       newErrors.titulo = 'El título es requerido';
-    } else if (formData.titulo.length > LIMITS.TITULO_MAX) {
-      newErrors.titulo = `El título no puede exceder ${LIMITS.TITULO_MAX} caracteres`;
+    } else {
+      const maxTitulo = modoGratuito ? 30 : LIMITS.TITULO_MAX;
+      if (formData.titulo.length > maxTitulo) {
+        newErrors.titulo = `El título no puede exceder ${maxTitulo} caracteres`;
+      }
     }
     
-    if (!formData.descripcion.trim()) {
-      newErrors.descripcion = 'La descripción es requerida';
-    } else if (formData.descripcion.length > LIMITS.DESCRIPCION_MAX) {
-      newErrors.descripcion = `La descripción no puede exceder ${LIMITS.DESCRIPCION_MAX} caracteres`;
+    if (!modoGratuito) {
+      if (!formData.descripcion.trim()) {
+        newErrors.descripcion = 'La descripción es requerida';
+      } else if (formData.descripcion.length > LIMITS.DESCRIPCION_MAX) {
+        newErrors.descripcion = `La descripción no puede exceder ${LIMITS.DESCRIPCION_MAX} caracteres`;
+      }
     }
     
     if (!formData.contacto.trim()) {
@@ -105,16 +111,20 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
       newErrors.contacto = 'Ingresa un número de teléfono válido (mínimo 8 dígitos)';
     }
     
-    if (!formData.ubicacion.trim()) {
-      newErrors.ubicacion = 'La ubicación es requerida';
-    } else if (formData.ubicacion.length > LIMITS.UBICACION_MAX) {
-      newErrors.ubicacion = `La ubicación no puede exceder ${LIMITS.UBICACION_MAX} caracteres`;
+    if (!modoGratuito) {
+      if (!formData.ubicacion.trim()) {
+        newErrors.ubicacion = 'La ubicación es requerida';
+      } else if (formData.ubicacion.length > LIMITS.UBICACION_MAX) {
+        newErrors.ubicacion = `La ubicación no puede exceder ${LIMITS.UBICACION_MAX} caracteres`;
+      }
     }
 
-    // Validar número de imágenes según el paquete
-    const paqueteSeleccionado = formData.tamaño ? PAQUETES[formData.tamaño] : PAQUETES.miniatura;
-    if (imagenesPreviews.length > paqueteSeleccionado.maxImagenes) {
-      newErrors.tamaño = `El paquete "${paqueteSeleccionado.nombre}" permite máximo ${paqueteSeleccionado.maxImagenes} imagen${paqueteSeleccionado.maxImagenes !== 1 ? 'es' : ''}`;
+    // Validar número de imágenes según el paquete (solo si no es modo gratuito)
+    if (!modoGratuito) {
+      const paqueteSeleccionado = formData.tamaño ? PAQUETES[formData.tamaño] : PAQUETES.miniatura;
+      if (imagenesPreviews.length > paqueteSeleccionado.maxImagenes) {
+        newErrors.tamaño = `El paquete "${paqueteSeleccionado.nombre}" permite máximo ${paqueteSeleccionado.maxImagenes} imagen${paqueteSeleccionado.maxImagenes !== 1 ? 'es' : ''}`;
+      }
     }
     
     setErrors(newErrors);
@@ -225,10 +235,16 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
       onPublicar(nuevoAviso);
       onSuccess?.('¡Aviso publicado con éxito!');
       
-      // Guardar en background (sin esperar)
-      saveAviso(nuevoAviso).catch(error => {
-        console.error('Error al guardar:', error);
-      });
+      // Guardar en Supabase (esperar para asegurar que se guarde)
+      // Esto es crítico para que el aviso no desaparezca al recargar
+      try {
+        await saveAviso(nuevoAviso);
+        console.log('✅ Aviso guardado correctamente en Supabase');
+      } catch (error: any) {
+        console.error('❌ Error crítico al guardar en Supabase:', error);
+        // Mostrar error al usuario pero no bloquear la UI
+        onError?.(`El aviso se publicó localmente, pero hubo un error al guardarlo en la base de datos: ${error?.message || 'Error desconocido'}. Por favor, intenta publicarlo nuevamente.`);
+      }
 
       // Subir imágenes en background y actualizar el aviso cuando terminen
       if (imagenesPreviews.length > 0) {
@@ -327,7 +343,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
             fontWeight: 600,
             color: 'var(--text-primary)'
           }}>
-            Publicar aviso
+            {modoGratuito ? 'Publicar aviso gratuito' : 'Publicar aviso'}
           </h2>
           <button
             onClick={onCerrar}
@@ -385,7 +401,8 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
             </select>
           </div>
 
-          {/* Selector de Paquete */}
+          {/* Selector de Paquete - Solo si no es modo gratuito */}
+          {!modoGratuito && (
           <div style={{ marginBottom: '1.5rem' }}>
             <label style={{
               display: 'flex',
@@ -492,6 +509,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
               </span>
             )}
           </div>
+          )}
 
           <div style={{ marginBottom: '1rem' }}>
             <label style={{
@@ -511,7 +529,8 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
               value={formData.titulo}
               onChange={(e) => {
                 const value = e.target.value;
-                if (value.length <= LIMITS.TITULO_MAX) {
+                const maxTitulo = modoGratuito ? 30 : LIMITS.TITULO_MAX;
+                if (value.length <= maxTitulo) {
                   setFormData({ ...formData, titulo: value });
                   if (errors.titulo) {
                     setErrors({ ...errors, titulo: undefined });
@@ -537,14 +556,16 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
               )}
               <span style={{ 
                 fontSize: '0.75rem', 
-                color: formData.titulo.length > LIMITS.TITULO_MAX * 0.9 ? '#f59e0b' : 'var(--text-tertiary)',
+                color: formData.titulo.length > (modoGratuito ? 30 : LIMITS.TITULO_MAX) * 0.9 ? '#f59e0b' : 'var(--text-tertiary)',
                 marginLeft: 'auto'
               }}>
-                {formData.titulo.length}/{LIMITS.TITULO_MAX}
+                {formData.titulo.length}/{modoGratuito ? 30 : LIMITS.TITULO_MAX}
               </span>
             </div>
           </div>
 
+          {/* Descripción - Solo si no es modo gratuito */}
+          {!modoGratuito && (
           <div style={{ marginBottom: '1rem' }}>
             <label style={{
               display: 'flex',
@@ -598,7 +619,10 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
               </span>
             </div>
           </div>
+          )}
 
+          {/* Ubicación - Solo si no es modo gratuito */}
+          {!modoGratuito && (
           <div style={{ marginBottom: '1rem' }}>
             <label style={{
               display: 'flex',
@@ -650,6 +674,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
               </span>
             </div>
           </div>
+          )}
 
           <div style={{ marginBottom: '1.5rem' }}>
             <label style={{
@@ -698,7 +723,8 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
             </div>
           </div>
 
-          {/* Input de múltiples imágenes */}
+          {/* Input de múltiples imágenes - Solo si no es modo gratuito */}
+          {!modoGratuito && (
           <div style={{ marginBottom: '1.5rem' }}>
             <label style={{
               display: 'flex',
@@ -815,6 +841,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
               </div>
             )}
           </div>
+          )}
 
           <div style={{
             display: 'flex',

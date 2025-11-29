@@ -8,24 +8,55 @@ const USE_LOCAL_STORAGE = process.env.NEXT_PUBLIC_USE_LOCAL_STORAGE === 'true';
 // Funciones que funcionan con localStorage (desarrollo)
 const getAvisosLocal = (): Aviso[] => {
   if (typeof window === 'undefined') return [];
-  const stored = localStorage.getItem(STORAGE_KEY);
-  return stored ? JSON.parse(stored) : [];
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.error('Error al leer localStorage:', error);
+    // Si hay error, limpiar y empezar de nuevo
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // Ignorar errores al limpiar
+    }
+    return [];
+  }
 };
 
 const saveAvisoLocal = (aviso: Aviso): void => {
   if (typeof window === 'undefined') return;
-  const avisos = getAvisosLocal();
-  // Prevenir duplicados: verificar si ya existe
-  const existe = avisos.find(a => a.id === aviso.id);
-  if (!existe) {
-    avisos.unshift(aviso);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(avisos));
-  } else {
-    // Si existe, actualizarlo en lugar de duplicarlo
-    const index = avisos.findIndex(a => a.id === aviso.id);
-    if (index >= 0) {
-      avisos[index] = aviso;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(avisos));
+  try {
+    const avisos = getAvisosLocal();
+    // Prevenir duplicados: verificar si ya existe
+    const existe = avisos.find(a => a.id === aviso.id);
+    if (!existe) {
+      avisos.unshift(aviso);
+    } else {
+      // Si existe, actualizarlo en lugar de duplicarlo
+      const index = avisos.findIndex(a => a.id === aviso.id);
+      if (index >= 0) {
+        avisos[index] = aviso;
+      }
+    }
+
+    // Limitar el número de avisos en localStorage para evitar exceder la cuota
+    // Mantener solo los últimos 50 avisos
+    const avisosLimitados = avisos.slice(0, 50);
+    
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(avisosLimitados));
+  } catch (error: any) {
+    // Si hay error de cuota, limpiar y guardar solo el nuevo aviso
+    if (error?.name === 'QuotaExceededError' || error?.message?.includes('quota')) {
+      console.warn('LocalStorage lleno, limpiando y guardando solo el nuevo aviso');
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify([aviso]));
+      } catch (cleanError) {
+        console.error('Error al limpiar localStorage:', cleanError);
+        // Si aún falla, no hacer nada (el aviso se guardará en Supabase)
+      }
+    } else {
+      console.error('Error al guardar en localStorage:', error);
     }
   }
 };
@@ -75,32 +106,40 @@ export const saveAviso = async (aviso: Aviso): Promise<void> => {
     return;
   }
   
-  // Si el aviso tiene imágenes con previews locales (data:image), NO guardar en API todavía
-  // Solo guardar cuando tenga URLs reales de Supabase
-  const tienePreviewsLocales = aviso.imagenesUrls?.some(url => url.startsWith('data:image'));
-  if (tienePreviewsLocales) {
-    // No guardar en API todavía, esperar a que las imágenes se suban
-    return;
-  }
-  
-  // Guardar en API en background
+  // IMPORTANTE: Guardar en API INMEDIATAMENTE, incluso con previews locales
+  // Esto asegura que el aviso exista en Supabase y no desaparezca al recargar
+  // Las imágenes se actualizarán cuando se suban a Supabase Storage
   if (typeof window !== 'undefined') {
     try {
       const { createAviso, updateAviso } = await import('./api');
       // Intentar crear, si falla por duplicado, actualizar
       try {
-        await createAviso(aviso);
+        const resultado = await createAviso(aviso);
+        console.log('✅ Aviso guardado en Supabase:', resultado.id);
       } catch (error: any) {
         // Si el error es 409 (conflict) o el aviso ya existe, actualizar
-        if (error?.message?.includes('ya existe') || error?.message?.includes('duplicado')) {
-          await updateAviso(aviso);
+        if (error?.message?.includes('ya existe') || error?.message?.includes('duplicado') || error?.response?.status === 409) {
+          const resultado = await updateAviso(aviso);
+          console.log('✅ Aviso actualizado en Supabase:', resultado.id);
         } else {
+          // Re-lanzar el error para que se maneje arriba
           throw error;
         }
       }
-    } catch (error) {
-      console.error('Error al guardar en API:', error);
-      // Ya está en cache, así que está bien
+    } catch (error: any) {
+      // Log detallado del error
+      console.error('❌ Error al guardar en API:', error);
+      console.error('Detalles del error:', {
+        message: error?.message,
+        status: error?.response?.status,
+        statusText: error?.response?.statusText,
+        avisoId: aviso.id,
+        avisoTitulo: aviso.titulo
+      });
+      
+      // Lanzar el error para que el componente pueda manejarlo
+      // Esto es importante para que el usuario sepa que hubo un problema
+      throw new Error(`Error al guardar aviso en Supabase: ${error?.message || 'Error desconocido'}`);
     }
   }
 };

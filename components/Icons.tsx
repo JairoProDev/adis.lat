@@ -22,7 +22,13 @@ import {
   FaHeading,
   FaAlignLeft,
   FaPhone,
-  FaBullhorn
+  FaBullhorn,
+  FaMap,
+  FaComments,
+  FaGift,
+  FaFileAlt,
+  FaChevronRight as FaChevronRightIcon,
+  FaChevronLeft as FaChevronLeftIcon
 } from 'react-icons/fa';
 
 interface IconProps {
@@ -128,4 +134,29 @@ export const IconPhone = (props: IconProps) => (
 
 export const IconMegaphone = (props: IconProps) => (
   <FaBullhorn size={getSize(props)} color={props.color || 'currentColor'} />
+);
+
+// Iconos para el sidebar
+export const IconMap = (props: IconProps) => (
+  <FaMap size={getSize(props)} color={props.color || 'currentColor'} />
+);
+
+export const IconChatbot = (props: IconProps) => (
+  <FaComments size={getSize(props)} color={props.color || 'currentColor'} />
+);
+
+export const IconGratuitos = (props: IconProps) => (
+  <FaGift size={getSize(props)} color={props.color || 'currentColor'} />
+);
+
+export const IconAviso = (props: IconProps) => (
+  <FaFileAlt size={getSize(props)} color={props.color || 'currentColor'} />
+);
+
+export const IconMinimize = (props: IconProps) => (
+  <FaChevronRightIcon size={getSize(props)} color={props.color || 'currentColor'} />
+);
+
+export const IconExpand = (props: IconProps) => (
+  <FaChevronLeftIcon size={getSize(props)} color={props.color || 'currentColor'} />
 );

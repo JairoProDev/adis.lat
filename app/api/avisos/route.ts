@@ -38,27 +38,38 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    const ahora = new Date();
-    const fecha = ahora.toISOString().split('T')[0];
-    const hora = ahora.toTimeString().split(' ')[0].substring(0, 5);
+    // Si el body ya tiene un aviso completo con id, usarlo directamente
+    // Si no, crear uno nuevo
+    let nuevoAviso: Aviso;
+    
+    if (body.id && body.fechaPublicacion && body.horaPublicacion) {
+      // El aviso ya está completo, usarlo tal cual
+      nuevoAviso = body as Aviso;
+    } else {
+      // Crear un nuevo aviso
+      const ahora = new Date();
+      const fecha = ahora.toISOString().split('T')[0];
+      const hora = ahora.toTimeString().split(' ')[0].substring(0, 5);
 
-    // Generar ID único y amigable
-    const idUnico = generarIdUnico();
+      // Usar el ID del body si existe, sino generar uno nuevo
+      const idUnico = body.id || generarIdUnico();
 
-    const nuevoAviso: Aviso = {
-      id: idUnico,
-      categoria: body.categoria,
-      titulo: body.titulo,
-      descripcion: body.descripcion,
-      contacto: body.contacto,
-      ubicacion: body.ubicacion,
-      tamaño: body.tamaño || 'miniatura',
-      fechaPublicacion: fecha,
-      horaPublicacion: hora,
-      imagenesUrls: body.imagenesUrls || undefined,
-      // Compatibilidad hacia atrás
-      imagenUrl: body.imagenUrl || body.imagenesUrls?.[0] || undefined
-    };
+      nuevoAviso = {
+        id: idUnico,
+        categoria: body.categoria,
+        titulo: body.titulo,
+        descripcion: body.descripcion,
+        contacto: body.contacto,
+        ubicacion: body.ubicacion,
+        tamaño: body.tamaño || 'miniatura',
+        fechaPublicacion: body.fechaPublicacion || fecha,
+        horaPublicacion: body.horaPublicacion || hora,
+        imagenesUrls: body.imagenesUrls || undefined,
+        // Compatibilidad hacia atrás
+        imagenUrl: body.imagenUrl || body.imagenesUrls?.[0] || undefined,
+        esGratuito: body.esGratuito || false
+      };
+    }
 
     const avisoCreado = await createAvisoInSupabase(nuevoAviso);
     
@@ -79,10 +90,16 @@ export async function POST(request: NextRequest) {
     } else if (error?.message?.includes('duplicado')) {
       errorMessage = 'Este aviso ya existe.';
       statusCode = 409;
+    } else if (error?.code === 'PGRST204' && error?.message?.includes('tamaño')) {
+      errorMessage = 'La columna "tamaño" no existe en la tabla avisos. Ejecuta el script SQL "supabase-avisos-tamaño.sql" en Supabase.';
+      statusCode = 500;
+    } else if (error?.code === 'PGRST204') {
+      errorMessage = `Columna no encontrada en la base de datos: ${error?.message || 'Error desconocido'}. Verifica el esquema de la base de datos.`;
+      statusCode = 500;
     }
     
     return NextResponse.json(
-      { error: errorMessage, details: error?.message },
+      { error: errorMessage, details: error?.message, code: error?.code },
       { status: statusCode }
     );
   }

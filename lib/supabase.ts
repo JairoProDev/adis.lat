@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { Aviso } from '@/types';
+import { Aviso, AvisoGratuito } from '@/types';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -58,7 +58,7 @@ function avisoToDb(aviso: Aviso): any {
     ? JSON.stringify(aviso.imagenesUrls)
     : null;
 
-  return {
+  const dbData: any = {
     id: aviso.id,
     categoria: aviso.categoria,
     titulo: aviso.titulo,
@@ -67,11 +67,17 @@ function avisoToDb(aviso: Aviso): any {
     ubicacion: aviso.ubicacion,
     fecha_publicacion: aviso.fechaPublicacion,
     hora_publicacion: aviso.horaPublicacion,
-    tamaño: aviso.tamaño || 'miniatura',
     imagenes_urls: imagenesUrlsJson,
     // Mantener imagen_url para compatibilidad
     imagen_url: aviso.imagenUrl || aviso.imagenesUrls?.[0] || null
   };
+
+  // Solo incluir tamaño si existe (para evitar errores si la columna no existe en la BD)
+  if (aviso.tamaño !== undefined) {
+    dbData.tamaño = aviso.tamaño;
+  }
+
+  return dbData;
 }
 
 export async function getAvisosFromSupabase(): Promise<Aviso[]> {
@@ -214,6 +220,93 @@ export async function updateAvisoInSupabase(aviso: Aviso): Promise<Aviso> {
     }
 
     return dbToAviso(data);
+  } catch (error: any) {
+    throw error;
+  }
+}
+
+// Funciones para avisos gratuitos
+
+// Función para convertir de la base de datos a AvisoGratuito
+function dbToAvisoGratuito(row: any): AvisoGratuito {
+  return {
+    id: row.id,
+    categoria: row.categoria,
+    titulo: row.titulo,
+    contacto: row.contacto,
+    fechaCreacion: row.fecha_creacion,
+    fechaExpiracion: row.fecha_expiracion
+  };
+}
+
+// Función para convertir de AvisoGratuito a la base de datos
+function avisoGratuitoToDb(aviso: AvisoGratuito): any {
+  return {
+    id: aviso.id,
+    categoria: aviso.categoria,
+    titulo: aviso.titulo,
+    contacto: aviso.contacto,
+    fecha_creacion: aviso.fechaCreacion,
+    fecha_expiracion: aviso.fechaExpiracion
+  };
+}
+
+export async function getAvisosGratuitosFromSupabase(): Promise<AvisoGratuito[]> {
+  if (!supabase) {
+    throw new Error('Supabase no está configurado');
+  }
+
+  try {
+    // Solo obtener avisos que no han expirado
+    const ahora = new Date().toISOString();
+    const { data, error } = await supabase
+      .from('avisos_gratuitos')
+      .select('*')
+      .gt('fecha_expiracion', ahora)
+      .order('fecha_creacion', { ascending: false })
+      .limit(100);
+
+    if (error) {
+      console.error('Error al obtener avisos gratuitos:', error);
+      throw error;
+    }
+
+    return data ? data.map(dbToAvisoGratuito) : [];
+  } catch (error: any) {
+    if (error?.code === 'PGRST301' || error?.message?.includes('permission denied')) {
+      throw new Error('Las políticas de seguridad no están configuradas. Ejecuta el SQL de seguridad en Supabase.');
+    }
+    throw error;
+  }
+}
+
+export async function createAvisoGratuitoInSupabase(aviso: AvisoGratuito): Promise<AvisoGratuito> {
+  if (!supabase) {
+    throw new Error('Supabase no está configurado');
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('avisos_gratuitos')
+      .insert(avisoGratuitoToDb(aviso))
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error al crear aviso gratuito:', error);
+      
+      if (error.code === 'PGRST301' || error.message?.includes('permission denied')) {
+        throw new Error('No tienes permiso para crear avisos gratuitos. Verifica las políticas de seguridad en Supabase.');
+      }
+      
+      throw error;
+    }
+
+    if (!data) {
+      throw new Error('No se recibió respuesta al crear el aviso gratuito');
+    }
+
+    return dbToAvisoGratuito(data);
   } catch (error: any) {
     throw error;
   }

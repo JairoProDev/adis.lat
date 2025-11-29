@@ -55,8 +55,10 @@ export async function PUT(
       ubicacion: body.ubicacion,
       fechaPublicacion: body.fechaPublicacion,
       horaPublicacion: body.horaPublicacion,
+      tamaño: body.tamaño || 'miniatura',
       imagenesUrls: body.imagenesUrls || undefined,
-      imagenUrl: body.imagenUrl || body.imagenesUrls?.[0] || undefined
+      imagenUrl: body.imagenUrl || body.imagenesUrls?.[0] || undefined,
+      esGratuito: body.esGratuito || false
     };
 
     const aviso = await updateAvisoInSupabase(avisoActualizado);

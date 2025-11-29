@@ -81,6 +81,16 @@ export interface Aviso {
   imagenesUrls?: string[]; // URLs de las imágenes del aviso (opcional, múltiples)
   // Mantener imagenUrl para compatibilidad hacia atrás
   imagenUrl?: string;
+  esGratuito?: boolean; // Indica si es un aviso gratuito
+}
+
+export interface AvisoGratuito {
+  id: string;
+  categoria: Categoria;
+  titulo: string; // Máximo 30 caracteres
+  contacto: string;
+  fechaCreacion: string;
+  fechaExpiracion: string; // 1 día después de fechaCreacion
 }
 
 export interface AvisoFormData {
