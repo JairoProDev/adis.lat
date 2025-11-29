@@ -239,11 +239,6 @@ function HomeContent() {
             onChange={setCategoriaFiltro}
           />
         </div>
-        {!cargando && avisosFiltrados.length > 0 && (
-          <div style={{ marginBottom: '1rem' }}>
-            <Ordenamiento value={ordenamiento} onChange={setOrdenamiento} />
-          </div>
-        )}
         {cargando ? (
           <SkeletonAvisos />
         ) : (
@@ -251,12 +246,18 @@ function HomeContent() {
               {avisosFiltrados.length > 0 && (
                 <div style={{
                   marginBottom: '1rem',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
                   fontSize: '0.875rem',
                   color: 'var(--text-secondary)',
                   padding: '0.5rem 0'
                 }}>
-                  Mostrando {avisosFiltrados.length} {avisosFiltrados.length === 1 ? 'aviso' : 'avisos'}
-                  {(busqueda || categoriaFiltro !== 'todos') && ` (de ${avisos.length} total)`}
+                  <span>
+                    Mostrando {avisosFiltrados.length} {avisosFiltrados.length === 1 ? 'aviso' : 'avisos'}
+                    {(busqueda || categoriaFiltro !== 'todos') && ` (de ${avisos.length} total)`}
+                  </span>
+                  <Ordenamiento value={ordenamiento} onChange={setOrdenamiento} />
                 </div>
               )}
               <GrillaAvisos

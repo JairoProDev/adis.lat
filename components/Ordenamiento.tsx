@@ -13,13 +13,9 @@ export default function Ordenamiento({ value, onChange }: OrdenamientoProps) {
       display: 'flex',
       alignItems: 'center',
       gap: '0.5rem',
-      marginBottom: '1rem',
-      padding: '0.5rem',
-      backgroundColor: 'var(--bg-secondary)',
-      borderRadius: '8px',
       fontSize: '0.875rem'
     }}>
-      <span style={{ color: 'var(--text-secondary)', marginRight: '0.25rem' }}>Ordenar:</span>
+      <span style={{ color: 'var(--text-secondary)', marginRight: '0.25rem', fontSize: '0.875rem' }}>Ordenar:</span>
       <button
         onClick={() => onChange('recientes')}
         style={{
