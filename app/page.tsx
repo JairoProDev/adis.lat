@@ -14,7 +14,6 @@ import { useDebounce } from '@/hooks/useDebounce';
 import Header from '@/components/Header';
 import Buscador from '@/components/Buscador';
 import FiltrosCategoria from '@/components/FiltrosCategoria';
-import Ordenamiento from '@/components/Ordenamiento';
 import GrillaAvisos from '@/components/GrillaAvisos';
 import ModalAviso from '@/components/ModalAviso';
 import BotonPublicar from '@/components/BotonPublicar';
@@ -34,7 +33,6 @@ function HomeContent() {
   const [busqueda, setBusqueda] = useState('');
   const busquedaDebounced = useDebounce(busqueda, 300);
   const [categoriaFiltro, setCategoriaFiltro] = useState<Categoria | 'todos'>('todos');
-  const [ordenamiento, setOrdenamiento] = useState<'recientes' | 'antiguos'>('recientes');
   const [avisoAbierto, setAvisoAbierto] = useState<Aviso | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [indiceAvisoActual, setIndiceAvisoActual] = useState(0);
@@ -139,14 +137,16 @@ function HomeContent() {
     }).catch(console.error);
   }, [avisoId, avisos, avisosFiltrados, cargando]);
 
-  // Filtrado
+  // Filtrado y ordenamiento (siempre más recientes primero, sin opción de cambiar)
   useEffect(() => {
-    let filtrados = avisos;
+    let filtrados = [...avisos]; // Crear copia para no mutar
 
+    // Filtrar por categoría
     if (categoriaFiltro !== 'todos') {
       filtrados = filtrados.filter(a => a.categoria === categoriaFiltro);
     }
 
+    // Filtrar por búsqueda
     if (busquedaDebounced.trim()) {
       const busquedaLower = busquedaDebounced.toLowerCase();
       filtrados = filtrados.filter(
@@ -157,11 +157,18 @@ function HomeContent() {
       );
     }
 
-    // Ordenamiento
-    filtrados = [...filtrados].sort((a, b) => {
-      const fechaA = new Date(`${a.fechaPublicacion}T${a.horaPublicacion}`).getTime();
-      const fechaB = new Date(`${b.fechaPublicacion}T${b.horaPublicacion}`).getTime();
-      return ordenamiento === 'recientes' ? fechaB - fechaA : fechaA - fechaB;
+    // Ordenar siempre por más recientes primero
+    filtrados.sort((a, b) => {
+      // Parsear fechas de forma simple
+      const fechaA = new Date(`${a.fechaPublicacion}T${a.horaPublicacion}:00`).getTime();
+      const fechaB = new Date(`${b.fechaPublicacion}T${b.horaPublicacion}:00`).getTime();
+      
+      // Si alguna fecha es inválida, ponerla al final
+      if (isNaN(fechaA)) return 1;
+      if (isNaN(fechaB)) return -1;
+
+      // Más recientes primero: mayor timestamp primero
+      return fechaB - fechaA;
     });
 
     setAvisosFiltrados(filtrados);
@@ -173,40 +180,28 @@ function HomeContent() {
         setIndiceAvisoActual(nuevoIndice);
       }
     }
-  }, [busquedaDebounced, categoriaFiltro, avisos, avisoAbierto, ordenamiento]);
+  }, [busquedaDebounced, categoriaFiltro, avisos, avisoAbierto]);
 
   const handlePublicar = (nuevoAviso: Aviso) => {
     // Optimistic update: mostrar inmediatamente
-    // Si el aviso ya existe (actualización con imagen), reemplazarlo
-    const avisosActualizados = avisos.find(a => a.id === nuevoAviso.id)
-      ? avisos.map(a => a.id === nuevoAviso.id ? nuevoAviso : a)
-      : [nuevoAviso, ...avisos];
+    // Prevenir duplicados: verificar si el aviso ya existe
+    const avisoExiste = avisos.find(a => a.id === nuevoAviso.id);
+    
+    let avisosActualizados: Aviso[];
+    if (avisoExiste) {
+      // Actualización: reemplazar el aviso existente
+      avisosActualizados = avisos.map(a => a.id === nuevoAviso.id ? nuevoAviso : a);
+    } else {
+      // Nuevo aviso: agregar al inicio
+      avisosActualizados = [nuevoAviso, ...avisos];
+    }
     
     setAvisos(avisosActualizados);
     
-    // Recalcular filtrados
-    let filtrados = [...avisosActualizados];
-    if (categoriaFiltro !== 'todos') {
-      filtrados = filtrados.filter(a => a.categoria === categoriaFiltro);
-    }
-    if (busquedaDebounced.trim()) {
-      const busquedaLower = busquedaDebounced.toLowerCase();
-      filtrados = filtrados.filter(
-        a =>
-          a.titulo.toLowerCase().includes(busquedaLower) ||
-          a.descripcion.toLowerCase().includes(busquedaLower) ||
-          a.ubicacion.toLowerCase().includes(busquedaLower)
-      );
-    }
-    filtrados.sort((a, b) => {
-      const fechaA = new Date(`${a.fechaPublicacion}T${a.horaPublicacion}`).getTime();
-      const fechaB = new Date(`${b.fechaPublicacion}T${b.horaPublicacion}`).getTime();
-      return ordenamiento === 'recientes' ? fechaB - fechaA : fechaA - fechaB;
-    });
-    setAvisosFiltrados(filtrados);
+    // El useEffect se encargará de recalcular filtrados y ordenamiento (más recientes primero) automáticamente
     
     // Solo cerrar formulario y abrir modal si es un aviso nuevo
-    if (!avisos.find(a => a.id === nuevoAviso.id)) {
+    if (!avisoExiste) {
       setMostrarFormulario(false);
       setAvisoAbierto(nuevoAviso);
       setIndiceAvisoActual(0);
@@ -280,9 +275,6 @@ function HomeContent() {
               {avisosFiltrados.length > 0 && (
                 <div style={{
                   marginBottom: '1rem',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
                   fontSize: '0.875rem',
                   color: 'var(--text-secondary)',
                   padding: '0.5rem 0'
@@ -291,7 +283,6 @@ function HomeContent() {
                     Mostrando {avisosFiltrados.length} {avisosFiltrados.length === 1 ? 'aviso' : 'avisos'}
                     {(busqueda || categoriaFiltro !== 'todos') && ` (de ${avisos.length} total)`}
                   </span>
-                  <Ordenamiento value={ordenamiento} onChange={setOrdenamiento} />
                 </div>
               )}
               <GrillaAvisos
