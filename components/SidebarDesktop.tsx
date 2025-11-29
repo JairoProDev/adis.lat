@@ -82,10 +82,20 @@ export default function SidebarDesktop({
       return (
         <>
           <style jsx global>{`
-            @keyframes fadeInTooltip {
+            @keyframes fadeInTooltipDown {
               from {
                 opacity: 0;
-                transform: translateY(-50%) translateX(-5px);
+                transform: translateX(-50%) translateY(-5px);
+              }
+              to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+              }
+            }
+            @keyframes fadeInTooltipLeft {
+              from {
+                opacity: 0;
+                transform: translateY(-50%) translateX(5px);
               }
               to {
                 opacity: 1;
@@ -191,14 +201,14 @@ export default function SidebarDesktop({
                     <span>{seccion.label}</span>
                   </button>
                   
-                  {/* Tooltip profesional */}
-                  {mostrarTooltip && (
+                  {/* Tooltip profesional - hacia abajo cuando sidebar expandido */}
+                  {mostrarTooltip && !minimizado && (
                     <div
                       style={{
                         position: 'absolute',
-                        left: 'calc(100% + 0.75rem)',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
+                        left: '50%',
+                        top: 'calc(100% + 0.75rem)',
+                        transform: 'translateX(-50%)',
                         backgroundColor: 'var(--bg-primary)',
                         color: 'var(--text-primary)',
                         padding: '0.625rem 0.875rem',
@@ -209,8 +219,11 @@ export default function SidebarDesktop({
                         border: '1px solid var(--border-color)',
                         zIndex: 2000,
                         pointerEvents: 'none',
-                        animation: 'fadeInTooltip 0.2s ease-out',
-                        maxWidth: '200px'
+                        animation: 'fadeInTooltipDown 0.2s ease-out',
+                        maxWidth: '220px',
+                        lineHeight: 1.4,
+                        whiteSpace: 'normal',
+                        textAlign: 'center'
                       }}
                     >
                       <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
@@ -224,31 +237,31 @@ export default function SidebarDesktop({
                       }}>
                         {seccion.descripcion}
                       </div>
-                      {/* Flecha del tooltip */}
+                      {/* Flecha del tooltip apuntando hacia arriba */}
                       <div
                         style={{
                           position: 'absolute',
-                          left: '-6px',
-                          top: '50%',
-                          transform: 'translateY(-50%)',
+                          left: '50%',
+                          top: '-6px',
+                          transform: 'translateX(-50%)',
                           width: 0,
                           height: 0,
-                          borderTop: '6px solid transparent',
-                          borderBottom: '6px solid transparent',
-                          borderRight: '6px solid var(--border-color)'
+                          borderLeft: '6px solid transparent',
+                          borderRight: '6px solid transparent',
+                          borderBottom: '6px solid var(--border-color)'
                         }}
                       />
                       <div
                         style={{
                           position: 'absolute',
-                          left: '-5px',
-                          top: '50%',
-                          transform: 'translateY(-50%)',
+                          left: '50%',
+                          top: '-5px',
+                          transform: 'translateX(-50%)',
                           width: 0,
                           height: 0,
-                          borderTop: '5px solid transparent',
-                          borderBottom: '5px solid transparent',
-                          borderRight: '5px solid var(--bg-primary)'
+                          borderLeft: '5px solid transparent',
+                          borderRight: '5px solid transparent',
+                          borderBottom: '5px solid var(--bg-primary)'
                         }}
                       />
                     </div>
@@ -422,12 +435,12 @@ export default function SidebarDesktop({
                     <IconComponent size={18} />
                   </button>
                   
-                  {/* Tooltip para botones minimizados */}
-                  {mostrarTooltip && (
+                  {/* Tooltip para botones minimizados - hacia la izquierda */}
+                  {mostrarTooltip && minimizado && (
                     <div
                       style={{
                         position: 'absolute',
-                        left: 'calc(100% + 0.75rem)',
+                        right: 'calc(100% + 0.75rem)',
                         top: '50%',
                         transform: 'translateY(-50%)',
                         backgroundColor: 'var(--bg-primary)',
@@ -440,8 +453,10 @@ export default function SidebarDesktop({
                         border: '1px solid var(--border-color)',
                         zIndex: 2000,
                         pointerEvents: 'none',
-                        animation: 'fadeInTooltip 0.2s ease-out',
-                        maxWidth: '200px'
+                        animation: 'fadeInTooltipLeft 0.2s ease-out',
+                        maxWidth: '220px',
+                        lineHeight: 1.4,
+                        whiteSpace: 'normal'
                       }}
                     >
                       <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
@@ -455,31 +470,31 @@ export default function SidebarDesktop({
                       }}>
                         {seccion.descripcion}
                       </div>
-                      {/* Flecha del tooltip */}
+                      {/* Flecha del tooltip apuntando hacia la derecha */}
                       <div
                         style={{
                           position: 'absolute',
-                          left: '-6px',
+                          right: '-6px',
                           top: '50%',
                           transform: 'translateY(-50%)',
                           width: 0,
                           height: 0,
                           borderTop: '6px solid transparent',
                           borderBottom: '6px solid transparent',
-                          borderRight: '6px solid var(--border-color)'
+                          borderLeft: '6px solid var(--border-color)'
                         }}
                       />
                       <div
                         style={{
                           position: 'absolute',
-                          left: '-5px',
+                          right: '-5px',
                           top: '50%',
                           transform: 'translateY(-50%)',
                           width: 0,
                           height: 0,
                           borderTop: '5px solid transparent',
                           borderBottom: '5px solid transparent',
-                          borderRight: '5px solid var(--bg-primary)'
+                          borderLeft: '5px solid var(--bg-primary)'
                         }}
                       />
                     </div>
