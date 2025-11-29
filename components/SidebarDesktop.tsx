@@ -55,6 +55,8 @@ export default function SidebarDesktop({
       setSeccionActiva(seccionInicial);
       if (seccionInicial === 'publicar') {
         setMostrarFormulario(true);
+      } else {
+        setMostrarFormulario(false);
       }
     }
   }, [seccionInicial]);
@@ -112,42 +114,56 @@ export default function SidebarDesktop({
             {secciones.map((seccion) => {
               const IconComponent = seccion.icono;
               const estaActiva = seccionActiva === seccion.id;
+              const esPublicar = seccion.id === 'publicar';
               return (
                 <button
                   key={seccion.id}
                   onClick={() => {
+                    setSeccionActiva(seccion.id);
                     if (seccion.id === 'publicar') {
                       setMostrarFormulario(true);
                     } else {
-                      setSeccionActiva(seccion.id);
                       setMostrarFormulario(false);
                     }
                   }}
                   style={{
-                    flex: 1,
+                    flex: esPublicar ? 1.2 : 1,
                     minWidth: '80px',
-                    padding: '0.75rem 0.5rem',
+                    padding: esPublicar ? '0.875rem 0.5rem' : '0.75rem 0.5rem',
                     border: 'none',
-                    backgroundColor: estaActiva ? 'var(--bg-primary)' : 'transparent',
-                    color: estaActiva ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    backgroundColor: esPublicar 
+                      ? (estaActiva ? 'var(--color-secondary)' : 'var(--color-secondary)')
+                      : (estaActiva ? 'var(--bg-primary)' : 'transparent'),
+                    color: esPublicar 
+                      ? 'var(--text-primary)'
+                      : (estaActiva ? 'var(--text-primary)' : 'var(--text-secondary)'),
                     cursor: 'pointer',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     gap: '0.25rem',
-                    fontSize: '0.7rem',
-                    fontWeight: estaActiva ? 600 : 400,
+                    fontSize: esPublicar ? '0.75rem' : '0.7rem',
+                    fontWeight: esPublicar ? 700 : (estaActiva ? 600 : 400),
                     transition: 'all 0.2s',
                     borderBottom: estaActiva ? `2px solid var(--text-primary)` : '2px solid transparent',
-                    position: 'relative'
+                    position: 'relative',
+                    borderRadius: esPublicar ? '6px' : '0',
+                    margin: esPublicar ? '0 0.25rem' : '0',
+                    boxShadow: esPublicar ? '0 2px 8px rgba(0, 0, 0, 0.1)' : 'none'
                   }}
                   onMouseEnter={(e) => {
-                    if (!estaActiva) {
+                    if (esPublicar) {
+                      e.currentTarget.style.opacity = '0.9';
+                      e.currentTarget.style.transform = 'translateY(-1px)';
+                    } else if (!estaActiva) {
                       e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
                     }
                   }}
                   onMouseLeave={(e) => {
-                    if (!estaActiva) {
+                    if (esPublicar) {
+                      e.currentTarget.style.opacity = '1';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    } else if (!estaActiva) {
                       e.currentTarget.style.backgroundColor = 'transparent';
                     }
                   }}
@@ -218,22 +234,18 @@ export default function SidebarDesktop({
               <MapaInteractivo avisos={[]} onAbrirAviso={() => {}} />
             )}
 
-            {seccionActiva === 'publicar' && mostrarFormulario && (
-              <div style={{ padding: '1rem', height: '100%', overflowY: 'auto' }}>
-                <FormularioPublicar
-                  onPublicar={(aviso) => {
-                    onPublicar(aviso);
-                    setMostrarFormulario(false);
-                    setSeccionActiva('aviso');
-                  }}
-                  onCerrar={() => {
-                    setMostrarFormulario(false);
-                    setSeccionActiva('aviso');
-                  }}
-                  onError={onError}
-                  onSuccess={onSuccess}
-                />
-              </div>
+            {seccionActiva === 'publicar' && (
+              <FormularioPublicar
+                onPublicar={(aviso) => {
+                  onPublicar(aviso);
+                }}
+                onCerrar={() => {
+                  setSeccionActiva('aviso');
+                }}
+                onError={onError}
+                onSuccess={onSuccess}
+                dentroSidebar={true}
+              />
             )}
 
             {seccionActiva === 'chatbot' && (
@@ -281,15 +293,15 @@ export default function SidebarDesktop({
               return (
                 <button
                   key={seccion.id}
-                  onClick={() => {
-                    setMinimizado(false);
-                    if (seccion.id === 'publicar') {
-                      setMostrarFormulario(true);
-                    } else {
+                    onClick={() => {
+                      setMinimizado(false);
                       setSeccionActiva(seccion.id);
-                      setMostrarFormulario(false);
-                    }
-                  }}
+                      if (seccion.id === 'publicar') {
+                        setMostrarFormulario(true);
+                      } else {
+                        setMostrarFormulario(false);
+                      }
+                    }}
                   style={{
                     width: '40px',
                     height: '40px',

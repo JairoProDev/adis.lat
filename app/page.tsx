@@ -17,7 +17,6 @@ import Buscador from '@/components/Buscador';
 import FiltrosCategoria from '@/components/FiltrosCategoria';
 import GrillaAvisos from '@/components/GrillaAvisos';
 import ModalAviso from '@/components/ModalAviso';
-import BotonPublicar from '@/components/BotonPublicar';
 import FormularioPublicar from '@/components/FormularioPublicar';
 import SkeletonAvisos from '@/components/SkeletonAvisos';
 import { ToastContainer } from '@/components/Toast';
@@ -41,7 +40,6 @@ function HomeContent() {
   const busquedaDebounced = useDebounce(busqueda, 300);
   const [categoriaFiltro, setCategoriaFiltro] = useState<Categoria | 'todos'>(categoriaUrl && ['empleos', 'inmuebles', 'vehiculos', 'servicios', 'productos', 'eventos', 'negocios', 'comunidad'].includes(categoriaUrl) ? categoriaUrl : 'todos');
   const [avisoAbierto, setAvisoAbierto] = useState<Aviso | null>(null);
-  const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [indiceAvisoActual, setIndiceAvisoActual] = useState(0);
   const [cargando, setCargando] = useState(true);
   const [modalMobileAbierto, setModalMobileAbierto] = useState(false);
@@ -270,9 +268,8 @@ function HomeContent() {
     
     // El useEffect se encargará de recalcular filtrados y ordenamiento (más recientes primero) automáticamente
     
-    // Solo cerrar formulario y abrir modal si es un aviso nuevo
+    // Solo abrir modal si es un aviso nuevo
     if (!avisoExiste) {
-      setMostrarFormulario(false);
       setAvisoAbierto(nuevoAviso);
       setIndiceAvisoActual(0);
       // Actualizar URL sin recargar la página
@@ -462,16 +459,6 @@ function HomeContent() {
             </>
         )}
       </main>
-      <BotonPublicar onClick={() => {
-        if (isDesktop) {
-          // En desktop, abrir la sección de publicar en el sidebar
-          setSeccionSidebarInicial('publicar');
-        } else {
-          // En mobile, abrir modal de navegación en sección publicar
-          setModalMobileAbierto(true);
-          setSeccionMobileInicial('publicar');
-        }
-      }} />
       <FeedbackButton />
       
       {/* Sidebar Desktop - siempre visible */}
@@ -513,15 +500,6 @@ function HomeContent() {
         />
       )}
 
-      {/* Formulario legacy (solo para casos especiales) */}
-      {mostrarFormulario && !isDesktop && (
-        <FormularioPublicar
-          onPublicar={handlePublicar}
-          onCerrar={() => setMostrarFormulario(false)}
-          onError={(msg) => error(msg)}
-          onSuccess={(msg) => success(msg)}
-        />
-      )}
 
       {/* Modal Aviso legacy (solo si no está en sidebar/modal mobile) */}
       {avisoAbierto && !isDesktop && !modalMobileAbierto && (
