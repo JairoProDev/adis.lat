@@ -22,6 +22,33 @@ interface ProgresoEntry {
 
 const progresoData: ProgresoEntry[] = [
   {
+    version: '1.7.0',
+    date: '2025-11-29',
+    time: '13:30',
+    type: 'feature',
+    title: 'Ampliación de Imágenes y Nueva Paleta de Colores',
+    description: 'Las imágenes ahora se pueden ampliar para verlas mejor, y nueva paleta de colores más atractiva',
+    userBenefits: [
+      'Haz click en cualquier imagen para verla en tamaño completo',
+      'Navega entre múltiples imágenes con flechas o teclado',
+      'Nueva paleta de colores: azul principal (#3c6997) y amarillo secundario (#ffdd4a)',
+      'Fondo beige claro (#f7f6f2) para una experiencia visual más agradable',
+      'Cierra la imagen ampliada con ESC, click fuera o botón X',
+      'Contador de imágenes para saber cuál estás viendo',
+    ],
+    technicalDetails: [
+      'Modal de imagen ampliada con z-index 3000 para estar sobre todo',
+      'Navegación entre imágenes con flechas izquierda/derecha',
+      'Soporte de teclado: ESC para cerrar, flechas para navegar',
+      'Click fuera de la imagen o en botón X para cerrar',
+      'Variables CSS actualizadas: --text-primary (#3c6997), --bg-secondary (#f7f6f2), --color-secondary (#ffdd4a)',
+      'Imágenes clickeables con cursor pointer y efecto hover',
+      'Modal responsive con botones adaptados para móvil y desktop',
+      'object-fit: contain para mantener proporciones de imagen',
+    ],
+    impact: 'major'
+  },
+  {
     version: '1.6.0',
     date: '2025-11-29',
     time: '11:45',

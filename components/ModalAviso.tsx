@@ -45,6 +45,7 @@ export default function ModalAviso({
   const [copiado, setCopiado] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [imagenAmpliada, setImagenAmpliada] = useState<{ url: string; index: number } | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const isDesktop = useMediaQuery('(min-width: 768px)');
 
@@ -67,7 +68,22 @@ export default function ModalAviso({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onCerrar();
+        if (imagenAmpliada) {
+          setImagenAmpliada(null);
+        } else {
+          onCerrar();
+        }
+      } else if (imagenAmpliada) {
+        // Navegación entre imágenes ampliadas
+        const imagenes = aviso.imagenesUrls && aviso.imagenesUrls.length > 0
+          ? aviso.imagenesUrls
+          : aviso.imagenUrl ? [aviso.imagenUrl] : [];
+        
+        if (e.key === 'ArrowLeft' && imagenAmpliada.index > 0) {
+          setImagenAmpliada({ url: imagenes[imagenAmpliada.index - 1], index: imagenAmpliada.index - 1 });
+        } else if (e.key === 'ArrowRight' && imagenAmpliada.index < imagenes.length - 1) {
+          setImagenAmpliada({ url: imagenes[imagenAmpliada.index + 1], index: imagenAmpliada.index + 1 });
+        }
       } else if (e.key === 'ArrowLeft' && puedeAnterior) {
         onAnterior();
       } else if (e.key === 'ArrowRight' && puedeSiguiente) {
@@ -77,7 +93,7 @@ export default function ModalAviso({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onCerrar, onAnterior, onSiguiente, puedeAnterior, puedeSiguiente]);
+  }, [onCerrar, onAnterior, onSiguiente, puedeAnterior, puedeSiguiente, imagenAmpliada, aviso]);
 
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
@@ -150,6 +166,7 @@ export default function ModalAviso({
   };
 
   return (
+    <>
     <div
       style={overlayStyle}
       onClick={isDesktop ? undefined : onCerrar}
@@ -241,11 +258,20 @@ export default function ModalAviso({
                     <img
                       src={imagenes[0]}
                       alt={aviso.titulo}
+                      onClick={() => setImagenAmpliada({ url: imagenes[0], index: 0 })}
                       style={{
                         width: '100%',
                         maxHeight: '400px',
                         objectFit: 'cover',
-                        display: 'block'
+                        display: 'block',
+                        cursor: 'pointer',
+                        transition: 'opacity 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.opacity = '0.9';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.opacity = '1';
                       }}
                     />
                   </div>
@@ -271,11 +297,20 @@ export default function ModalAviso({
                         <img
                           src={url}
                           alt={`${aviso.titulo} - Imagen ${index + 1}`}
+                          onClick={() => setImagenAmpliada({ url, index })}
                           style={{
                             width: '100%',
                             height: '100%',
                             objectFit: 'cover',
-                            display: 'block'
+                            display: 'block',
+                            cursor: 'pointer',
+                            transition: 'opacity 0.2s'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.opacity = '0.9';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.opacity = '1';
                           }}
                         />
                       </div>
@@ -507,5 +542,184 @@ export default function ModalAviso({
         )}
       </div>
     </div>
+
+    {/* Modal de imagen ampliada - fuera del modal principal para evitar conflictos */}
+    {imagenAmpliada && (() => {
+        const imagenes = aviso.imagenesUrls && aviso.imagenesUrls.length > 0
+          ? aviso.imagenesUrls
+          : aviso.imagenUrl ? [aviso.imagenUrl] : [];
+        const puedeAnteriorImg = imagenAmpliada.index > 0;
+        const puedeSiguienteImg = imagenAmpliada.index < imagenes.length - 1;
+
+        return (
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.95)',
+              zIndex: 3000,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '2rem',
+              cursor: 'pointer'
+            }}
+            onClick={(e) => {
+              // Solo cerrar si se hace click directamente en el fondo (no en el contenido)
+              if (e.target === e.currentTarget) {
+                setImagenAmpliada(null);
+              }
+            }}
+          >
+            <div
+              style={{
+                position: 'relative',
+                maxWidth: '90vw',
+                maxHeight: '90vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setImagenAmpliada(null);
+                }}
+                style={{
+                  position: 'absolute',
+                  top: '-3rem',
+                  right: 0,
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '40px',
+                  height: '40px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: 'white',
+                  fontSize: '1.5rem',
+                  zIndex: 10,
+                  transition: 'background 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                }}
+              >
+                <IconClose />
+              </button>
+
+              {puedeAnteriorImg && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setImagenAmpliada({ url: imagenes[imagenAmpliada.index - 1], index: imagenAmpliada.index - 1 });
+                  }}
+                  style={{
+                    position: 'absolute',
+                    left: isDesktop ? '-3rem' : '-1rem',
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '50px',
+                    height: '50px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: 'white',
+                    zIndex: 10,
+                    transition: 'background 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                  }}
+                >
+                  <IconArrowLeft size={24} />
+                </button>
+              )}
+
+              <img
+                src={imagenAmpliada.url}
+                alt={`${aviso.titulo} - Imagen ${imagenAmpliada.index + 1}`}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '90vh',
+                  objectFit: 'contain',
+                  borderRadius: '8px',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+                  cursor: 'default'
+                }}
+              />
+
+              {puedeSiguienteImg && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setImagenAmpliada({ url: imagenes[imagenAmpliada.index + 1], index: imagenAmpliada.index + 1 });
+                  }}
+                  style={{
+                    position: 'absolute',
+                    right: isDesktop ? '-3rem' : '-1rem',
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '50px',
+                    height: '50px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: 'white',
+                    zIndex: 10,
+                    transition: 'background 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                  }}
+                >
+                  <IconArrowRight size={24} />
+                </button>
+              )}
+
+              {imagenes.length > 1 && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    bottom: '-3rem',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    padding: '0.5rem 1rem',
+                    borderRadius: '20px',
+                    color: 'white',
+                    fontSize: '0.875rem',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  {imagenAmpliada.index + 1} / {imagenes.length}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+    </>
   );
 }
