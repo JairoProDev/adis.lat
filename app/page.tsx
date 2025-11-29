@@ -9,14 +9,18 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Aviso, Categoria } from '@/types';
 import { getAvisos, getAvisoById, saveAviso, getAvisosCache } from '@/lib/storage';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { useToast } from '@/hooks/useToast';
+import { useDebounce } from '@/hooks/useDebounce';
 import Header from '@/components/Header';
 import Buscador from '@/components/Buscador';
 import FiltrosCategoria from '@/components/FiltrosCategoria';
+import Ordenamiento from '@/components/Ordenamiento';
 import GrillaAvisos from '@/components/GrillaAvisos';
 import ModalAviso from '@/components/ModalAviso';
 import BotonPublicar from '@/components/BotonPublicar';
 import FormularioPublicar from '@/components/FormularioPublicar';
 import SkeletonAvisos from '@/components/SkeletonAvisos';
+import { ToastContainer } from '@/components/Toast';
 
 function HomeContent() {
   const router = useRouter();
@@ -27,12 +31,15 @@ function HomeContent() {
   const [avisos, setAvisos] = useState<Aviso[]>([]);
   const [avisosFiltrados, setAvisosFiltrados] = useState<Aviso[]>([]);
   const [busqueda, setBusqueda] = useState('');
+  const busquedaDebounced = useDebounce(busqueda, 300);
   const [categoriaFiltro, setCategoriaFiltro] = useState<Categoria | 'todos'>('todos');
+  const [ordenamiento, setOrdenamiento] = useState<'recientes' | 'antiguos'>('recientes');
   const [avisoAbierto, setAvisoAbierto] = useState<Aviso | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [indiceAvisoActual, setIndiceAvisoActual] = useState(0);
   const [cargando, setCargando] = useState(true);
   const isDesktop = useMediaQuery('(min-width: 768px)');
+  const { toasts, removeToast, success, error } = useToast();
 
   // Carga inicial: mostrar cache primero (instantáneo), luego actualizar desde API
   useEffect(() => {
@@ -139,8 +146,8 @@ function HomeContent() {
       filtrados = filtrados.filter(a => a.categoria === categoriaFiltro);
     }
 
-    if (busqueda.trim()) {
-      const busquedaLower = busqueda.toLowerCase();
+    if (busquedaDebounced.trim()) {
+      const busquedaLower = busquedaDebounced.toLowerCase();
       filtrados = filtrados.filter(
         a =>
           a.titulo.toLowerCase().includes(busquedaLower) ||
@@ -148,6 +155,13 @@ function HomeContent() {
           a.ubicacion.toLowerCase().includes(busquedaLower)
       );
     }
+
+    // Ordenamiento
+    filtrados = [...filtrados].sort((a, b) => {
+      const fechaA = new Date(`${a.fechaPublicacion}T${a.horaPublicacion}`).getTime();
+      const fechaB = new Date(`${b.fechaPublicacion}T${b.horaPublicacion}`).getTime();
+      return ordenamiento === 'recientes' ? fechaB - fechaA : fechaA - fechaB;
+    });
 
     setAvisosFiltrados(filtrados);
     
@@ -158,7 +172,7 @@ function HomeContent() {
         setIndiceAvisoActual(nuevoIndice);
       }
     }
-  }, [busqueda, categoriaFiltro, avisos, avisoAbierto]);
+  }, [busquedaDebounced, categoriaFiltro, avisos, avisoAbierto, ordenamiento]);
 
   const handlePublicar = (nuevoAviso: Aviso) => {
     // Optimistic update: mostrar inmediatamente
@@ -169,6 +183,7 @@ function HomeContent() {
     setAvisoAbierto(nuevoAviso);
     setIndiceAvisoActual(0);
     router.push(`/?aviso=${nuevoAviso.id}`, { scroll: false });
+    success('¡Aviso publicado exitosamente!');
   };
 
   const handleAbrirAviso = (aviso: Aviso) => {
@@ -224,35 +239,53 @@ function HomeContent() {
             onChange={setCategoriaFiltro}
           />
         </div>
+        {!cargando && avisosFiltrados.length > 0 && (
+          <div style={{ marginBottom: '1rem' }}>
+            <Ordenamiento value={ordenamiento} onChange={setOrdenamiento} />
+          </div>
+        )}
         {cargando ? (
           <SkeletonAvisos />
         ) : (
-          <>
-            <GrillaAvisos
-              avisos={avisosFiltrados}
-              onAbrirAviso={handleAbrirAviso}
-            />
-            {avisosFiltrados.length === 0 && (
-              <div style={{
-                textAlign: 'center',
-                padding: '3rem 1rem',
-                color: 'var(--text-secondary)'
-              }}>
-                {busqueda || categoriaFiltro !== 'todos'
-                  ? 'No se encontraron avisos con esos filtros'
-                  : 'Aún no hay avisos publicados'}
-              </div>
-            )}
-          </>
+            <>
+              {avisosFiltrados.length > 0 && (
+                <div style={{
+                  marginBottom: '1rem',
+                  fontSize: '0.875rem',
+                  color: 'var(--text-secondary)',
+                  padding: '0.5rem 0'
+                }}>
+                  Mostrando {avisosFiltrados.length} {avisosFiltrados.length === 1 ? 'aviso' : 'avisos'}
+                  {(busqueda || categoriaFiltro !== 'todos') && ` (de ${avisos.length} total)`}
+                </div>
+              )}
+              <GrillaAvisos
+                avisos={avisosFiltrados}
+                onAbrirAviso={handleAbrirAviso}
+              />
+              {avisosFiltrados.length === 0 && (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '3rem 1rem',
+                  color: 'var(--text-secondary)'
+                }}>
+                  {busqueda || categoriaFiltro !== 'todos'
+                    ? 'No se encontraron avisos con esos filtros'
+                    : 'Aún no hay avisos publicados'}
+                </div>
+              )}
+            </>
         )}
       </main>
       <BotonPublicar onClick={() => setMostrarFormulario(true)} />
-      {mostrarFormulario && (
-        <FormularioPublicar
-          onPublicar={handlePublicar}
-          onCerrar={() => setMostrarFormulario(false)}
-        />
-      )}
+        {mostrarFormulario && (
+          <FormularioPublicar
+            onPublicar={handlePublicar}
+            onCerrar={() => setMostrarFormulario(false)}
+            onError={(msg) => error(msg)}
+            onSuccess={(msg) => success(msg)}
+          />
+        )}
       {avisoAbierto && (
         <ModalAviso
           aviso={avisoAbierto}

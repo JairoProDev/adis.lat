@@ -3,6 +3,7 @@
 import React, { useState, FormEvent } from 'react';
 import { Aviso, AvisoFormData, Categoria } from '@/types';
 import { saveAviso } from '@/lib/storage';
+import { LIMITS, formatPhoneNumber, validatePhoneNumber } from '@/lib/utils';
 import {
   IconEmpleos,
   IconInmuebles,
@@ -22,6 +23,8 @@ import {
 interface FormularioPublicarProps {
   onPublicar: (aviso: Aviso) => void;
   onCerrar: () => void;
+  onError?: (message: string) => void;
+  onSuccess?: (message: string) => void;
 }
 
 const CATEGORIAS: Categoria[] = [
@@ -60,7 +63,7 @@ const getCategoriaIcon = (categoria: Categoria): React.ComponentType<{ size?: nu
   return iconMap[categoria];
 };
 
-export default function FormularioPublicar({ onPublicar, onCerrar }: FormularioPublicarProps) {
+export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSuccess }: FormularioPublicarProps) {
   const [formData, setFormData] = useState<AvisoFormData>({
     categoria: 'empleos',
     titulo: '',
@@ -69,6 +72,38 @@ export default function FormularioPublicar({ onPublicar, onCerrar }: FormularioP
     ubicacion: ''
   });
   const [enviando, setEnviando] = useState(false);
+  const [errors, setErrors] = useState<Partial<Record<keyof AvisoFormData, string>>>({});
+
+  const validateForm = (): boolean => {
+    const newErrors: Partial<Record<keyof AvisoFormData, string>> = {};
+    
+    if (!formData.titulo.trim()) {
+      newErrors.titulo = 'El título es requerido';
+    } else if (formData.titulo.length > LIMITS.TITULO_MAX) {
+      newErrors.titulo = `El título no puede exceder ${LIMITS.TITULO_MAX} caracteres`;
+    }
+    
+    if (!formData.descripcion.trim()) {
+      newErrors.descripcion = 'La descripción es requerida';
+    } else if (formData.descripcion.length > LIMITS.DESCRIPCION_MAX) {
+      newErrors.descripcion = `La descripción no puede exceder ${LIMITS.DESCRIPCION_MAX} caracteres`;
+    }
+    
+    if (!formData.contacto.trim()) {
+      newErrors.contacto = 'El número de contacto es requerido';
+    } else if (!validatePhoneNumber(formData.contacto)) {
+      newErrors.contacto = 'Ingresa un número de teléfono válido (mínimo 8 dígitos)';
+    }
+    
+    if (!formData.ubicacion.trim()) {
+      newErrors.ubicacion = 'La ubicación es requerida';
+    } else if (formData.ubicacion.length > LIMITS.UBICACION_MAX) {
+      newErrors.ubicacion = `La ubicación no puede exceder ${LIMITS.UBICACION_MAX} caracteres`;
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -78,8 +113,8 @@ export default function FormularioPublicar({ onPublicar, onCerrar }: FormularioP
       return;
     }
     
-    if (!formData.titulo.trim() || !formData.descripcion.trim() || !formData.contacto.trim() || !formData.ubicacion.trim()) {
-      alert('Por favor completa todos los campos');
+    if (!validateForm()) {
+      onError?.('Por favor corrige los errores en el formulario');
       return;
     }
 
@@ -107,11 +142,11 @@ export default function FormularioPublicar({ onPublicar, onCerrar }: FormularioP
       // Guardar en background después de mostrar (carga optimista)
       saveAviso(nuevoAviso).catch(error => {
         console.error('Error al guardar:', error);
-        alert('Hubo un error al guardar. El aviso se mostró pero puede no haberse guardado.');
+        onError?.('Hubo un error al guardar. El aviso se mostró pero puede no haberse guardado.');
       });
     } catch (error) {
       console.error('Error al publicar:', error);
-      alert('Hubo un error al publicar el aviso. Por favor intenta nuevamente.');
+      onError?.('Hubo un error al publicar el aviso. Por favor intenta nuevamente.');
       setEnviando(false);
     }
   };
@@ -230,20 +265,40 @@ export default function FormularioPublicar({ onPublicar, onCerrar }: FormularioP
             <input
               type="text"
               value={formData.titulo}
-              onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value.length <= LIMITS.TITULO_MAX) {
+                  setFormData({ ...formData, titulo: value });
+                  if (errors.titulo) {
+                    setErrors({ ...errors, titulo: undefined });
+                  }
+                }
+              }}
               required
               placeholder={CATEGORIA_PLACEHOLDERS[formData.categoria]}
               style={{
                 width: '100%',
                 padding: '0.75rem',
                 fontSize: '1rem',
-                border: '1px solid var(--border-color)',
+                border: `1px solid ${errors.titulo ? '#ef4444' : 'var(--border-color)'}`,
                 borderRadius: '8px',
                 backgroundColor: 'var(--bg-primary)',
                 color: 'var(--text-primary)',
                 outline: 'none'
               }}
             />
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
+              {errors.titulo && (
+                <span style={{ fontSize: '0.75rem', color: '#ef4444' }}>{errors.titulo}</span>
+              )}
+              <span style={{ 
+                fontSize: '0.75rem', 
+                color: formData.titulo.length > LIMITS.TITULO_MAX * 0.9 ? '#f59e0b' : 'var(--text-tertiary)',
+                marginLeft: 'auto'
+              }}>
+                {formData.titulo.length}/{LIMITS.TITULO_MAX}
+              </span>
+            </div>
           </div>
 
           <div style={{ marginBottom: '1rem' }}>
@@ -261,7 +316,15 @@ export default function FormularioPublicar({ onPublicar, onCerrar }: FormularioP
             </label>
             <textarea
               value={formData.descripcion}
-              onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value.length <= LIMITS.DESCRIPCION_MAX) {
+                  setFormData({ ...formData, descripcion: value });
+                  if (errors.descripcion) {
+                    setErrors({ ...errors, descripcion: undefined });
+                  }
+                }
+              }}
               required
               placeholder="Describe tu aviso..."
               rows={4}
@@ -269,7 +332,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar }: FormularioP
                 width: '100%',
                 padding: '0.75rem',
                 fontSize: '1rem',
-                border: '1px solid var(--border-color)',
+                border: `1px solid ${errors.descripcion ? '#ef4444' : 'var(--border-color)'}`,
                 borderRadius: '8px',
                 backgroundColor: 'var(--bg-primary)',
                 color: 'var(--text-primary)',
@@ -278,6 +341,18 @@ export default function FormularioPublicar({ onPublicar, onCerrar }: FormularioP
                 fontFamily: 'inherit'
               }}
             />
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
+              {errors.descripcion && (
+                <span style={{ fontSize: '0.75rem', color: '#ef4444' }}>{errors.descripcion}</span>
+              )}
+              <span style={{ 
+                fontSize: '0.75rem', 
+                color: formData.descripcion.length > LIMITS.DESCRIPCION_MAX * 0.9 ? '#f59e0b' : 'var(--text-tertiary)',
+                marginLeft: 'auto'
+              }}>
+                {formData.descripcion.length}/{LIMITS.DESCRIPCION_MAX}
+              </span>
+            </div>
           </div>
 
           <div style={{ marginBottom: '1rem' }}>
@@ -296,20 +371,40 @@ export default function FormularioPublicar({ onPublicar, onCerrar }: FormularioP
             <input
               type="text"
               value={formData.ubicacion}
-              onChange={(e) => setFormData({ ...formData, ubicacion: e.target.value })}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value.length <= LIMITS.UBICACION_MAX) {
+                  setFormData({ ...formData, ubicacion: value });
+                  if (errors.ubicacion) {
+                    setErrors({ ...errors, ubicacion: undefined });
+                  }
+                }
+              }}
               required
               placeholder="Ej: Ciudad, Barrio"
               style={{
                 width: '100%',
                 padding: '0.75rem',
                 fontSize: '1rem',
-                border: '1px solid var(--border-color)',
+                border: `1px solid ${errors.ubicacion ? '#ef4444' : 'var(--border-color)'}`,
                 borderRadius: '8px',
                 backgroundColor: 'var(--bg-primary)',
                 color: 'var(--text-primary)',
                 outline: 'none'
               }}
             />
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
+              {errors.ubicacion && (
+                <span style={{ fontSize: '0.75rem', color: '#ef4444' }}>{errors.ubicacion}</span>
+              )}
+              <span style={{ 
+                fontSize: '0.75rem', 
+                color: formData.ubicacion.length > LIMITS.UBICACION_MAX * 0.9 ? '#f59e0b' : 'var(--text-tertiary)',
+                marginLeft: 'auto'
+              }}>
+                {formData.ubicacion.length}/{LIMITS.UBICACION_MAX}
+              </span>
+            </div>
           </div>
 
           <div style={{ marginBottom: '1.5rem' }}>
@@ -328,26 +423,34 @@ export default function FormularioPublicar({ onPublicar, onCerrar }: FormularioP
             <input
               type="tel"
               value={formData.contacto}
-              onChange={(e) => setFormData({ ...formData, contacto: e.target.value })}
+              onChange={(e) => {
+                const formatted = formatPhoneNumber(e.target.value);
+                setFormData({ ...formData, contacto: formatted });
+                if (errors.contacto) {
+                  setErrors({ ...errors, contacto: undefined });
+                }
+              }}
               required
               placeholder="+51 987 654 321"
               style={{
                 width: '100%',
                 padding: '0.75rem',
                 fontSize: '1rem',
-                border: '1px solid var(--border-color)',
+                border: `1px solid ${errors.contacto ? '#ef4444' : 'var(--border-color)'}`,
                 borderRadius: '8px',
                 backgroundColor: 'var(--bg-primary)',
                 color: 'var(--text-primary)',
                 outline: 'none'
               }}
             />
-            <div style={{
-              fontSize: '0.75rem',
-              color: 'var(--text-tertiary)',
-              marginTop: '0.25rem'
-            }}>
-              Este número no se mostrará públicamente
+            <div style={{ marginTop: '0.25rem' }}>
+              {errors.contacto ? (
+                <span style={{ fontSize: '0.75rem', color: '#ef4444' }}>{errors.contacto}</span>
+              ) : (
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+                  Este número no se mostrará públicamente
+                </span>
+              )}
             </div>
           </div>
 

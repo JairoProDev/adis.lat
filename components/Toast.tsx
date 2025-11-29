@@ -2,25 +2,28 @@
 
 import { useEffect, useState } from 'react';
 import { FaCheck, FaTimes, FaExclamationTriangle, FaInfoCircle } from 'react-icons/fa';
+import { Toast } from '@/hooks/useToast';
 
-interface ToastProps {
-  message: string;
-  type?: 'success' | 'error' | 'info' | 'warning';
-  duration?: number;
+interface ToastItemProps {
+  toast: Toast;
   onClose: () => void;
+  index: number;
 }
 
-export default function Toast({ message, type = 'info', duration = 3000, onClose }: ToastProps) {
-  const [isVisible, setIsVisible] = useState(true);
+export default function ToastItem({ toast, onClose, index }: ToastItemProps) {
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
+    // Animación de entrada
+    setTimeout(() => setIsVisible(true), 10);
+    
     const timer = setTimeout(() => {
       setIsVisible(false);
-      setTimeout(onClose, 300); // Esperar animación
-    }, duration);
+      setTimeout(onClose, 300); // Esperar animación de salida
+    }, toast.duration || 3000);
 
     return () => clearTimeout(timer);
-  }, [duration, onClose]);
+  }, [toast.duration, onClose]);
 
   const icons = {
     success: FaCheck,
@@ -36,7 +39,59 @@ export default function Toast({ message, type = 'info', duration = 3000, onClose
     info: '#3b82f6',
   };
 
-  const Icon = icons[type];
+  const Icon = icons[toast.type];
+
+  return (
+    <div
+      style={{
+        backgroundColor: 'var(--bg-primary)',
+        border: `2px solid ${colors[toast.type]}`,
+        borderRadius: '8px',
+        padding: '1rem 1.5rem',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.75rem',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+        maxWidth: '400px',
+        marginBottom: '0.5rem',
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? 'translateX(0)' : 'translateX(100%)',
+        transition: 'all 0.3s ease',
+      }}
+    >
+      <Icon size={20} color={colors[toast.type]} />
+      <span style={{ color: 'var(--text-primary)', fontSize: '0.875rem', flex: 1 }}>
+        {toast.message}
+      </span>
+      <button
+        onClick={() => {
+          setIsVisible(false);
+          setTimeout(onClose, 300);
+        }}
+        style={{
+          background: 'none',
+          border: 'none',
+          color: 'var(--text-secondary)',
+          cursor: 'pointer',
+          padding: '0.25rem',
+          display: 'flex',
+          alignItems: 'center',
+          lineHeight: 1,
+        }}
+      >
+        <FaTimes size={14} />
+      </button>
+    </div>
+  );
+}
+
+interface ToastContainerProps {
+  toasts: Toast[];
+  removeToast: (id: string) => void;
+}
+
+export function ToastContainer({ toasts, removeToast }: ToastContainerProps) {
+  if (toasts.length === 0) return null;
 
   return (
     <div
@@ -44,26 +99,19 @@ export default function Toast({ message, type = 'info', duration = 3000, onClose
         position: 'fixed',
         bottom: '1rem',
         right: '1rem',
-        backgroundColor: 'var(--bg-primary)',
-        border: `2px solid ${colors[type]}`,
-        borderRadius: '8px',
-        padding: '1rem 1.5rem',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.75rem',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
         zIndex: 3000,
-        maxWidth: '400px',
-        opacity: isVisible ? 1 : 0,
-        transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
-        transition: 'all 0.3s ease',
-        pointerEvents: isVisible ? 'auto' : 'none',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-end',
+        gap: '0.5rem',
+        pointerEvents: 'none',
       }}
     >
-      <Icon size={20} color={colors[type]} />
-      <span style={{ color: 'var(--text-primary)', fontSize: '0.875rem' }}>
-        {message}
-      </span>
+      {toasts.map((toast, index) => (
+        <div key={toast.id} style={{ pointerEvents: 'auto' }}>
+          <ToastItem toast={toast} onClose={() => removeToast(toast.id)} index={index} />
+        </div>
+      ))}
     </div>
   );
 }

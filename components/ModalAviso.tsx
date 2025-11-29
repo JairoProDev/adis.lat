@@ -103,9 +103,13 @@ export default function ModalAviso({
   };
 
   const handleCopiarLink = async () => {
-    await copiarLink(aviso.id);
-    setCopiado(true);
-    setTimeout(() => setCopiado(false), 2000);
+    try {
+      await copiarLink(aviso.id);
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 2000);
+    } catch (error) {
+      console.error('Error al copiar:', error);
+    }
   };
 
   const handleCompartir = async () => {
