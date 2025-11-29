@@ -17,6 +17,7 @@ export interface Aviso {
   ubicacion: string;
   fechaPublicacion: string;
   horaPublicacion: string;
+  imagenUrl?: string; // URL de la imagen del aviso (opcional)
 }
 
 export interface AvisoFormData {
@@ -25,5 +26,6 @@ export interface AvisoFormData {
   descripcion: string;
   contacto: string;
   ubicacion: string;
+  imagenUrl?: string; // URL de la imagen (opcional)
 }
 

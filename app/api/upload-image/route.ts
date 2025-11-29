@@ -44,11 +44,16 @@ export async function POST(request: NextRequest) {
     const timestamp = Date.now();
     const random = Math.random().toString(36).substring(2, 15);
     const extension = file.name.split('.').pop() || 'jpg';
-    const fileName = `feedback/${timestamp}-${random}.${extension}`;
+    // Determinar si es para feedback o aviso basado en el tipo de archivo o parámetro
+    const tipo = request.headers.get('x-upload-type') || 'avisos'; // Por defecto avisos
+    const fileName = `${tipo}/${timestamp}-${random}.${extension}`;
 
+    // Determinar el bucket según el tipo
+    const bucketName = tipo === 'feedback' ? 'feedback-images' : 'avisos-images';
+    
     // Subir a Supabase Storage
     const { data, error } = await supabase.storage
-      .from('feedback-images')
+      .from(bucketName)
       .upload(fileName, buffer, {
         contentType: file.type,
         upsert: false
@@ -64,7 +69,7 @@ export async function POST(request: NextRequest) {
 
     // Obtener URL pública
     const { data: urlData } = supabase.storage
-      .from('feedback-images')
+      .from(bucketName)
       .getPublicUrl(fileName);
 
     return NextResponse.json({

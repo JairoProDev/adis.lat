@@ -19,6 +19,7 @@ import {
   IconPhone,
   IconMegaphone
 } from './Icons';
+import { FaImage, FaTrash } from 'react-icons/fa';
 
 interface FormularioPublicarProps {
   onPublicar: (aviso: Aviso) => void;
@@ -71,8 +72,12 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
     contacto: '',
     ubicacion: ''
   });
+  const [imagenPreview, setImagenPreview] = useState<string | null>(null);
+  const [imagenFile, setImagenFile] = useState<File | null>(null);
+  const [subiendoImagen, setSubiendoImagen] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof AvisoFormData, string>>>({});
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof AvisoFormData, string>> = {};
@@ -105,11 +110,43 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validar tamaño (máximo 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      onError?.('La imagen es demasiado grande. Máximo 5MB.');
+      return;
+    }
+
+    // Validar tipo
+    if (!file.type.startsWith('image/')) {
+      onError?.('Por favor selecciona una imagen válida.');
+      return;
+    }
+
+    setImagenFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagenPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveImage = () => {
+    setImagenPreview(null);
+    setImagenFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
     // Prevenir múltiples submits
-    if (enviando) {
+    if (enviando || subiendoImagen) {
       return;
     }
     
@@ -121,6 +158,37 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
     setEnviando(true);
 
     try {
+      // Subir imagen si existe
+      let imagenUrl: string | undefined = undefined;
+      if (imagenFile) {
+        setSubiendoImagen(true);
+        try {
+          const formDataUpload = new FormData();
+          formDataUpload.append('image', imagenFile);
+          
+          const uploadResponse = await fetch('/api/upload-image', {
+            method: 'POST',
+            headers: {
+              'x-upload-type': 'avisos'
+            },
+            body: formDataUpload
+          });
+
+          if (uploadResponse.ok) {
+            const uploadData = await uploadResponse.json();
+            imagenUrl = uploadData.url;
+          } else {
+            console.warn('Error al subir imagen, continuando sin imagen');
+            onError?.('Error al subir la imagen. El aviso se publicará sin imagen.');
+          }
+        } catch (err) {
+          console.warn('Error al subir imagen:', err);
+          onError?.('Error al subir la imagen. El aviso se publicará sin imagen.');
+        } finally {
+          setSubiendoImagen(false);
+        }
+      }
+
       const ahora = new Date();
       const fecha = ahora.toISOString().split('T')[0];
       const hora = ahora.toTimeString().split(' ')[0].substring(0, 5);
@@ -131,6 +199,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
       const nuevoAviso: Aviso = {
         id: idUnico,
         ...formData,
+        imagenUrl,
         fechaPublicacion: fecha,
         horaPublicacion: hora
       };
@@ -138,6 +207,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
       // Cerrar formulario inmediatamente
       setEnviando(false);
       onPublicar(nuevoAviso);
+      onSuccess?.('¡Aviso publicado con éxito!');
       
       // Guardar en background después de mostrar (carga optimista)
       saveAviso(nuevoAviso).catch(error => {
@@ -454,6 +524,105 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
             </div>
           </div>
 
+          {/* Input de imagen */}
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              marginBottom: '0.5rem',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              color: 'var(--text-primary)'
+            }}>
+              <FaImage size={16} />
+              Imagen del aviso (opcional)
+            </label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              style={{ display: 'none' }}
+              id="aviso-image-input"
+            />
+            <label
+              htmlFor="aviso-image-input"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.75rem',
+                border: '1px dashed var(--border-color)',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+                color: 'var(--text-secondary)',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--text-primary)';
+                e.currentTarget.style.color = 'var(--text-primary)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border-color)';
+                e.currentTarget.style.color = 'var(--text-secondary)';
+              }}
+            >
+              <FaImage size={16} />
+              {imagenPreview ? 'Cambiar imagen' : 'Agregar imagen (máx. 5MB)'}
+            </label>
+            
+            {imagenPreview && (
+              <div style={{
+                marginTop: '0.75rem',
+                position: 'relative',
+                display: 'inline-block'
+              }}>
+                <img
+                  src={imagenPreview}
+                  alt="Preview"
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '300px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)'
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={handleRemoveImage}
+                  style={{
+                    position: 'absolute',
+                    top: '0.5rem',
+                    right: '0.5rem',
+                    background: 'rgba(0, 0, 0, 0.7)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '28px',
+                    height: '28px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: 'white'
+                  }}
+                >
+                  <FaTrash size={12} />
+                </button>
+              </div>
+            )}
+            {subiendoImagen && (
+              <div style={{
+                marginTop: '0.5rem',
+                fontSize: '0.75rem',
+                color: 'var(--text-secondary)'
+              }}>
+                Subiendo imagen...
+              </div>
+            )}
+          </div>
+
           <div style={{
             display: 'flex',
             gap: '0.75rem'
@@ -476,7 +645,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
             </button>
             <button
               type="submit"
-              disabled={enviando}
+              disabled={enviando || subiendoImagen}
               style={{
                 flex: 1,
                 padding: '0.75rem',
@@ -485,9 +654,9 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
                 borderRadius: '8px',
                 backgroundColor: 'var(--text-primary)',
                 color: 'var(--bg-primary)',
-                cursor: enviando ? 'not-allowed' : 'pointer',
-                opacity: enviando ? 0.6 : 1,
-                pointerEvents: enviando ? 'none' : 'auto',
+                cursor: (enviando || subiendoImagen) ? 'not-allowed' : 'pointer',
+                opacity: (enviando || subiendoImagen) ? 0.6 : 1,
+                pointerEvents: (enviando || subiendoImagen) ? 'none' : 'auto',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -495,7 +664,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
               }}
             >
               <IconMegaphone />
-              {enviando ? 'Publicando...' : 'Publicar'}
+              {subiendoImagen ? 'Subiendo imagen...' : enviando ? 'Publicando...' : 'Publicar'}
             </button>
           </div>
         </form>

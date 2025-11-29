@@ -219,6 +219,25 @@ export default function ModalAviso({
           }}>
             {aviso.titulo}
           </h2>
+          {aviso.imagenUrl && (
+            <div style={{
+              marginBottom: '1rem',
+              borderRadius: '8px',
+              overflow: 'hidden',
+              border: '1px solid var(--border-color)'
+            }}>
+              <img
+                src={aviso.imagenUrl}
+                alt={aviso.titulo}
+                style={{
+                  width: '100%',
+                  maxHeight: '400px',
+                  objectFit: 'cover',
+                  display: 'block'
+                }}
+              />
+            </div>
+          )}
           <div style={{
             fontSize: '0.875rem',
             color: 'var(--text-secondary)',

@@ -22,6 +22,33 @@ interface ProgresoEntry {
 
 const progresoData: ProgresoEntry[] = [
   {
+    version: '1.5.0',
+    date: '2025-11-29',
+    time: '11:00',
+    type: 'feature',
+    title: 'Soporte para Imágenes en Avisos',
+    description: 'Los usuarios ahora pueden agregar imágenes a sus avisos para hacerlos más atractivos e informativos',
+    userBenefits: [
+      'Agrega imágenes a tus avisos para mostrar mejor tus productos o servicios',
+      'Las imágenes aparecen tanto en la grilla como en el detalle del aviso',
+      'Sistema opcional: puedes publicar con o sin imagen',
+      'Validación automática de tamaño (máximo 5MB) y tipo de archivo',
+      'Preview de imagen antes de publicar',
+      'Almacenamiento seguro en Supabase Storage',
+    ],
+    technicalDetails: [
+      'Campo `imagenUrl` agregado al tipo `Aviso` y `AvisoFormData`',
+      'Columna `imagen_url` agregada a la tabla `avisos` en Supabase',
+      'Input de imagen con preview en `FormularioPublicar`',
+      'Validación de tamaño (5MB) y tipo de archivo',
+      'Endpoint `/api/upload-image` actualizado para soportar avisos y feedback',
+      'Bucket `avisos-images` en Supabase Storage con políticas RLS',
+      'Imágenes mostradas en `GrillaAvisos` (thumbnail) y `ModalAviso` (completa)',
+      'Sistema de fallback: si falla la subida, el aviso se publica sin imagen',
+    ],
+    impact: 'major'
+  },
+  {
     version: '1.4.0',
     date: '2025-11-29',
     time: '10:40',

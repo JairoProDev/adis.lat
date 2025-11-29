@@ -27,7 +27,8 @@ function dbToAviso(row: any): Aviso {
     contacto: row.contacto,
     ubicacion: row.ubicacion,
     fechaPublicacion: row.fecha_publicacion,
-    horaPublicacion: row.hora_publicacion
+    horaPublicacion: row.hora_publicacion,
+    imagenUrl: row.imagen_url || undefined
   };
 }
 
@@ -41,7 +42,8 @@ function avisoToDb(aviso: Aviso): any {
     contacto: aviso.contacto,
     ubicacion: aviso.ubicacion,
     fecha_publicacion: aviso.fechaPublicacion,
-    hora_publicacion: aviso.horaPublicacion
+    hora_publicacion: aviso.horaPublicacion,
+    imagen_url: aviso.imagenUrl || null
   };
 }
 
