@@ -3,6 +3,10 @@ import { supabase } from '@/lib/supabase';
 
 // Email opcional para notificaciones (configurar en .env.local)
 const NOTIFICATION_EMAIL = process.env.FEEDBACK_NOTIFICATION_EMAIL;
+// Dominio de email - configurable por producto
+const EMAIL_FROM_DOMAIN = process.env.EMAIL_FROM_DOMAIN || 'adis.lat';
+const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || 'Adis.lat';
+const EMAIL_FROM_ADDRESS = process.env.EMAIL_FROM_ADDRESS || 'feedback'; // feedback@adis.lat
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,6 +40,7 @@ export async function POST(request: NextRequest) {
       hora: f.hora,
       url: f.url || null,
       user_agent: f.userAgent || null,
+      imagen_url: f.imagenUrl || null,
       leido: false
     }));
 
@@ -127,43 +132,92 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Función opcional para enviar notificación por email
+// Función para enviar notificación por email usando Resend
 async function enviarNotificacionEmail(feedbacks: any[]) {
   if (!NOTIFICATION_EMAIL) return;
 
-  // Opción 1: Usar Resend (gratis hasta 3,000 emails/mes)
-  // Necesitas instalar: npm install resend
-  // Y agregar RESEND_API_KEY en .env.local
-  
-  // Opción 2: Usar SendGrid
-  // Opción 3: Usar Nodemailer con SMTP
-  
-  // Por ahora, solo logueamos (puedes implementar después)
-  console.log(`📧 Nuevo feedback recibido (${feedbacks.length}):`, {
-    tipo: feedbacks[0].tipo,
-    texto: feedbacks[0].texto.substring(0, 100) + '...',
-    email: NOTIFICATION_EMAIL
-  });
+  const RESEND_API_KEY = process.env.RESEND_API_KEY;
+  if (!RESEND_API_KEY) {
+    console.warn('⚠️ RESEND_API_KEY no configurada. Las notificaciones por email no se enviarán.');
+    return;
+  }
 
-  // TODO: Implementar envío real de email
-  // Ejemplo con Resend:
-  /*
-  const { Resend } = require('resend');
-  const resend = new Resend(process.env.RESEND_API_KEY);
-  
-  await resend.emails.send({
-    from: 'feedback@buscadis.com',
-    to: NOTIFICATION_EMAIL,
-    subject: `Nuevo ${feedbacks[0].tipo}: ${feedbacks[0].texto.substring(0, 50)}...`,
-    html: `
-      <h2>Nuevo feedback recibido</h2>
-      <p><strong>Tipo:</strong> ${feedbacks[0].tipo}</p>
-      <p><strong>Mensaje:</strong></p>
-      <p>${feedbacks[0].texto}</p>
-      <p><strong>Fecha:</strong> ${feedbacks[0].fecha} ${feedbacks[0].hora}</p>
-      <p><strong>URL:</strong> ${feedbacks[0].url || 'N/A'}</p>
-    `
-  });
-  */
+  try {
+    const { Resend } = await import('resend');
+    const resend = new Resend(RESEND_API_KEY);
+
+    const feedback = feedbacks[0];
+    const tipoLabel = feedback.tipo === 'sugerencia' ? '💡 Sugerencia' : '🚨 Problema';
+    const emoji = feedback.tipo === 'sugerencia' ? '💡' : '🚨';
+
+    const subject = `${emoji} Nuevo ${feedback.tipo}: ${feedback.texto.substring(0, 50)}${feedback.texto.length > 50 ? '...' : ''}`;
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+            .content { background: #fff; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; }
+            .label { font-weight: 600; color: #666; margin-top: 15px; }
+            .value { margin-top: 5px; padding: 10px; background: #f9f9f9; border-radius: 4px; }
+            .footer { margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0; font-size: 12px; color: #999; }
+            a { color: #0066cc; text-decoration: none; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h2 style="margin: 0;">${tipoLabel}</h2>
+              <p style="margin: 5px 0 0 0; color: #666;">Nuevo feedback recibido en buscadis.com</p>
+            </div>
+            <div class="content">
+              <div class="label">Tipo:</div>
+              <div class="value">${feedback.tipo === 'sugerencia' ? '💡 Sugerencia' : '🚨 Problema'}</div>
+              
+              <div class="label">Mensaje:</div>
+              <div class="value" style="white-space: pre-wrap;">${feedback.texto}</div>
+              
+              <div class="label">Fecha y Hora:</div>
+              <div class="value">${feedback.fecha} a las ${feedback.hora}</div>
+              
+              ${feedback.url ? `
+                <div class="label">URL:</div>
+                <div class="value"><a href="${feedback.url}" target="_blank">${feedback.url}</a></div>
+              ` : ''}
+              
+              ${feedbacks.length > 1 ? `
+                <div class="label" style="margin-top: 20px; color: #f59e0b;">
+                  ⚠️ Se recibieron ${feedbacks.length} feedbacks en este lote
+                </div>
+              ` : ''}
+            </div>
+            <div class="footer">
+              <p>Este es un email automático de ${EMAIL_FROM_DOMAIN}</p>
+              <p>Puedes gestionar los feedbacks desde el dashboard: <a href="${process.env.NEXT_PUBLIC_APP_URL || `https://${EMAIL_FROM_DOMAIN}`}/admin/feedback">Ver Dashboard</a></p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    await resend.emails.send({
+      from: `${EMAIL_FROM_NAME} <${EMAIL_FROM_ADDRESS}@${EMAIL_FROM_DOMAIN}>`,
+      to: NOTIFICATION_EMAIL,
+      subject: subject,
+      html: htmlContent
+    });
+
+    console.log(`✅ Email de notificación enviado a ${NOTIFICATION_EMAIL}`);
+  } catch (error: any) {
+    console.error('❌ Error al enviar notificación por email:', {
+      message: error.message,
+      error
+    });
+    // No fallar si el email falla, solo loguear
+  }
 }
 

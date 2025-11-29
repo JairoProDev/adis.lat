@@ -22,6 +22,34 @@ interface ProgresoEntry {
 
 const progresoData: ProgresoEntry[] = [
   {
+    version: '1.4.0',
+    date: '2025-11-29',
+    time: '10:40',
+    type: 'feature',
+    title: 'Sistema de Feedback Funcional',
+    description: 'Implementación completa de sistema de feedback con integración a Supabase, notificaciones por email y dashboard de gestión',
+    userBenefits: [
+      'Envía sugerencias y reporta problemas fácilmente desde cualquier página',
+      'Tu feedback se guarda de forma segura y se revisa periódicamente',
+      'Sistema robusto con fallback automático si hay problemas de conexión',
+      'Notificaciones por email al equipo cuando recibes feedback',
+      'Dashboard interno para gestionar y responder feedbacks',
+      'Estadísticas de feedbacks para entender mejor a los usuarios',
+    ],
+    technicalDetails: [
+      'Tabla de feedback en Supabase con Row Level Security (RLS) configurado',
+      'API route `/api/feedback` para recibir y guardar feedbacks',
+      'Sistema de fallback a localStorage si falla la conexión',
+      'Reintento automático cada 30 segundos para feedbacks pendientes',
+      'Integración con Resend para notificaciones por email',
+      'Dashboard interno en `/admin/feedback` para gestionar feedbacks',
+      'Estadísticas de feedbacks: totales, por tipo, no leídos',
+      'Soporte opcional para imágenes/capturas de pantalla en feedbacks',
+      'Políticas RLS correctamente configuradas para INSERT y SELECT',
+    ],
+    impact: 'major'
+  },
+  {
     version: '1.3.0',
     date: '2025-11-29',
     time: '09:48',

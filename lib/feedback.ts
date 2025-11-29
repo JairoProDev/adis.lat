@@ -6,6 +6,7 @@ export interface Feedback {
   hora: string;
   userAgent?: string;
   url?: string;
+  imagenUrl?: string; // URL de la imagen si se subió una captura
 }
 
 const FEEDBACK_STORAGE_KEY = 'adis_feedback_pendientes';
@@ -86,7 +87,8 @@ export async function enviarFeedbackInmediato(feedback: Omit<Feedback, 'id' | 'f
     fecha: new Date().toISOString().split('T')[0],
     hora: new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }),
     url: window.location.href,
-    userAgent: navigator.userAgent
+    userAgent: navigator.userAgent,
+    imagenUrl: feedback.imagenUrl
   };
 
   console.log('📤 Enviando feedback inmediato:', nuevoFeedback);

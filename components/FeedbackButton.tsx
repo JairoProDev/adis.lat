@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { FaLightbulb, FaExclamationTriangle, FaTimes, FaCheckCircle, FaCommentDots } from 'react-icons/fa';
+import { useState, useRef } from 'react';
+import { FaLightbulb, FaExclamationTriangle, FaTimes, FaCheckCircle, FaCommentDots, FaImage, FaTrash } from 'react-icons/fa';
 import { enviarFeedbackInmediato } from '@/lib/feedback';
 import { useToast } from '@/hooks/useToast';
 
@@ -13,18 +13,77 @@ export default function FeedbackButton({ variant = 'floating' }: FeedbackButtonP
   const [mostrarModal, setMostrarModal] = useState(false);
   const [texto, setTexto] = useState('');
   const [tipoSeleccionado, setTipoSeleccionado] = useState<'sugerencia' | 'problema'>('sugerencia');
+  const [imagenPreview, setImagenPreview] = useState<string | null>(null);
+  const [imagenFile, setImagenFile] = useState<File | null>(null);
   const [enviado, setEnviado] = useState(false);
-  const { success } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { success, error: errorToast } = useToast();
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validar tamaño (máximo 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      errorToast('La imagen es demasiado grande. Máximo 5MB.');
+      return;
+    }
+
+    // Validar tipo
+    if (!file.type.startsWith('image/')) {
+      errorToast('Por favor selecciona una imagen válida.');
+      return;
+    }
+
+    setImagenFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagenPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveImage = () => {
+    setImagenPreview(null);
+    setImagenFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const handleSubmit = async () => {
     if (!texto.trim()) return;
 
     setEnviado(true);
     
+    // Subir imagen si existe
+    let imagenUrl: string | undefined = undefined;
+    if (imagenFile) {
+      try {
+        const formData = new FormData();
+        formData.append('image', imagenFile);
+        
+        const uploadResponse = await fetch('/api/upload-image', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (uploadResponse.ok) {
+          const uploadData = await uploadResponse.json();
+          imagenUrl = uploadData.url;
+        } else {
+          console.warn('Error al subir imagen, continuando sin imagen');
+        }
+      } catch (err) {
+        console.warn('Error al subir imagen:', err);
+      }
+    }
+    
     // Intentar enviar inmediatamente
     const enviado = await enviarFeedbackInmediato({
       tipo: tipoSeleccionado,
-      texto: texto.trim()
+      texto: texto.trim(),
+      imagenUrl
     });
 
     if (enviado) {
@@ -36,8 +95,13 @@ export default function FeedbackButton({ variant = 'floating' }: FeedbackButtonP
     setTimeout(() => {
       setMostrarModal(false);
       setTexto('');
+      setImagenPreview(null);
+      setImagenFile(null);
       setEnviado(false);
       setTipoSeleccionado('sugerencia');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }, 1500);
   };
 
@@ -203,6 +267,83 @@ export default function FeedbackButton({ variant = 'floating' }: FeedbackButtonP
                     marginBottom: '1rem'
                   }}
                 />
+
+                {/* Input de imagen */}
+                <div style={{ marginBottom: '1rem' }}>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    style={{ display: 'none' }}
+                    id="feedback-image-input"
+                  />
+                  <label
+                    htmlFor="feedback-image-input"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.75rem',
+                      border: '1px dashed var(--border-color)',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem',
+                      color: 'var(--text-secondary)',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--text-primary)';
+                      e.currentTarget.style.color = 'var(--text-primary)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--border-color)';
+                      e.currentTarget.style.color = 'var(--text-secondary)';
+                    }}
+                  >
+                    <FaImage size={16} />
+                    {imagenPreview ? 'Cambiar imagen' : 'Agregar captura de pantalla (opcional)'}
+                  </label>
+                  
+                  {imagenPreview && (
+                    <div style={{
+                      marginTop: '0.75rem',
+                      position: 'relative',
+                      display: 'inline-block'
+                    }}>
+                      <img
+                        src={imagenPreview}
+                        alt="Preview"
+                        style={{
+                          maxWidth: '100%',
+                          maxHeight: '200px',
+                          borderRadius: '8px',
+                          border: '1px solid var(--border-color)'
+                        }}
+                      />
+                      <button
+                        onClick={handleRemoveImage}
+                        style={{
+                          position: 'absolute',
+                          top: '0.5rem',
+                          right: '0.5rem',
+                          background: 'rgba(0, 0, 0, 0.7)',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '28px',
+                          height: '28px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          color: 'white'
+                        }}
+                      >
+                        <FaTrash size={12} />
+                      </button>
+                    </div>
+                  )}
+                </div>
 
                 <div style={{
                   display: 'flex',
