@@ -60,12 +60,12 @@ export default function GrillaAvisos({ avisos, onAbrirAviso, avisoSeleccionadoId
           display: grid;
           grid-template-columns: repeat(2, 1fr);
           gap: 0.5rem;
-          grid-auto-rows: minmax(60px, auto);
+          grid-auto-rows: minmax(80px, auto);
         }
         @media (min-width: 768px) {
           .grilla-avisos {
             grid-template-columns: repeat(4, 1fr);
-            grid-auto-rows: minmax(75px, auto);
+            grid-auto-rows: minmax(100px, auto);
           }
         }
       `}</style>
@@ -92,7 +92,7 @@ export default function GrillaAvisos({ avisos, onAbrirAviso, avisoSeleccionadoId
                   ? '2px solid var(--text-primary)' 
                   : '1px solid var(--border-color)',
                 borderRadius: '6px',
-                padding: tamaño === 'miniatura' ? '0.5rem' : tamaño === 'pequeño' ? '0.625rem' : '0.75rem',
+                padding: tamaño === 'miniatura' ? '0.5rem' : tamaño === 'pequeño' ? '0.75rem' : tamaño === 'mediano' ? '0.875rem' : '1rem',
                 textAlign: 'left',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
@@ -139,7 +139,7 @@ export default function GrillaAvisos({ avisos, onAbrirAviso, avisoSeleccionadoId
                   alt={aviso.titulo}
                   style={{
                     width: '100%',
-                    height: tamaño === 'pequeño' ? '80px' : tamaño === 'mediano' ? '100px' : tamaño === 'grande' ? '140px' : '180px',
+                    height: tamaño === 'pequeño' ? '120px' : tamaño === 'mediano' ? '140px' : tamaño === 'grande' ? '180px' : '220px',
                     objectFit: 'cover',
                     borderRadius: '4px',
                     marginBottom: '0.3rem'
