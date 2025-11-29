@@ -4,7 +4,7 @@
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
 
-import { useState, useEffect, useRef } from 'react';
+import { Suspense, useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Aviso, Categoria } from '@/types';
 import { getAvisos, getAvisoById, saveAviso, getAvisosCache } from '@/lib/storage';
@@ -18,7 +18,7 @@ import BotonPublicar from '@/components/BotonPublicar';
 import FormularioPublicar from '@/components/FormularioPublicar';
 import SkeletonAvisos from '@/components/SkeletonAvisos';
 
-export default function Home() {
+function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const avisoId = searchParams.get('aviso');
@@ -264,5 +264,13 @@ export default function Home() {
         />
       )}
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>Cargando...</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }
