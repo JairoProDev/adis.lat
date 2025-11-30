@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { Categoria } from '@/types';
 import { 
@@ -11,25 +13,27 @@ import {
   IconNegocios, 
   IconComunidad 
 } from './Icons';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface FiltrosCategoriaProps {
   categoriaSeleccionada: Categoria | 'todos';
   onChange: (categoria: Categoria | 'todos') => void;
 }
 
-const CATEGORIAS: Array<{ value: Categoria | 'todos'; label: string; icon: React.ComponentType<{ size?: number; color?: string }> }> = [
-  { value: 'todos', label: 'Todos', icon: IconTodos },
-  { value: 'empleos', label: 'Empleos', icon: IconEmpleos },
-  { value: 'inmuebles', label: 'Inmuebles', icon: IconInmuebles },
-  { value: 'vehiculos', label: 'Vehículos', icon: IconVehiculos },
-  { value: 'servicios', label: 'Servicios', icon: IconServicios },
-  { value: 'productos', label: 'Productos', icon: IconProductos },
-  { value: 'eventos', label: 'Eventos', icon: IconEventos },
-  { value: 'negocios', label: 'Negocios', icon: IconNegocios },
-  { value: 'comunidad', label: 'Comunidad', icon: IconComunidad },
-];
-
 export default function FiltrosCategoria({ categoriaSeleccionada, onChange }: FiltrosCategoriaProps) {
+  const { t } = useTranslation();
+  
+  const CATEGORIAS: Array<{ value: Categoria | 'todos'; labelKey: string; icon: React.ComponentType<{ size?: number; color?: string }> }> = [
+    { value: 'todos', labelKey: 'categories.all', icon: IconTodos },
+    { value: 'empleos', labelKey: 'categories.empleos', icon: IconEmpleos },
+    { value: 'inmuebles', labelKey: 'categories.inmuebles', icon: IconInmuebles },
+    { value: 'vehiculos', labelKey: 'categories.vehiculos', icon: IconVehiculos },
+    { value: 'servicios', labelKey: 'categories.servicios', icon: IconServicios },
+    { value: 'productos', labelKey: 'categories.productos', icon: IconProductos },
+    { value: 'eventos', labelKey: 'categories.eventos', icon: IconEventos },
+    { value: 'negocios', labelKey: 'categories.negocios', icon: IconNegocios },
+    { value: 'comunidad', labelKey: 'categories.comunidad', icon: IconComunidad },
+  ];
   return (
     <div style={{
       display: 'flex',
@@ -43,7 +47,7 @@ export default function FiltrosCategoria({ categoriaSeleccionada, onChange }: Fi
         <button
           key={cat.value}
           onClick={() => onChange(cat.value)}
-          aria-label={`Filtrar por ${cat.label}`}
+          aria-label={`${t('common.filter')} ${t(cat.labelKey)}`}
           aria-pressed={categoriaSeleccionada === cat.value}
           style={{
             padding: '0.5rem 1rem',
@@ -78,7 +82,7 @@ export default function FiltrosCategoria({ categoriaSeleccionada, onChange }: Fi
             const IconComponent = cat.icon;
             return <IconComponent aria-hidden="true" color={categoriaSeleccionada === cat.value ? 'var(--bg-primary)' : 'var(--text-primary)'} />;
           })()}
-          {cat.label}
+          {t(cat.labelKey)}
         </button>
       ))}
     </div>

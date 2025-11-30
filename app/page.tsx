@@ -17,6 +17,7 @@ import dynamicImport from 'next/dynamic';
 import Header from '@/components/Header';
 import Buscador from '@/components/Buscador';
 import FiltrosCategoria from '@/components/FiltrosCategoria';
+import Ordenamiento, { TipoOrdenamiento } from '@/components/Ordenamiento';
 import GrillaAdisos from '@/components/GrillaAdisos';
 import SkeletonAdisos from '@/components/SkeletonAdisos';
 import { ToastContainer } from '@/components/Toast';
@@ -61,6 +62,7 @@ function HomeContent() {
   const [busqueda, setBusqueda] = useState(buscarUrl);
   const busquedaDebounced = useDebounce(busqueda, 300);
   const [categoriaFiltro, setCategoriaFiltro] = useState<Categoria | 'todos'>(categoriaUrl && ['empleos', 'inmuebles', 'vehiculos', 'servicios', 'productos', 'eventos', 'negocios', 'comunidad'].includes(categoriaUrl) ? categoriaUrl : 'todos');
+  const [ordenamiento, setOrdenamiento] = useState<TipoOrdenamiento>('recientes');
   const [adisoAbierto, setAdisoAbierto] = useState<Adiso | null>(null);
   const [indiceAdisoActual, setIndiceAdisoActual] = useState(0);
   const [cargando, setCargando] = useState(true);
@@ -239,7 +241,7 @@ function HomeContent() {
         }).catch(console.error);
   }, [adisoId, adisos, adisosFiltrados, cargando]);
 
-  // Filtrado y ordenamiento (siempre más recientes primero, sin opción de cambiar)
+  // Filtrado y ordenamiento
   useEffect(() => {
     let filtrados = [...adisos]; // Crear copia para no mutar
 
@@ -259,18 +261,32 @@ function HomeContent() {
       );
     }
 
-    // Ordenar siempre por más recientes primero
+    // Ordenar según el tipo seleccionado
     filtrados.sort((a, b) => {
-      // Parsear fechas de forma simple
-      const fechaA = new Date(`${a.fechaPublicacion}T${a.horaPublicacion}:00`).getTime();
-      const fechaB = new Date(`${b.fechaPublicacion}T${b.horaPublicacion}:00`).getTime();
-      
-      // Si alguna fecha es inválida, ponerla al final
-      if (isNaN(fechaA)) return 1;
-      if (isNaN(fechaB)) return -1;
-
-      // Más recientes primero: mayor timestamp primero
-      return fechaB - fechaA;
+      switch (ordenamiento) {
+        case 'recientes': {
+          const fechaA = new Date(`${a.fechaPublicacion}T${a.horaPublicacion}:00`).getTime();
+          const fechaB = new Date(`${b.fechaPublicacion}T${b.horaPublicacion}:00`).getTime();
+          if (isNaN(fechaA)) return 1;
+          if (isNaN(fechaB)) return -1;
+          return fechaB - fechaA; // Más recientes primero
+        }
+        case 'antiguos': {
+          const fechaA = new Date(`${a.fechaPublicacion}T${a.horaPublicacion}:00`).getTime();
+          const fechaB = new Date(`${b.fechaPublicacion}T${b.horaPublicacion}:00`).getTime();
+          if (isNaN(fechaA)) return 1;
+          if (isNaN(fechaB)) return -1;
+          return fechaA - fechaB; // Más antiguos primero
+        }
+        case 'titulo-asc': {
+          return a.titulo.localeCompare(b.titulo, 'es', { sensitivity: 'base' });
+        }
+        case 'titulo-desc': {
+          return b.titulo.localeCompare(a.titulo, 'es', { sensitivity: 'base' });
+        }
+        default:
+          return 0;
+      }
     });
 
     setAdisosFiltrados(filtrados);
@@ -282,7 +298,7 @@ function HomeContent() {
         setIndiceAdisoActual(nuevoIndice);
       }
     }
-  }, [busquedaDebounced, categoriaFiltro, adisos, adisoAbierto]);
+  }, [busquedaDebounced, categoriaFiltro, ordenamiento, adisos, adisoAbierto]);
 
   // Actualizar URL cuando cambian búsqueda o categoría (después del debounce)
   useEffect(() => {
@@ -561,6 +577,10 @@ function HomeContent() {
               const newUrl = params.toString() ? `/?${params.toString()}` : '/';
               router.push(newUrl, { scroll: false });
             }}
+          />
+          <Ordenamiento
+            valor={ordenamiento}
+            onChange={setOrdenamiento}
           />
         </div>
         {cargando ? (

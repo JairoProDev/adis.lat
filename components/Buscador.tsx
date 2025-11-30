@@ -1,4 +1,5 @@
 import { IconSearch } from './Icons';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface BuscadorProps {
   value: string;
@@ -6,6 +7,8 @@ interface BuscadorProps {
 }
 
 export default function Buscador({ value, onChange }: BuscadorProps) {
+  const { t } = useTranslation();
+  
   return (
     <div style={{ position: 'relative' }}>
       <div
@@ -26,10 +29,10 @@ export default function Buscador({ value, onChange }: BuscadorProps) {
       </div>
       <input
         type="search"
-        placeholder="Buscar ofertas y oportunidades..."
+        placeholder={t('search.placeholder')}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        aria-label="Buscar adisos"
+        aria-label={t('search.label')}
         style={{
           width: '100%',
           padding: '0.75rem 1rem 0.75rem 2.5rem',

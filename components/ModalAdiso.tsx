@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Adiso } from '@/types';
 import { formatFecha, getWhatsAppUrl, copiarLink, compartirNativo } from '@/lib/utils';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { isMyAdiso } from '@/lib/storage';
 import {
   IconClose,
   IconArrowLeft,
@@ -22,7 +23,9 @@ import {
   IconProductos,
   IconEventos,
   IconNegocios,
-  IconComunidad
+  IconComunidad,
+  IconEdit,
+  IconTrash
 } from './Icons';
 import { Categoria } from '@/types';
 
@@ -34,6 +37,8 @@ interface ModalAdisoProps {
   puedeAnterior: boolean;
   puedeSiguiente: boolean;
   dentroSidebar?: boolean; // Indica si está dentro del sidebar (sin overlay)
+  onEditar?: (adiso: Adiso) => void; // Callback para editar adiso
+  onEliminar?: (adisoId: string) => void; // Callback para eliminar adiso
 }
 
 export default function ModalAdiso({
@@ -43,14 +48,19 @@ export default function ModalAdiso({
   onSiguiente,
   puedeAnterior,
   puedeSiguiente,
-  dentroSidebar = false
+  dentroSidebar = false,
+  onEditar,
+  onEliminar
 }: ModalAdisoProps) {
   const [copiado, setCopiado] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [imagenAmpliada, setImagenAmpliada] = useState<{ url: string; index: number } | null>(null);
+  const [mostrarConfirmarEliminar, setMostrarConfirmarEliminar] = useState(false);
+  const [eliminando, setEliminando] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const isDesktop = useMediaQuery('(min-width: 768px)');
+  const esMiAdiso = isMyAdiso(adiso.id);
 
   const minSwipeDistance = 50;
 
@@ -137,6 +147,35 @@ export default function ModalAdiso({
 
     const handleContactar = () => {
       window.open(getWhatsAppUrl(adiso.contacto, adiso.titulo, adiso.categoria, adiso.id), '_blank');
+    };
+
+    const handleEditar = () => {
+      if (onEditar) {
+        onEditar(adiso);
+      }
+    };
+
+    const handleEliminarClick = () => {
+      setMostrarConfirmarEliminar(true);
+    };
+
+    const handleConfirmarEliminar = async () => {
+      if (!onEliminar) return;
+      
+      setEliminando(true);
+      try {
+        await onEliminar(adiso.id);
+        setMostrarConfirmarEliminar(false);
+        onCerrar(); // Cerrar el modal después de eliminar
+      } catch (error) {
+        console.error('Error al eliminar adiso:', error);
+        setEliminando(false);
+      }
+    };
+
+    const handleCancelarEliminar = () => {
+      setMostrarConfirmarEliminar(false);
+      setEliminando(false);
     };
 
   const overlayStyle: React.CSSProperties = {

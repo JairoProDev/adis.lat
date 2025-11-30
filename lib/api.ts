@@ -86,11 +86,27 @@ export async function updateAdiso(adiso: Adiso): Promise<Adiso> {
       body: JSON.stringify(adiso),
     });
     if (!response.ok) {
-      throw new Error('Error al actualizar adiso');
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Error al actualizar adiso');
     }
     return await response.json();
   } catch (error) {
     console.error('Error updating adiso:', error);
+    throw error;
+  }
+}
+
+export async function deleteAdiso(id: string): Promise<void> {
+  try {
+    const response = await fetch(`${API_URL}/adisos/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Error al eliminar adiso');
+    }
+  } catch (error) {
+    console.error('Error deleting adiso:', error);
     throw error;
   }
 }

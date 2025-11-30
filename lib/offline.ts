@@ -24,3 +24,5 @@ export function getOfflineMessage(): string {
   return 'No hay conexión a internet. Algunas funciones pueden no estar disponibles.';
 }
 
+
+

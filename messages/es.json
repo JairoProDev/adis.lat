@@ -1,0 +1,86 @@
+{
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "close": "Cerrar",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "sort": "Ordenar",
+    "all": "Todos"
+  },
+  "header": {
+    "title": "buscadis.com",
+    "progress": "Nuestro Progreso"
+  },
+  "search": {
+    "placeholder": "Buscar ofertas y oportunidades...",
+    "label": "Buscar adisos"
+  },
+  "categories": {
+    "all": "Todos",
+    "empleos": "Empleos",
+    "inmuebles": "Inmuebles",
+    "vehiculos": "Vehículos",
+    "servicios": "Servicios",
+    "productos": "Productos",
+    "eventos": "Eventos",
+    "negocios": "Negocios",
+    "comunidad": "Comunidad"
+  },
+  "sort": {
+    "label": "Ordenar por:",
+    "recent": "Más recientes",
+    "oldest": "Más antiguos",
+    "titleAsc": "Título A-Z",
+    "titleDesc": "Título Z-A"
+  },
+  "adiso": {
+    "published": "Publicado",
+    "location": "Ubicación",
+    "contact": "Contactar por WhatsApp",
+    "copyLink": "Copiar link",
+    "share": "Compartir",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "close": "Cerrar adiso",
+    "notFound": "Adiso no encontrado"
+  },
+  "publish": {
+    "title": "Publicar Adiso",
+    "titleLabel": "Título",
+    "descriptionLabel": "Descripción",
+    "categoryLabel": "Categoría",
+    "locationLabel": "Ubicación",
+    "contactLabel": "Contacto (WhatsApp)",
+    "packageLabel": "Paquete",
+    "imagesLabel": "Imágenes",
+    "publish": "Publicar",
+    "publishing": "Publicando...",
+    "success": "¡Adiso publicado exitosamente!",
+    "error": "Error al publicar el adiso"
+  },
+  "grid": {
+    "noResults": "No se encontraron adisos",
+    "loading": "Cargando adisos...",
+    "found": "adiso encontrado",
+    "foundPlural": "adisos encontrados"
+  },
+  "breadcrumbs": {
+    "home": "Inicio"
+  },
+  "theme": {
+    "light": "Modo claro",
+    "dark": "Modo oscuro",
+    "auto": "Modo automático"
+  },
+  "language": {
+    "select": "Seleccionar idioma",
+    "current": "Idioma actual"
+  }
+}
+
+
+

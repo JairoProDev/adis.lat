@@ -126,6 +126,8 @@ export const saveAdiso = async (adiso: Adiso): Promise<void> => {
       try {
         const resultado = await createAdiso(adiso);
         console.log('✅ Adiso guardado en Supabase:', resultado.id);
+        // Marcar como propio cuando se crea exitosamente
+        markAdisoAsOwn(adiso.id);
       } catch (error: any) {
         // Si el error es 409 (conflict) o el adiso ya existe, actualizar
         if (error?.message?.includes('ya existe') || error?.message?.includes('duplicado') || error?.response?.status === 409) {
@@ -183,4 +185,59 @@ export const getAdisoById = async (id: string): Promise<Adiso | null> => {
   }
   
   return cacheAdiso;
+};
+
+// Funciones para rastrear adisos propios (sin autenticación, basado en localStorage)
+const MY_ADISOS_KEY = 'buscadis_mis_adisos';
+
+/**
+ * Marca un adiso como propio del usuario actual
+ */
+export const markAdisoAsOwn = (adisoId: string): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    const myAdisos = getMyAdisos();
+    if (!myAdisos.includes(adisoId)) {
+      myAdisos.push(adisoId);
+      localStorage.setItem(MY_ADISOS_KEY, JSON.stringify(myAdisos));
+    }
+  } catch (error) {
+    console.error('Error al marcar adiso como propio:', error);
+  }
+};
+
+/**
+ * Elimina un adiso de la lista de adisos propios
+ */
+export const unmarkAdisoAsOwn = (adisoId: string): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    const myAdisos = getMyAdisos();
+    const filtered = myAdisos.filter(id => id !== adisoId);
+    localStorage.setItem(MY_ADISOS_KEY, JSON.stringify(filtered));
+  } catch (error) {
+    console.error('Error al desmarcar adiso como propio:', error);
+  }
+};
+
+/**
+ * Obtiene la lista de IDs de adisos propios
+ */
+export const getMyAdisos = (): string[] => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const stored = localStorage.getItem(MY_ADISOS_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.error('Error al leer adisos propios:', error);
+    return [];
+  }
+};
+
+/**
+ * Verifica si un adiso es propio del usuario actual
+ */
+export const isMyAdiso = (adisoId: string): boolean => {
+  const myAdisos = getMyAdisos();
+  return myAdisos.includes(adisoId);
 };

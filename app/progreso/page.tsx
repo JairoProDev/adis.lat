@@ -22,6 +22,31 @@ interface ProgresoEntry {
 
 const progresoData: ProgresoEntry[] = [
   {
+    version: '2.3.0',
+    date: '2025-01-27',
+    time: '22:00',
+    type: 'improvement',
+    title: 'Mejoras de Fase 2: Modo Oscuro, Prefetching, Páginas de Categorías y Ordenamiento',
+    description: 'Implementación de modo oscuro con preferencias del sistema, prefetching de imágenes relacionadas, páginas dedicadas de categorías para SEO, y sistema de ordenamiento visual',
+    userBenefits: [
+      'Modo oscuro: soporte automático según preferencias del sistema, con toggle manual para elegir tema',
+      'Navegación más rápida: prefetching automático de imágenes de adisos relacionados (anterior/siguiente)',
+      'Mejor SEO: páginas dedicadas por categoría con metadata específica y structured data',
+      'Ordenamiento flexible: opciones para ordenar por más recientes, más antiguos, título A-Z o Z-A',
+      'Mejor experiencia visual: tema oscuro reduce fatiga visual en ambientes con poca luz',
+    ],
+    technicalDetails: [
+      'Modo oscuro: CSS variables con @media (prefers-color-scheme: dark), clases .light-mode y .dark-mode, componente ThemeToggle con persistencia en localStorage',
+      'Prefetching: useEffect en app/page.tsx que pre-carga imágenes de adisos anterior/siguiente usando <link rel="prefetch">',
+      'Páginas de categorías: app/categoria/[nombre]/page.tsx con metadata dinámica, structured data CollectionPage, breadcrumbs, y redirección inteligente para bots',
+      'Ordenamiento: componente Ordenamiento.tsx con 4 opciones (recientes, antiguos, título A-Z, Z-A), integrado en app/page.tsx',
+      'Sitemap actualizado: incluye rutas de categorías dedicadas (/categoria/[nombre])',
+      'ThemeToggle: componente con 3 modos (claro, oscuro, automático), persistencia en localStorage, sin flash de contenido incorrecto',
+      'CSS mejorado: variables CSS para modo oscuro con mejor contraste y legibilidad',
+    ],
+    impact: 'major'
+  },
+  {
     version: '2.2.0',
     date: '2025-01-27',
     time: '20:00',

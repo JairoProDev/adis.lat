@@ -1,0 +1,86 @@
+{
+  "common": {
+    "loading": "Carregando...",
+    "error": "Erro",
+    "success": "Sucesso",
+    "close": "Fechar",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "sort": "Ordenar",
+    "all": "Todos"
+  },
+  "header": {
+    "title": "buscadis.com",
+    "progress": "Nosso Progresso"
+  },
+  "search": {
+    "placeholder": "Buscar ofertas e oportunidades...",
+    "label": "Buscar anúncios"
+  },
+  "categories": {
+    "all": "Todos",
+    "empleos": "Empregos",
+    "inmuebles": "Imóveis",
+    "vehiculos": "Veículos",
+    "servicios": "Serviços",
+    "productos": "Produtos",
+    "eventos": "Eventos",
+    "negocios": "Negócios",
+    "comunidad": "Comunidade"
+  },
+  "sort": {
+    "label": "Ordenar por:",
+    "recent": "Mais recentes",
+    "oldest": "Mais antigos",
+    "titleAsc": "Título A-Z",
+    "titleDesc": "Título Z-A"
+  },
+  "adiso": {
+    "published": "Publicado",
+    "location": "Localização",
+    "contact": "Contatar via WhatsApp",
+    "copyLink": "Copiar link",
+    "share": "Compartilhar",
+    "previous": "Anterior",
+    "next": "Próximo",
+    "close": "Fechar anúncio",
+    "notFound": "Anúncio não encontrado"
+  },
+  "publish": {
+    "title": "Publicar Anúncio",
+    "titleLabel": "Título",
+    "descriptionLabel": "Descrição",
+    "categoryLabel": "Categoria",
+    "locationLabel": "Localização",
+    "contactLabel": "Contato (WhatsApp)",
+    "packageLabel": "Pacote",
+    "imagesLabel": "Imagens",
+    "publish": "Publicar",
+    "publishing": "Publicando...",
+    "success": "Anúncio publicado com sucesso!",
+    "error": "Erro ao publicar anúncio"
+  },
+  "grid": {
+    "noResults": "Nenhum anúncio encontrado",
+    "loading": "Carregando anúncios...",
+    "found": "anúncio encontrado",
+    "foundPlural": "anúncios encontrados"
+  },
+  "breadcrumbs": {
+    "home": "Início"
+  },
+  "theme": {
+    "light": "Modo claro",
+    "dark": "Modo escuro",
+    "auto": "Modo automático"
+  },
+  "language": {
+    "select": "Selecionar idioma",
+    "current": "Idioma atual"
+  }
+}
+
+
+

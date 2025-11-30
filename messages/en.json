@@ -1,0 +1,86 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "close": "Close",
+    "save": "Save",
+    "cancel": "Cancel",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "all": "All"
+  },
+  "header": {
+    "title": "buscadis.com",
+    "progress": "Our Progress"
+  },
+  "search": {
+    "placeholder": "Search offers and opportunities...",
+    "label": "Search ads"
+  },
+  "categories": {
+    "all": "All",
+    "empleos": "Jobs",
+    "inmuebles": "Real Estate",
+    "vehiculos": "Vehicles",
+    "servicios": "Services",
+    "productos": "Products",
+    "eventos": "Events",
+    "negocios": "Business",
+    "comunidad": "Community"
+  },
+  "sort": {
+    "label": "Sort by:",
+    "recent": "Most recent",
+    "oldest": "Oldest",
+    "titleAsc": "Title A-Z",
+    "titleDesc": "Title Z-A"
+  },
+  "adiso": {
+    "published": "Published",
+    "location": "Location",
+    "contact": "Contact via WhatsApp",
+    "copyLink": "Copy link",
+    "share": "Share",
+    "previous": "Previous",
+    "next": "Next",
+    "close": "Close ad",
+    "notFound": "Ad not found"
+  },
+  "publish": {
+    "title": "Publish Ad",
+    "titleLabel": "Title",
+    "descriptionLabel": "Description",
+    "categoryLabel": "Category",
+    "locationLabel": "Location",
+    "contactLabel": "Contact (WhatsApp)",
+    "packageLabel": "Package",
+    "imagesLabel": "Images",
+    "publish": "Publish",
+    "publishing": "Publishing...",
+    "success": "Ad published successfully!",
+    "error": "Error publishing ad"
+  },
+  "grid": {
+    "noResults": "No ads found",
+    "loading": "Loading ads...",
+    "found": "ad found",
+    "foundPlural": "ads found"
+  },
+  "breadcrumbs": {
+    "home": "Home"
+  },
+  "theme": {
+    "light": "Light mode",
+    "dark": "Dark mode",
+    "auto": "Auto mode"
+  },
+  "language": {
+    "select": "Select language",
+    "current": "Current language"
+  }
+}
+
+
+

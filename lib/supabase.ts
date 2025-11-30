@@ -238,6 +238,36 @@ export async function updateAdisoInSupabase(adiso: Adiso): Promise<Adiso> {
   }
 }
 
+export async function deleteAdisoInSupabase(id: string): Promise<void> {
+  if (!supabase) {
+    throw new Error('Supabase no está configurado');
+  }
+
+  try {
+    const { error } = await supabase
+      .from('adisos')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error al eliminar adiso:', error);
+      
+      // Errores comunes con mensajes más claros
+      if (error.code === 'PGRST301' || error.message?.includes('permission denied')) {
+        throw new Error('No tienes permiso para eliminar adisos. Verifica las políticas de seguridad en Supabase.');
+      }
+      
+      if (error.code === 'PGRST116') {
+        throw new Error('Adiso no encontrado.');
+      }
+      
+      throw error;
+    }
+  } catch (error: any) {
+    throw error;
+  }
+}
+
 // Funciones para adisos gratuitos
 
 // Función para convertir de la base de datos a AdisoGratuito

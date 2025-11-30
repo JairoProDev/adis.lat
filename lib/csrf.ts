@@ -69,3 +69,5 @@ export function setCSRFToken(token: string): void {
   document.cookie = `${CSRF_TOKEN_NAME}=${encodeURIComponent(token)}; expires=${expires.toUTCString()}; path=/; SameSite=Strict; Secure`;
 }
 
+
+

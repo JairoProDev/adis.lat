@@ -1,86 +1,196 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAdisoByIdFromSupabase, createAdisoInSupabase, updateAdisoInSupabase } from '@/lib/supabase';
+import { deleteAdisoInSupabase, getAdisoByIdFromSupabase, updateAdisoInSupabase } from '@/lib/supabase';
 import { Adiso } from '@/types';
+import { createAdisoSchema, sanitizeText } from '@/lib/validations';
+import { rateLimit, getClientIP } from '@/lib/rate-limit';
 
-// Esta función maneja GET para obtener un adiso por ID
+// GET: Obtener un adiso por ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
+  const ip = getClientIP(request);
+  const limitResult = rateLimit(`get-adiso-${ip}`, {
+    windowMs: 60 * 1000,
+    maxRequests: 120,
+  });
+
+  if (!limitResult.allowed) {
+    return NextResponse.json(
+      { error: 'Demasiadas solicitudes. Por favor intenta más tarde.' },
+      { status: 429 }
+    );
+  }
+
   try {
-    const { id } = await params;
+    const { id } = params;
     const adiso = await getAdisoByIdFromSupabase(id);
-    
+
     if (!adiso) {
       return NextResponse.json(
         { error: 'Adiso no encontrado' },
         { status: 404 }
       );
     }
-    
+
     return NextResponse.json(adiso);
   } catch (error: any) {
     console.error('Error al obtener adiso:', error);
-    
-    // Si es un error de timeout o conexión, retornar un error más descriptivo
-    if (error?.message?.includes('timeout') || error?.message?.includes('fetch failed')) {
-      return NextResponse.json(
-        { error: 'Error de conexión con la base de datos. Verifica tu conexión a internet y las políticas de Supabase.' },
-        { status: 503 }
-      );
-    }
-    
     return NextResponse.json(
-      { error: 'Error al obtener adiso' },
+      { error: 'Error al obtener adiso', details: error?.message },
       { status: 500 }
     );
   }
 }
 
-// Esta función maneja PUT para actualizar un adiso existente
+// PUT: Actualizar un adiso
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
+  const ip = getClientIP(request);
+  const limitResult = rateLimit(`put-adiso-${ip}`, {
+    windowMs: 60 * 1000,
+    maxRequests: 20,
+  });
+
+  if (!limitResult.allowed) {
+    return NextResponse.json(
+      { error: 'Demasiadas solicitudes. Por favor intenta más tarde.' },
+      { status: 429 }
+    );
+  }
+
   try {
-    const { id } = await params;
+    const { id } = params;
     const body = await request.json();
-    
-    const adisoActualizado: Adiso = {
-      id: id,
-      categoria: body.categoria,
-      titulo: body.titulo,
-      descripcion: body.descripcion,
-      contacto: body.contacto,
-      ubicacion: body.ubicacion,
-      fechaPublicacion: body.fechaPublicacion,
-      horaPublicacion: body.horaPublicacion,
-      tamaño: body.tamaño || 'miniatura',
-      imagenesUrls: body.imagenesUrls || undefined,
-      imagenUrl: body.imagenUrl || body.imagenesUrls?.[0] || undefined,
-      esGratuito: body.esGratuito || false
+
+    // Validar que el ID coincida
+    if (body.id && body.id !== id) {
+      return NextResponse.json(
+        { error: 'El ID del body no coincide con el ID de la URL' },
+        { status: 400 }
+      );
+    }
+
+    // Validar y sanitizar entrada
+    const validationResult = createAdisoSchema.safeParse(body);
+
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { 
+          error: 'Datos de entrada inválidos',
+          details: validationResult.error.issues.map(e => ({
+            path: e.path.join('.'),
+            message: e.message
+          }))
+        },
+        { status: 400 }
+      );
+    }
+
+    const validatedData = validationResult.data;
+
+    // Sanitizar campos de texto
+    const sanitizedData = {
+      ...validatedData,
+      titulo: sanitizeText(validatedData.titulo),
+      descripcion: validatedData.descripcion ? sanitizeText(validatedData.descripcion) : undefined,
+      ubicacion: sanitizeText(validatedData.ubicacion),
+      contacto: sanitizeText(validatedData.contacto),
     };
 
-    const adiso = await updateAdisoInSupabase(adisoActualizado);
-    
-    return NextResponse.json(adiso, { status: 200 });
+    // Verificar que el adiso existe
+    const adisoExistente = await getAdisoByIdFromSupabase(id);
+    if (!adisoExistente) {
+      return NextResponse.json(
+        { error: 'Adiso no encontrado' },
+        { status: 404 }
+      );
+    }
+
+    // Actualizar el adiso (mantener fechas originales)
+    const adisoActualizado: Adiso = {
+      ...adisoExistente,
+      ...sanitizedData,
+      id, // Asegurar que el ID no cambie
+      fechaPublicacion: adisoExistente.fechaPublicacion,
+      horaPublicacion: adisoExistente.horaPublicacion,
+    };
+
+    const resultado = await updateAdisoInSupabase(adisoActualizado);
+
+    return NextResponse.json(resultado);
   } catch (error: any) {
     console.error('Error al actualizar adiso:', error);
-    
     let errorMessage = 'Error al actualizar adiso';
     let statusCode = 500;
-    
+
     if (error?.message?.includes('políticas de seguridad') || error?.message?.includes('permission denied')) {
-      errorMessage = 'Las políticas de seguridad no están configuradas. Ejecuta el SQL de seguridad en Supabase.';
+      errorMessage = 'No tienes permiso para actualizar este adiso.';
       statusCode = 403;
-    } else if (error?.message?.includes('timeout') || error?.message?.includes('fetch failed')) {
-      errorMessage = 'Error de conexión con Supabase. Verifica tu conexión y las credenciales.';
-      statusCode = 503;
-    } else if (error?.code === 'PGRST116') {
+    } else if (error?.message?.includes('no encontrado')) {
       errorMessage = 'Adiso no encontrado.';
       statusCode = 404;
     }
-    
+
+    return NextResponse.json(
+      { error: errorMessage, details: error?.message },
+      { status: statusCode }
+    );
+  }
+}
+
+// DELETE: Eliminar un adiso
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const ip = getClientIP(request);
+  const limitResult = rateLimit(`delete-adiso-${ip}`, {
+    windowMs: 60 * 1000,
+    maxRequests: 10,
+  });
+
+  if (!limitResult.allowed) {
+    return NextResponse.json(
+      { error: 'Demasiadas solicitudes. Por favor intenta más tarde.' },
+      { status: 429 }
+    );
+  }
+
+  try {
+    const { id } = params;
+
+    // Verificar que el adiso existe
+    const adisoExistente = await getAdisoByIdFromSupabase(id);
+    if (!adisoExistente) {
+      return NextResponse.json(
+        { error: 'Adiso no encontrado' },
+        { status: 404 }
+      );
+    }
+
+    // Eliminar el adiso
+    await deleteAdisoInSupabase(id);
+
+    return NextResponse.json(
+      { success: true, message: 'Adiso eliminado correctamente' },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    console.error('Error al eliminar adiso:', error);
+    let errorMessage = 'Error al eliminar adiso';
+    let statusCode = 500;
+
+    if (error?.message?.includes('políticas de seguridad') || error?.message?.includes('permission denied')) {
+      errorMessage = 'No tienes permiso para eliminar este adiso.';
+      statusCode = 403;
+    } else if (error?.message?.includes('no encontrado')) {
+      errorMessage = 'Adiso no encontrado.';
+      statusCode = 404;
+    }
+
     return NextResponse.json(
       { error: errorMessage, details: error?.message },
       { status: statusCode }

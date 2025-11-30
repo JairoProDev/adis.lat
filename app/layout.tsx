@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { defaultLocale } from '@/i18n';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://buscadis.com';
 
@@ -63,11 +64,35 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es">
+    <html lang={defaultLocale} suppressHydrationWarning>
       <head>
         <link rel="canonical" href={siteUrl} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#3c6997" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  const theme = localStorage.getItem('theme') || 'auto';
+                  const root = document.documentElement;
+                  if (theme === 'dark') {
+                    root.classList.add('dark-mode');
+                  } else if (theme === 'light') {
+                    root.classList.add('light-mode');
+                  } else {
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (prefersDark) {
+                      root.classList.add('dark-mode');
+                    } else {
+                      root.classList.add('light-mode');
+                    }
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
       </head>
       <body>
         <ErrorBoundary>
