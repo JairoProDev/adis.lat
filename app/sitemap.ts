@@ -13,7 +13,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     'productos',
     'eventos',
     'negocios',
-    'comunidad',
+    'comunidad'
   ];
 
   // Páginas estáticas
@@ -24,36 +24,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'hourly',
       priority: 1,
     },
-    {
-      url: `${siteUrl}/progreso`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.5,
-    },
   ];
 
   // Páginas de categorías
   const categoriaPages: MetadataRoute.Sitemap = categorias.map((categoria) => ({
     url: `${siteUrl}/?categoria=${categoria}`,
     lastModified: new Date(),
-    changeFrequency: 'hourly',
+    changeFrequency: 'daily',
     priority: 0.8,
   }));
 
-  // Páginas de adisos individuales
+  // Páginas de adisos
   let adisoPages: MetadataRoute.Sitemap = [];
+  
   try {
     const adisos = await getAdisosFromSupabase();
-    adisoPages = adisos.map((adiso) => ({
+    
+    adisoPages = adisos.slice(0, 1000).map((adiso) => ({
       url: `${siteUrl}/${adiso.categoria}/${adiso.id}`,
       lastModified: new Date(`${adiso.fechaPublicacion}T${adiso.horaPublicacion}:00`),
-      changeFrequency: 'daily',
-      priority: 0.7,
+      changeFrequency: 'weekly' as const,
+      priority: 0.6,
     }));
   } catch (error) {
     console.error('Error al generar sitemap de adisos:', error);
+    // Continuar sin adisos si hay error
   }
 
   return [...staticPages, ...categoriaPages, ...adisoPages];
 }
-

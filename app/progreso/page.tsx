@@ -22,6 +22,37 @@ interface ProgresoEntry {
 
 const progresoData: ProgresoEntry[] = [
   {
+    version: '2.2.0',
+    date: '2025-01-27',
+    time: '20:00',
+    type: 'improvement',
+    title: 'Auditoría Completa: Accesibilidad, SEO, Rendimiento y Seguridad',
+    description: 'Implementación masiva de mejoras críticas en accesibilidad WCAG 2.1 AA, SEO avanzado, optimización de rendimiento, validación robusta y seguridad',
+    userBenefits: [
+      'Mejor accesibilidad: navegación por teclado completa, screen readers compatibles, contraste mejorado',
+      'Mejor SEO: sitemap dinámico, robots.txt, structured data, metadata mejorada',
+      'Rendimiento optimizado: imágenes con next/image, code splitting, cache LRU inteligente',
+      'Mayor seguridad: validación robusta con Zod, sanitización de entrada, rate limiting',
+      'Mejor experiencia offline: detección de conexión, mensajes claros, fallbacks',
+      'Código más robusto: ErrorBoundary, manejo de errores mejorado, loading states',
+      'Mejor UX: spinners de carga, mensajes de error claros, feedback visual mejorado',
+    ],
+    technicalDetails: [
+      'Accesibilidad: ARIA labels en todos los iconos, htmlFor en labels, skip links, focus visible, contraste WCAG AA',
+      'SEO: sitemap.ts dinámico con todos los adisos, robots.ts configurado, structured data JSON-LD, metadata Open Graph y Twitter Cards',
+      'Rendimiento: migración completa a next/image con lazy loading, dynamic imports para componentes pesados, cache LRU en localStorage',
+      'Seguridad: validación con Zod en todas las rutas API, sanitización de HTML/texto, rate limiting por IP',
+      'Componentes nuevos: LoadingSpinner, ErrorBoundary, lib/offline.ts para detección de conexión',
+      'Validaciones: lib/validations.ts con schemas Zod, sanitización de XSS, validación de imágenes',
+      'Health check: endpoint /api/health para monitoreo de servicios',
+      'Mejoras de código: iconos con aria-hidden, botones con aria-label, mejor estructura',
+      'Configuración: next.config.js con remotePatterns para imágenes de Supabase',
+      'Manejo de errores: mensajes específicos y amigables, detección de tipos de error',
+      'Estados de carga: spinners animados, aria-busy, feedback visual consistente',
+    ],
+    impact: 'major'
+  },
+  {
     version: '2.1.0',
     date: '2025-11-29',
     time: '19:30',

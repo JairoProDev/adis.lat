@@ -70,7 +70,7 @@ export function rateLimit(
 }
 
 // Helper para obtener IP del request
-export function getClientIP(request: Request): string {
+export function getClientIP(request: Request | { headers: Headers }): string {
   // Intentar obtener IP de headers comunes
   const forwarded = request.headers.get('x-forwarded-for');
   if (forwarded) {

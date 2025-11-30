@@ -12,7 +12,8 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useToast } from '@/hooks/useToast';
 import { useDebounce } from '@/hooks/useDebounce';
 import { getBusquedaUrl } from '@/lib/utils';
-import dynamic from 'next/dynamic';
+import { onOnlineStatusChange, getOfflineMessage } from '@/lib/offline';
+import dynamicImport from 'next/dynamic';
 import Header from '@/components/Header';
 import Buscador from '@/components/Buscador';
 import FiltrosCategoria from '@/components/FiltrosCategoria';
@@ -23,22 +24,22 @@ import FeedbackButton from '@/components/FeedbackButton';
 import NavbarMobile from '@/components/NavbarMobile';
 
 // Lazy load componentes pesados
-const ModalAdiso = dynamic(() => import('@/components/ModalAdiso'), {
+const ModalAdiso = dynamicImport(() => import('@/components/ModalAdiso'), {
   loading: () => <div style={{ padding: '2rem', textAlign: 'center' }}>Cargando adiso...</div>,
   ssr: false,
 });
 
-const FormularioPublicar = dynamic(() => import('@/components/FormularioPublicar'), {
+const FormularioPublicar = dynamicImport(() => import('@/components/FormularioPublicar'), {
   loading: () => <div style={{ padding: '2rem', textAlign: 'center' }}>Cargando formulario...</div>,
   ssr: false,
 });
 
-const SidebarDesktop = dynamic(() => import('@/components/SidebarDesktop').then(mod => ({ default: mod.default })), {
+const SidebarDesktop = dynamicImport(() => import('@/components/SidebarDesktop').then(mod => ({ default: mod.default })), {
   loading: () => null,
   ssr: false,
 });
 
-const ModalNavegacionMobile = dynamic(() => import('@/components/ModalNavegacionMobile'), {
+const ModalNavegacionMobile = dynamicImport(() => import('@/components/ModalNavegacionMobile'), {
   loading: () => null,
   ssr: false,
 });
@@ -70,7 +71,12 @@ function HomeContent() {
   const [isSidebarMinimizado, setIsSidebarMinimizado] = useState(false);
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const { toasts, removeToast, success, error } = useToast();
-  const [isOnlineState, setIsOnlineState] = useState(isOnline());
+  const [isOnlineState, setIsOnlineState] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return navigator.onLine;
+    }
+    return true;
+  });
 
   // Detectar cambios en el estado de conexión
   useEffect(() => {

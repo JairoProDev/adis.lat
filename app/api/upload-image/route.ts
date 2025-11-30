@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { isValidImageType, isValidImageSize, LIMITS } from '@/lib/validations';
+import { validateImageFile } from '@/lib/validations';
+import { LIMITS } from '@/lib/utils';
 import { rateLimit, getClientIP } from '@/lib/rate-limit';
 import sharp from 'sharp';
 
@@ -38,18 +39,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validar tipo MIME
-    if (!isValidImageType(file.type)) {
+    // Validar imagen
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
       return NextResponse.json(
-        { error: `Tipo de archivo no permitido. Solo se permiten: ${['JPEG', 'PNG', 'WEBP', 'GIF'].join(', ')}` },
-        { status: 400 }
-      );
-    }
-
-    // Validar tamaño
-    if (!isValidImageSize(file.size)) {
-      return NextResponse.json(
-        { error: `La imagen es demasiado grande. Máximo ${LIMITS.IMAGEN_SIZE_MAX / (1024 * 1024)}MB.` },
+        { error: validation.error },
         { status: 400 }
       );
     }
@@ -77,9 +71,10 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      if (metadata.width > LIMITS.IMAGEN_DIMENSION_MAX || metadata.height > LIMITS.IMAGEN_DIMENSION_MAX) {
+      const MAX_DIMENSION = 4096; // Máximo de dimensiones de imagen
+      if (metadata.width && metadata.width > MAX_DIMENSION || metadata.height && metadata.height > MAX_DIMENSION) {
         return NextResponse.json(
-          { error: `Las dimensiones de la imagen exceden el máximo permitido (${LIMITS.IMAGEN_DIMENSION_MAX}px)` },
+          { error: `Las dimensiones de la imagen exceden el máximo permitido (${MAX_DIMENSION}px)` },
           { status: 400 }
         );
       }

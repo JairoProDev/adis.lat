@@ -1,119 +1,123 @@
 import { z } from 'zod';
-import { Categoria, TamañoPaquete } from '@/types';
 
-// Límites de validación
-export const LIMITS = {
-  TITULO_MIN: 3,
-  TITULO_MAX: 200,
-  DESCRIPCION_MIN: 10,
-  DESCRIPCION_MAX: 5000,
-  UBICACION_MIN: 2,
-  UBICACION_MAX: 200,
-  CONTACTO_MIN: 8,
-  CONTACTO_MAX: 20,
-  IMAGEN_SIZE_MAX: 5 * 1024 * 1024, // 5MB
-  IMAGEN_DIMENSION_MAX: 4096, // 4096px
-} as const;
-
-// Validación de categoría
-const categoriaSchema = z.enum([
-  'empleos',
-  'inmuebles',
-  'vehiculos',
-  'servicios',
-  'productos',
-  'eventos',
-  'negocios',
-  'comunidad'
-]);
-
-// Validación de tamaño de paquete
-const tamañoPaqueteSchema = z.enum([
-  'miniatura',
-  'pequeño',
-  'mediano',
-  'grande',
-  'gigante'
-]);
-
-// Validación de teléfono (permite números, +, espacios, guiones)
-const telefonoSchema = z.string()
-  .min(LIMITS.CONTACTO_MIN, `El contacto debe tener al menos ${LIMITS.CONTACTO_MIN} caracteres`)
-  .max(LIMITS.CONTACTO_MAX, `El contacto no puede exceder ${LIMITS.CONTACTO_MAX} caracteres`)
-  .regex(/^[\d\s\+\-\(\)]+$/, 'El contacto solo puede contener números, espacios, +, -, ( y )');
-
-// Schema para crear adiso
-export const createAdisoSchema = z.object({
-  categoria: categoriaSchema,
+// Schema de validación para adisos
+export const adisoSchema = z.object({
+  id: z.string().min(1, 'ID es requerido'),
+  categoria: z.enum([
+    'empleos',
+    'inmuebles',
+    'vehiculos',
+    'servicios',
+    'productos',
+    'eventos',
+    'negocios',
+    'comunidad'
+  ]),
   titulo: z.string()
-    .min(LIMITS.TITULO_MIN, `El título debe tener al menos ${LIMITS.TITULO_MIN} caracteres`)
-    .max(LIMITS.TITULO_MAX, `El título no puede exceder ${LIMITS.TITULO_MAX} caracteres`)
+    .min(1, 'El título es requerido')
+    .max(100, 'El título no puede exceder 100 caracteres')
     .trim(),
   descripcion: z.string()
-    .min(LIMITS.DESCRIPCION_MIN, `La descripción debe tener al menos ${LIMITS.DESCRIPCION_MIN} caracteres`)
-    .max(LIMITS.DESCRIPCION_MAX, `La descripción no puede exceder ${LIMITS.DESCRIPCION_MAX} caracteres`)
-    .trim(),
-  contacto: telefonoSchema,
+    .max(2000, 'La descripción no puede exceder 2000 caracteres')
+    .optional()
+    .nullable(),
+  contacto: z.string()
+    .regex(/^\+?[1-9]\d{1,14}$/, 'Número de contacto inválido')
+    .min(9, 'El número de contacto debe tener al menos 9 dígitos'),
   ubicacion: z.string()
-    .min(LIMITS.UBICACION_MIN, `La ubicación debe tener al menos ${LIMITS.UBICACION_MIN} caracteres`)
-    .max(LIMITS.UBICACION_MAX, `La ubicación no puede exceder ${LIMITS.UBICACION_MAX} caracteres`)
+    .min(1, 'La ubicación es requerida')
+    .max(100, 'La ubicación no puede exceder 100 caracteres')
     .trim(),
-  tamaño: tamañoPaqueteSchema.optional().default('miniatura'),
-  imagenesUrls: z.array(z.string().url()).optional(),
-  imagenUrl: z.string().url().optional(),
-  esGratuito: z.boolean().optional().default(false),
-  id: z.string().optional(),
-  fechaPublicacion: z.string().optional(),
-  horaPublicacion: z.string().optional(),
-}).strict();
+  tamaño: z.enum(['miniatura', 'pequeño', 'mediano', 'grande', 'gigante']).optional(),
+  imagenUrl: z.string().url().optional().nullable(),
+  imagenesUrls: z.array(z.string().url()).optional().nullable(),
+  fechaPublicacion: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato de fecha inválido'),
+  horaPublicacion: z.string().regex(/^\d{2}:\d{2}$/, 'Formato de hora inválido'),
+});
 
-// Schema para adiso gratuito (más restrictivo)
-export const createAdisoGratuitoSchema = z.object({
-  categoria: categoriaSchema,
+// Schema para adisos gratuitos (más restrictivo)
+export const adisoGratuitoSchema = z.object({
   titulo: z.string()
-    .min(3, 'El título debe tener al menos 3 caracteres')
+    .min(1, 'El título es requerido')
     .max(30, 'El título no puede exceder 30 caracteres')
     .trim(),
-  contacto: telefonoSchema,
-}).strict();
+  categoria: z.enum([
+    'empleos',
+    'inmuebles',
+    'vehiculos',
+    'servicios',
+    'productos',
+    'eventos',
+    'negocios',
+    'comunidad'
+  ]),
+  contacto: z.string()
+    .regex(/^\+?[1-9]\d{1,14}$/, 'Número de contacto inválido')
+    .min(9, 'El número de contacto debe tener al menos 9 dígitos'),
+});
 
-// Schema para actualizar adiso
-export const updateAdisoSchema = createAdisoSchema.partial().required({ id: true });
+// Schema para crear adiso (sin validar campos generados automáticamente)
+export const createAdisoSchema = adisoSchema.omit({
+  id: true,
+  fechaPublicacion: true,
+  horaPublicacion: true,
+}).extend({
+  fechaPublicacion: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  horaPublicacion: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+});
+
+// Schema para crear adiso gratuito
+export const createAdisoGratuitoSchema = adisoGratuitoSchema;
+
+// Funciones de sanitización
+export function sanitizeText(text: string): string {
+  return text
+    .trim()
+    .replace(/\s+/g, ' ') // Múltiples espacios a uno
+    .replace(/[<>]/g, ''); // Remover < y >
+}
 
 // Función para sanitizar HTML (prevenir XSS)
 export function sanitizeHtml(html: string): string {
-  // Remover tags HTML peligrosos y sus atributos
-  return html
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
-    .replace(/on\w+="[^"]*"/gi, '')
-    .replace(/on\w+='[^']*'/gi, '')
-    .replace(/javascript:/gi, '')
-    .replace(/data:/gi, '');
+  if (typeof window === 'undefined') {
+    // En el servidor, usar una sanitización básica
+    return html
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;')
+      .replace(/\//g, '&#x2F;');
+  }
+  
+  // En el cliente, usar DOMPurify si está disponible
+  // Por ahora, usar sanitización básica
+  const div = document.createElement('div');
+  div.textContent = html;
+  return div.innerHTML;
 }
 
-// Función para sanitizar texto plano
-export function sanitizeText(text: string): string {
-  return text
-    .replace(/[<>]/g, '') // Remover < y >
-    .trim();
+// Validar tamaño de imagen
+export function validateImageFile(file: File): { valid: boolean; error?: string } {
+  const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+  const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    return { valid: false, error: 'Tipo de archivo no permitido. Use JPEG, PNG o WebP' };
+  }
+  
+  if (file.size > MAX_SIZE) {
+    return { valid: false, error: 'El archivo es demasiado grande. Máximo 5MB' };
+  }
+  
+  return { valid: true };
 }
 
-// Validación de tipo MIME de imagen
-export const ALLOWED_IMAGE_TYPES = [
-  'image/jpeg',
-  'image/jpg',
-  'image/png',
-  'image/webp',
-  'image/gif'
-] as const;
-
-export function isValidImageType(mimeType: string): boolean {
-  return ALLOWED_IMAGE_TYPES.includes(mimeType as typeof ALLOWED_IMAGE_TYPES[number]);
+// Validar URL
+export function validateUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return ['http:', 'https:'].includes(parsed.protocol);
+  } catch {
+    return false;
+  }
 }
-
-// Validación de tamaño de archivo
-export function isValidImageSize(size: number): boolean {
-  return size > 0 && size <= LIMITS.IMAGEN_SIZE_MAX;
-}
-

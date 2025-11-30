@@ -5,7 +5,7 @@ import {
 } from '@/lib/supabase';
 import { Adiso } from '@/types';
 import { generarIdUnico } from '@/lib/utils';
-import { createAdisoSchema, sanitizeText, sanitizeHtml } from '@/lib/validations';
+import { createAdisoSchema, sanitizeText } from '@/lib/validations';
 import { rateLimit, getClientIP } from '@/lib/rate-limit';
 
 // Esta función maneja GET para obtener todos los adisos
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { 
           error: 'Datos de entrada inválidos',
-          details: validationResult.error.errors.map(e => ({
+          details: validationResult.error.issues.map(e => ({
             path: e.path.join('.'),
             message: e.message
           }))
@@ -138,18 +138,27 @@ export async function POST(request: NextRequest) {
     const sanitizedData = {
       ...validatedData,
       titulo: sanitizeText(validatedData.titulo),
-      descripcion: sanitizeHtml(validatedData.descripcion),
+      descripcion: validatedData.descripcion ? sanitizeText(validatedData.descripcion) : undefined,
       ubicacion: sanitizeText(validatedData.ubicacion),
       contacto: sanitizeText(validatedData.contacto),
     };
+    
+    // Verificar si el body original tiene id y fechas
+    const bodyHasId = 'id' in body && typeof body.id === 'string';
+    const bodyHasDates = 'fechaPublicacion' in body && 'horaPublicacion' in body;
     
     // Si el body ya tiene un adiso completo con id, usarlo directamente
     // Si no, crear uno nuevo
     let nuevoAdiso: Adiso;
     
-    if (sanitizedData.id && sanitizedData.fechaPublicacion && sanitizedData.horaPublicacion) {
-      // El adiso ya está completo, usarlo tal cual
-      nuevoAdiso = sanitizedData as Adiso;
+    if (bodyHasId && bodyHasDates) {
+      // El adiso ya está completo, usarlo tal cual (con sanitización)
+      nuevoAdiso = {
+        ...sanitizedData,
+        id: body.id as string,
+        fechaPublicacion: body.fechaPublicacion as string,
+        horaPublicacion: body.horaPublicacion as string,
+      } as Adiso;
     } else {
       // Crear un nuevo adiso
       const ahora = new Date();
@@ -157,13 +166,13 @@ export async function POST(request: NextRequest) {
       const hora = ahora.toTimeString().split(' ')[0].substring(0, 5);
 
       // Usar el ID del body si existe, sino generar uno nuevo
-      const idUnico = sanitizedData.id || generarIdUnico();
+      const idUnico = (bodyHasId ? body.id : generarIdUnico()) as string;
 
       nuevoAdiso = {
         id: idUnico,
         categoria: sanitizedData.categoria,
         titulo: sanitizedData.titulo,
-        descripcion: sanitizedData.descripcion,
+        descripcion: sanitizedData.descripcion || '',
         contacto: sanitizedData.contacto,
         ubicacion: sanitizedData.ubicacion,
         tamaño: sanitizedData.tamaño || 'miniatura',
@@ -172,7 +181,7 @@ export async function POST(request: NextRequest) {
         imagenesUrls: sanitizedData.imagenesUrls || undefined,
         // Compatibilidad hacia atrás
         imagenUrl: sanitizedData.imagenUrl || sanitizedData.imagenesUrls?.[0] || undefined,
-        esGratuito: sanitizedData.esGratuito || false
+        esGratuito: ('esGratuito' in body ? body.esGratuito : false) as boolean
       };
     }
 
