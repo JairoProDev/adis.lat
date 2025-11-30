@@ -770,34 +770,17 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
           overflowY: 'auto'
         }}
       >
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+        {/* Header sin botón de cerrar cuando está dentro del sidebar */}
+        {/* En desktop: el usuario puede colapsar el sidebar o cambiar de sección */}
+        {/* En mobile: ya hay un botón de cerrar en el header del ModalNavegacionMobile */}
+        <h2 style={{
+          fontSize: '1.25rem',
+          fontWeight: 600,
+          color: 'var(--text-primary)',
           marginBottom: '1.5rem'
         }}>
-          <h2 style={{
-            fontSize: '1.25rem',
-            fontWeight: 600,
-            color: 'var(--text-primary)'
-          }}>
-            {modoGratuito ? 'Publicar aviso gratuito' : 'Publicar aviso'}
-          </h2>
-          <button
-            onClick={onCerrar}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: '1.5rem',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-              padding: '0.25rem',
-              lineHeight: 1
-            }}
-          >
-            ×
-          </button>
-        </div>
+          {modoGratuito ? 'Publicar aviso gratuito' : 'Publicar aviso'}
+        </h2>
         {renderForm()}
       </div>
     );

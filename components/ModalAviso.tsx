@@ -196,34 +196,9 @@ export default function ModalAviso({
           borderLeft: 'none'
         }}
       >
-        <button
-          onClick={onCerrar}
-          style={{
-            position: 'absolute',
-            top: '1rem',
-            right: '1rem',
-            color: 'var(--text-secondary)',
-            cursor: 'pointer',
-            background: 'none',
-            border: 'none',
-            padding: '0.5rem',
-            lineHeight: 1,
-            zIndex: 20,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRadius: '4px',
-            transition: 'background-color 0.2s'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-          }}
-        >
-          <IconClose />
-        </button>
+        {/* No mostrar botón de cerrar cuando está dentro del sidebar (desktop o mobile) */}
+        {/* En desktop: el usuario puede colapsar el sidebar o cambiar de sección */}
+        {/* En mobile: ya hay un botón de cerrar en el header del ModalNavegacionMobile */}
 
         <div style={{ marginBottom: '1rem' }}>
           <div
@@ -248,8 +223,8 @@ export default function ModalAviso({
             fontWeight: 600,
             color: 'var(--text-primary)',
             marginBottom: '1rem',
-            lineHeight: 1.3,
-            paddingRight: '2.5rem'
+            lineHeight: 1.3
+            // paddingRight removido ya que no hay botón de cerrar dentro del sidebar
           }}>
             {aviso.titulo}
           </h2>
