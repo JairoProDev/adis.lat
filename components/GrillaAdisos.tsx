@@ -79,7 +79,7 @@ export default function GrillaAdisos({ adisos, onAbrirAdiso, adisoSeleccionadoId
           display: grid;
           grid-template-columns: repeat(${isDesktop ? columnas : 2}, 1fr);
           gap: 0.5rem;
-          grid-auto-rows: minmax(${isDesktop ? '100px' : '80px'}, auto);
+          grid-auto-rows: minmax(${isDesktop ? '80px' : '80px'}, auto);
         }
       `}</style>
       <div className="grilla-adisos">
@@ -105,19 +105,33 @@ export default function GrillaAdisos({ adisos, onAbrirAdiso, adisoSeleccionadoId
                   ? '2px solid var(--text-primary)' 
                   : '1px solid var(--border-color)',
                 borderRadius: '6px',
-                padding: tamaño === 'miniatura' ? '0.5rem' : tamaño === 'pequeño' ? '0.75rem' : tamaño === 'mediano' ? '0.875rem' : '1rem',
+                padding: tamaño === 'miniatura' 
+                  ? isDesktop ? '0.6rem' : '0.5rem'
+                  : tamaño === 'pequeño' 
+                  ? isDesktop ? '0.75rem' : '0.65rem'
+                  : tamaño === 'mediano' 
+                  ? '0.875rem' 
+                  : tamaño === 'grande'
+                  ? '1rem'
+                  : '1.125rem', // gigante
                 textAlign: 'left',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: tamaño === 'miniatura' ? '0.2rem' : tamaño === 'pequeño' ? '0.3rem' : '0.4rem',
+                gap: tamaño === 'miniatura' 
+                  ? '0.25rem' 
+                  : tamaño === 'pequeño' 
+                  ? '0.35rem' 
+                  : '0.4rem',
                 position: 'relative',
                 boxShadow: estaSeleccionado ? '0 4px 12px rgba(0, 0, 0, 0.15)' : 'none',
                 gridColumn: `span ${gridColumnSpan}`,
                 gridRow: `span ${gridRowSpan}`,
                 height: '100%',
-                justifyContent: 'flex-start'
+                justifyContent: 'flex-start',
+                overflow: 'hidden', // Asegura que el contenido no se desborde
+                minHeight: 0 // Permite que flexbox funcione correctamente
               }}
               onMouseEnter={(e) => {
                 if (!estaSeleccionado) {
@@ -152,42 +166,112 @@ export default function GrillaAdisos({ adisos, onAbrirAdiso, adisoSeleccionadoId
                   alt={adiso.titulo}
                   style={{
                     width: '100%',
-                    height: tamaño === 'pequeño' ? '120px' : tamaño === 'mediano' ? '140px' : tamaño === 'grande' ? '180px' : '220px',
+                    height: tamaño === 'pequeño' 
+                      ? isDesktop ? '130px' : '120px'
+                      : tamaño === 'mediano' 
+                      ? isDesktop ? '150px' : '140px'
+                      : tamaño === 'grande' 
+                      ? isDesktop ? '190px' : '180px'
+                      : isDesktop ? '230px' : '220px', // gigante
                     objectFit: 'cover',
                     borderRadius: '4px',
-                    marginBottom: '0.3rem'
+                    marginBottom: '0.3rem',
+                    flexShrink: 0 // No permitir que la imagen se comprima
                   }}
                 />
               ) : null;
             })()}
             <div style={{
-              fontSize: tamaño === 'miniatura' ? '0.6rem' : tamaño === 'pequeño' ? '0.65rem' : '0.7rem',
+              fontSize: tamaño === 'miniatura' 
+                ? isDesktop ? '0.7rem' : '0.65rem'
+                : tamaño === 'pequeño'
+                ? isDesktop ? '0.75rem' : '0.7rem'
+                : tamaño === 'mediano'
+                ? isDesktop ? '0.8rem' : '0.75rem'
+                : tamaño === 'grande'
+                ? isDesktop ? '0.875rem' : '0.8rem'
+                : isDesktop ? '0.95rem' : '0.9rem', // gigante
               color: 'var(--text-tertiary)',
               textTransform: 'capitalize',
               display: 'flex',
               alignItems: 'center',
               gap: '0.25rem',
-              marginBottom: tamaño === 'miniatura' ? '0.1rem' : '0.15rem'
+              marginBottom: tamaño === 'miniatura' ? '0.15rem' : '0.2rem',
+              flexShrink: 0 // No permitir que la categoría se reduzca
             }}>
               {(() => {
                 const IconComponent = getCategoriaIcon(adiso.categoria);
-                return <IconComponent size={tamaño === 'miniatura' ? 10 : tamaño === 'pequeño' ? 11 : 12} />;
+                const iconSize = tamaño === 'miniatura' 
+                  ? isDesktop ? 12 : 11
+                  : tamaño === 'pequeño'
+                  ? isDesktop ? 13 : 12
+                  : tamaño === 'mediano'
+                  ? isDesktop ? 14 : 13
+                  : tamaño === 'grande'
+                  ? isDesktop ? 15 : 14
+                  : isDesktop ? 16 : 15; // gigante
+                return <IconComponent size={iconSize} />;
               })()}
               {adiso.categoria}
             </div>
-            <h3 style={{
-              fontSize: tamaño === 'miniatura' ? '0.75rem' : tamaño === 'pequeño' ? '0.8125rem' : tamaño === 'mediano' ? '0.875rem' : tamaño === 'grande' ? '0.9375rem' : '1rem',
-              fontWeight: 600,
-              color: 'var(--text-primary)',
-              lineHeight: 1.3,
-              display: '-webkit-box',
-              WebkitLineClamp: tamaño === 'miniatura' ? 1 : tamaño === 'pequeño' ? 1 : tamaño === 'mediano' ? 2 : tamaño === 'grande' ? 2 : 3,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-              margin: 0
+            <div style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'flex-start',
+              minHeight: 0,
+              overflow: 'hidden'
             }}>
-              {adiso.titulo}
-            </h3>
+              <h3 style={{
+                fontSize: tamaño === 'miniatura' 
+                  ? isDesktop ? '0.875rem' : '0.8rem'
+                  : tamaño === 'pequeño'
+                  ? isDesktop ? '1.125rem' : '1rem'
+                  : tamaño === 'mediano'
+                  ? isDesktop ? '1.375rem' : '1.25rem'
+                  : tamaño === 'grande'
+                  ? isDesktop ? '1.625rem' : '1.5rem'
+                  : isDesktop ? '1.875rem' : '1.75rem', // gigante
+                fontWeight: tamaño === 'miniatura' 
+                  ? 600 
+                  : tamaño === 'pequeño' 
+                  ? 700 
+                  : tamaño === 'mediano' 
+                  ? 700 
+                  : tamaño === 'grande' 
+                  ? 800 
+                  : 900, // gigante más bold
+                color: 'var(--text-primary)',
+                lineHeight: tamaño === 'miniatura' 
+                  ? 1.3 
+                  : tamaño === 'pequeño'
+                  ? 1.3
+                  : tamaño === 'mediano'
+                  ? 1.3
+                  : tamaño === 'grande'
+                  ? 1.25
+                  : 1.25, // gigante
+                display: '-webkit-box',
+                WebkitLineClamp: tamaño === 'miniatura' 
+                  ? isDesktop ? 3 : 2  // 2-3 líneas en miniatura
+                  : tamaño === 'pequeño'
+                  ? isDesktop ? 3 : 2
+                  : tamaño === 'mediano'
+                  ? isDesktop ? 4 : 3
+                  : tamaño === 'grande'
+                  ? isDesktop ? 5 : 4
+                  : isDesktop ? 6 : 5, // gigante
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+                margin: 0,
+                wordBreak: 'break-word',
+                hyphens: 'auto',
+                flex: 1,
+                minHeight: 0
+              }}>
+                {adiso.titulo}
+              </h3>
+            </div>
             {estaSeleccionado && (
               <div style={{
                 position: 'absolute',
