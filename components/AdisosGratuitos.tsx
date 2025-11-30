@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { AdisoGratuito, Categoria, Adiso } from '@/types';
 import { IconWhatsApp, IconGratuitos } from './Icons';
 import { getWhatsAppUrl, generarIdUnico } from '@/lib/utils';
@@ -35,11 +35,17 @@ interface AdisosGratuitosProps {
   todosLosAdisos?: Adiso[]; // Todos los adisos (gratuitos + de paga)
 }
 
+// Tipo unificado para adisos mezclados
+type AdisoUnificado = 
+  | { tipo: 'paga'; adiso: Adiso }
+  | { tipo: 'gratuito'; adiso: AdisoGratuito };
+
 export default function AdisosGratuitos({ onPublicarGratuito, todosLosAdisos = [] }: AdisosGratuitosProps) {
   const [adisosGratuitos, setAdisosGratuitos] = useState<AdisoGratuito[]>([]);
   const [cargando, setCargando] = useState(true);
   const [errorCargandoGratuitos, setErrorCargandoGratuitos] = useState(false);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [publicando, setPublicando] = useState(false);
   const [formData, setFormData] = useState({
     categoria: 'empleos' as Categoria,
     titulo: '',
@@ -66,6 +72,39 @@ export default function AdisosGratuitos({ onPublicarGratuito, todosLosAdisos = [
     cargarAdisos();
   }, []);
 
+  // Función para parsear fecha de adiso de paga
+  const parsearFechaPaga = (adiso: Adiso): number => {
+    const fechaStr = `${adiso.fechaPublicacion}T${adiso.horaPublicacion || '00:00'}:00`;
+    const fecha = new Date(fechaStr).getTime();
+    return isNaN(fecha) ? 0 : fecha;
+  };
+
+  // Función para parsear fecha de adiso gratuito
+  const parsearFechaGratuito = (adiso: AdisoGratuito): number => {
+    const fecha = new Date(adiso.fechaCreacion).getTime();
+    return isNaN(fecha) ? 0 : fecha;
+  };
+
+  // Combinar y ordenar todos los adisos por fecha (más recientes primero)
+  const adisosOrdenados = useMemo(() => {
+    const unificados: AdisoUnificado[] = [
+      ...todosLosAdisos.map(adiso => ({ tipo: 'paga' as const, adiso })),
+      ...adisosGratuitos.map(adiso => ({ tipo: 'gratuito' as const, adiso }))
+    ];
+
+    return unificados.sort((a, b) => {
+      const fechaA = a.tipo === 'paga' 
+        ? parsearFechaPaga(a.adiso) 
+        : parsearFechaGratuito(a.adiso);
+      const fechaB = b.tipo === 'paga' 
+        ? parsearFechaPaga(b.adiso) 
+        : parsearFechaGratuito(b.adiso);
+      
+      // Más recientes primero (fecha mayor primero)
+      return fechaB - fechaA;
+    });
+  }, [todosLosAdisos, adisosGratuitos]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.titulo.trim().length === 0 || formData.titulo.length > 30) {
@@ -75,20 +114,80 @@ export default function AdisosGratuitos({ onPublicarGratuito, todosLosAdisos = [
       return;
     }
 
-    try {
-      const nuevoAdiso = await createAdisoGratuito({
-        categoria: formData.categoria,
-        titulo: formData.titulo.trim(),
-        contacto: formData.contacto.trim()
-      });
+    // Guardar valores antes de limpiar el formulario
+    const datosParaEnviar = {
+      categoria: formData.categoria,
+      titulo: formData.titulo.trim(),
+      contacto: formData.contacto.trim()
+    };
 
-      setAdisosGratuitos(prev => [nuevoAdiso, ...prev]);
-      setFormData({ categoria: 'empleos', titulo: '', contacto: '' });
-      setMostrarFormulario(false);
+    // Optimistic update: crear adiso temporal inmediatamente
+    const ahora = new Date();
+    const fechaCreacion = ahora.toISOString();
+    const fechaExpiracion = new Date(ahora.getTime() + 24 * 60 * 60 * 1000).toISOString();
+    
+    const adisoTemporal: AdisoGratuito = {
+      id: generarIdUnico(),
+      categoria: datosParaEnviar.categoria,
+      titulo: datosParaEnviar.titulo,
+      contacto: datosParaEnviar.contacto,
+      fechaCreacion,
+      fechaExpiracion
+    };
+
+    // Agregar inmediatamente al estado (optimistic update)
+    setAdisosGratuitos(prev => [adisoTemporal, ...prev]);
+    setPublicando(true);
+    setFormData({ categoria: 'empleos', titulo: '', contacto: '' });
+    setMostrarFormulario(false);
+
+    try {
+      // Llamada API en background
+      const nuevoAdiso = await createAdisoGratuito(datosParaEnviar);
+
+      // Reemplazar el temporal con el real (con el ID correcto del servidor)
+      setAdisosGratuitos(prev => 
+        prev.map(a => a.id === adisoTemporal.id ? nuevoAdiso : a)
+      );
+      
       onPublicarGratuito?.(nuevoAdiso);
     } catch (error: any) {
       console.error('Error al publicar adiso gratuito:', error);
-      alert(error.message || 'Error al publicar el adiso gratuito');
+      
+      // Revertir optimistic update si falla
+      setAdisosGratuitos(prev => prev.filter(a => a.id !== adisoTemporal.id));
+      
+      // Restaurar formulario
+      setFormData({
+        categoria: datosParaEnviar.categoria,
+        titulo: datosParaEnviar.titulo,
+        contacto: datosParaEnviar.contacto
+      });
+      setMostrarFormulario(true);
+      
+      alert(error.message || 'Error al publicar el adiso gratuito. Por favor intenta nuevamente.');
+    } finally {
+      setPublicando(false);
+    }
+  };
+
+  const handleClickTitulo = (adisoUnificado: AdisoUnificado) => {
+    if (adisoUnificado.tipo === 'paga') {
+      const url = getWhatsAppUrl(
+        adisoUnificado.adiso.contacto,
+        adisoUnificado.adiso.titulo,
+        adisoUnificado.adiso.categoria,
+        adisoUnificado.adiso.id
+      );
+      window.open(url, '_blank');
+    } else {
+      const url = getWhatsAppUrl(
+        adisoUnificado.adiso.contacto,
+        adisoUnificado.adiso.titulo,
+        adisoUnificado.adiso.categoria,
+        adisoUnificado.adiso.id
+      );
+      window.open(url, '_blank');
     }
   };
 
@@ -195,19 +294,21 @@ export default function AdisosGratuitos({ onPublicarGratuito, todosLosAdisos = [
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button
               type="submit"
+              disabled={publicando}
               style={{
                 flex: 1,
                 padding: '0.625rem',
-                backgroundColor: 'var(--text-primary)',
+                backgroundColor: publicando ? 'var(--text-tertiary)' : 'var(--text-primary)',
                 color: 'var(--bg-primary)',
                 border: 'none',
                 borderRadius: '4px',
                 fontSize: '0.875rem',
                 fontWeight: 600,
-                cursor: 'pointer'
+                cursor: publicando ? 'not-allowed' : 'pointer',
+                opacity: publicando ? 0.6 : 1
               }}
             >
-              Publicar Gratis
+              {publicando ? 'Publicando...' : 'Publicar Gratis'}
             </button>
             <button
               type="button"
@@ -215,6 +316,7 @@ export default function AdisosGratuitos({ onPublicarGratuito, todosLosAdisos = [
                 setMostrarFormulario(false);
                 setFormData({ categoria: 'empleos', titulo: '', contacto: '' });
               }}
+              disabled={publicando}
               style={{
                 padding: '0.625rem 1rem',
                 backgroundColor: 'var(--bg-primary)',
@@ -222,7 +324,8 @@ export default function AdisosGratuitos({ onPublicarGratuito, todosLosAdisos = [
                 border: '1px solid var(--border-color)',
                 borderRadius: '4px',
                 fontSize: '0.875rem',
-                cursor: 'pointer'
+                cursor: publicando ? 'not-allowed' : 'pointer',
+                opacity: publicando ? 0.6 : 1
               }}
             >
               Cancelar
@@ -249,131 +352,155 @@ export default function AdisosGratuitos({ onPublicarGratuito, todosLosAdisos = [
         </button>
       )}
 
-      {/* Lista de TODOS los adisos (gratuitos + de paga) */}
+      {/* Lista compacta de TODOS los adisos (paga + gratis) ordenados por fecha */}
       <div style={{ flex: 1, overflowY: 'auto' }}>
         {cargando ? (
           <div style={{ textAlign: 'center', color: 'var(--text-tertiary)', padding: '2rem' }}>
             Cargando...
           </div>
+        ) : adisosOrdenados.length === 0 ? (
+          <div style={{ textAlign: 'center', color: 'var(--text-tertiary)', padding: '2rem' }}>
+            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📋</div>
+            <div>No hay adisos aún</div>
+          </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {/* Mostrar adisos de paga primero */}
-            {todosLosAdisos.map((adiso) => {
-              const IconComponent = getCategoriaIcon(adiso.categoria);
-              const tituloTruncado = adiso.titulo.length > 50 ? adiso.titulo.substring(0, 50) + '...' : adiso.titulo;
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+            {adisosOrdenados.map((adisoUnificado) => {
+              const IconComponent = adisoUnificado.tipo === 'paga'
+                ? getCategoriaIcon(adisoUnificado.adiso.categoria)
+                : getCategoriaIcon(adisoUnificado.adiso.categoria);
+              
+              const esPaga = adisoUnificado.tipo === 'paga';
+              const titulo = esPaga ? adisoUnificado.adiso.titulo : adisoUnificado.adiso.titulo;
+              const descripcion = esPaga ? adisoUnificado.adiso.descripcion : undefined;
+              const tamaño = esPaga ? adisoUnificado.adiso.tamaño : undefined;
+              const contacto = esPaga ? adisoUnificado.adiso.contacto : adisoUnificado.adiso.contacto;
+              const categoria = esPaga ? adisoUnificado.adiso.categoria : adisoUnificado.adiso.categoria;
+              const id = esPaga ? adisoUnificado.adiso.id : adisoUnificado.adiso.id;
+
               return (
                 <div
-                  key={adiso.id}
+                  key={id}
                   style={{
-                    padding: '0.75rem',
+                    padding: '0.625rem 0.75rem',
                     backgroundColor: 'var(--bg-secondary)',
-                    borderRadius: '6px',
+                    borderRadius: '4px',
                     border: '1px solid var(--border-color)',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '0.5rem'
+                    gap: '0.25rem',
+                    opacity: esPaga ? 1 : 0.75,
+                    transition: 'all 0.2s ease',
+                    cursor: 'pointer'
                   }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
+                    e.currentTarget.style.borderColor = 'var(--text-primary)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
+                    e.currentTarget.style.borderColor = 'var(--border-color)';
+                  }}
+                  onClick={() => handleClickTitulo(adisoUnificado)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleClickTitulo(adisoUnificado);
+                    }
+                  }}
+                  aria-label={`Contactar sobre ${titulo} por WhatsApp`}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
-                    <IconComponent size={12} />
-                    <span style={{ textTransform: 'capitalize' }}>{adiso.categoria}</span>
-                    {adiso.tamaño && (
-                      <span style={{ marginLeft: 'auto', fontSize: '0.65rem', opacity: 0.7, textTransform: 'capitalize' }}>
-                        {adiso.tamaño}
+                  {/* Línea principal: Icono + Título + Badge */}
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem',
+                    minHeight: '24px'
+                  }}>
+                    <IconComponent size={16} color={esPaga ? undefined : 'var(--text-tertiary)'} />
+                    <span 
+                      style={{ 
+                        fontSize: '0.875rem', 
+                        fontWeight: 500, 
+                        color: esPaga ? 'var(--text-primary)' : 'var(--text-secondary)',
+                        flex: 1,
+                        lineHeight: '1.4',
+                        wordBreak: 'break-word'
+                      }}
+                      title={titulo}
+                    >
+                      {titulo}
+                    </span>
+                    {esPaga && tamaño && (
+                      <span 
+                        style={{ 
+                          fontSize: '0.7rem',
+                          padding: '0.125rem 0.375rem',
+                          backgroundColor: 'var(--text-primary)',
+                          color: 'var(--bg-primary)',
+                          borderRadius: '4px',
+                          fontWeight: 600,
+                          textTransform: 'capitalize',
+                          whiteSpace: 'nowrap',
+                          flexShrink: 0
+                        }}
+                      >
+                        {tamaño}
                       </span>
                     )}
+                    {!esPaga && (
+                      <span 
+                        style={{ 
+                          fontSize: '0.65rem',
+                          padding: '0.125rem 0.375rem',
+                          backgroundColor: '#25D366',
+                          color: 'white',
+                          borderRadius: '4px',
+                          fontWeight: 600,
+                          opacity: 0.8,
+                          whiteSpace: 'nowrap',
+                          flexShrink: 0
+                        }}
+                      >
+                        Gratis
+                      </span>
+                    )}
+                    <IconWhatsApp 
+                      size={14} 
+                      style={{ 
+                        color: '#25D366', 
+                        opacity: 0.7,
+                        flexShrink: 0
+                      }} 
+                    />
                   </div>
-                  <div style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-primary)' }}>
-                    {tituloTruncado}
-                  </div>
-                  {adiso.descripcion && (
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
-                      {adiso.descripcion.length > 100 ? adiso.descripcion.substring(0, 100) + '...' : adiso.descripcion}
+                  
+                  {/* Descripción solo para adisos de paga */}
+                  {esPaga && descripcion && (
+                    <div 
+                      style={{ 
+                        fontSize: '0.75rem', 
+                        color: 'var(--text-secondary)', 
+                        lineHeight: '1.4',
+                        paddingLeft: '1.5rem',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        maxWidth: '100%'
+                      }}
+                      title={descripcion}
+                    >
+                      {descripcion}
                     </div>
                   )}
-                  <button
-                    onClick={() => window.open(getWhatsAppUrl(adiso.contacto, adiso.titulo, adiso.categoria, adiso.id), '_blank')}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      padding: '0.5rem',
-                      backgroundColor: '#25D366',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      fontSize: '0.75rem',
-                      cursor: 'pointer',
-                      width: 'fit-content'
-                    }}
-                  >
-                    <IconWhatsApp size={14} />
-                    Contactar
-                  </button>
                 </div>
               );
             })}
-            
-            {/* Mostrar adisos gratuitos después */}
-            {adisosGratuitos.map((adiso) => {
-              const IconComponent = getCategoriaIcon(adiso.categoria);
-              const tituloTruncado = adiso.titulo.length > 30 ? adiso.titulo.substring(0, 30) + '...' : adiso.titulo;
-              return (
-                <div
-                  key={adiso.id}
-                  style={{
-                    padding: '0.75rem',
-                    backgroundColor: 'var(--bg-secondary)',
-                    borderRadius: '6px',
-                    border: '1px solid var(--border-color)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.5rem',
-                    opacity: 0.9 // Ligeramente más opaco para diferenciarlos
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
-                    <IconComponent size={12} />
-                    <span style={{ textTransform: 'capitalize' }}>{adiso.categoria}</span>
-                    <span style={{ marginLeft: 'auto', fontSize: '0.65rem', opacity: 0.7, color: '#25D366', fontWeight: 600 }}>Gratis</span>
-                  </div>
-                  <div style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-primary)' }}>
-                    {tituloTruncado}
-                  </div>
-                  <button
-                    onClick={() => window.open(getWhatsAppUrl(adiso.contacto, adiso.titulo, adiso.categoria, adiso.id), '_blank')}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      padding: '0.5rem',
-                      backgroundColor: '#25D366',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      fontSize: '0.75rem',
-                      cursor: 'pointer',
-                      width: 'fit-content'
-                    }}
-                  >
-                    <IconWhatsApp size={14} />
-                    Contactar
-                  </button>
-                </div>
-              );
-            })}
-            
-            {/* Mensaje si no hay adisos */}
-            {todosLosAdisos.length === 0 && adisosGratuitos.length === 0 && (
-              <div style={{ textAlign: 'center', color: 'var(--text-tertiary)', padding: '2rem' }}>
-                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📋</div>
-                <div>No hay adisos aún</div>
-              </div>
-            )}
           </div>
         )}
       </div>
     </div>
   );
 }
-
