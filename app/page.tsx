@@ -23,6 +23,7 @@ import { ToastContainer } from '@/components/Toast';
 import FeedbackButton from '@/components/FeedbackButton';
 import SidebarDesktop, { SeccionSidebar } from '@/components/SidebarDesktop';
 import ModalNavegacionMobile from '@/components/ModalNavegacionMobile';
+import NavbarMobile from '@/components/NavbarMobile';
 
 type SeccionMobile = 'aviso' | 'mapa' | 'publicar' | 'chatbot' | 'gratuitos';
 
@@ -44,6 +45,7 @@ function HomeContent() {
   const [cargando, setCargando] = useState(true);
   const [modalMobileAbierto, setModalMobileAbierto] = useState(false);
   const [seccionMobileInicial, setSeccionMobileInicial] = useState<SeccionMobile>('aviso');
+  const [seccionMobileActiva, setSeccionMobileActiva] = useState<SeccionSidebar | null>(null);
   const [seccionSidebarInicial, setSeccionSidebarInicial] = useState<SeccionSidebar | undefined>(undefined);
   const [isSidebarMinimizado, setIsSidebarMinimizado] = useState(false);
   const isDesktop = useMediaQuery('(min-width: 768px)');
@@ -69,6 +71,10 @@ function HomeContent() {
             setAvisoAbierto(avisoCache);
             const indice = cache.findIndex(a => a.id === avisoId);
             setIndiceAvisoActual(indice >= 0 ? indice : 0);
+            // En mobile, abrir sección de aviso si no es desktop
+            if (typeof window !== 'undefined' && window.innerWidth < 768) {
+              setSeccionMobileActiva('aviso');
+            }
           } else {
             // Si no está en cache, cargarlo primero
             const avisoEspecifico = await getAvisoById(avisoId);
@@ -77,6 +83,10 @@ function HomeContent() {
               setAvisos(prev => [avisoEspecifico, ...prev]);
               setAvisosFiltrados(prev => [avisoEspecifico, ...prev]);
               setIndiceAvisoActual(0);
+              // En mobile, abrir sección de aviso si no es desktop
+              if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                setSeccionMobileActiva('aviso');
+              }
             }
           }
         }
@@ -147,30 +157,41 @@ function HomeContent() {
       setAvisoAbierto(avisoLocal);
       const indice = avisosFiltrados.findIndex(a => a.id === avisoId);
       setIndiceAvisoActual(indice >= 0 ? indice : avisos.findIndex(a => a.id === avisoId));
+      // En mobile, abrir sección de aviso
+      if (!isDesktop) {
+        setSeccionMobileActiva('aviso');
+      }
       return;
     }
 
     // Si no está en local, cargarlo en background (sin bloquear UI)
-    getAvisoById(avisoId).then(aviso => {
-      if (aviso) {
-        setAvisoAbierto(aviso);
-        // Agregar a la lista si no existe
-        setAvisos(prev => {
-          if (!prev.find(a => a.id === avisoId)) {
-            return [aviso, ...prev];
+        getAvisoById(avisoId).then(aviso => {
+          if (aviso) {
+            setAvisoAbierto(aviso);
+            // Agregar a la lista si no existe
+            setAvisos(prev => {
+              if (!prev.find(a => a.id === avisoId)) {
+                return [aviso, ...prev];
+              }
+              return prev;
+            });
+            setAvisosFiltrados(prev => {
+              if (!prev.find(a => a.id === avisoId)) {
+                return [aviso, ...prev];
+              }
+              return prev;
+            });
+            const indice = avisosFiltrados.findIndex(a => a.id === avisoId);
+            setIndiceAvisoActual(indice >= 0 ? indice : 0);
+            // En mobile, abrir sección de aviso si no es desktop
+            if (!isDesktop) {
+              setSeccionMobileActiva('aviso');
+            }
+            if (!isDesktop) {
+              setSeccionMobileActiva('aviso');
+            }
           }
-          return prev;
-        });
-        setAvisosFiltrados(prev => {
-          if (!prev.find(a => a.id === avisoId)) {
-            return [aviso, ...prev];
-          }
-          return prev;
-        });
-        const indice = avisosFiltrados.findIndex(a => a.id === avisoId);
-        setIndiceAvisoActual(indice >= 0 ? indice : 0);
-      }
-    }).catch(console.error);
+        }).catch(console.error);
   }, [avisoId, avisos, avisosFiltrados, cargando]);
 
   // Filtrado y ordenamiento (siempre más recientes primero, sin opción de cambiar)
@@ -273,6 +294,10 @@ function HomeContent() {
     if (!avisoExiste) {
       setAvisoAbierto(nuevoAviso);
       setIndiceAvisoActual(0);
+      // En mobile, abrir sección de aviso automáticamente
+      if (!isDesktop) {
+        setSeccionMobileActiva('aviso');
+      }
       // Actualizar URL sin recargar la página
       const params = new URLSearchParams(searchParams.toString());
       params.set('aviso', nuevoAviso.id);
@@ -291,9 +316,9 @@ function HomeContent() {
     setIndiceAvisoActual(indice >= 0 ? indice : 0);
     setAvisoAbierto(aviso);
     
-    // En mobile, abrir modal de navegación
+    // En mobile, abrir sección de aviso automáticamente
     if (!isDesktop) {
-      setModalMobileAbierto(true);
+      setSeccionMobileActiva('aviso');
     }
     
     // Actualizar URL sin recargar la página
@@ -302,8 +327,33 @@ function HomeContent() {
     router.replace(`/?${params.toString()}`, { scroll: false });
   };
 
+  const handleCambiarSeccionMobile = (seccion: SeccionSidebar) => {
+    // Si selecciona la misma sección que está activa, cerrarla (toggle)
+    if (seccionMobileActiva === seccion) {
+      setSeccionMobileActiva(null);
+      return;
+    }
+    
+    // Cambiar a la nueva sección
+    setSeccionMobileActiva(seccion);
+    
+    // Si selecciona aviso y hay aviso abierto, mantenerlo visible
+    // Si selecciona otra sección, el overlay mostrará esa sección
+  };
+
+  const handleCerrarSeccionMobile = () => {
+    const seccionAnterior = seccionMobileActiva;
+    setSeccionMobileActiva(null);
+    // No cerrar el aviso, solo cerrar el overlay
+    // El aviso puede seguir abierto y el usuario puede volver a verlo tocando "Aviso" en el navbar
+  };
+
   const handleCerrarAviso = () => {
     setAvisoAbierto(null);
+    // En mobile, si estaba en sección de aviso, cerrarla también
+    if (!isDesktop && seccionMobileActiva === 'aviso') {
+      setSeccionMobileActiva(null);
+    }
     router.push('/', { scroll: false });
   };
 
@@ -339,12 +389,13 @@ function HomeContent() {
       <main style={{
         flex: 1,
         padding: '1rem',
+        paddingBottom: isDesktop ? '1rem' : '5rem', // Espacio para navbar mobile permanente
         maxWidth: isDesktop 
           ? `calc(100% - ${isSidebarMinimizado ? 60 : 420}px)` 
           : '1400px',
         margin: '0 auto',
         width: '100%',
-        transition: 'max-width 0.3s ease, margin-right 0.3s ease',
+        transition: 'max-width 0.3s ease, margin-right 0.3s ease, padding-bottom 0.3s ease',
         ...(isDesktop && { marginRight: `${isSidebarMinimizado ? 60 : 420}px` })
       }}>
         <div style={{ marginBottom: '1.5rem' }}>
@@ -482,17 +533,21 @@ function HomeContent() {
         />
       )}
 
-      {/* Modal Mobile - solo cuando está abierto */}
+      {/* Navbar Mobile - siempre visible en mobile */}
       {!isDesktop && (
+        <NavbarMobile
+          seccionActiva={seccionMobileActiva || (avisoAbierto ? 'aviso' : null)}
+          onCambiarSeccion={handleCambiarSeccionMobile}
+          tieneAvisoAbierto={!!avisoAbierto}
+        />
+      )}
+
+      {/* Modal Mobile Overlay - solo cuando hay sección activa */}
+      {!isDesktop && seccionMobileActiva && (
         <ModalNavegacionMobile
-          abierto={modalMobileAbierto || !!avisoAbierto}
-          onCerrar={() => {
-            setModalMobileAbierto(false);
-            if (!avisoAbierto) {
-              handleCerrarAviso();
-            }
-          }}
-          seccionInicial={avisoAbierto ? 'aviso' : 'publicar'}
+          abierto={!!seccionMobileActiva}
+          onCerrar={handleCerrarSeccionMobile}
+          seccionInicial={seccionMobileActiva}
           avisoAbierto={avisoAbierto}
           onCerrarAviso={handleCerrarAviso}
           onAnterior={handleAnterior}
@@ -502,19 +557,7 @@ function HomeContent() {
           onPublicar={handlePublicar}
           onError={(msg) => error(msg)}
           onSuccess={(msg) => success(msg)}
-        />
-      )}
-
-
-      {/* Modal Aviso legacy (solo si no está en sidebar/modal mobile) */}
-      {avisoAbierto && !isDesktop && !modalMobileAbierto && (
-        <ModalAviso
-          aviso={avisoAbierto}
-          onCerrar={handleCerrarAviso}
-          onAnterior={handleAnterior}
-          onSiguiente={handleSiguiente}
-          puedeAnterior={indiceAvisoActual > 0}
-          puedeSiguiente={indiceAvisoActual < avisosFiltrados.length - 1}
+          onCambiarSeccion={handleCambiarSeccionMobile}
         />
       )}
       

@@ -181,11 +181,14 @@ export default function ModalAviso({
           ...modalContentStyle,
           width: '100%',
           maxWidth: '100%',
-          height: '100%',
-          maxHeight: '100%',
+          height: 'auto',
+          minHeight: '100%',
           padding: '1rem',
+          paddingBottom: (puedeAnterior || puedeSiguiente) ? '5.5rem' : '1rem', // Espacio extra para botones de navegación
           borderRadius: 0,
           boxShadow: 'none',
+          overflowY: 'visible', // Sin scroll propio, usa el del contenedor padre
+          position: 'relative',
           // Usar borderTop, borderRight, borderBottom, borderLeft explícitamente para evitar conflicto
           borderTop: 'none',
           borderRight: 'none',
