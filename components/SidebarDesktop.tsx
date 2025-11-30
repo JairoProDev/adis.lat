@@ -24,6 +24,7 @@ interface SidebarDesktopProps {
   onSuccess?: (message: string) => void;
   seccionInicial?: SeccionSidebar; // Nueva prop para controlar la sección inicial
   onMinimizadoChange?: (minimizado: boolean) => void; // Callback para notificar cambios de estado minimizado
+  todosLosAdisos?: Adiso[]; // Todos los adisos para mostrar en la sección de gratuitos
 }
 
 export default function SidebarDesktop({
@@ -37,7 +38,8 @@ export default function SidebarDesktop({
   onError,
   onSuccess,
   seccionInicial,
-  onMinimizadoChange
+  onMinimizadoChange,
+  todosLosAdisos = []
 }: SidebarDesktopProps) {
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const [seccionActiva, setSeccionActiva] = useState<SeccionSidebar>(seccionInicial || 'adiso');
@@ -359,7 +361,7 @@ export default function SidebarDesktop({
             )}
 
             {seccionActiva === 'gratuitos' && (
-              <AdisosGratuitos />
+              <AdisosGratuitos todosLosAdisos={todosLosAdisos} />
             )}
 
             {/* Estado vacío cuando no hay contenido */}

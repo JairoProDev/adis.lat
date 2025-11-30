@@ -26,12 +26,13 @@ interface ModalNavegacionMobileProps {
   onError?: (message: string) => void;
   onSuccess?: (message: string) => void;
   onCambiarSeccion?: (seccion: SeccionSidebar) => void; // Callback para sincronizar con navbar
+  todosLosAdisos?: Adiso[]; // Todos los adisos para mostrar en la sección de gratuitos
 }
 
 export default function ModalNavegacionMobile({
   abierto,
   onCerrar,
-  seccionInicial = 'adiso',
+  seccionInicial = 'gratuitos',
   adisoAbierto,
   onCerrarAdiso,
   onAnterior,
@@ -41,7 +42,8 @@ export default function ModalNavegacionMobile({
   onPublicar,
   onError,
   onSuccess,
-  onCambiarSeccion
+  onCambiarSeccion,
+  todosLosAdisos = []
 }: ModalNavegacionMobileProps) {
   // TODOS LOS HOOKS DEBEN IR ANTES DEL EARLY RETURN
   const isDesktop = useMediaQuery('(min-width: 768px)');
@@ -233,7 +235,7 @@ export default function ModalNavegacionMobile({
           )}
 
           {seccionActiva === 'gratuitos' && (
-            <AdisosGratuitos />
+            <AdisosGratuitos todosLosAdisos={todosLosAdisos} />
           )}
 
           {seccionActiva === 'adiso' && !adisoAbierto && (

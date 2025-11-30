@@ -25,6 +25,19 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     console.error('Error al obtener adisos gratuitos:', error);
     
+    // Si la tabla no existe aún (error de tabla no encontrada), retornar array vacío
+    // Esto permite que la funcionalidad funcione aunque la tabla no esté creada
+    if (
+      error?.message?.includes('relation') && 
+      error?.message?.includes('does not exist') ||
+      error?.code === 'PGRST204' ||
+      error?.message?.includes('tabla') ||
+      error?.message?.includes('table')
+    ) {
+      console.warn('Tabla de adisos gratuitos no existe aún, retornando array vacío');
+      return NextResponse.json([], { status: 200 });
+    }
+    
     let errorMessage = 'Error al obtener adisos gratuitos';
     let statusCode = 500;
     

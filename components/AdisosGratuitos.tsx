@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { AdisoGratuito, Categoria } from '@/types';
+import { AdisoGratuito, Categoria, Adiso } from '@/types';
 import { IconWhatsApp, IconGratuitos } from './Icons';
 import { getWhatsAppUrl, generarIdUnico } from '@/lib/utils';
 import { fetchAdisosGratuitos, createAdisoGratuito } from '@/lib/api';
@@ -32,11 +32,13 @@ const getCategoriaIcon = (categoria: Categoria): React.ComponentType<{ size?: nu
 
 interface AdisosGratuitosProps {
   onPublicarGratuito?: (adiso: AdisoGratuito) => void;
+  todosLosAdisos?: Adiso[]; // Todos los adisos (gratuitos + de paga)
 }
 
-export default function AdisosGratuitos({ onPublicarGratuito }: AdisosGratuitosProps) {
+export default function AdisosGratuitos({ onPublicarGratuito, todosLosAdisos = [] }: AdisosGratuitosProps) {
   const [adisosGratuitos, setAdisosGratuitos] = useState<AdisoGratuito[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [errorCargandoGratuitos, setErrorCargandoGratuitos] = useState(false);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [formData, setFormData] = useState({
     categoria: 'empleos' as Categoria,
@@ -49,8 +51,14 @@ export default function AdisosGratuitos({ onPublicarGratuito }: AdisosGratuitosP
       try {
         const adisos = await fetchAdisosGratuitos();
         setAdisosGratuitos(adisos);
-      } catch (error) {
+        setErrorCargandoGratuitos(false);
+      } catch (error: any) {
         console.error('Error al cargar adisos gratuitos:', error);
+        // Si la tabla no existe aún (error 500/503), simplemente no mostrar error
+        // Los adisos de paga se mostrarán de todas formas
+        if (error?.message?.includes('Error al obtener adisos gratuitos')) {
+          setErrorCargandoGratuitos(true);
+        }
       } finally {
         setCargando(false);
       }
@@ -241,22 +249,18 @@ export default function AdisosGratuitos({ onPublicarGratuito }: AdisosGratuitosP
         </button>
       )}
 
-      {/* Lista de adisos gratuitos */}
+      {/* Lista de TODOS los adisos (gratuitos + de paga) */}
       <div style={{ flex: 1, overflowY: 'auto' }}>
         {cargando ? (
           <div style={{ textAlign: 'center', color: 'var(--text-tertiary)', padding: '2rem' }}>
             Cargando...
           </div>
-        ) : adisosGratuitos.length === 0 ? (
-          <div style={{ textAlign: 'center', color: 'var(--text-tertiary)', padding: '2rem' }}>
-            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📋</div>
-            <div>No hay adisos gratuitos aún</div>
-          </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {adisosGratuitos.map((adiso) => {
+            {/* Mostrar adisos de paga primero */}
+            {todosLosAdisos.map((adiso) => {
               const IconComponent = getCategoriaIcon(adiso.categoria);
-              const tituloTruncado = adiso.titulo.length > 30 ? adiso.titulo.substring(0, 30) + '...' : adiso.titulo;
+              const tituloTruncado = adiso.titulo.length > 50 ? adiso.titulo.substring(0, 50) + '...' : adiso.titulo;
               return (
                 <div
                   key={adiso.id}
@@ -273,7 +277,65 @@ export default function AdisosGratuitos({ onPublicarGratuito }: AdisosGratuitosP
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
                     <IconComponent size={12} />
                     <span style={{ textTransform: 'capitalize' }}>{adiso.categoria}</span>
-                    <span style={{ marginLeft: 'auto', fontSize: '0.65rem', opacity: 0.7 }}>Gratis</span>
+                    {adiso.tamaño && (
+                      <span style={{ marginLeft: 'auto', fontSize: '0.65rem', opacity: 0.7, textTransform: 'capitalize' }}>
+                        {adiso.tamaño}
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-primary)' }}>
+                    {tituloTruncado}
+                  </div>
+                  {adiso.descripcion && (
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                      {adiso.descripcion.length > 100 ? adiso.descripcion.substring(0, 100) + '...' : adiso.descripcion}
+                    </div>
+                  )}
+                  <button
+                    onClick={() => window.open(getWhatsAppUrl(adiso.contacto, adiso.titulo, adiso.categoria, adiso.id), '_blank')}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.5rem',
+                      backgroundColor: '#25D366',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      fontSize: '0.75rem',
+                      cursor: 'pointer',
+                      width: 'fit-content'
+                    }}
+                  >
+                    <IconWhatsApp size={14} />
+                    Contactar
+                  </button>
+                </div>
+              );
+            })}
+            
+            {/* Mostrar adisos gratuitos después */}
+            {adisosGratuitos.map((adiso) => {
+              const IconComponent = getCategoriaIcon(adiso.categoria);
+              const tituloTruncado = adiso.titulo.length > 30 ? adiso.titulo.substring(0, 30) + '...' : adiso.titulo;
+              return (
+                <div
+                  key={adiso.id}
+                  style={{
+                    padding: '0.75rem',
+                    backgroundColor: 'var(--bg-secondary)',
+                    borderRadius: '6px',
+                    border: '1px solid var(--border-color)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.5rem',
+                    opacity: 0.9 // Ligeramente más opaco para diferenciarlos
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
+                    <IconComponent size={12} />
+                    <span style={{ textTransform: 'capitalize' }}>{adiso.categoria}</span>
+                    <span style={{ marginLeft: 'auto', fontSize: '0.65rem', opacity: 0.7, color: '#25D366', fontWeight: 600 }}>Gratis</span>
                   </div>
                   <div style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-primary)' }}>
                     {tituloTruncado}
@@ -300,6 +362,14 @@ export default function AdisosGratuitos({ onPublicarGratuito }: AdisosGratuitosP
                 </div>
               );
             })}
+            
+            {/* Mensaje si no hay adisos */}
+            {todosLosAdisos.length === 0 && adisosGratuitos.length === 0 && (
+              <div style={{ textAlign: 'center', color: 'var(--text-tertiary)', padding: '2rem' }}>
+                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📋</div>
+                <div>No hay adisos aún</div>
+              </div>
+            )}
           </div>
         )}
       </div>

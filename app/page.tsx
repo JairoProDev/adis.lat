@@ -67,9 +67,9 @@ function HomeContent() {
   const [indiceAdisoActual, setIndiceAdisoActual] = useState(0);
   const [cargando, setCargando] = useState(true);
   const [modalMobileAbierto, setModalMobileAbierto] = useState(false);
-  const [seccionMobileInicial, setSeccionMobileInicial] = useState<SeccionMobile>('adiso');
+  const [seccionMobileInicial, setSeccionMobileInicial] = useState<SeccionMobile>('gratuitos');
   const [seccionMobileActiva, setSeccionMobileActiva] = useState<SeccionSidebar | null>(null);
-  const [seccionSidebarInicial, setSeccionSidebarInicial] = useState<SeccionSidebar | undefined>(undefined);
+  const [seccionSidebarInicial, setSeccionSidebarInicial] = useState<SeccionSidebar | undefined>('gratuitos');
   const [isSidebarMinimizado, setIsSidebarMinimizado] = useState(false);
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const { toasts, removeToast, success, error } = useToast();
@@ -702,6 +702,7 @@ function HomeContent() {
           onSuccess={(msg) => success(msg)}
           seccionInicial={seccionSidebarInicial}
           onMinimizadoChange={setIsSidebarMinimizado}
+          todosLosAdisos={adisosFiltrados}
         />
       )}
 
@@ -727,6 +728,7 @@ function HomeContent() {
           puedeAnterior={indiceAdisoActual > 0}
           puedeSiguiente={indiceAdisoActual < adisosFiltrados.length - 1}
           onPublicar={handlePublicar}
+          todosLosAdisos={adisosFiltrados}
           onError={(msg) => error(msg)}
           onSuccess={(msg) => success(msg)}
           onCambiarSeccion={handleCambiarSeccionMobile}
