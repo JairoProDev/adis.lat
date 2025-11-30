@@ -1,4 +1,4 @@
-export default function SkeletonAvisos() {
+export default function SkeletonAdisos() {
   return (
     <>
       <style jsx>{`

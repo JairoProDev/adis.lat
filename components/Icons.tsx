@@ -149,7 +149,7 @@ export const IconGratuitos = (props: IconProps) => (
   <FaGift size={getSize(props)} color={props.color || 'currentColor'} />
 );
 
-export const IconAviso = (props: IconProps) => (
+export const IconAdiso = (props: IconProps) => (
   <FaFileAlt size={getSize(props)} color={props.color || 'currentColor'} />
 );
 

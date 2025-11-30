@@ -1,12 +1,12 @@
-import { Aviso } from '@/types';
+import { Adiso } from '@/types';
 
-const STORAGE_KEY = 'buscadis_avisos';
+const STORAGE_KEY = 'buscadis_adisos';
 
 // Por defecto usa localStorage. Cambiar a false para usar API/Supabase
 const USE_LOCAL_STORAGE = process.env.NEXT_PUBLIC_USE_LOCAL_STORAGE === 'true';
 
 // Funciones que funcionan con localStorage (desarrollo)
-const getAvisosLocal = (): Aviso[] => {
+const getAdisosLocal = (): Adiso[] => {
   if (typeof window === 'undefined') return [];
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -23,37 +23,37 @@ const getAvisosLocal = (): Aviso[] => {
   }
 };
 
-const saveAvisoLocal = (aviso: Aviso): void => {
+const saveAdisoLocal = (adiso: Adiso): void => {
   if (typeof window === 'undefined') return;
   try {
-    const avisos = getAvisosLocal();
+    const adisos = getAdisosLocal();
     // Prevenir duplicados: verificar si ya existe
-    const existe = avisos.find(a => a.id === aviso.id);
+    const existe = adisos.find(a => a.id === adiso.id);
     if (!existe) {
-      avisos.unshift(aviso);
+      adisos.unshift(adiso);
     } else {
       // Si existe, actualizarlo en lugar de duplicarlo
-      const index = avisos.findIndex(a => a.id === aviso.id);
+      const index = adisos.findIndex(a => a.id === adiso.id);
       if (index >= 0) {
-        avisos[index] = aviso;
+        adisos[index] = adiso;
       }
     }
 
-    // Limitar el número de avisos en localStorage para evitar exceder la cuota
-    // Mantener solo los últimos 50 avisos
-    const avisosLimitados = avisos.slice(0, 50);
+    // Limitar el número de adisos en localStorage para evitar exceder la cuota
+    // Mantener solo los últimos 50 adisos
+    const adisosLimitados = adisos.slice(0, 50);
     
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(avisosLimitados));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(adisosLimitados));
   } catch (error: any) {
-    // Si hay error de cuota, limpiar y guardar solo el nuevo aviso
+    // Si hay error de cuota, limpiar y guardar solo el nuevo adiso
     if (error?.name === 'QuotaExceededError' || error?.message?.includes('quota')) {
-      console.warn('LocalStorage lleno, limpiando y guardando solo el nuevo aviso');
+      console.warn('LocalStorage lleno, limpiando y guardando solo el nuevo adiso');
       try {
         localStorage.removeItem(STORAGE_KEY);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify([aviso]));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify([adiso]));
       } catch (cleanError) {
         console.error('Error al limpiar localStorage:', cleanError);
-        // Si aún falla, no hacer nada (el aviso se guardará en Supabase)
+        // Si aún falla, no hacer nada (el adiso se guardará en Supabase)
       }
     } else {
       console.error('Error al guardar en localStorage:', error);
@@ -61,66 +61,66 @@ const saveAvisoLocal = (aviso: Aviso): void => {
   }
 };
 
-const getAvisoByIdLocal = (id: string): Aviso | null => {
-  const avisos = getAvisosLocal();
-  return avisos.find(a => a.id === id) || null;
+const getAdisoByIdLocal = (id: string): Adiso | null => {
+  const adisos = getAdisosLocal();
+  return adisos.find(a => a.id === id) || null;
 };
 
 // Obtener solo cache (instantáneo)
-export const getAvisosCache = (): Aviso[] => {
-  return getAvisosLocal();
+export const getAdisosCache = (): Adiso[] => {
+  return getAdisosLocal();
 };
 
 // Funciones públicas que eligen entre localStorage o API
-export const getAvisos = async (): Promise<Aviso[]> => {
+export const getAdisos = async (): Promise<Adiso[]> => {
   if (USE_LOCAL_STORAGE) {
-    return getAvisosLocal();
+    return getAdisosLocal();
   }
   
   // Si no usa localStorage, cargar desde API
   if (typeof window !== 'undefined') {
     try {
-      const { fetchAvisos } = await import('./api');
-      const avisosDesdeAPI = await fetchAvisos();
+      const { fetchAdisos } = await import('./api');
+      const adisosDesdeAPI = await fetchAdisos();
       
       // Actualizar cache con datos frescos
-      if (avisosDesdeAPI.length > 0) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(avisosDesdeAPI));
+      if (adisosDesdeAPI.length > 0) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(adisosDesdeAPI));
       }
       
-      return avisosDesdeAPI;
+      return adisosDesdeAPI;
     } catch (error) {
       console.error('Error al cargar desde API, usando localStorage:', error);
-      return getAvisosLocal();
+      return getAdisosLocal();
     }
   }
   
   return [];
 };
 
-export const saveAviso = async (aviso: Aviso): Promise<void> => {
+export const saveAdiso = async (adiso: Adiso): Promise<void> => {
   // Guardar en cache inmediatamente (optimistic update)
-  saveAvisoLocal(aviso);
+  saveAdisoLocal(adiso);
   
   if (USE_LOCAL_STORAGE) {
     return;
   }
   
   // IMPORTANTE: Guardar en API INMEDIATAMENTE, incluso con previews locales
-  // Esto asegura que el aviso exista en Supabase y no desaparezca al recargar
+  // Esto asegura que el adiso exista en Supabase y no desaparezca al recargar
   // Las imágenes se actualizarán cuando se suban a Supabase Storage
   if (typeof window !== 'undefined') {
     try {
-      const { createAviso, updateAviso } = await import('./api');
+      const { createAdiso, updateAdiso } = await import('./api');
       // Intentar crear, si falla por duplicado, actualizar
       try {
-        const resultado = await createAviso(aviso);
-        console.log('✅ Aviso guardado en Supabase:', resultado.id);
+        const resultado = await createAdiso(adiso);
+        console.log('✅ Adiso guardado en Supabase:', resultado.id);
       } catch (error: any) {
-        // Si el error es 409 (conflict) o el aviso ya existe, actualizar
+        // Si el error es 409 (conflict) o el adiso ya existe, actualizar
         if (error?.message?.includes('ya existe') || error?.message?.includes('duplicado') || error?.response?.status === 409) {
-          const resultado = await updateAviso(aviso);
-          console.log('✅ Aviso actualizado en Supabase:', resultado.id);
+          const resultado = await updateAdiso(adiso);
+          console.log('✅ Adiso actualizado en Supabase:', resultado.id);
         } else {
           // Re-lanzar el error para que se maneje arriba
           throw error;
@@ -133,44 +133,44 @@ export const saveAviso = async (aviso: Aviso): Promise<void> => {
         message: error?.message,
         status: error?.response?.status,
         statusText: error?.response?.statusText,
-        avisoId: aviso.id,
-        avisoTitulo: aviso.titulo
+        adisoId: adiso.id,
+        adisoTitulo: adiso.titulo
       });
       
       // Lanzar el error para que el componente pueda manejarlo
       // Esto es importante para que el usuario sepa que hubo un problema
-      throw new Error(`Error al guardar aviso en Supabase: ${error?.message || 'Error desconocido'}`);
+      throw new Error(`Error al guardar adiso en Supabase: ${error?.message || 'Error desconocido'}`);
     }
   }
 };
 
-export const getAvisoById = async (id: string): Promise<Aviso | null> => {
+export const getAdisoById = async (id: string): Promise<Adiso | null> => {
   // Primero buscar en cache (instantáneo)
-  const cacheAviso = getAvisoByIdLocal(id);
+  const cacheAdiso = getAdisoByIdLocal(id);
   
   if (USE_LOCAL_STORAGE) {
-    return cacheAviso;
+    return cacheAdiso;
   }
   
   // Si no está en cache, cargar desde API
   if (typeof window !== 'undefined') {
     try {
-      const { fetchAvisoById } = await import('./api');
-      const aviso = await fetchAvisoById(id);
-      if (aviso) {
+      const { fetchAdisoById } = await import('./api');
+      const adiso = await fetchAdisoById(id);
+      if (adiso) {
         // Guardar en cache para próxima vez
-        const avisos = getAvisosLocal();
-        if (!avisos.find(a => a.id === id)) {
-          avisos.unshift(aviso);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(avisos));
+        const adisos = getAdisosLocal();
+        if (!adisos.find(a => a.id === id)) {
+          adisos.unshift(adiso);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(adisos));
         }
       }
-      return aviso || cacheAviso;
+      return adiso || cacheAdiso;
     } catch (error) {
       console.error('Error al cargar desde API:', error);
-      return cacheAviso;
+      return cacheAdiso;
     }
   }
   
-  return cacheAviso;
+  return cacheAdiso;
 };

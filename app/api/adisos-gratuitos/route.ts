@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAvisoGratuitoInSupabase, getAvisosGratuitosFromSupabase } from '@/lib/supabase';
+import { createAdisoGratuitoInSupabase, getAdisosGratuitosFromSupabase } from '@/lib/supabase';
 import { generarIdUnico } from '@/lib/utils';
-import { AvisoGratuito } from '@/types';
+import { AdisoGratuito } from '@/types';
 
 export async function GET() {
   try {
-    const avisos = await getAvisosGratuitosFromSupabase();
-    return NextResponse.json(avisos, { status: 200 });
+    const adisos = await getAdisosGratuitosFromSupabase();
+    return NextResponse.json(adisos, { status: 200 });
   } catch (error: any) {
-    console.error('Error al obtener avisos gratuitos:', error);
+    console.error('Error al obtener adisos gratuitos:', error);
     
-    let errorMessage = 'Error al obtener avisos gratuitos';
+    let errorMessage = 'Error al obtener adisos gratuitos';
     let statusCode = 500;
     
     if (error?.message?.includes('políticas de seguridad') || error?.message?.includes('permission denied')) {
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    // Validaciones estrictas para avisos gratuitos
+    // Validaciones estrictas para adisos gratuitos
     if (!body.titulo || typeof body.titulo !== 'string' || body.titulo.trim().length === 0) {
       return NextResponse.json(
         { error: 'El título es requerido' },
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     const fechaCreacion = ahora.toISOString();
     const fechaExpiracion = new Date(ahora.getTime() + 24 * 60 * 60 * 1000).toISOString(); // 1 día después
 
-    const nuevoAviso: AvisoGratuito = {
+    const nuevoAdiso: AdisoGratuito = {
       id: generarIdUnico(),
       categoria: body.categoria,
       titulo: body.titulo.trim(),
@@ -74,13 +74,13 @@ export async function POST(request: NextRequest) {
       fechaExpiracion
     };
 
-    const avisoCreado = await createAvisoGratuitoInSupabase(nuevoAviso);
+    const adisoCreado = await createAdisoGratuitoInSupabase(nuevoAdiso);
     
-    return NextResponse.json(avisoCreado, { status: 201 });
+    return NextResponse.json(adisoCreado, { status: 201 });
   } catch (error: any) {
-    console.error('Error al crear aviso gratuito:', error);
+    console.error('Error al crear adiso gratuito:', error);
     
-    let errorMessage = 'Error al crear aviso gratuito';
+    let errorMessage = 'Error al crear adiso gratuito';
     let statusCode = 500;
     
     if (error?.message?.includes('políticas de seguridad') || error?.message?.includes('permission denied')) {

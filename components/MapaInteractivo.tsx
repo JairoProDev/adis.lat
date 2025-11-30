@@ -1,20 +1,20 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { Aviso } from '@/types';
+import { Adiso } from '@/types';
 
 interface MapaInteractivoProps {
-  avisos: Aviso[];
-  onAbrirAviso: (aviso: Aviso) => void;
+  adisos: Adiso[];
+  onAbrirAdiso: (adiso: Adiso) => void;
 }
 
-export default function MapaInteractivo({ avisos, onAbrirAviso }: MapaInteractivoProps) {
+export default function MapaInteractivo({ adisos, onAbrirAdiso }: MapaInteractivoProps) {
   const mapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Placeholder para integración futura con Leaflet o Google Maps
     // Por ahora mostramos un mensaje informativo
-  }, [avisos]);
+  }, [adisos]);
 
   return (
     <div
@@ -49,12 +49,12 @@ export default function MapaInteractivo({ avisos, onAbrirAviso }: MapaInteractiv
             Mapa Interactivo
           </div>
           <div style={{ fontSize: '0.875rem', color: 'var(--text-tertiary)' }}>
-            Próximamente: Integración con mapa para buscar avisos por ubicación
+            Próximamente: Integración con mapa para buscar adisos por ubicación
           </div>
         </div>
       </div>
       <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-        Los avisos se mostrarán como marcadores en el mapa
+        Los adisos se mostrarán como marcadores en el mapa
       </div>
     </div>
   );

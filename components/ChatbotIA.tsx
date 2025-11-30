@@ -21,7 +21,7 @@ export default function ChatbotIA() {
         Chatbot con IA
       </div>
       <div style={{ fontSize: '0.875rem', color: 'var(--text-tertiary)', maxWidth: '300px' }}>
-        Próximamente: Busca avisos conversando con nuestra IA
+        Próximamente: Busca adisos conversando con nuestra IA
       </div>
     </div>
   );

@@ -3,7 +3,7 @@
 ## Contexto
 - **Empresa**: ADIS TECHNOLOGICAL PLATFORMS S.A.C.
 - **Dominio principal**: adis.lat
-- **Producto**: Marketplace de oportunidades y avisos clasificados
+- **Producto**: Marketplace de oportunidades y adisos clasificados
 - **Mercado inicial**: Local (Cusco, Perú)
 - **Expansión futura**: Global
 

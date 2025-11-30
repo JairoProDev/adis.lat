@@ -6,8 +6,8 @@ export const fetchCache = 'force-no-store';
 
 import { Suspense, useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Aviso, Categoria } from '@/types';
-import { getAvisos, getAvisoById, saveAviso, getAvisosCache } from '@/lib/storage';
+import { Adiso, Categoria } from '@/types';
+import { getAdisos, getAdisoById, saveAdiso, getAdisosCache } from '@/lib/storage';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useToast } from '@/hooks/useToast';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -15,36 +15,36 @@ import { getBusquedaUrl } from '@/lib/utils';
 import Header from '@/components/Header';
 import Buscador from '@/components/Buscador';
 import FiltrosCategoria from '@/components/FiltrosCategoria';
-import GrillaAvisos from '@/components/GrillaAvisos';
-import ModalAviso from '@/components/ModalAviso';
+import GrillaAdisos from '@/components/GrillaAdisos';
+import ModalAdiso from '@/components/ModalAdiso';
 import FormularioPublicar from '@/components/FormularioPublicar';
-import SkeletonAvisos from '@/components/SkeletonAvisos';
+import SkeletonAdisos from '@/components/SkeletonAdisos';
 import { ToastContainer } from '@/components/Toast';
 import FeedbackButton from '@/components/FeedbackButton';
 import SidebarDesktop, { SeccionSidebar } from '@/components/SidebarDesktop';
 import ModalNavegacionMobile from '@/components/ModalNavegacionMobile';
 import NavbarMobile from '@/components/NavbarMobile';
 
-type SeccionMobile = 'aviso' | 'mapa' | 'publicar' | 'chatbot' | 'gratuitos';
+type SeccionMobile = 'adiso' | 'mapa' | 'publicar' | 'chatbot' | 'gratuitos';
 
 function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const avisoId = searchParams.get('aviso');
+  const adisoId = searchParams.get('adiso');
   const categoriaUrl = searchParams.get('categoria') as Categoria | null;
   const buscarUrl = searchParams.get('buscar') || '';
   const cargadoInicialmente = useRef(false);
   
-  const [avisos, setAvisos] = useState<Aviso[]>([]);
-  const [avisosFiltrados, setAvisosFiltrados] = useState<Aviso[]>([]);
+  const [adisos, setAdisos] = useState<Adiso[]>([]);
+  const [adisosFiltrados, setAdisosFiltrados] = useState<Adiso[]>([]);
   const [busqueda, setBusqueda] = useState(buscarUrl);
   const busquedaDebounced = useDebounce(busqueda, 300);
   const [categoriaFiltro, setCategoriaFiltro] = useState<Categoria | 'todos'>(categoriaUrl && ['empleos', 'inmuebles', 'vehiculos', 'servicios', 'productos', 'eventos', 'negocios', 'comunidad'].includes(categoriaUrl) ? categoriaUrl : 'todos');
-  const [avisoAbierto, setAvisoAbierto] = useState<Aviso | null>(null);
-  const [indiceAvisoActual, setIndiceAvisoActual] = useState(0);
+  const [adisoAbierto, setAdisoAbierto] = useState<Adiso | null>(null);
+  const [indiceAdisoActual, setIndiceAdisoActual] = useState(0);
   const [cargando, setCargando] = useState(true);
   const [modalMobileAbierto, setModalMobileAbierto] = useState(false);
-  const [seccionMobileInicial, setSeccionMobileInicial] = useState<SeccionMobile>('aviso');
+  const [seccionMobileInicial, setSeccionMobileInicial] = useState<SeccionMobile>('adiso');
   const [seccionMobileActiva, setSeccionMobileActiva] = useState<SeccionSidebar | null>(null);
   const [seccionSidebarInicial, setSeccionSidebarInicial] = useState<SeccionSidebar | undefined>(undefined);
   const [isSidebarMinimizado, setIsSidebarMinimizado] = useState(false);
@@ -58,34 +58,34 @@ function HomeContent() {
 
     const cargarTodo = async () => {
       // Mostrar cache primero (instantáneo, síncrono)
-      const cache = getAvisosCache();
+      const cache = getAdisosCache();
       if (cache.length > 0) {
-        setAvisos(cache);
-        setAvisosFiltrados(cache);
+        setAdisos(cache);
+        setAdisosFiltrados(cache);
         setCargando(false);
         
-        // Si hay avisoId, buscarlo en cache
-        if (avisoId) {
-          const avisoCache = cache.find(a => a.id === avisoId);
-          if (avisoCache) {
-            setAvisoAbierto(avisoCache);
-            const indice = cache.findIndex(a => a.id === avisoId);
-            setIndiceAvisoActual(indice >= 0 ? indice : 0);
-            // En mobile, abrir sección de aviso si no es desktop
+        // Si hay adisoId, buscarlo en cache
+        if (adisoId) {
+          const adisoCache = cache.find(a => a.id === adisoId);
+          if (adisoCache) {
+            setAdisoAbierto(adisoCache);
+            const indice = cache.findIndex(a => a.id === adisoId);
+            setIndiceAdisoActual(indice >= 0 ? indice : 0);
+            // En mobile, abrir sección de adiso si no es desktop
             if (typeof window !== 'undefined' && window.innerWidth < 768) {
-              setSeccionMobileActiva('aviso');
+              setSeccionMobileActiva('adiso');
             }
           } else {
             // Si no está en cache, cargarlo primero
-            const avisoEspecifico = await getAvisoById(avisoId);
-            if (avisoEspecifico) {
-              setAvisoAbierto(avisoEspecifico);
-              setAvisos(prev => [avisoEspecifico, ...prev]);
-              setAvisosFiltrados(prev => [avisoEspecifico, ...prev]);
-              setIndiceAvisoActual(0);
-              // En mobile, abrir sección de aviso si no es desktop
+            const adisoEspecifico = await getAdisoById(adisoId);
+            if (adisoEspecifico) {
+              setAdisoAbierto(adisoEspecifico);
+              setAdisos(prev => [adisoEspecifico, ...prev]);
+              setAdisosFiltrados(prev => [adisoEspecifico, ...prev]);
+              setIndiceAdisoActual(0);
+              // En mobile, abrir sección de adiso si no es desktop
               if (typeof window !== 'undefined' && window.innerWidth < 768) {
-                setSeccionMobileActiva('aviso');
+                setSeccionMobileActiva('adiso');
               }
             }
           }
@@ -94,39 +94,39 @@ function HomeContent() {
       
       // Actualizar desde API en background
       try {
-        const avisosDesdeAPI = await getAvisos();
-        if (avisosDesdeAPI.length > 0 || cache.length === 0) {
-          // Merge inteligente: mantener avisos locales que no están en API (avisos recién publicados)
-          setAvisos(prev => {
-            const avisosMergeados = [...avisosDesdeAPI];
-            // Agregar avisos locales que no están en API (pueden ser recién publicados)
-            prev.forEach(avisoLocal => {
-              if (!avisosDesdeAPI.find(a => a.id === avisoLocal.id)) {
-                avisosMergeados.unshift(avisoLocal);
+        const adisosDesdeAPI = await getAdisos();
+        if (adisosDesdeAPI.length > 0 || cache.length === 0) {
+          // Merge inteligente: mantener adisos locales que no están en API (adisos recién publicados)
+          setAdisos(prev => {
+            const adisosMergeados = [...adisosDesdeAPI];
+            // Agregar adisos locales que no están en API (pueden ser recién publicados)
+            prev.forEach(adisoLocal => {
+              if (!adisosDesdeAPI.find(a => a.id === adisoLocal.id)) {
+                adisosMergeados.unshift(adisoLocal);
               }
             });
-            return avisosMergeados;
+            return adisosMergeados;
           });
           
-          setAvisosFiltrados(prev => {
-            const avisosMergeados = [...avisosDesdeAPI];
-            // Agregar avisos locales que no están en API
-            prev.forEach(avisoLocal => {
-              if (!avisosDesdeAPI.find(a => a.id === avisoLocal.id)) {
-                avisosMergeados.unshift(avisoLocal);
+          setAdisosFiltrados(prev => {
+            const adisosMergeados = [...adisosDesdeAPI];
+            // Agregar adisos locales que no están en API
+            prev.forEach(adisoLocal => {
+              if (!adisosDesdeAPI.find(a => a.id === adisoLocal.id)) {
+                adisosMergeados.unshift(adisoLocal);
               }
             });
-            return avisosMergeados;
+            return adisosMergeados;
           });
           
-          // Si hay avisoId, buscar en la lista actualizada
-          if (avisoId) {
-            setAvisos(prev => {
-              const avisoEncontrado = prev.find(a => a.id === avisoId);
-              if (avisoEncontrado) {
-                setAvisoAbierto(avisoEncontrado);
-                const indice = prev.findIndex(a => a.id === avisoId);
-                setIndiceAvisoActual(indice >= 0 ? indice : 0);
+          // Si hay adisoId, buscar en la lista actualizada
+          if (adisoId) {
+            setAdisos(prev => {
+              const adisoEncontrado = prev.find(a => a.id === adisoId);
+              if (adisoEncontrado) {
+                setAdisoAbierto(adisoEncontrado);
+                const indice = prev.findIndex(a => a.id === adisoId);
+                setIndiceAdisoActual(indice >= 0 ? indice : 0);
               }
               return prev;
             });
@@ -142,61 +142,61 @@ function HomeContent() {
     cargarTodo();
   }, []);
 
-  // Manejar cambios en avisoId cuando ya está cargado (solo actualizar modal, no recargar página)
+  // Manejar cambios en adisoId cuando ya está cargado (solo actualizar modal, no recargar página)
   useEffect(() => {
     if (cargando) return; // Esperar a que termine la carga inicial
     
-    if (!avisoId) {
-      setAvisoAbierto(null);
+    if (!adisoId) {
+      setAdisoAbierto(null);
       return;
     }
 
-    // Buscar en avisos actuales primero (más rápido)
-    const avisoLocal = avisos.find(a => a.id === avisoId);
-    if (avisoLocal) {
-      setAvisoAbierto(avisoLocal);
-      const indice = avisosFiltrados.findIndex(a => a.id === avisoId);
-      setIndiceAvisoActual(indice >= 0 ? indice : avisos.findIndex(a => a.id === avisoId));
-      // En mobile, abrir sección de aviso
+    // Buscar en adisos actuales primero (más rápido)
+    const adisoLocal = adisos.find(a => a.id === adisoId);
+    if (adisoLocal) {
+      setAdisoAbierto(adisoLocal);
+      const indice = adisosFiltrados.findIndex(a => a.id === adisoId);
+      setIndiceAdisoActual(indice >= 0 ? indice : adisos.findIndex(a => a.id === adisoId));
+      // En mobile, abrir sección de adiso
       if (!isDesktop) {
-        setSeccionMobileActiva('aviso');
+        setSeccionMobileActiva('adiso');
       }
       return;
     }
 
     // Si no está en local, cargarlo en background (sin bloquear UI)
-        getAvisoById(avisoId).then(aviso => {
-          if (aviso) {
-            setAvisoAbierto(aviso);
+        getAdisoById(adisoId).then(adiso => {
+          if (adiso) {
+            setAdisoAbierto(adiso);
             // Agregar a la lista si no existe
-            setAvisos(prev => {
-              if (!prev.find(a => a.id === avisoId)) {
-                return [aviso, ...prev];
+            setAdisos(prev => {
+              if (!prev.find(a => a.id === adisoId)) {
+                return [adiso, ...prev];
               }
               return prev;
             });
-            setAvisosFiltrados(prev => {
-              if (!prev.find(a => a.id === avisoId)) {
-                return [aviso, ...prev];
+            setAdisosFiltrados(prev => {
+              if (!prev.find(a => a.id === adisoId)) {
+                return [adiso, ...prev];
               }
               return prev;
             });
-            const indice = avisosFiltrados.findIndex(a => a.id === avisoId);
-            setIndiceAvisoActual(indice >= 0 ? indice : 0);
-            // En mobile, abrir sección de aviso si no es desktop
+            const indice = adisosFiltrados.findIndex(a => a.id === adisoId);
+            setIndiceAdisoActual(indice >= 0 ? indice : 0);
+            // En mobile, abrir sección de adiso si no es desktop
             if (!isDesktop) {
-              setSeccionMobileActiva('aviso');
+              setSeccionMobileActiva('adiso');
             }
             if (!isDesktop) {
-              setSeccionMobileActiva('aviso');
+              setSeccionMobileActiva('adiso');
             }
           }
         }).catch(console.error);
-  }, [avisoId, avisos, avisosFiltrados, cargando]);
+  }, [adisoId, adisos, adisosFiltrados, cargando]);
 
   // Filtrado y ordenamiento (siempre más recientes primero, sin opción de cambiar)
   useEffect(() => {
-    let filtrados = [...avisos]; // Crear copia para no mutar
+    let filtrados = [...adisos]; // Crear copia para no mutar
 
     // Filtrar por categoría
     if (categoriaFiltro !== 'todos') {
@@ -228,16 +228,16 @@ function HomeContent() {
       return fechaB - fechaA;
     });
 
-    setAvisosFiltrados(filtrados);
+    setAdisosFiltrados(filtrados);
     
-    // Actualizar índice si el aviso abierto sigue visible
-    if (avisoAbierto) {
-      const nuevoIndice = filtrados.findIndex(a => a.id === avisoAbierto.id);
+    // Actualizar índice si el adiso abierto sigue visible
+    if (adisoAbierto) {
+      const nuevoIndice = filtrados.findIndex(a => a.id === adisoAbierto.id);
       if (nuevoIndice >= 0) {
-        setIndiceAvisoActual(nuevoIndice);
+        setIndiceAdisoActual(nuevoIndice);
       }
     }
-  }, [busquedaDebounced, categoriaFiltro, avisos, avisoAbierto]);
+  }, [busquedaDebounced, categoriaFiltro, adisos, adisoAbierto]);
 
   // Actualizar URL cuando cambian búsqueda o categoría (después del debounce)
   useEffect(() => {
@@ -253,9 +253,9 @@ function HomeContent() {
       params.set('buscar', busquedaDebounced.trim());
     }
     
-    // Mantener aviso si está abierto
-    if (avisoId) {
-      params.set('aviso', avisoId);
+    // Mantener adiso si está abierto
+    if (adisoId) {
+      params.set('adiso', adisoId);
     }
     
     const newUrl = params.toString() ? `/?${params.toString()}` : '/';
@@ -270,60 +270,60 @@ function HomeContent() {
     if (hasChanges) {
       router.replace(newUrl, { scroll: false });
     }
-  }, [busquedaDebounced, categoriaFiltro, avisoId, router]);
+  }, [busquedaDebounced, categoriaFiltro, adisoId, router]);
 
-  const handlePublicar = (nuevoAviso: Aviso) => {
+  const handlePublicar = (nuevoAdiso: Adiso) => {
     // Optimistic update: mostrar inmediatamente
-    // Prevenir duplicados: verificar si el aviso ya existe
-    const avisoExiste = avisos.find(a => a.id === nuevoAviso.id);
+    // Prevenir duplicados: verificar si el adiso ya existe
+    const adisoExiste = adisos.find(a => a.id === nuevoAdiso.id);
     
-    let avisosActualizados: Aviso[];
-    if (avisoExiste) {
-      // Actualización: reemplazar el aviso existente
-      avisosActualizados = avisos.map(a => a.id === nuevoAviso.id ? nuevoAviso : a);
+    let adisosActualizados: Adiso[];
+    if (adisoExiste) {
+      // Actualización: reemplazar el adiso existente
+      adisosActualizados = adisos.map(a => a.id === nuevoAdiso.id ? nuevoAdiso : a);
     } else {
-      // Nuevo aviso: agregar al inicio
-      avisosActualizados = [nuevoAviso, ...avisos];
+      // Nuevo adiso: agregar al inicio
+      adisosActualizados = [nuevoAdiso, ...adisos];
     }
     
-    setAvisos(avisosActualizados);
+    setAdisos(adisosActualizados);
     
     // El useEffect se encargará de recalcular filtrados y ordenamiento (más recientes primero) automáticamente
     
-    // Solo abrir modal si es un aviso nuevo
-    if (!avisoExiste) {
-      setAvisoAbierto(nuevoAviso);
-      setIndiceAvisoActual(0);
-      // En mobile, abrir sección de aviso automáticamente
+    // Solo abrir modal si es un adiso nuevo
+    if (!adisoExiste) {
+      setAdisoAbierto(nuevoAdiso);
+      setIndiceAdisoActual(0);
+      // En mobile, abrir sección de adiso automáticamente
       if (!isDesktop) {
-        setSeccionMobileActiva('aviso');
+        setSeccionMobileActiva('adiso');
       }
       // Actualizar URL sin recargar la página
       const params = new URLSearchParams(searchParams.toString());
-      params.set('aviso', nuevoAviso.id);
+      params.set('adiso', nuevoAdiso.id);
       router.replace(`/?${params.toString()}`, { scroll: false });
-      success('¡Aviso publicado exitosamente!');
+      success('¡Adiso publicado exitosamente!');
     } else {
       // Si es una actualización (con imagen), actualizar el modal si está abierto
-      if (avisoAbierto?.id === nuevoAviso.id) {
-        setAvisoAbierto(nuevoAviso);
+      if (adisoAbierto?.id === nuevoAdiso.id) {
+        setAdisoAbierto(nuevoAdiso);
       }
     }
   };
 
-  const handleAbrirAviso = (aviso: Aviso) => {
-    const indice = avisosFiltrados.findIndex(a => a.id === aviso.id);
-    setIndiceAvisoActual(indice >= 0 ? indice : 0);
-    setAvisoAbierto(aviso);
+  const handleAbrirAdiso = (adiso: Adiso) => {
+    const indice = adisosFiltrados.findIndex(a => a.id === adiso.id);
+    setIndiceAdisoActual(indice >= 0 ? indice : 0);
+    setAdisoAbierto(adiso);
     
-    // En mobile, abrir sección de aviso automáticamente
+    // En mobile, abrir sección de adiso automáticamente
     if (!isDesktop) {
-      setSeccionMobileActiva('aviso');
+      setSeccionMobileActiva('adiso');
     }
     
     // Actualizar URL sin recargar la página
     const params = new URLSearchParams(searchParams.toString());
-    params.set('aviso', aviso.id);
+    params.set('adiso', adiso.id);
     router.replace(`/?${params.toString()}`, { scroll: false });
   };
 
@@ -337,48 +337,48 @@ function HomeContent() {
     // Cambiar a la nueva sección
     setSeccionMobileActiva(seccion);
     
-    // Si selecciona aviso y hay aviso abierto, mantenerlo visible
+    // Si selecciona adiso y hay adiso abierto, mantenerlo visible
     // Si selecciona otra sección, el overlay mostrará esa sección
   };
 
   const handleCerrarSeccionMobile = () => {
     const seccionAnterior = seccionMobileActiva;
     setSeccionMobileActiva(null);
-    // No cerrar el aviso, solo cerrar el overlay
-    // El aviso puede seguir abierto y el usuario puede volver a verlo tocando "Aviso" en el navbar
+    // No cerrar el adiso, solo cerrar el overlay
+    // El adiso puede seguir abierto y el usuario puede volver a verlo tocando "Adiso" en el navbar
   };
 
-  const handleCerrarAviso = () => {
-    setAvisoAbierto(null);
-    // En mobile, si estaba en sección de aviso, cerrarla también
-    if (!isDesktop && seccionMobileActiva === 'aviso') {
+  const handleCerrarAdiso = () => {
+    setAdisoAbierto(null);
+    // En mobile, si estaba en sección de adiso, cerrarla también
+    if (!isDesktop && seccionMobileActiva === 'adiso') {
       setSeccionMobileActiva(null);
     }
     router.push('/', { scroll: false });
   };
 
   const handleAnterior = () => {
-    if (indiceAvisoActual > 0) {
-      const nuevoIndice = indiceAvisoActual - 1;
-      const aviso = avisosFiltrados[nuevoIndice];
-      setIndiceAvisoActual(nuevoIndice);
-      setAvisoAbierto(aviso);
+    if (indiceAdisoActual > 0) {
+      const nuevoIndice = indiceAdisoActual - 1;
+      const adiso = adisosFiltrados[nuevoIndice];
+      setIndiceAdisoActual(nuevoIndice);
+      setAdisoAbierto(adiso);
       // Actualizar URL sin recargar la página
       const params = new URLSearchParams(searchParams.toString());
-      params.set('aviso', aviso.id);
+      params.set('adiso', adiso.id);
       router.replace(`/?${params.toString()}`, { scroll: false });
     }
   };
 
   const handleSiguiente = () => {
-    if (indiceAvisoActual < avisosFiltrados.length - 1) {
-      const nuevoIndice = indiceAvisoActual + 1;
-      const aviso = avisosFiltrados[nuevoIndice];
-      setIndiceAvisoActual(nuevoIndice);
-      setAvisoAbierto(aviso);
+    if (indiceAdisoActual < adisosFiltrados.length - 1) {
+      const nuevoIndice = indiceAdisoActual + 1;
+      const adiso = adisosFiltrados[nuevoIndice];
+      setIndiceAdisoActual(nuevoIndice);
+      setAdisoAbierto(adiso);
       // Actualizar URL sin recargar la página
       const params = new URLSearchParams(searchParams.toString());
-      params.set('aviso', aviso.id);
+      params.set('adiso', adiso.id);
       router.replace(`/?${params.toString()}`, { scroll: false });
     }
   };
@@ -426,11 +426,11 @@ function HomeContent() {
               } else {
                 params.delete('buscar');
               }
-              // Mantener aviso si está abierto
-              if (avisoId) {
-                params.set('aviso', avisoId);
+              // Mantener adiso si está abierto
+              if (adisoId) {
+                params.set('adiso', adisoId);
               } else {
-                params.delete('aviso');
+                params.delete('adiso');
               }
               const newUrl = params.toString() ? `/?${params.toString()}` : '/';
               router.push(newUrl, { scroll: false });
@@ -438,10 +438,10 @@ function HomeContent() {
           />
         </div>
         {cargando ? (
-          <SkeletonAvisos />
+          <SkeletonAdisos />
         ) : (
             <>
-              {avisosFiltrados.length > 0 && (
+              {adisosFiltrados.length > 0 && (
                 <div style={{
                   marginBottom: '1rem',
                   display: 'flex',
@@ -454,8 +454,8 @@ function HomeContent() {
                   gap: '0.5rem'
                 }}>
                   <span>
-                    Mostrando {avisosFiltrados.length} {avisosFiltrados.length === 1 ? 'aviso' : 'avisos'}
-                    {(busqueda || categoriaFiltro !== 'todos') && ` (de ${avisos.length} total)`}
+                    Mostrando {adisosFiltrados.length} {adisosFiltrados.length === 1 ? 'adiso' : 'adisos'}
+                    {(busqueda || categoriaFiltro !== 'todos') && ` (de ${adisos.length} total)`}
                   </span>
                   {(busqueda.trim() || categoriaFiltro !== 'todos') && (
                     <button
@@ -494,21 +494,21 @@ function HomeContent() {
                   )}
                 </div>
               )}
-              <GrillaAvisos
-                avisos={avisosFiltrados}
-                onAbrirAviso={handleAbrirAviso}
-                avisoSeleccionadoId={avisoAbierto?.id}
+              <GrillaAdisos
+                adisos={adisosFiltrados}
+                onAbrirAdiso={handleAbrirAdiso}
+                adisoSeleccionadoId={adisoAbierto?.id}
                 espacioAdicional={isSidebarMinimizado ? 360 : 0}
               />
-              {avisosFiltrados.length === 0 && (
+              {adisosFiltrados.length === 0 && (
                 <div style={{
                   textAlign: 'center',
                   padding: '3rem 1rem',
                   color: 'var(--text-secondary)'
                 }}>
                   {busqueda || categoriaFiltro !== 'todos'
-                    ? 'No se encontraron avisos con esos filtros'
-                    : 'Aún no hay avisos publicados'}
+                    ? 'No se encontraron adisos con esos filtros'
+                    : 'Aún no hay adisos publicados'}
                 </div>
               )}
             </>
@@ -519,12 +519,12 @@ function HomeContent() {
       {/* Sidebar Desktop - siempre visible */}
       {isDesktop && (
         <SidebarDesktop
-          avisoAbierto={avisoAbierto}
-          onCerrarAviso={handleCerrarAviso}
+          adisoAbierto={adisoAbierto}
+          onCerrarAdiso={handleCerrarAdiso}
           onAnterior={handleAnterior}
           onSiguiente={handleSiguiente}
-          puedeAnterior={indiceAvisoActual > 0}
-          puedeSiguiente={indiceAvisoActual < avisosFiltrados.length - 1}
+          puedeAnterior={indiceAdisoActual > 0}
+          puedeSiguiente={indiceAdisoActual < adisosFiltrados.length - 1}
           onPublicar={handlePublicar}
           onError={(msg) => error(msg)}
           onSuccess={(msg) => success(msg)}
@@ -536,9 +536,9 @@ function HomeContent() {
       {/* Navbar Mobile - siempre visible en mobile */}
       {!isDesktop && (
         <NavbarMobile
-          seccionActiva={seccionMobileActiva || (avisoAbierto ? 'aviso' : null)}
+          seccionActiva={seccionMobileActiva || (adisoAbierto ? 'adiso' : null)}
           onCambiarSeccion={handleCambiarSeccionMobile}
-          tieneAvisoAbierto={!!avisoAbierto}
+          tieneAdisoAbierto={!!adisoAbierto}
         />
       )}
 
@@ -548,12 +548,12 @@ function HomeContent() {
           abierto={!!seccionMobileActiva}
           onCerrar={handleCerrarSeccionMobile}
           seccionInicial={seccionMobileActiva}
-          avisoAbierto={avisoAbierto}
-          onCerrarAviso={handleCerrarAviso}
+          adisoAbierto={adisoAbierto}
+          onCerrarAdiso={handleCerrarAdiso}
           onAnterior={handleAnterior}
           onSiguiente={handleSiguiente}
-          puedeAnterior={indiceAvisoActual > 0}
-          puedeSiguiente={indiceAvisoActual < avisosFiltrados.length - 1}
+          puedeAnterior={indiceAdisoActual > 0}
+          puedeSiguiente={indiceAdisoActual < adisosFiltrados.length - 1}
           onPublicar={handlePublicar}
           onError={(msg) => error(msg)}
           onSuccess={(msg) => success(msg)}

@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Buscadis - Avisos Clasificados',
-  description: 'Publica y encuentra avisos clasificados',
+  title: 'Buscadis - Adisos Clasificados',
+  description: 'Publica y encuentra adisos clasificados',
 };
 
 export default function RootLayout({

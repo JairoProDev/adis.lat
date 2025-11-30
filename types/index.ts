@@ -68,7 +68,7 @@ export const PAQUETES: Record<TamañoPaquete, PaqueteInfo> = {
   }
 };
 
-export interface Aviso {
+export interface Adiso {
   id: string;
   categoria: Categoria;
   titulo: string;
@@ -78,13 +78,13 @@ export interface Aviso {
   fechaPublicacion: string;
   horaPublicacion: string;
   tamaño?: TamañoPaquete; // Tamaño del paquete seleccionado
-  imagenesUrls?: string[]; // URLs de las imágenes del aviso (opcional, múltiples)
+  imagenesUrls?: string[]; // URLs de las imágenes del adiso (opcional, múltiples)
   // Mantener imagenUrl para compatibilidad hacia atrás
   imagenUrl?: string;
-  esGratuito?: boolean; // Indica si es un aviso gratuito
+  esGratuito?: boolean; // Indica si es un adiso gratuito
 }
 
-export interface AvisoGratuito {
+export interface AdisoGratuito {
   id: string;
   categoria: Categoria;
   titulo: string; // Máximo 30 caracteres
@@ -93,7 +93,7 @@ export interface AvisoGratuito {
   fechaExpiracion: string; // 1 día después de fechaCreacion
 }
 
-export interface AvisoFormData {
+export interface AdisoFormData {
   categoria: Categoria;
   titulo: string;
   descripcion: string;

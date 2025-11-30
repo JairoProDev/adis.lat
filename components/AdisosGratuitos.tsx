@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { AvisoGratuito, Categoria } from '@/types';
+import { AdisoGratuito, Categoria } from '@/types';
 import { IconWhatsApp, IconGratuitos } from './Icons';
 import { getWhatsAppUrl, generarIdUnico } from '@/lib/utils';
-import { fetchAvisosGratuitos, createAvisoGratuito } from '@/lib/api';
+import { fetchAdisosGratuitos, createAdisoGratuito } from '@/lib/api';
 import { 
   IconEmpleos, 
   IconInmuebles, 
@@ -30,12 +30,12 @@ const getCategoriaIcon = (categoria: Categoria): React.ComponentType<{ size?: nu
   return iconMap[categoria];
 };
 
-interface AvisosGratuitosProps {
-  onPublicarGratuito?: (aviso: AvisoGratuito) => void;
+interface AdisosGratuitosProps {
+  onPublicarGratuito?: (adiso: AdisoGratuito) => void;
 }
 
-export default function AvisosGratuitos({ onPublicarGratuito }: AvisosGratuitosProps) {
-  const [avisosGratuitos, setAvisosGratuitos] = useState<AvisoGratuito[]>([]);
+export default function AdisosGratuitos({ onPublicarGratuito }: AdisosGratuitosProps) {
+  const [adisosGratuitos, setAdisosGratuitos] = useState<AdisoGratuito[]>([]);
   const [cargando, setCargando] = useState(true);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [formData, setFormData] = useState({
@@ -45,17 +45,17 @@ export default function AvisosGratuitos({ onPublicarGratuito }: AvisosGratuitosP
   });
 
   useEffect(() => {
-    const cargarAvisos = async () => {
+    const cargarAdisos = async () => {
       try {
-        const avisos = await fetchAvisosGratuitos();
-        setAvisosGratuitos(avisos);
+        const adisos = await fetchAdisosGratuitos();
+        setAdisosGratuitos(adisos);
       } catch (error) {
-        console.error('Error al cargar avisos gratuitos:', error);
+        console.error('Error al cargar adisos gratuitos:', error);
       } finally {
         setCargando(false);
       }
     };
-    cargarAvisos();
+    cargarAdisos();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -68,19 +68,19 @@ export default function AvisosGratuitos({ onPublicarGratuito }: AvisosGratuitosP
     }
 
     try {
-      const nuevoAviso = await createAvisoGratuito({
+      const nuevoAdiso = await createAdisoGratuito({
         categoria: formData.categoria,
         titulo: formData.titulo.trim(),
         contacto: formData.contacto.trim()
       });
 
-      setAvisosGratuitos(prev => [nuevoAviso, ...prev]);
+      setAdisosGratuitos(prev => [nuevoAdiso, ...prev]);
       setFormData({ categoria: 'empleos', titulo: '', contacto: '' });
       setMostrarFormulario(false);
-      onPublicarGratuito?.(nuevoAviso);
+      onPublicarGratuito?.(nuevoAdiso);
     } catch (error: any) {
-      console.error('Error al publicar aviso gratuito:', error);
-      alert(error.message || 'Error al publicar el aviso gratuito');
+      console.error('Error al publicar adiso gratuito:', error);
+      alert(error.message || 'Error al publicar el adiso gratuito');
     }
   };
 
@@ -106,7 +106,7 @@ export default function AvisosGratuitos({ onPublicarGratuito }: AvisosGratuitosP
       >
         <IconGratuitos size={20} />
         <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
-          Avisos Gratuitos
+          Adisos Gratuitos
         </h2>
       </div>
 
@@ -237,29 +237,29 @@ export default function AvisosGratuitos({ onPublicarGratuito }: AvisosGratuitosP
             marginBottom: '1rem'
           }}
         >
-          + Publicar Aviso Gratuito
+          + Publicar Adiso Gratuito
         </button>
       )}
 
-      {/* Lista de avisos gratuitos */}
+      {/* Lista de adisos gratuitos */}
       <div style={{ flex: 1, overflowY: 'auto' }}>
         {cargando ? (
           <div style={{ textAlign: 'center', color: 'var(--text-tertiary)', padding: '2rem' }}>
             Cargando...
           </div>
-        ) : avisosGratuitos.length === 0 ? (
+        ) : adisosGratuitos.length === 0 ? (
           <div style={{ textAlign: 'center', color: 'var(--text-tertiary)', padding: '2rem' }}>
             <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📋</div>
-            <div>No hay avisos gratuitos aún</div>
+            <div>No hay adisos gratuitos aún</div>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {avisosGratuitos.map((aviso) => {
-              const IconComponent = getCategoriaIcon(aviso.categoria);
-              const tituloTruncado = aviso.titulo.length > 30 ? aviso.titulo.substring(0, 30) + '...' : aviso.titulo;
+            {adisosGratuitos.map((adiso) => {
+              const IconComponent = getCategoriaIcon(adiso.categoria);
+              const tituloTruncado = adiso.titulo.length > 30 ? adiso.titulo.substring(0, 30) + '...' : adiso.titulo;
               return (
                 <div
-                  key={aviso.id}
+                  key={adiso.id}
                   style={{
                     padding: '0.75rem',
                     backgroundColor: 'var(--bg-secondary)',
@@ -272,14 +272,14 @@ export default function AvisosGratuitos({ onPublicarGratuito }: AvisosGratuitosP
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
                     <IconComponent size={12} />
-                    <span style={{ textTransform: 'capitalize' }}>{aviso.categoria}</span>
+                    <span style={{ textTransform: 'capitalize' }}>{adiso.categoria}</span>
                     <span style={{ marginLeft: 'auto', fontSize: '0.65rem', opacity: 0.7 }}>Gratis</span>
                   </div>
                   <div style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-primary)' }}>
                     {tituloTruncado}
                   </div>
                   <button
-                    onClick={() => window.open(getWhatsAppUrl(aviso.contacto, aviso.titulo, aviso.categoria, aviso.id), '_blank')}
+                    onClick={() => window.open(getWhatsAppUrl(adiso.contacto, adiso.titulo, adiso.categoria, adiso.id), '_blank')}
                     style={{
                       display: 'flex',
                       alignItems: 'center',

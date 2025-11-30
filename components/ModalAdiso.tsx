@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
-import { Aviso } from '@/types';
+import { Adiso } from '@/types';
 import { formatFecha, getWhatsAppUrl, copiarLink, compartirNativo } from '@/lib/utils';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import {
@@ -25,8 +25,8 @@ import {
 } from './Icons';
 import { Categoria } from '@/types';
 
-interface ModalAvisoProps {
-  aviso: Aviso;
+interface ModalAdisoProps {
+  adiso: Adiso;
   onCerrar: () => void;
   onAnterior: () => void;
   onSiguiente: () => void;
@@ -35,15 +35,15 @@ interface ModalAvisoProps {
   dentroSidebar?: boolean; // Indica si está dentro del sidebar (sin overlay)
 }
 
-export default function ModalAviso({
-  aviso,
+export default function ModalAdiso({
+  adiso,
   onCerrar,
   onAnterior,
   onSiguiente,
   puedeAnterior,
   puedeSiguiente,
   dentroSidebar = false
-}: ModalAvisoProps) {
+}: ModalAdisoProps) {
   const [copiado, setCopiado] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
@@ -77,9 +77,9 @@ export default function ModalAviso({
         }
       } else if (imagenAmpliada) {
         // Navegación entre imágenes ampliadas
-        const imagenes = aviso.imagenesUrls && aviso.imagenesUrls.length > 0
-          ? aviso.imagenesUrls
-          : aviso.imagenUrl ? [aviso.imagenUrl] : [];
+        const imagenes = adiso.imagenesUrls && adiso.imagenesUrls.length > 0
+          ? adiso.imagenesUrls
+          : adiso.imagenUrl ? [adiso.imagenUrl] : [];
         
         if (e.key === 'ArrowLeft' && imagenAmpliada.index > 0) {
           setImagenAmpliada({ url: imagenes[imagenAmpliada.index - 1], index: imagenAmpliada.index - 1 });
@@ -95,7 +95,7 @@ export default function ModalAviso({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onCerrar, onAnterior, onSiguiente, puedeAnterior, puedeSiguiente, imagenAmpliada, aviso]);
+  }, [onCerrar, onAnterior, onSiguiente, puedeAnterior, puedeSiguiente, imagenAmpliada, adiso]);
 
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
@@ -122,7 +122,7 @@ export default function ModalAviso({
 
     const handleCopiarLink = async () => {
       try {
-        await copiarLink(aviso.categoria, aviso.id);
+        await copiarLink(adiso.categoria, adiso.id);
         setCopiado(true);
         setTimeout(() => setCopiado(false), 2000);
       } catch (error) {
@@ -131,11 +131,11 @@ export default function ModalAviso({
     };
 
     const handleCompartir = async () => {
-      await compartirNativo(aviso.categoria, aviso.id, aviso.titulo);
+      await compartirNativo(adiso.categoria, adiso.id, adiso.titulo);
     };
 
     const handleContactar = () => {
-      window.open(getWhatsAppUrl(aviso.contacto, aviso.titulo, aviso.categoria, aviso.id), '_blank');
+      window.open(getWhatsAppUrl(adiso.contacto, adiso.titulo, adiso.categoria, adiso.id), '_blank');
     };
 
   const overlayStyle: React.CSSProperties = {
@@ -213,10 +213,10 @@ export default function ModalAviso({
             }}
           >
             {(() => {
-              const IconComponent = getCategoriaIcon(aviso.categoria);
+              const IconComponent = getCategoriaIcon(adiso.categoria);
               return <IconComponent size={14} />;
             })()}
-            {aviso.categoria}
+            {adiso.categoria}
           </div>
           <h2 style={{
             fontSize: '1.5rem',
@@ -226,14 +226,14 @@ export default function ModalAviso({
             lineHeight: 1.3
             // paddingRight removido ya que no hay botón de cerrar dentro del sidebar
           }}>
-            {aviso.titulo}
+            {adiso.titulo}
           </h2>
           {(() => {
             // Mostrar todas las imágenes si hay múltiples, o imagen única
-            const imagenes = aviso.imagenesUrls && aviso.imagenesUrls.length > 0
-              ? aviso.imagenesUrls
-              : aviso.imagenUrl
-                ? [aviso.imagenUrl]
+            const imagenes = adiso.imagenesUrls && adiso.imagenesUrls.length > 0
+              ? adiso.imagenesUrls
+              : adiso.imagenUrl
+                ? [adiso.imagenUrl]
                 : [];
 
             if (imagenes.length === 0) return null;
@@ -249,7 +249,7 @@ export default function ModalAviso({
                   }}>
                     <img
                       src={imagenes[0]}
-                      alt={aviso.titulo}
+                      alt={adiso.titulo}
                       onClick={() => setImagenAmpliada({ url: imagenes[0], index: 0 })}
                       style={{
                         width: '100%',
@@ -288,7 +288,7 @@ export default function ModalAviso({
                       >
                         <img
                           src={url}
-                          alt={`${aviso.titulo} - Imagen ${index + 1}`}
+                          alt={`${adiso.titulo} - Imagen ${index + 1}`}
                           onClick={() => setImagenAmpliada({ url, index })}
                           style={{
                             width: '100%',
@@ -319,7 +319,7 @@ export default function ModalAviso({
             lineHeight: 1.6,
             whiteSpace: 'pre-wrap'
           }}>
-            {aviso.descripcion}
+            {adiso.descripcion}
           </div>
           <div
             style={{
@@ -342,7 +342,7 @@ export default function ModalAviso({
             >
               <IconLocation />
               <span>
-                <strong style={{ color: 'var(--text-primary)' }}>Ubicación:</strong> {aviso.ubicacion}
+                <strong style={{ color: 'var(--text-primary)' }}>Ubicación:</strong> {adiso.ubicacion}
               </span>
             </div>
             <div
@@ -355,7 +355,7 @@ export default function ModalAviso({
               <IconCalendar />
               <span>
                 <strong style={{ color: 'var(--text-primary)' }}>Publicado:</strong>{' '}
-                {formatFecha(aviso.fechaPublicacion, aviso.horaPublicacion)}
+                {formatFecha(adiso.fechaPublicacion, adiso.horaPublicacion)}
               </span>
             </div>
           </div>
@@ -541,9 +541,9 @@ export default function ModalAviso({
 
         {/* Modal de imagen ampliada - fuera del modal principal para evitar conflictos */}
         {imagenAmpliada && (() => {
-          const imagenes = aviso.imagenesUrls && aviso.imagenesUrls.length > 0
-            ? aviso.imagenesUrls
-            : aviso.imagenUrl ? [aviso.imagenUrl] : [];
+          const imagenes = adiso.imagenesUrls && adiso.imagenesUrls.length > 0
+            ? adiso.imagenesUrls
+            : adiso.imagenUrl ? [adiso.imagenUrl] : [];
         const puedeAnteriorImg = imagenAmpliada.index > 0;
         const puedeSiguienteImg = imagenAmpliada.index < imagenes.length - 1;
 
@@ -649,7 +649,7 @@ export default function ModalAviso({
 
               <img
                 src={imagenAmpliada.url}
-                alt={`${aviso.titulo} - Imagen ${imagenAmpliada.index + 1}`}
+                alt={`${adiso.titulo} - Imagen ${imagenAmpliada.index + 1}`}
                 onClick={(e) => e.stopPropagation()}
                 style={{
                   maxWidth: '100%',
@@ -778,10 +778,10 @@ export default function ModalAviso({
             }}
           >
             {(() => {
-              const IconComponent = getCategoriaIcon(aviso.categoria);
+              const IconComponent = getCategoriaIcon(adiso.categoria);
               return <IconComponent size={14} />;
             })()}
-            {aviso.categoria}
+            {adiso.categoria}
           </div>
           <h2 style={{
             fontSize: '1.5rem',
@@ -791,14 +791,14 @@ export default function ModalAviso({
             lineHeight: 1.3,
             paddingRight: '2.5rem'
           }}>
-            {aviso.titulo}
+            {adiso.titulo}
           </h2>
           {(() => {
             // Mostrar todas las imágenes si hay múltiples, o imagen única
-            const imagenes = aviso.imagenesUrls && aviso.imagenesUrls.length > 0
-              ? aviso.imagenesUrls
-              : aviso.imagenUrl
-                ? [aviso.imagenUrl]
+            const imagenes = adiso.imagenesUrls && adiso.imagenesUrls.length > 0
+              ? adiso.imagenesUrls
+              : adiso.imagenUrl
+                ? [adiso.imagenUrl]
                 : [];
 
             if (imagenes.length === 0) return null;
@@ -814,7 +814,7 @@ export default function ModalAviso({
                   }}>
                     <img
                       src={imagenes[0]}
-                      alt={aviso.titulo}
+                      alt={adiso.titulo}
                       onClick={() => setImagenAmpliada({ url: imagenes[0], index: 0 })}
                       style={{
                         width: '100%',
@@ -853,7 +853,7 @@ export default function ModalAviso({
                       >
                         <img
                           src={url}
-                          alt={`${aviso.titulo} - Imagen ${index + 1}`}
+                          alt={`${adiso.titulo} - Imagen ${index + 1}`}
                           onClick={() => setImagenAmpliada({ url, index })}
                           style={{
                             width: '100%',
@@ -884,7 +884,7 @@ export default function ModalAviso({
             lineHeight: 1.6,
             whiteSpace: 'pre-wrap'
           }}>
-            {aviso.descripcion}
+            {adiso.descripcion}
           </div>
           <div
             style={{
@@ -907,7 +907,7 @@ export default function ModalAviso({
             >
               <IconLocation />
               <span>
-                <strong style={{ color: 'var(--text-primary)' }}>Ubicación:</strong> {aviso.ubicacion}
+                <strong style={{ color: 'var(--text-primary)' }}>Ubicación:</strong> {adiso.ubicacion}
               </span>
             </div>
             <div
@@ -920,7 +920,7 @@ export default function ModalAviso({
               <IconCalendar />
               <span>
                 <strong style={{ color: 'var(--text-primary)' }}>Publicado:</strong>{' '}
-                {formatFecha(aviso.fechaPublicacion, aviso.horaPublicacion)}
+                {formatFecha(adiso.fechaPublicacion, adiso.horaPublicacion)}
               </span>
             </div>
           </div>
@@ -1108,9 +1108,9 @@ export default function ModalAviso({
 
     {/* Modal de imagen ampliada - fuera del modal principal para evitar conflictos */}
     {imagenAmpliada && (() => {
-        const imagenes = aviso.imagenesUrls && aviso.imagenesUrls.length > 0
-          ? aviso.imagenesUrls
-          : aviso.imagenUrl ? [aviso.imagenUrl] : [];
+        const imagenes = adiso.imagenesUrls && adiso.imagenesUrls.length > 0
+          ? adiso.imagenesUrls
+          : adiso.imagenUrl ? [adiso.imagenUrl] : [];
         const puedeAnteriorImg = imagenAmpliada.index > 0;
         const puedeSiguienteImg = imagenAmpliada.index < imagenes.length - 1;
 
@@ -1216,7 +1216,7 @@ export default function ModalAviso({
 
               <img
                 src={imagenAmpliada.url}
-                alt={`${aviso.titulo} - Imagen ${imagenAmpliada.index + 1}`}
+                alt={`${adiso.titulo} - Imagen ${imagenAmpliada.index + 1}`}
                 onClick={(e) => e.stopPropagation()}
                 style={{
                   maxWidth: '100%',

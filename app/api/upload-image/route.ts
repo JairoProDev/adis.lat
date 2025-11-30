@@ -44,12 +44,12 @@ export async function POST(request: NextRequest) {
     const timestamp = Date.now();
     const random = Math.random().toString(36).substring(2, 15);
     const extension = file.name.split('.').pop() || 'jpg';
-    // Determinar si es para feedback o aviso basado en el tipo de archivo o parámetro
-    const tipo = request.headers.get('x-upload-type') || 'avisos'; // Por defecto avisos
+    // Determinar si es para feedback o adiso basado en el tipo de archivo o parámetro
+    const tipo = request.headers.get('x-upload-type') || 'adisos'; // Por defecto adisos
     const fileName = `${tipo}/${timestamp}-${random}.${extension}`;
 
     // Determinar el bucket según el tipo
-    const bucketName = tipo === 'feedback' ? 'feedback-images' : 'avisos-images';
+    const bucketName = tipo === 'feedback' ? 'feedback-images' : 'adisos-images';
     
     // Subir a Supabase Storage
     const { data, error } = await supabase.storage

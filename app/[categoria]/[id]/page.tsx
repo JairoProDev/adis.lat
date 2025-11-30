@@ -8,7 +8,7 @@ import { useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Categoria } from '@/types';
 
-export default function AvisoPage() {
+export default function AdisoPage() {
   const router = useRouter();
   const params = useParams();
   const categoria = params?.categoria as string;
@@ -20,8 +20,8 @@ export default function AvisoPage() {
       // Validar que la categoría sea válida
       const categoriasValidas: Categoria[] = ['empleos', 'inmuebles', 'vehiculos', 'servicios', 'productos', 'eventos', 'negocios', 'comunidad'];
       if (categoriasValidas.includes(categoria as Categoria)) {
-        // Redirigir a la página principal con el aviso en query param
-        router.replace(`/?aviso=${id}`, { scroll: false });
+        // Redirigir a la página principal con el adiso en query param
+        router.replace(`/?adiso=${id}`, { scroll: false });
       } else {
         router.replace('/', { scroll: false });
       }

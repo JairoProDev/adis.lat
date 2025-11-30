@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { Aviso, AvisoGratuito } from '@/types';
+import { Adiso, AdisoGratuito } from '@/types';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -17,8 +17,8 @@ export const supabase = supabaseUrl && supabaseAnonKey
     })
   : null;
 
-// Función para convertir de la base de datos a Aviso
-function dbToAviso(row: any): Aviso {
+// Función para convertir de la base de datos a Adiso
+function dbToAdiso(row: any): Adiso {
   // Soporte para múltiples imágenes (array JSON) o imagen única (string)
   let imagenesUrls: string[] | undefined;
   if (row.imagenes_urls) {
@@ -51,53 +51,53 @@ function dbToAviso(row: any): Aviso {
   };
 }
 
-// Función para convertir de Aviso a la base de datos
-function avisoToDb(aviso: Aviso): any {
+// Función para convertir de Adiso a la base de datos
+function adisoToDb(adiso: Adiso): any {
   // Convertir array de imágenes a JSON
-  const imagenesUrlsJson = aviso.imagenesUrls && aviso.imagenesUrls.length > 0
-    ? JSON.stringify(aviso.imagenesUrls)
+  const imagenesUrlsJson = adiso.imagenesUrls && adiso.imagenesUrls.length > 0
+    ? JSON.stringify(adiso.imagenesUrls)
     : null;
 
   const dbData: any = {
-    id: aviso.id,
-    categoria: aviso.categoria,
-    titulo: aviso.titulo,
-    descripcion: aviso.descripcion,
-    contacto: aviso.contacto,
-    ubicacion: aviso.ubicacion,
-    fecha_publicacion: aviso.fechaPublicacion,
-    hora_publicacion: aviso.horaPublicacion,
+    id: adiso.id,
+    categoria: adiso.categoria,
+    titulo: adiso.titulo,
+    descripcion: adiso.descripcion,
+    contacto: adiso.contacto,
+    ubicacion: adiso.ubicacion,
+    fecha_publicacion: adiso.fechaPublicacion,
+    hora_publicacion: adiso.horaPublicacion,
     imagenes_urls: imagenesUrlsJson,
     // Mantener imagen_url para compatibilidad
-    imagen_url: aviso.imagenUrl || aviso.imagenesUrls?.[0] || null
+    imagen_url: adiso.imagenUrl || adiso.imagenesUrls?.[0] || null
   };
 
   // Solo incluir tamaño si existe (para evitar errores si la columna no existe en la BD)
-  if (aviso.tamaño !== undefined) {
-    dbData.tamaño = aviso.tamaño;
+  if (adiso.tamaño !== undefined) {
+    dbData.tamaño = adiso.tamaño;
   }
 
   return dbData;
 }
 
-export async function getAvisosFromSupabase(): Promise<Aviso[]> {
+export async function getAdisosFromSupabase(): Promise<Adiso[]> {
   if (!supabase) {
     throw new Error('Supabase no está configurado');
   }
 
   try {
     const { data, error } = await supabase
-      .from('avisos')
+      .from('adisos')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(1000);
 
     if (error) {
-      console.error('Error al obtener avisos:', error);
+      console.error('Error al obtener adisos:', error);
       throw error;
     }
 
-    return data ? data.map(dbToAviso) : [];
+    return data ? data.map(dbToAdiso) : [];
   } catch (error: any) {
     // Si es un error de RLS, dar mensaje más claro
     if (error?.code === 'PGRST301' || error?.message?.includes('permission denied')) {
@@ -107,14 +107,14 @@ export async function getAvisosFromSupabase(): Promise<Aviso[]> {
   }
 }
 
-export async function getAvisoByIdFromSupabase(id: string): Promise<Aviso | null> {
+export async function getAdisoByIdFromSupabase(id: string): Promise<Adiso | null> {
   if (!supabase) {
     throw new Error('Supabase no está configurado');
   }
 
   try {
     const { data, error } = await supabase
-      .from('avisos')
+      .from('adisos')
       .select('*')
       .eq('id', id)
       .single();
@@ -124,11 +124,11 @@ export async function getAvisoByIdFromSupabase(id: string): Promise<Aviso | null
         // No se encontró el registro
         return null;
       }
-      console.error('Error al obtener aviso:', error);
+      console.error('Error al obtener adiso:', error);
       throw error;
     }
 
-    return data ? dbToAviso(data) : null;
+    return data ? dbToAdiso(data) : null;
   } catch (error: any) {
     if (error?.code === 'PGRST301' || error?.message?.includes('permission denied')) {
       throw new Error('Las políticas de seguridad no están configuradas.');
@@ -137,98 +137,98 @@ export async function getAvisoByIdFromSupabase(id: string): Promise<Aviso | null
   }
 }
 
-export async function createAvisoInSupabase(aviso: Aviso): Promise<Aviso> {
+export async function createAdisoInSupabase(adiso: Adiso): Promise<Adiso> {
   if (!supabase) {
     throw new Error('Supabase no está configurado');
   }
 
   try {
-    // Verificar si el aviso ya existe
+    // Verificar si el adiso ya existe
     const { data: existing } = await supabase
-      .from('avisos')
+      .from('adisos')
       .select('*')
-      .eq('id', aviso.id)
+      .eq('id', adiso.id)
       .single();
 
     // Si existe, actualizarlo en lugar de crear uno nuevo
     if (existing) {
-      return await updateAvisoInSupabase(aviso);
+      return await updateAdisoInSupabase(adiso);
     }
 
     const { data, error } = await supabase
-      .from('avisos')
-      .insert(avisoToDb(aviso))
+      .from('adisos')
+      .insert(adisoToDb(adiso))
       .select()
       .single();
 
     if (error) {
-      console.error('Error al crear aviso:', error);
+      console.error('Error al crear adiso:', error);
       
       // Errores comunes con mensajes más claros
       if (error.code === 'PGRST301' || error.message?.includes('permission denied')) {
-        throw new Error('No tienes permiso para crear avisos. Verifica las políticas de seguridad en Supabase.');
+        throw new Error('No tienes permiso para crear adisos. Verifica las políticas de seguridad en Supabase.');
       }
       
       if (error.code === '23505') {
         // Si es duplicado, intentar actualizar
-        return await updateAvisoInSupabase(aviso);
+        return await updateAdisoInSupabase(adiso);
       }
       
       throw error;
     }
 
     if (!data) {
-      throw new Error('No se recibió respuesta al crear el aviso');
+      throw new Error('No se recibió respuesta al crear el adiso');
     }
 
-    return dbToAviso(data);
+    return dbToAdiso(data);
   } catch (error: any) {
     throw error;
   }
 }
 
-export async function updateAvisoInSupabase(aviso: Aviso): Promise<Aviso> {
+export async function updateAdisoInSupabase(adiso: Adiso): Promise<Adiso> {
   if (!supabase) {
     throw new Error('Supabase no está configurado');
   }
 
   try {
     const { data, error } = await supabase
-      .from('avisos')
-      .update(avisoToDb(aviso))
-      .eq('id', aviso.id)
+      .from('adisos')
+      .update(adisoToDb(adiso))
+      .eq('id', adiso.id)
       .select()
       .single();
 
     if (error) {
-      console.error('Error al actualizar aviso:', error);
+      console.error('Error al actualizar adiso:', error);
       
       // Errores comunes con mensajes más claros
       if (error.code === 'PGRST301' || error.message?.includes('permission denied')) {
-        throw new Error('No tienes permiso para actualizar avisos. Verifica las políticas de seguridad en Supabase.');
+        throw new Error('No tienes permiso para actualizar adisos. Verifica las políticas de seguridad en Supabase.');
       }
       
       if (error.code === 'PGRST116') {
-        throw new Error('Aviso no encontrado.');
+        throw new Error('Adiso no encontrado.');
       }
       
       throw error;
     }
 
     if (!data) {
-      throw new Error('No se recibió respuesta al actualizar el aviso');
+      throw new Error('No se recibió respuesta al actualizar el adiso');
     }
 
-    return dbToAviso(data);
+    return dbToAdiso(data);
   } catch (error: any) {
     throw error;
   }
 }
 
-// Funciones para avisos gratuitos
+// Funciones para adisos gratuitos
 
-// Función para convertir de la base de datos a AvisoGratuito
-function dbToAvisoGratuito(row: any): AvisoGratuito {
+// Función para convertir de la base de datos a AdisoGratuito
+function dbToAdisoGratuito(row: any): AdisoGratuito {
   return {
     id: row.id,
     categoria: row.categoria,
@@ -239,39 +239,39 @@ function dbToAvisoGratuito(row: any): AvisoGratuito {
   };
 }
 
-// Función para convertir de AvisoGratuito a la base de datos
-function avisoGratuitoToDb(aviso: AvisoGratuito): any {
+// Función para convertir de AdisoGratuito a la base de datos
+function adisoGratuitoToDb(adiso: AdisoGratuito): any {
   return {
-    id: aviso.id,
-    categoria: aviso.categoria,
-    titulo: aviso.titulo,
-    contacto: aviso.contacto,
-    fecha_creacion: aviso.fechaCreacion,
-    fecha_expiracion: aviso.fechaExpiracion
+    id: adiso.id,
+    categoria: adiso.categoria,
+    titulo: adiso.titulo,
+    contacto: adiso.contacto,
+    fecha_creacion: adiso.fechaCreacion,
+    fecha_expiracion: adiso.fechaExpiracion
   };
 }
 
-export async function getAvisosGratuitosFromSupabase(): Promise<AvisoGratuito[]> {
+export async function getAdisosGratuitosFromSupabase(): Promise<AdisoGratuito[]> {
   if (!supabase) {
     throw new Error('Supabase no está configurado');
   }
 
   try {
-    // Solo obtener avisos que no han expirado
+    // Solo obtener adisos que no han expirado
     const ahora = new Date().toISOString();
     const { data, error } = await supabase
-      .from('avisos_gratuitos')
+      .from('adisos_gratuitos')
       .select('*')
       .gt('fecha_expiracion', ahora)
       .order('fecha_creacion', { ascending: false })
       .limit(100);
 
     if (error) {
-      console.error('Error al obtener avisos gratuitos:', error);
+      console.error('Error al obtener adisos gratuitos:', error);
       throw error;
     }
 
-    return data ? data.map(dbToAvisoGratuito) : [];
+    return data ? data.map(dbToAdisoGratuito) : [];
   } catch (error: any) {
     if (error?.code === 'PGRST301' || error?.message?.includes('permission denied')) {
       throw new Error('Las políticas de seguridad no están configuradas. Ejecuta el SQL de seguridad en Supabase.');
@@ -280,33 +280,33 @@ export async function getAvisosGratuitosFromSupabase(): Promise<AvisoGratuito[]>
   }
 }
 
-export async function createAvisoGratuitoInSupabase(aviso: AvisoGratuito): Promise<AvisoGratuito> {
+export async function createAdisoGratuitoInSupabase(adiso: AdisoGratuito): Promise<AdisoGratuito> {
   if (!supabase) {
     throw new Error('Supabase no está configurado');
   }
 
   try {
     const { data, error } = await supabase
-      .from('avisos_gratuitos')
-      .insert(avisoGratuitoToDb(aviso))
+      .from('adisos_gratuitos')
+      .insert(adisoGratuitoToDb(adiso))
       .select()
       .single();
 
     if (error) {
-      console.error('Error al crear aviso gratuito:', error);
+      console.error('Error al crear adiso gratuito:', error);
       
       if (error.code === 'PGRST301' || error.message?.includes('permission denied')) {
-        throw new Error('No tienes permiso para crear avisos gratuitos. Verifica las políticas de seguridad en Supabase.');
+        throw new Error('No tienes permiso para crear adisos gratuitos. Verifica las políticas de seguridad en Supabase.');
       }
       
       throw error;
     }
 
     if (!data) {
-      throw new Error('No se recibió respuesta al crear el aviso gratuito');
+      throw new Error('No se recibió respuesta al crear el adiso gratuito');
     }
 
-    return dbToAvisoGratuito(data);
+    return dbToAdisoGratuito(data);
   } catch (error: any) {
     throw error;
   }

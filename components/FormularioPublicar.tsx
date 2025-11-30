@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, FormEvent, useRef } from 'react';
-import { Aviso, AvisoFormData, Categoria, TamañoPaquete, PAQUETES, PaqueteInfo } from '@/types';
-import { saveAviso } from '@/lib/storage';
+import { Adiso, AdisoFormData, Categoria, TamañoPaquete, PAQUETES, PaqueteInfo } from '@/types';
+import { saveAdiso } from '@/lib/storage';
 import { LIMITS, formatPhoneNumber, validatePhoneNumber, generarIdUnico } from '@/lib/utils';
 import {
   IconEmpleos,
@@ -22,7 +22,7 @@ import {
 import { FaImage, FaTrash, FaPlus } from 'react-icons/fa';
 
 interface FormularioPublicarProps {
-  onPublicar: (aviso: Aviso) => void;
+  onPublicar: (adiso: Adiso) => void;
   onCerrar: () => void;
   onError?: (message: string) => void;
   onSuccess?: (message: string) => void;
@@ -66,7 +66,7 @@ const getCategoriaIcon = (categoria: Categoria): React.ComponentType<{ size?: nu
 };
 
 export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSuccess, modoGratuito = false, dentroSidebar = false }: FormularioPublicarProps) {
-  const [formData, setFormData] = useState<AvisoFormData>({
+  const [formData, setFormData] = useState<AdisoFormData>({
     categoria: 'empleos',
     titulo: '',
     descripcion: '',
@@ -76,11 +76,11 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
   });
   const [imagenesPreviews, setImagenesPreviews] = useState<ImagenPreview[]>([]);
   const [enviando, setEnviando] = useState(false);
-  const [errors, setErrors] = useState<Partial<Record<keyof AvisoFormData, string>>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof AdisoFormData, string>>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<Record<keyof AvisoFormData, string>> = {};
+    const newErrors: Partial<Record<keyof AdisoFormData, string>> = {};
     
     if (!formData.titulo.trim()) {
       newErrors.titulo = 'El título es requerido';
@@ -198,7 +198,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
       const idUnico = generarIdUnico();
       const previewsUrls = imagenesPreviews.map(img => img.preview);
       
-      const nuevoAviso: Aviso = {
+      const nuevoAdiso: Adiso = {
         id: idUnico,
         categoria: formData.categoria,
         titulo: formData.titulo,
@@ -212,13 +212,13 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
       };
 
       setEnviando(false);
-      onPublicar(nuevoAviso);
-      onSuccess?.('¡Aviso publicado con éxito!');
+      onPublicar(nuevoAdiso);
+      onSuccess?.('¡Adiso publicado con éxito!');
       
       try {
-        await saveAviso(nuevoAviso);
+        await saveAdiso(nuevoAdiso);
       } catch (error: any) {
-        onError?.(`El aviso se publicó localmente, pero hubo un error al guardarlo en la base de datos: ${error?.message || 'Error desconocido'}. Por favor, intenta publicarlo nuevamente.`);
+        onError?.(`El adiso se publicó localmente, pero hubo un error al guardarlo en la base de datos: ${error?.message || 'Error desconocido'}. Por favor, intenta publicarlo nuevamente.`);
       }
 
       if (imagenesPreviews.length > 0) {
@@ -228,7 +228,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
             try {
               const formDataUpload = new FormData();
               formDataUpload.append('image', imgPreview.file);
-              formDataUpload.append('bucket', 'avisos-images');
+              formDataUpload.append('bucket', 'adisos-images');
               
               const uploadResponse = await fetch('/api/upload-image', {
                 method: 'POST',
@@ -249,18 +249,18 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
           urlsSubidas.push(...resultados.filter((url): url is string => url !== null));
 
           if (urlsSubidas.length > 0) {
-            const avisoActualizado: Aviso = {
-              ...nuevoAviso,
+            const adisoActualizado: Adiso = {
+              ...nuevoAdiso,
               imagenesUrls: urlsSubidas
             };
-            onPublicar(avisoActualizado);
-            saveAviso(avisoActualizado).catch(() => {});
+            onPublicar(adisoActualizado);
+            saveAdiso(adisoActualizado).catch(() => {});
           }
         })();
       }
     } catch (error) {
       console.error('Error al publicar:', error);
-      onError?.('Hubo un error al publicar el aviso. Por favor intenta nuevamente.');
+      onError?.('Hubo un error al publicar el adiso. Por favor intenta nuevamente.');
       setEnviando(false);
     }
   };
@@ -481,7 +481,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
                 }
               }}
               required
-              placeholder="Describe tu aviso..."
+              placeholder="Describe tu adiso..."
               rows={4}
               style={{
                 width: '100%',
@@ -623,7 +623,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
             color: 'var(--text-primary)'
           }}>
             <FaImage size={16} />
-            Imágenes del aviso (opcional, máx. 5MB cada una)
+            Imágenes del adiso (opcional, máx. 5MB cada una)
           </label>
           <input
             ref={fileInputRef}
@@ -632,10 +632,10 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
             multiple
             onChange={handleImageChange}
             style={{ display: 'none' }}
-            id="aviso-images-input"
+            id="adiso-images-input"
           />
           <label
-            htmlFor="aviso-images-input"
+            htmlFor="adiso-images-input"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -779,7 +779,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
           color: 'var(--text-primary)',
           marginBottom: '1.5rem'
         }}>
-          {modoGratuito ? 'Publicar aviso gratuito' : 'Publicar aviso'}
+          {modoGratuito ? 'Publicar adiso gratuito' : 'Publicar adiso'}
         </h2>
         {renderForm()}
       </div>
@@ -826,7 +826,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
             fontWeight: 600,
             color: 'var(--text-primary)'
           }}>
-            {modoGratuito ? 'Publicar aviso gratuito' : 'Publicar aviso'}
+            {modoGratuito ? 'Publicar adiso gratuito' : 'Publicar adiso'}
           </h2>
           <button
             onClick={onCerrar}

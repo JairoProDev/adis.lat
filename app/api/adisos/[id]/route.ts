@@ -1,26 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAvisoByIdFromSupabase, createAvisoInSupabase, updateAvisoInSupabase } from '@/lib/supabase';
-import { Aviso } from '@/types';
+import { getAdisoByIdFromSupabase, createAdisoInSupabase, updateAdisoInSupabase } from '@/lib/supabase';
+import { Adiso } from '@/types';
 
-// Esta función maneja GET para obtener un aviso por ID
+// Esta función maneja GET para obtener un adiso por ID
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    const aviso = await getAvisoByIdFromSupabase(id);
+    const adiso = await getAdisoByIdFromSupabase(id);
     
-    if (!aviso) {
+    if (!adiso) {
       return NextResponse.json(
-        { error: 'Aviso no encontrado' },
+        { error: 'Adiso no encontrado' },
         { status: 404 }
       );
     }
     
-    return NextResponse.json(aviso);
+    return NextResponse.json(adiso);
   } catch (error: any) {
-    console.error('Error al obtener aviso:', error);
+    console.error('Error al obtener adiso:', error);
     
     // Si es un error de timeout o conexión, retornar un error más descriptivo
     if (error?.message?.includes('timeout') || error?.message?.includes('fetch failed')) {
@@ -31,13 +31,13 @@ export async function GET(
     }
     
     return NextResponse.json(
-      { error: 'Error al obtener aviso' },
+      { error: 'Error al obtener adiso' },
       { status: 500 }
     );
   }
 }
 
-// Esta función maneja PUT para actualizar un aviso existente
+// Esta función maneja PUT para actualizar un adiso existente
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -46,7 +46,7 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
     
-    const avisoActualizado: Aviso = {
+    const adisoActualizado: Adiso = {
       id: id,
       categoria: body.categoria,
       titulo: body.titulo,
@@ -61,13 +61,13 @@ export async function PUT(
       esGratuito: body.esGratuito || false
     };
 
-    const aviso = await updateAvisoInSupabase(avisoActualizado);
+    const adiso = await updateAdisoInSupabase(adisoActualizado);
     
-    return NextResponse.json(aviso, { status: 200 });
+    return NextResponse.json(adiso, { status: 200 });
   } catch (error: any) {
-    console.error('Error al actualizar aviso:', error);
+    console.error('Error al actualizar adiso:', error);
     
-    let errorMessage = 'Error al actualizar aviso';
+    let errorMessage = 'Error al actualizar adiso';
     let statusCode = 500;
     
     if (error?.message?.includes('políticas de seguridad') || error?.message?.includes('permission denied')) {
@@ -77,7 +77,7 @@ export async function PUT(
       errorMessage = 'Error de conexión con Supabase. Verifica tu conexión y las credenciales.';
       statusCode = 503;
     } else if (error?.code === 'PGRST116') {
-      errorMessage = 'Aviso no encontrado.';
+      errorMessage = 'Adiso no encontrado.';
       statusCode = 404;
     }
     

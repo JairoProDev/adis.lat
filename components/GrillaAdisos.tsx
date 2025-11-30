@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { Aviso, Categoria, PAQUETES } from '@/types';
+import { Adiso, Categoria, PAQUETES } from '@/types';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { 
   IconEmpleos, 
@@ -28,15 +28,15 @@ const getCategoriaIcon = (categoria: Categoria): React.ComponentType<{ size?: nu
   return iconMap[categoria];
 };
 
-interface GrillaAvisosProps {
-  avisos: Aviso[];
-  onAbrirAviso: (aviso: Aviso) => void;
-  avisoSeleccionadoId?: string | null;
+interface GrillaAdisosProps {
+  adisos: Adiso[];
+  onAbrirAdiso: (adiso: Adiso) => void;
+  adisoSeleccionadoId?: string | null;
   espacioAdicional?: number; // Espacio adicional disponible (píxeles) cuando el sidebar está minimizado
 }
 
-export default function GrillaAvisos({ avisos, onAbrirAviso, avisoSeleccionadoId, espacioAdicional = 0 }: GrillaAvisosProps) {
-  const avisoRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
+export default function GrillaAdisos({ adisos, onAbrirAdiso, adisoSeleccionadoId, espacioAdicional = 0 }: GrillaAdisosProps) {
+  const adisoRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
   const isDesktop = useMediaQuery('(min-width: 768px)');
   
   // Calcular número de columnas basado en el espacio disponible
@@ -55,10 +55,10 @@ export default function GrillaAvisos({ avisos, onAbrirAviso, avisoSeleccionadoId
   
   const columnas = getColumnas();
 
-  // Scroll automático cuando cambia el aviso seleccionado
+  // Scroll automático cuando cambia el adiso seleccionado
   useEffect(() => {
-    if (avisoSeleccionadoId && avisoRefs.current[avisoSeleccionadoId]) {
-      const elemento = avisoRefs.current[avisoSeleccionadoId];
+    if (adisoSeleccionadoId && adisoRefs.current[adisoSeleccionadoId]) {
+      const elemento = adisoRefs.current[adisoSeleccionadoId];
       if (elemento) {
         // Esperar un poco para que el DOM se actualice
         setTimeout(() => {
@@ -70,22 +70,22 @@ export default function GrillaAvisos({ avisos, onAbrirAviso, avisoSeleccionadoId
         }, 100);
       }
     }
-  }, [avisoSeleccionadoId]);
+  }, [adisoSeleccionadoId]);
 
   return (
     <>
       <style jsx>{`
-        .grilla-avisos {
+        .grilla-adisos {
           display: grid;
           grid-template-columns: repeat(${isDesktop ? columnas : 2}, 1fr);
           gap: 0.5rem;
           grid-auto-rows: minmax(${isDesktop ? '100px' : '80px'}, auto);
         }
       `}</style>
-      <div className="grilla-avisos">
-        {avisos.map((aviso) => {
-          const estaSeleccionado = aviso.id === avisoSeleccionadoId;
-          const tamaño = aviso.tamaño || 'miniatura';
+      <div className="grilla-adisos">
+        {adisos.map((adiso) => {
+          const estaSeleccionado = adiso.id === adisoSeleccionadoId;
+          const tamaño = adiso.tamaño || 'miniatura';
           const paquete = PAQUETES[tamaño];
           
           // Calcular grid span según el tamaño
@@ -94,11 +94,11 @@ export default function GrillaAvisos({ avisos, onAbrirAviso, avisoSeleccionadoId
           
           return (
             <button
-              key={aviso.id}
+              key={adiso.id}
               ref={(el) => {
-                avisoRefs.current[aviso.id] = el;
+                adisoRefs.current[adiso.id] = el;
               }}
-              onClick={() => onAbrirAviso(aviso)}
+              onClick={() => onAbrirAdiso(adiso)}
               style={{
                 backgroundColor: estaSeleccionado ? 'var(--hover-bg)' : 'var(--bg-primary)',
                 border: estaSeleccionado 
@@ -145,11 +145,11 @@ export default function GrillaAvisos({ avisos, onAbrirAviso, avisoSeleccionadoId
               }
               
               // Mostrar primera imagen si hay múltiples o imagen única
-              const imagenUrl = aviso.imagenesUrls?.[0] || aviso.imagenUrl;
+              const imagenUrl = adiso.imagenesUrls?.[0] || adiso.imagenUrl;
               return imagenUrl ? (
                 <img
                   src={imagenUrl}
-                  alt={aviso.titulo}
+                  alt={adiso.titulo}
                   style={{
                     width: '100%',
                     height: tamaño === 'pequeño' ? '120px' : tamaño === 'mediano' ? '140px' : tamaño === 'grande' ? '180px' : '220px',
@@ -170,10 +170,10 @@ export default function GrillaAvisos({ avisos, onAbrirAviso, avisoSeleccionadoId
               marginBottom: tamaño === 'miniatura' ? '0.1rem' : '0.15rem'
             }}>
               {(() => {
-                const IconComponent = getCategoriaIcon(aviso.categoria);
+                const IconComponent = getCategoriaIcon(adiso.categoria);
                 return <IconComponent size={tamaño === 'miniatura' ? 10 : tamaño === 'pequeño' ? 11 : 12} />;
               })()}
-              {aviso.categoria}
+              {adiso.categoria}
             </div>
             <h3 style={{
               fontSize: tamaño === 'miniatura' ? '0.75rem' : tamaño === 'pequeño' ? '0.8125rem' : tamaño === 'mediano' ? '0.875rem' : tamaño === 'grande' ? '0.9375rem' : '1rem',
@@ -186,7 +186,7 @@ export default function GrillaAvisos({ avisos, onAbrirAviso, avisoSeleccionadoId
               overflow: 'hidden',
               margin: 0
             }}>
-              {aviso.titulo}
+              {adiso.titulo}
             </h3>
             {estaSeleccionado && (
               <div style={{

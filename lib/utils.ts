@@ -13,32 +13,32 @@ export const formatFecha = (fecha: string, hora: string): string => {
   });
 };
 
-// Generar URL de aviso con categoría
-export const getAvisoUrl = (categoria: string, id: string): string => {
+// Generar URL de adiso con categoría
+export const getAdisoUrl = (categoria: string, id: string): string => {
   return `${typeof window !== 'undefined' ? window.location.origin : ''}/${categoria}/${id}`;
 };
 
 export const getWhatsAppUrl = (contacto: string, titulo: string, categoria: string, id: string): string => {
-  const url = getAvisoUrl(categoria, id);
-  const mensajeBase = `Hola, vi tu aviso de ${categoria} "${titulo}" en ${url} y me interesa. ¿Podrías brindarme más información, por favor?`;
+  const url = getAdisoUrl(categoria, id);
+  const mensajeBase = `Hola, vi tu adiso de ${categoria} "${titulo}" en ${url} y me interesa. ¿Podrías brindarme más información, por favor?`;
   const mensaje = encodeURIComponent(mensajeBase);
   const numero = contacto.replace(/\D/g, ''); // Solo números
   return `https://wa.me/${numero}?text=${mensaje}`;
 };
 
 export const copiarLink = (categoria: string, id: string): Promise<void> => {
-  const url = getAvisoUrl(categoria, id);
+  const url = getAdisoUrl(categoria, id);
   return navigator.clipboard.writeText(url);
 };
 
 export const compartirNativo = async (categoria: string, id: string, titulo: string): Promise<void> => {
-  const url = getAvisoUrl(categoria, id);
+  const url = getAdisoUrl(categoria, id);
   
   if (navigator.share) {
     try {
       await navigator.share({
         title: titulo,
-        text: `Mira este aviso: ${titulo}`,
+        text: `Mira este adiso: ${titulo}`,
         url: url
       });
     } catch (err) {

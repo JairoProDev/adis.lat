@@ -1,53 +1,53 @@
-import { Aviso, AvisoGratuito } from '@/types';
+import { Adiso, AdisoGratuito } from '@/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
-export async function fetchAvisos(): Promise<Aviso[]> {
+export async function fetchAdisos(): Promise<Adiso[]> {
   try {
-    const response = await fetch(`${API_URL}/avisos`, {
+    const response = await fetch(`${API_URL}/adisos`, {
       cache: 'no-store', // Siempre obtener datos frescos
       next: { revalidate: 0 } // Sin caché para datos dinámicos
     });
     if (!response.ok) {
-      throw new Error('Error al obtener avisos');
+      throw new Error('Error al obtener adisos');
     }
     return await response.json();
   } catch (error) {
-    console.error('Error fetching avisos:', error);
+    console.error('Error fetching adisos:', error);
     return [];
   }
 }
 
-export async function fetchAvisoById(id: string): Promise<Aviso | null> {
+export async function fetchAdisoById(id: string): Promise<Adiso | null> {
   try {
-    const response = await fetch(`${API_URL}/avisos/${id}`, {
+    const response = await fetch(`${API_URL}/adisos/${id}`, {
       cache: 'no-store',
       next: { revalidate: 0 }
     });
     if (!response.ok) {
       if (response.status === 404) return null;
-      throw new Error('Error al obtener aviso');
+      throw new Error('Error al obtener adiso');
     }
     return await response.json();
   } catch (error) {
-    console.error('Error fetching aviso:', error);
+    console.error('Error fetching adiso:', error);
     return null;
   }
 }
 
-export async function createAviso(aviso: Omit<Aviso, 'id' | 'fechaPublicacion' | 'horaPublicacion'> | Aviso): Promise<Aviso> {
+export async function createAdiso(adiso: Omit<Adiso, 'id' | 'fechaPublicacion' | 'horaPublicacion'> | Adiso): Promise<Adiso> {
   try {
-    const response = await fetch(`${API_URL}/avisos`, {
+    const response = await fetch(`${API_URL}/adisos`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(aviso),
+      body: JSON.stringify(adiso),
     });
     
     if (!response.ok) {
       // Intentar obtener el mensaje de error del servidor
-      let errorMessage = 'Error al crear aviso';
+      let errorMessage = 'Error al crear adiso';
       try {
         const errorData = await response.json();
         errorMessage = errorData.error || errorData.message || errorMessage;
@@ -56,10 +56,10 @@ export async function createAviso(aviso: Omit<Aviso, 'id' | 'fechaPublicacion' |
         errorMessage = `Error ${response.status}: ${response.statusText}`;
       }
       
-      // Si el error es 409 (conflict), el aviso ya existe, intentar actualizar
-      if (response.status === 409 && 'id' in aviso) {
+      // Si el error es 409 (conflict), el adiso ya existe, intentar actualizar
+      if (response.status === 409 && 'id' in adiso) {
         // Intentar actualizar en lugar de crear
-        return await updateAviso(aviso as Aviso);
+        return await updateAdiso(adiso as Adiso);
       }
       
       throw new Error(errorMessage);
@@ -68,64 +68,64 @@ export async function createAviso(aviso: Omit<Aviso, 'id' | 'fechaPublicacion' |
     const resultado = await response.json();
     return resultado;
   } catch (error: any) {
-    console.error('Error creating aviso:', error);
+    console.error('Error creating adiso:', error);
     // Re-lanzar con más contexto
-    throw error instanceof Error ? error : new Error(`Error al crear aviso: ${error?.message || 'Error desconocido'}`);
+    throw error instanceof Error ? error : new Error(`Error al crear adiso: ${error?.message || 'Error desconocido'}`);
   }
 }
 
-export async function updateAviso(aviso: Aviso): Promise<Aviso> {
+export async function updateAdiso(adiso: Adiso): Promise<Adiso> {
   try {
-    const response = await fetch(`${API_URL}/avisos/${aviso.id}`, {
+    const response = await fetch(`${API_URL}/adisos/${adiso.id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(aviso),
+      body: JSON.stringify(adiso),
     });
     if (!response.ok) {
-      throw new Error('Error al actualizar aviso');
+      throw new Error('Error al actualizar adiso');
     }
     return await response.json();
   } catch (error) {
-    console.error('Error updating aviso:', error);
+    console.error('Error updating adiso:', error);
     throw error;
   }
 }
 
-// Funciones para avisos gratuitos
-export async function fetchAvisosGratuitos(): Promise<AvisoGratuito[]> {
+// Funciones para adisos gratuitos
+export async function fetchAdisosGratuitos(): Promise<AdisoGratuito[]> {
   try {
-    const response = await fetch(`${API_URL}/avisos-gratuitos`, {
+    const response = await fetch(`${API_URL}/adisos-gratuitos`, {
       cache: 'no-store',
       next: { revalidate: 0 }
     });
     if (!response.ok) {
-      throw new Error('Error al obtener avisos gratuitos');
+      throw new Error('Error al obtener adisos gratuitos');
     }
     return await response.json();
   } catch (error) {
-    console.error('Error fetching avisos gratuitos:', error);
+    console.error('Error fetching adisos gratuitos:', error);
     return [];
   }
 }
 
-export async function createAvisoGratuito(aviso: Omit<AvisoGratuito, 'id' | 'fechaCreacion' | 'fechaExpiracion'>): Promise<AvisoGratuito> {
+export async function createAdisoGratuito(adiso: Omit<AdisoGratuito, 'id' | 'fechaCreacion' | 'fechaExpiracion'>): Promise<AdisoGratuito> {
   try {
-    const response = await fetch(`${API_URL}/avisos-gratuitos`, {
+    const response = await fetch(`${API_URL}/adisos-gratuitos`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(aviso),
+      body: JSON.stringify(adiso),
     });
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || 'Error al crear aviso gratuito');
+      throw new Error(errorData.error || 'Error al crear adiso gratuito');
     }
     return await response.json();
   } catch (error) {
-    console.error('Error creating aviso gratuito:', error);
+    console.error('Error creating adiso gratuito:', error);
     throw error;
   }
 }

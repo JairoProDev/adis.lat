@@ -2,27 +2,27 @@
 
 import React, { useState, useEffect } from 'react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
-import { Aviso } from '@/types';
-import { IconAviso, IconMap, IconMegaphone, IconChatbot, IconGratuitos, IconClose } from './Icons';
-import ModalAviso from './ModalAviso';
+import { Adiso } from '@/types';
+import { IconAdiso, IconMap, IconMegaphone, IconChatbot, IconGratuitos, IconClose } from './Icons';
+import ModalAdiso from './ModalAdiso';
 import MapaInteractivo from './MapaInteractivo';
 import FormularioPublicar from './FormularioPublicar';
 import ChatbotIA from './ChatbotIA';
-import AvisosGratuitos from './AvisosGratuitos';
+import AdisosGratuitos from './AdisosGratuitos';
 
-export type SeccionSidebar = 'aviso' | 'mapa' | 'publicar' | 'chatbot' | 'gratuitos';
+export type SeccionSidebar = 'adiso' | 'mapa' | 'publicar' | 'chatbot' | 'gratuitos';
 
 interface ModalNavegacionMobileProps {
   abierto: boolean;
   onCerrar: () => void;
   seccionInicial?: SeccionSidebar;
-  avisoAbierto: Aviso | null;
-  onCerrarAviso: () => void;
+  adisoAbierto: Adiso | null;
+  onCerrarAdiso: () => void;
   onAnterior: () => void;
   onSiguiente: () => void;
   puedeAnterior: boolean;
   puedeSiguiente: boolean;
-  onPublicar: (aviso: Aviso) => void;
+  onPublicar: (adiso: Adiso) => void;
   onError?: (message: string) => void;
   onSuccess?: (message: string) => void;
   onCambiarSeccion?: (seccion: SeccionSidebar) => void; // Callback para sincronizar con navbar
@@ -31,9 +31,9 @@ interface ModalNavegacionMobileProps {
 export default function ModalNavegacionMobile({
   abierto,
   onCerrar,
-  seccionInicial = 'aviso',
-  avisoAbierto,
-  onCerrarAviso,
+  seccionInicial = 'adiso',
+  adisoAbierto,
+  onCerrarAdiso,
   onAnterior,
   onSiguiente,
   puedeAnterior,
@@ -49,10 +49,10 @@ export default function ModalNavegacionMobile({
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
 
   useEffect(() => {
-    if (avisoAbierto) {
-      setSeccionActiva('aviso');
+    if (adisoAbierto) {
+      setSeccionActiva('adiso');
     }
-  }, [avisoAbierto]);
+  }, [adisoAbierto]);
 
   useEffect(() => {
     if (seccionInicial) {
@@ -66,7 +66,7 @@ export default function ModalNavegacionMobile({
   }
 
   const secciones = [
-    { id: 'aviso' as SeccionSidebar, icono: IconAviso, label: 'Aviso' },
+    { id: 'adiso' as SeccionSidebar, icono: IconAdiso, label: 'Adiso' },
     { id: 'mapa' as SeccionSidebar, icono: IconMap, label: 'Mapa' },
     { id: 'publicar' as SeccionSidebar, icono: IconMegaphone, label: 'Publicar' },
     { id: 'chatbot' as SeccionSidebar, icono: IconChatbot, label: 'Chatbot' },
@@ -193,10 +193,10 @@ export default function ModalNavegacionMobile({
             minHeight: 0 // Permite que el contenido se comprima si es necesario
           }}
         >
-          {seccionActiva === 'aviso' && avisoAbierto && (
-            <ModalAviso
-              aviso={avisoAbierto}
-              onCerrar={onCerrarAviso}
+          {seccionActiva === 'adiso' && adisoAbierto && (
+            <ModalAdiso
+              adiso={adisoAbierto}
+              onCerrar={onCerrarAdiso}
               onAnterior={onAnterior}
               onSiguiente={onSiguiente}
               puedeAnterior={puedeAnterior}
@@ -206,19 +206,19 @@ export default function ModalNavegacionMobile({
           )}
 
           {seccionActiva === 'mapa' && (
-            <MapaInteractivo avisos={[]} onAbrirAviso={() => {}} />
+            <MapaInteractivo adisos={[]} onAbrirAdiso={() => {}} />
           )}
 
           {seccionActiva === 'publicar' && (
             <FormularioPublicar
-              onPublicar={(aviso) => {
-                onPublicar(aviso);
-                setSeccionActiva('aviso');
-                onCambiarSeccion?.('aviso');
+              onPublicar={(adiso) => {
+                onPublicar(adiso);
+                setSeccionActiva('adiso');
+                onCambiarSeccion?.('adiso');
               }}
               onCerrar={() => {
-                setSeccionActiva('aviso');
-                onCambiarSeccion?.('aviso');
+                setSeccionActiva('adiso');
+                onCambiarSeccion?.('adiso');
               }}
               onError={onError}
               onSuccess={onSuccess}
@@ -233,10 +233,10 @@ export default function ModalNavegacionMobile({
           )}
 
           {seccionActiva === 'gratuitos' && (
-            <AvisosGratuitos />
+            <AdisosGratuitos />
           )}
 
-          {seccionActiva === 'aviso' && !avisoAbierto && (
+          {seccionActiva === 'adiso' && !adisoAbierto && (
             <div
               style={{
                 display: 'flex',
@@ -249,7 +249,7 @@ export default function ModalNavegacionMobile({
                 padding: '2rem'
               }}
             >
-              Selecciona un aviso para ver los detalles
+              Selecciona un adiso para ver los detalles
             </div>
           )}
         </div>

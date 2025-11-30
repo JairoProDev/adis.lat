@@ -3,18 +3,18 @@
 import React from 'react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { SeccionSidebar } from './SidebarDesktop';
-import { IconAviso, IconMap, IconMegaphone, IconChatbot, IconGratuitos } from './Icons';
+import { IconAdiso, IconMap, IconMegaphone, IconChatbot, IconGratuitos } from './Icons';
 
 interface NavbarMobileProps {
   seccionActiva: SeccionSidebar | null;
   onCambiarSeccion: (seccion: SeccionSidebar) => void;
-  tieneAvisoAbierto: boolean;
+  tieneAdisoAbierto: boolean;
 }
 
 export default function NavbarMobile({
   seccionActiva,
   onCambiarSeccion,
-  tieneAvisoAbierto
+  tieneAdisoAbierto
 }: NavbarMobileProps) {
   const isDesktop = useMediaQuery('(min-width: 768px)');
 
@@ -24,7 +24,7 @@ export default function NavbarMobile({
   }
 
   const secciones = [
-    { id: 'aviso' as SeccionSidebar, icono: IconAviso, label: 'Aviso' },
+    { id: 'adiso' as SeccionSidebar, icono: IconAdiso, label: 'Adiso' },
     { id: 'mapa' as SeccionSidebar, icono: IconMap, label: 'Mapa' },
     { id: 'publicar' as SeccionSidebar, icono: IconMegaphone, label: 'Publicar' },
     { id: 'chatbot' as SeccionSidebar, icono: IconChatbot, label: 'Chatbot' },
@@ -67,7 +67,7 @@ export default function NavbarMobile({
           const IconComponent = seccion.icono;
           const estaActiva = seccionActiva !== null && seccionActiva === seccion.id;
           const esPublicar = seccion.id === 'publicar';
-          const tieneNotificacion = seccion.id === 'aviso' && tieneAvisoAbierto && !estaActiva;
+          const tieneNotificacion = seccion.id === 'adiso' && tieneAdisoAbierto && !estaActiva;
           
           return (
             <button

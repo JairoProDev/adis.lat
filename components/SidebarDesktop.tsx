@@ -2,24 +2,24 @@
 
 import React, { useState } from 'react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
-import { Aviso } from '@/types';
-import { IconAviso, IconMap, IconMegaphone, IconChatbot, IconGratuitos, IconMinimize, IconExpand } from './Icons';
-import ModalAviso from './ModalAviso';
+import { Adiso } from '@/types';
+import { IconAdiso, IconMap, IconMegaphone, IconChatbot, IconGratuitos, IconMinimize, IconExpand } from './Icons';
+import ModalAdiso from './ModalAdiso';
 import MapaInteractivo from './MapaInteractivo';
 import FormularioPublicar from './FormularioPublicar';
 import ChatbotIA from './ChatbotIA';
-import AvisosGratuitos from './AvisosGratuitos';
+import AdisosGratuitos from './AdisosGratuitos';
 
-export type SeccionSidebar = 'aviso' | 'mapa' | 'publicar' | 'chatbot' | 'gratuitos';
+export type SeccionSidebar = 'adiso' | 'mapa' | 'publicar' | 'chatbot' | 'gratuitos';
 
 interface SidebarDesktopProps {
-  avisoAbierto: Aviso | null;
-  onCerrarAviso: () => void;
+  adisoAbierto: Adiso | null;
+  onCerrarAdiso: () => void;
   onAnterior: () => void;
   onSiguiente: () => void;
   puedeAnterior: boolean;
   puedeSiguiente: boolean;
-  onPublicar: (aviso: Aviso) => void;
+  onPublicar: (adiso: Adiso) => void;
   onError?: (message: string) => void;
   onSuccess?: (message: string) => void;
   seccionInicial?: SeccionSidebar; // Nueva prop para controlar la sección inicial
@@ -27,8 +27,8 @@ interface SidebarDesktopProps {
 }
 
 export default function SidebarDesktop({
-  avisoAbierto,
-  onCerrarAviso,
+  adisoAbierto,
+  onCerrarAdiso,
   onAnterior,
   onSiguiente,
   puedeAnterior,
@@ -40,19 +40,19 @@ export default function SidebarDesktop({
   onMinimizadoChange
 }: SidebarDesktopProps) {
   const isDesktop = useMediaQuery('(min-width: 768px)');
-  const [seccionActiva, setSeccionActiva] = useState<SeccionSidebar>(seccionInicial || 'aviso');
+  const [seccionActiva, setSeccionActiva] = useState<SeccionSidebar>(seccionInicial || 'adiso');
   const [minimizado, setMinimizado] = useState(false);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [tooltipHovered, setTooltipHovered] = useState<SeccionSidebar | null>(null);
 
-  // Si hay aviso abierto, mostrar sección de aviso automáticamente y expandir sidebar si está minimizado
+  // Si hay adiso abierto, mostrar sección de adiso automáticamente y expandir sidebar si está minimizado
   React.useEffect(() => {
-    if (avisoAbierto) {
-      setSeccionActiva('aviso');
-      // Si el sidebar está minimizado, expandirlo automáticamente para mostrar el aviso
+    if (adisoAbierto) {
+      setSeccionActiva('adiso');
+      // Si el sidebar está minimizado, expandirlo automáticamente para mostrar el adiso
       setMinimizado(prev => prev ? false : prev);
     }
-  }, [avisoAbierto]);
+  }, [adisoAbierto]);
 
   // Si se cambia la sección inicial desde fuera, actualizar
   React.useEffect(() => {
@@ -72,11 +72,11 @@ export default function SidebarDesktop({
   }
 
       const secciones = [
-        { id: 'aviso' as SeccionSidebar, icono: IconAviso, label: 'Aviso', descripcion: 'Ver detalles del aviso seleccionado' },
-        { id: 'mapa' as SeccionSidebar, icono: IconMap, label: 'Mapa', descripcion: 'Explorar avisos en el mapa interactivo' },
-        { id: 'publicar' as SeccionSidebar, icono: IconMegaphone, label: 'Publicar', descripcion: 'Crear y publicar un nuevo aviso' },
+        { id: 'adiso' as SeccionSidebar, icono: IconAdiso, label: 'Adiso', descripcion: 'Ver detalles del adiso seleccionado' },
+        { id: 'mapa' as SeccionSidebar, icono: IconMap, label: 'Mapa', descripcion: 'Explorar adisos en el mapa interactivo' },
+        { id: 'publicar' as SeccionSidebar, icono: IconMegaphone, label: 'Publicar', descripcion: 'Crear y publicar un nuevo adiso' },
         { id: 'chatbot' as SeccionSidebar, icono: IconChatbot, label: 'Chatbot', descripcion: 'Asistente de búsqueda inteligente (próximamente)' },
-        { id: 'gratuitos' as SeccionSidebar, icono: IconGratuitos, label: 'Gratuitos', descripcion: 'Ver y publicar avisos gratuitos' }
+        { id: 'gratuitos' as SeccionSidebar, icono: IconGratuitos, label: 'Gratuitos', descripcion: 'Ver y publicar adisos gratuitos' }
       ];
 
   const anchoSidebar = minimizado ? 60 : 420;
@@ -322,11 +322,11 @@ export default function SidebarDesktop({
               position: 'relative'
             }}
           >
-            {seccionActiva === 'aviso' && avisoAbierto && (
+            {seccionActiva === 'adiso' && adisoAbierto && (
               <div style={{ height: '100%', overflowY: 'auto' }}>
-                <ModalAviso
-                  aviso={avisoAbierto}
-                  onCerrar={onCerrarAviso}
+                <ModalAdiso
+                  adiso={adisoAbierto}
+                  onCerrar={onCerrarAdiso}
                   onAnterior={onAnterior}
                   onSiguiente={onSiguiente}
                   puedeAnterior={puedeAnterior}
@@ -337,16 +337,16 @@ export default function SidebarDesktop({
             )}
 
             {seccionActiva === 'mapa' && (
-              <MapaInteractivo avisos={[]} onAbrirAviso={() => {}} />
+              <MapaInteractivo adisos={[]} onAbrirAdiso={() => {}} />
             )}
 
             {seccionActiva === 'publicar' && (
               <FormularioPublicar
-                onPublicar={(aviso) => {
-                  onPublicar(aviso);
+                onPublicar={(adiso) => {
+                  onPublicar(adiso);
                 }}
                 onCerrar={() => {
-                  setSeccionActiva('aviso');
+                  setSeccionActiva('adiso');
                 }}
                 onError={onError}
                 onSuccess={onSuccess}
@@ -359,11 +359,11 @@ export default function SidebarDesktop({
             )}
 
             {seccionActiva === 'gratuitos' && (
-              <AvisosGratuitos />
+              <AdisosGratuitos />
             )}
 
             {/* Estado vacío cuando no hay contenido */}
-            {seccionActiva === 'aviso' && !avisoAbierto && (
+            {seccionActiva === 'adiso' && !adisoAbierto && (
               <div
                 style={{
                   display: 'flex',
@@ -376,7 +376,7 @@ export default function SidebarDesktop({
                   padding: '2rem'
                 }}
               >
-                Selecciona un aviso para ver los detalles
+                Selecciona un adiso para ver los detalles
               </div>
             )}
           </div>

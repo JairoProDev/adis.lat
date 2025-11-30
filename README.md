@@ -1,21 +1,21 @@
-# Buscadis - MVP de Avisos Clasificados
+# Buscadis - MVP de Adisos Clasificados
 
-MVP simple para publicar y visualizar avisos clasificados en buscadis.com
+MVP simple para publicar y visualizar adisos clasificados en buscadis.com
 
 ## Características
 
-- ✅ Publicación de avisos con categoría, título, descripción, contacto y ubicación
+- ✅ Publicación de adisos con categoría, título, descripción, contacto y ubicación
 - ✅ Grilla responsive: 2 columnas en mobile, 4 en desktop
 - ✅ Buscador en tiempo real
 - ✅ Filtros por categoría (empleos, inmuebles, vehículos, servicios, productos, eventos, negocios, comunidad)
 - ✅ Modal de detalle responsive:
   - Mobile: aparece desde abajo
   - Desktop: aparece al costado derecho
-- ✅ Navegación entre avisos:
+- ✅ Navegación entre adisos:
   - Teclas de flecha (← →)
   - Botones anterior/siguiente
   - Swipe gestual en mobile
-- ✅ Compartir avisos:
+- ✅ Compartir adisos:
   - Copiar link con un click
   - Compartir nativo (compartir del sistema)
 - ✅ Contacto por WhatsApp con mensaje predeterminado
@@ -67,7 +67,7 @@ npm start
 
 - **Fecha exacta**: Ahora muestra la fecha y hora exacta de publicación
 - El número de contacto nunca se muestra públicamente
-- Los avisos se ordenan por fecha (más recientes primero)
+- Los adisos se ordenan por fecha (más recientes primero)
 
 ## Problemas Comunes
 
