@@ -22,6 +22,37 @@ interface ProgresoEntry {
 
 const progresoData: ProgresoEntry[] = [
   {
+    version: '2.1.0',
+    date: '2025-11-29',
+    time: '19:30',
+    type: 'improvement',
+    title: 'Mejoras en UX del Modal Móvil y Sidebar Desktop',
+    description: 'Optimización completa de la experiencia móvil y desktop con overlay parcial, reorganización de botones y eliminación de elementos redundantes',
+    userBenefits: [
+      'Overlay móvil más intuitivo: ocupa solo 85% de la pantalla, dejando ver el contenido de fondo',
+      'Botones de acción organizados: flechas de navegación en extremos, botones de copiar/compartir centrados',
+      'Interfaz más limpia: eliminación de botones de cerrar redundantes',
+      'Sidebar inteligente: se expande automáticamente al seleccionar un aviso estando minimizado',
+      'Mejor aprovechamiento del espacio: el contenido no se siente abrumador',
+      'Navegación más natural: puedes ver el contexto mientras revisas un aviso',
+    ],
+    technicalDetails: [
+      'Modal móvil ajustado a `maxHeight: 85vh` en lugar de fullscreen',
+      'Indicador visual superior (handle) para mejor affordance de interacción',
+      'Overlay semitransparente que permite ver el contenido de fondo',
+      'Reorganización de botones: layout flex con flechas en extremos y acciones centradas',
+      'Botones de acción más compactos: padding ajustado para dar espacio a navegación',
+      'Eliminación de botón de cerrar en `ModalAviso` cuando está dentro del sidebar',
+      'Eliminación de botón de cerrar en `FormularioPublicar` cuando está dentro del sidebar',
+      'Lógica de auto-expansión: sidebar se expande automáticamente al abrir aviso minimizado',
+      'Mejoras en scroll: contenido visible completamente sin solapamientos',
+      'Ajustes de padding: espacio correcto para botones de navegación sin tapar contenido',
+      'Simplificación del header: solo un botón de cerrar en mobile (header del modal)',
+      'Transiciones suaves: animaciones mejoradas para mejor sensación de fluidez',
+    ],
+    impact: 'major'
+  },
+  {
     version: '2.0.0',
     date: '2025-11-29',
     time: '15:00',
