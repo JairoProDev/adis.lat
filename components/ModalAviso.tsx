@@ -419,144 +419,150 @@ export default function ModalAviso({
             <IconWhatsApp />
             Contactar por WhatsApp
           </button>
+          
+          {/* Botones de acción y navegación en la misma línea */}
           <div style={{
             display: 'flex',
-            gap: '0.75rem'
-          }}>
-            <button
-              onClick={handleCopiarLink}
-              style={{
-                flex: 1,
-                padding: '0.75rem',
-                fontSize: '0.875rem',
-                border: '1px solid var(--border-color)',
-                borderRadius: '8px',
-                backgroundColor: 'var(--bg-primary)',
-                color: 'var(--text-primary)',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-              }}
-            >
-              {copiado ? <IconCheck /> : <IconCopy />}
-              {copiado ? 'Copiado' : 'Copiar link'}
-            </button>
-            <button
-              onClick={handleCompartir}
-              style={{
-                flex: 1,
-                padding: '0.75rem',
-                fontSize: '0.875rem',
-                border: '1px solid var(--border-color)',
-                borderRadius: '8px',
-                backgroundColor: 'var(--bg-primary)',
-                color: 'var(--text-primary)',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-              }}
-            >
-              <IconShare />
-              Compartir
-            </button>
-          </div>
-        </div>
-
-        {/* Botones de navegación abajo */}
-        {(puedeAnterior || puedeSiguiente) && (
-          <div style={{
-            position: 'absolute',
-            bottom: '1rem',
-            left: '1.5rem',
-            right: '1.5rem',
-            display: 'flex',
-            justifyContent: 'space-between',
             alignItems: 'center',
             gap: '0.5rem',
-            zIndex: 10
+            width: '100%'
           }}>
-            <button
-              onClick={onAnterior}
-              disabled={!puedeAnterior}
-              style={{
-                padding: '0.75rem',
-                border: '1px solid var(--border-color)',
-                borderRadius: '50%',
-                backgroundColor: puedeAnterior ? 'var(--bg-primary)' : 'var(--bg-secondary)',
-                color: puedeAnterior ? 'var(--text-primary)' : 'var(--text-tertiary)',
-                cursor: puedeAnterior ? 'pointer' : 'not-allowed',
-                opacity: puedeAnterior ? 1 : 0.5,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '44px',
-                height: '44px',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                if (puedeAnterior) {
+            {/* Flecha izquierda */}
+            {(puedeAnterior || puedeSiguiente) && (
+              <button
+                onClick={onAnterior}
+                disabled={!puedeAnterior}
+                style={{
+                  padding: '0.75rem',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '50%',
+                  backgroundColor: puedeAnterior ? 'var(--bg-primary)' : 'var(--bg-secondary)',
+                  color: puedeAnterior ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                  cursor: puedeAnterior ? 'pointer' : 'not-allowed',
+                  opacity: puedeAnterior ? 1 : 0.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '44px',
+                  height: '44px',
+                  flexShrink: 0,
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  if (puedeAnterior) {
+                    e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (puedeAnterior) {
+                    e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
+                  }
+                }}
+              >
+                <IconArrowLeft />
+              </button>
+            )}
+            
+            {/* Botones de acción centrados */}
+            <div style={{
+              display: 'flex',
+              gap: '0.5rem',
+              flex: 1,
+              justifyContent: 'center'
+            }}>
+              <button
+                onClick={handleCopiarLink}
+                style={{
+                  padding: '0.75rem 1rem',
+                  fontSize: '0.875rem',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '8px',
+                  backgroundColor: 'var(--bg-primary)',
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  whiteSpace: 'nowrap'
+                }}
+                onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (puedeAnterior) {
+                }}
+                onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-                }
-              }}
-            >
-              <IconArrowLeft />
-            </button>
-            <button
-              onClick={onSiguiente}
-              disabled={!puedeSiguiente}
-              style={{
-                padding: '0.75rem',
-                border: '1px solid var(--border-color)',
-                borderRadius: '50%',
-                backgroundColor: puedeSiguiente ? 'var(--bg-primary)' : 'var(--bg-secondary)',
-                color: puedeSiguiente ? 'var(--text-primary)' : 'var(--text-tertiary)',
-                cursor: puedeSiguiente ? 'pointer' : 'not-allowed',
-                opacity: puedeSiguiente ? 1 : 0.5,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '44px',
-                height: '44px',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                if (puedeSiguiente) {
+                }}
+              >
+                {copiado ? <IconCheck /> : <IconCopy />}
+                {copiado ? 'Copiado' : 'Copiar link'}
+              </button>
+              <button
+                onClick={handleCompartir}
+                style={{
+                  padding: '0.75rem 1rem',
+                  fontSize: '0.875rem',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '8px',
+                  backgroundColor: 'var(--bg-primary)',
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  whiteSpace: 'nowrap'
+                }}
+                onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (puedeSiguiente) {
+                }}
+                onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-                }
-              }}
-            >
-              <IconArrowRight />
-            </button>
+                }}
+              >
+                <IconShare />
+                Compartir
+              </button>
+            </div>
+            
+            {/* Flecha derecha */}
+            {(puedeAnterior || puedeSiguiente) && (
+              <button
+                onClick={onSiguiente}
+                disabled={!puedeSiguiente}
+                style={{
+                  padding: '0.75rem',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '50%',
+                  backgroundColor: puedeSiguiente ? 'var(--bg-primary)' : 'var(--bg-secondary)',
+                  color: puedeSiguiente ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                  cursor: puedeSiguiente ? 'pointer' : 'not-allowed',
+                  opacity: puedeSiguiente ? 1 : 0.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '44px',
+                  height: '44px',
+                  flexShrink: 0,
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  if (puedeSiguiente) {
+                    e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (puedeSiguiente) {
+                    e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
+                  }
+                }}
+              >
+                <IconArrowRight />
+              </button>
+            )}
           </div>
-        )}
+        </div>
 
         {/* Modal de imagen ampliada - fuera del modal principal para evitar conflictos */}
         {imagenAmpliada && (() => {
@@ -978,144 +984,150 @@ export default function ModalAviso({
             <IconWhatsApp />
             Contactar por WhatsApp
           </button>
+          
+          {/* Botones de acción y navegación en la misma línea */}
           <div style={{
             display: 'flex',
-            gap: '0.75rem'
-          }}>
-            <button
-              onClick={handleCopiarLink}
-              style={{
-                flex: 1,
-                padding: '0.75rem',
-                fontSize: '0.875rem',
-                border: '1px solid var(--border-color)',
-                borderRadius: '8px',
-                backgroundColor: 'var(--bg-primary)',
-                color: 'var(--text-primary)',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-              }}
-            >
-              {copiado ? <IconCheck /> : <IconCopy />}
-              {copiado ? 'Copiado' : 'Copiar link'}
-            </button>
-            <button
-              onClick={handleCompartir}
-              style={{
-                flex: 1,
-                padding: '0.75rem',
-                fontSize: '0.875rem',
-                border: '1px solid var(--border-color)',
-                borderRadius: '8px',
-                backgroundColor: 'var(--bg-primary)',
-                color: 'var(--text-primary)',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-              }}
-            >
-              <IconShare />
-              Compartir
-            </button>
-          </div>
-        </div>
-
-        {/* Botones de navegación abajo */}
-        {(puedeAnterior || puedeSiguiente) && (
-          <div style={{
-            position: 'absolute',
-            bottom: '1rem',
-            left: '1.5rem',
-            right: '1.5rem',
-            display: 'flex',
-            justifyContent: 'space-between',
             alignItems: 'center',
             gap: '0.5rem',
-            zIndex: 10
+            width: '100%'
           }}>
-            <button
-              onClick={onAnterior}
-              disabled={!puedeAnterior}
-              style={{
-                padding: '0.75rem',
-                border: '1px solid var(--border-color)',
-                borderRadius: '50%',
-                backgroundColor: puedeAnterior ? 'var(--bg-primary)' : 'var(--bg-secondary)',
-                color: puedeAnterior ? 'var(--text-primary)' : 'var(--text-tertiary)',
-                cursor: puedeAnterior ? 'pointer' : 'not-allowed',
-                opacity: puedeAnterior ? 1 : 0.5,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '44px',
-                height: '44px',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                if (puedeAnterior) {
+            {/* Flecha izquierda */}
+            {(puedeAnterior || puedeSiguiente) && (
+              <button
+                onClick={onAnterior}
+                disabled={!puedeAnterior}
+                style={{
+                  padding: '0.75rem',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '50%',
+                  backgroundColor: puedeAnterior ? 'var(--bg-primary)' : 'var(--bg-secondary)',
+                  color: puedeAnterior ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                  cursor: puedeAnterior ? 'pointer' : 'not-allowed',
+                  opacity: puedeAnterior ? 1 : 0.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '44px',
+                  height: '44px',
+                  flexShrink: 0,
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  if (puedeAnterior) {
+                    e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (puedeAnterior) {
+                    e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
+                  }
+                }}
+              >
+                <IconArrowLeft />
+              </button>
+            )}
+            
+            {/* Botones de acción centrados */}
+            <div style={{
+              display: 'flex',
+              gap: '0.5rem',
+              flex: 1,
+              justifyContent: 'center'
+            }}>
+              <button
+                onClick={handleCopiarLink}
+                style={{
+                  padding: '0.75rem 1rem',
+                  fontSize: '0.875rem',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '8px',
+                  backgroundColor: 'var(--bg-primary)',
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  whiteSpace: 'nowrap'
+                }}
+                onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (puedeAnterior) {
+                }}
+                onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-                }
-              }}
-            >
-              <IconArrowLeft />
-            </button>
-            <button
-              onClick={onSiguiente}
-              disabled={!puedeSiguiente}
-              style={{
-                padding: '0.75rem',
-                border: '1px solid var(--border-color)',
-                borderRadius: '50%',
-                backgroundColor: puedeSiguiente ? 'var(--bg-primary)' : 'var(--bg-secondary)',
-                color: puedeSiguiente ? 'var(--text-primary)' : 'var(--text-tertiary)',
-                cursor: puedeSiguiente ? 'pointer' : 'not-allowed',
-                opacity: puedeSiguiente ? 1 : 0.5,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '44px',
-                height: '44px',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                if (puedeSiguiente) {
+                }}
+              >
+                {copiado ? <IconCheck /> : <IconCopy />}
+                {copiado ? 'Copiado' : 'Copiar link'}
+              </button>
+              <button
+                onClick={handleCompartir}
+                style={{
+                  padding: '0.75rem 1rem',
+                  fontSize: '0.875rem',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '8px',
+                  backgroundColor: 'var(--bg-primary)',
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  whiteSpace: 'nowrap'
+                }}
+                onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (puedeSiguiente) {
+                }}
+                onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-                }
-              }}
-            >
-              <IconArrowRight />
-            </button>
+                }}
+              >
+                <IconShare />
+                Compartir
+              </button>
+            </div>
+            
+            {/* Flecha derecha */}
+            {(puedeAnterior || puedeSiguiente) && (
+              <button
+                onClick={onSiguiente}
+                disabled={!puedeSiguiente}
+                style={{
+                  padding: '0.75rem',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '50%',
+                  backgroundColor: puedeSiguiente ? 'var(--bg-primary)' : 'var(--bg-secondary)',
+                  color: puedeSiguiente ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                  cursor: puedeSiguiente ? 'pointer' : 'not-allowed',
+                  opacity: puedeSiguiente ? 1 : 0.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '44px',
+                  height: '44px',
+                  flexShrink: 0,
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  if (puedeSiguiente) {
+                    e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (puedeSiguiente) {
+                    e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
+                  }
+                }}
+              >
+                <IconArrowRight />
+              </button>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
 
