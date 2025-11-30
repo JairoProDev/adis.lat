@@ -1,23 +1,28 @@
 import { FaChartLine } from 'react-icons/fa';
+import Breadcrumbs from './Breadcrumbs';
 
 interface HeaderProps {
   onChangelogClick?: () => void;
+  breadcrumbs?: Array<{ label: string; href?: string }>;
 }
 
-export default function Header({ onChangelogClick }: HeaderProps) {
+export default function Header({ onChangelogClick, breadcrumbs }: HeaderProps) {
   return (
     <header style={{
       backgroundColor: 'var(--bg-primary)',
       borderBottom: '1px solid var(--border-color)',
       padding: '1rem',
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center'
     }}>
-      <h1 style={{
-        fontSize: '1.5rem',
-        fontWeight: 600,
-        color: 'var(--text-primary)',
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: breadcrumbs ? '0.5rem' : 0
+      }}>
+        <h1 style={{
+          fontSize: '1.5rem',
+          fontWeight: 600,
+          color: 'var(--text-primary)',
         letterSpacing: '-0.02em',
         margin: 0
       }}>
@@ -52,6 +57,10 @@ export default function Header({ onChangelogClick }: HeaderProps) {
           <FaChartLine size={14} aria-hidden="true" />
           Nuestro Progreso
         </button>
+      )}
+      </div>
+      {breadcrumbs && breadcrumbs.length > 0 && (
+        <Breadcrumbs items={breadcrumbs} />
       )}
     </header>
   );

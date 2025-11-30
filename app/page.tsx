@@ -112,7 +112,7 @@ function HomeContent() {
             const indice = cache.findIndex(a => a.id === adisoId);
             setIndiceAdisoActual(indice >= 0 ? indice : 0);
             // En mobile, abrir sección de adiso si no es desktop
-            if (typeof window !== 'undefined' && window.innerWidth < 768) {
+            if (!isDesktop) {
               setSeccionMobileActiva('adiso');
             }
           } else {
@@ -124,7 +124,7 @@ function HomeContent() {
               setAdisosFiltrados(prev => [adisoEspecifico, ...prev]);
               setIndiceAdisoActual(0);
               // En mobile, abrir sección de adiso si no es desktop
-              if (typeof window !== 'undefined' && window.innerWidth < 768) {
+              if (!isDesktop) {
                 setSeccionMobileActiva('adiso');
               }
             }
@@ -453,7 +453,14 @@ function HomeContent() {
         <a href="#main-content" className="skip-link">
           Saltar al contenido principal
         </a>
-        <Header onChangelogClick={() => router.push('/progreso')} />
+        <Header 
+          onChangelogClick={() => router.push('/progreso')}
+          breadcrumbs={[
+            { label: 'Inicio', href: '/' },
+            ...(categoriaFiltro !== 'todos' ? [{ label: categoriaFiltro, href: `/?categoria=${categoriaFiltro}` }] : []),
+            ...(adisoAbierto ? [{ label: adisoAbierto.titulo }] : []),
+          ]}
+        />
       <main id="main-content" style={{
         flex: 1,
         padding: '1rem',

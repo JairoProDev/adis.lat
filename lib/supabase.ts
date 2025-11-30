@@ -80,17 +80,30 @@ function adisoToDb(adiso: Adiso): any {
   return dbData;
 }
 
-export async function getAdisosFromSupabase(): Promise<Adiso[]> {
+export async function getAdisosFromSupabase(options?: { limit?: number; offset?: number }): Promise<Adiso[]> {
   if (!supabase) {
     throw new Error('Supabase no está configurado');
   }
 
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('adisos')
       .select('*')
-      .order('created_at', { ascending: false })
-      .limit(1000);
+      .order('created_at', { ascending: false });
+    
+    // Aplicar paginación si se proporciona
+    if (options?.limit) {
+      query = query.limit(options.limit);
+    } else {
+      // Por defecto, limitar a 1000 para evitar problemas de memoria
+      query = query.limit(1000);
+    }
+    
+    if (options?.offset) {
+      query = query.range(options.offset, options.offset + (options.limit || 1000) - 1);
+    }
+    
+    const { data, error } = await query;
 
     if (error) {
       console.error('Error al obtener adisos:', error);

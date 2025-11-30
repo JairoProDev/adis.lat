@@ -66,6 +66,8 @@ export default function RootLayout({
     <html lang="es">
       <head>
         <link rel="canonical" href={siteUrl} />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#3c6997" />
       </head>
       <body>
         <ErrorBoundary>

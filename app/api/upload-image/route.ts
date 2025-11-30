@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { validateImageFile } from '@/lib/validations';
-import { LIMITS } from '@/lib/utils';
 import { rateLimit, getClientIP } from '@/lib/rate-limit';
 import sharp from 'sharp';
+
+// Configuración de exportación dinámica para evitar errores en build
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
 export async function POST(request: NextRequest) {
   // Rate limiting para upload de imágenes
