@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
+import Image from 'next/image';
 import { Adiso } from '@/types';
 import { formatFecha, getWhatsAppUrl, copiarLink, compartirNativo } from '@/lib/utils';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
@@ -242,29 +243,37 @@ export default function ModalAdiso({
               <div style={{ marginBottom: '1rem' }}>
                 {imagenes.length === 1 ? (
                   // Una sola imagen: mostrar grande
-                  <div style={{
-                    borderRadius: '8px',
-                    overflow: 'hidden',
-                    border: '1px solid var(--border-color)'
-                  }}>
-                    <img
+                  <div 
+                    style={{
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      border: '1px solid var(--border-color)',
+                      position: 'relative',
+                      width: '100%',
+                      height: '400px',
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => setImagenAmpliada({ url: imagenes[0], index: 0 })}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setImagenAmpliada({ url: imagenes[0], index: 0 });
+                      }
+                    }}
+                    aria-label="Ampliar imagen"
+                  >
+                    <Image
                       src={imagenes[0]}
                       alt={adiso.titulo}
-                      onClick={() => setImagenAmpliada({ url: imagenes[0], index: 0 })}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 50vw"
                       style={{
-                        width: '100%',
-                        maxHeight: '400px',
                         objectFit: 'cover',
-                        display: 'block',
-                        cursor: 'pointer',
                         transition: 'opacity 0.2s'
                       }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.opacity = '0.9';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.opacity = '1';
-                      }}
+                      loading="lazy"
                     />
                   </div>
                 ) : (
@@ -283,27 +292,31 @@ export default function ModalAdiso({
                           aspectRatio: '1',
                           overflow: 'hidden',
                           border: '1px solid var(--border-color)',
-                          borderRadius: '4px'
+                          borderRadius: '4px',
+                          position: 'relative',
+                          cursor: 'pointer'
                         }}
+                        onClick={() => setImagenAmpliada({ url, index })}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            setImagenAmpliada({ url, index });
+                          }
+                        }}
+                        aria-label={`Ampliar imagen ${index + 1} de ${imagenes.length}`}
                       >
-                        <img
+                        <Image
                           src={url}
                           alt={`${adiso.titulo} - Imagen ${index + 1}`}
-                          onClick={() => setImagenAmpliada({ url, index })}
+                          fill
+                          sizes="(max-width: 768px) 33vw, 20vw"
                           style={{
-                            width: '100%',
-                            height: '100%',
                             objectFit: 'cover',
-                            display: 'block',
-                            cursor: 'pointer',
                             transition: 'opacity 0.2s'
                           }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.opacity = '0.9';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.opacity = '1';
-                          }}
+                          loading={index < 3 ? 'eager' : 'lazy'}
                         />
                       </div>
                     ))}
@@ -340,7 +353,7 @@ export default function ModalAdiso({
                 gap: '0.4rem'
               }}
             >
-              <IconLocation />
+              <IconLocation aria-hidden="true" />
               <span>
                 <strong style={{ color: 'var(--text-primary)' }}>Ubicación:</strong> {adiso.ubicacion}
               </span>
@@ -352,7 +365,7 @@ export default function ModalAdiso({
                 gap: '0.4rem'
               }}
             >
-              <IconCalendar />
+              <IconCalendar aria-hidden="true" />
               <span>
                 <strong style={{ color: 'var(--text-primary)' }}>Publicado:</strong>{' '}
                 {formatFecha(adiso.fechaPublicacion, adiso.horaPublicacion)}
@@ -368,6 +381,7 @@ export default function ModalAdiso({
         }}>
           <button
             onClick={handleContactar}
+            aria-label={`Contactar al publicador de ${adiso.titulo} por WhatsApp`}
             style={{
               width: '100%',
               padding: '0.875rem',
@@ -391,7 +405,7 @@ export default function ModalAdiso({
               e.currentTarget.style.opacity = '1';
             }}
           >
-            <IconWhatsApp />
+            <IconWhatsApp aria-hidden="true" />
             Contactar por WhatsApp
           </button>
           
@@ -434,7 +448,7 @@ export default function ModalAdiso({
                   }
                 }}
               >
-                <IconArrowLeft />
+                <IconArrowLeft aria-hidden="true" />
               </button>
             )}
             
@@ -469,7 +483,7 @@ export default function ModalAdiso({
                   e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
                 }}
               >
-                {copiado ? <IconCheck /> : <IconCopy />}
+                {copiado ? <IconCheck aria-hidden="true" /> : <IconCopy aria-hidden="true" />}
                 {copiado ? 'Copiado' : 'Copiar link'}
               </button>
               <button
@@ -496,7 +510,7 @@ export default function ModalAdiso({
                   e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
                 }}
               >
-                <IconShare />
+                <IconShare aria-hidden="true" />
                 Compartir
               </button>
             </div>
@@ -611,7 +625,7 @@ export default function ModalAdiso({
                   e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
                 }}
               >
-                <IconClose />
+                <IconClose aria-hidden="true" />
               </button>
 
               {puedeAnteriorImg && (
@@ -690,7 +704,7 @@ export default function ModalAdiso({
                     e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
                   }}
                 >
-                  <IconArrowRight size={24} />
+                  <IconArrowRight size={24} aria-hidden="true" />
                 </button>
               )}
 
@@ -738,6 +752,7 @@ export default function ModalAdiso({
       >
         <button
           onClick={onCerrar}
+          aria-label="Cerrar adiso"
           style={{
             position: 'absolute',
             top: '1rem',
@@ -762,7 +777,7 @@ export default function ModalAdiso({
             e.currentTarget.style.backgroundColor = 'transparent';
           }}
         >
-          <IconClose />
+          <IconClose aria-hidden="true" />
         </button>
 
         <div style={{ marginBottom: '1rem' }}>
@@ -807,29 +822,37 @@ export default function ModalAdiso({
               <div style={{ marginBottom: '1rem' }}>
                 {imagenes.length === 1 ? (
                   // Una sola imagen: mostrar grande
-                  <div style={{
-                    borderRadius: '8px',
-                    overflow: 'hidden',
-                    border: '1px solid var(--border-color)'
-                  }}>
-                    <img
+                  <div 
+                    style={{
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      border: '1px solid var(--border-color)',
+                      position: 'relative',
+                      width: '100%',
+                      height: '400px',
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => setImagenAmpliada({ url: imagenes[0], index: 0 })}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setImagenAmpliada({ url: imagenes[0], index: 0 });
+                      }
+                    }}
+                    aria-label="Ampliar imagen"
+                  >
+                    <Image
                       src={imagenes[0]}
                       alt={adiso.titulo}
-                      onClick={() => setImagenAmpliada({ url: imagenes[0], index: 0 })}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 50vw"
                       style={{
-                        width: '100%',
-                        maxHeight: '400px',
                         objectFit: 'cover',
-                        display: 'block',
-                        cursor: 'pointer',
                         transition: 'opacity 0.2s'
                       }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.opacity = '0.9';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.opacity = '1';
-                      }}
+                      loading="lazy"
                     />
                   </div>
                 ) : (
@@ -848,27 +871,31 @@ export default function ModalAdiso({
                           aspectRatio: '1',
                           overflow: 'hidden',
                           border: '1px solid var(--border-color)',
-                          borderRadius: '4px'
+                          borderRadius: '4px',
+                          position: 'relative',
+                          cursor: 'pointer'
                         }}
+                        onClick={() => setImagenAmpliada({ url, index })}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            setImagenAmpliada({ url, index });
+                          }
+                        }}
+                        aria-label={`Ampliar imagen ${index + 1} de ${imagenes.length}`}
                       >
-                        <img
+                        <Image
                           src={url}
                           alt={`${adiso.titulo} - Imagen ${index + 1}`}
-                          onClick={() => setImagenAmpliada({ url, index })}
+                          fill
+                          sizes="(max-width: 768px) 33vw, 20vw"
                           style={{
-                            width: '100%',
-                            height: '100%',
                             objectFit: 'cover',
-                            display: 'block',
-                            cursor: 'pointer',
                             transition: 'opacity 0.2s'
                           }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.opacity = '0.9';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.opacity = '1';
-                          }}
+                          loading={index < 3 ? 'eager' : 'lazy'}
                         />
                       </div>
                     ))}
@@ -905,7 +932,7 @@ export default function ModalAdiso({
                 gap: '0.4rem'
               }}
             >
-              <IconLocation />
+              <IconLocation aria-hidden="true" />
               <span>
                 <strong style={{ color: 'var(--text-primary)' }}>Ubicación:</strong> {adiso.ubicacion}
               </span>
@@ -917,7 +944,7 @@ export default function ModalAdiso({
                 gap: '0.4rem'
               }}
             >
-              <IconCalendar />
+              <IconCalendar aria-hidden="true" />
               <span>
                 <strong style={{ color: 'var(--text-primary)' }}>Publicado:</strong>{' '}
                 {formatFecha(adiso.fechaPublicacion, adiso.horaPublicacion)}
@@ -933,6 +960,7 @@ export default function ModalAdiso({
         }}>
           <button
             onClick={handleContactar}
+            aria-label={`Contactar al publicador de ${adiso.titulo} por WhatsApp`}
             style={{
               width: '100%',
               padding: '0.875rem',
@@ -956,7 +984,7 @@ export default function ModalAdiso({
               e.currentTarget.style.opacity = '1';
             }}
           >
-            <IconWhatsApp />
+            <IconWhatsApp aria-hidden="true" />
             Contactar por WhatsApp
           </button>
           
@@ -999,7 +1027,7 @@ export default function ModalAdiso({
                   }
                 }}
               >
-                <IconArrowLeft />
+                <IconArrowLeft aria-hidden="true" />
               </button>
             )}
             
@@ -1034,7 +1062,7 @@ export default function ModalAdiso({
                   e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
                 }}
               >
-                {copiado ? <IconCheck /> : <IconCopy />}
+                {copiado ? <IconCheck aria-hidden="true" /> : <IconCopy aria-hidden="true" />}
                 {copiado ? 'Copiado' : 'Copiar link'}
               </button>
               <button
@@ -1061,7 +1089,7 @@ export default function ModalAdiso({
                   e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
                 }}
               >
-                <IconShare />
+                <IconShare aria-hidden="true" />
                 Compartir
               </button>
             </div>
@@ -1178,7 +1206,7 @@ export default function ModalAdiso({
                   e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
                 }}
               >
-                <IconClose />
+                <IconClose aria-hidden="true" />
               </button>
 
               {puedeAnteriorImg && (
@@ -1257,7 +1285,7 @@ export default function ModalAdiso({
                     e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
                   }}
                 >
-                  <IconArrowRight size={24} />
+                  <IconArrowRight size={24} aria-hidden="true" />
                 </button>
               )}
 

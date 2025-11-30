@@ -32,18 +32,28 @@ const saveAdisoLocal = (adiso: Adiso): void => {
     if (!existe) {
       adisos.unshift(adiso);
     } else {
-      // Si existe, actualizarlo en lugar de duplicarlo
+      // Si existe, moverlo al inicio (LRU: más reciente al principio)
       const index = adisos.findIndex(a => a.id === adiso.id);
       if (index >= 0) {
-        adisos[index] = adiso;
+        adisos.splice(index, 1);
+        adisos.unshift(adiso); // Mover al inicio
       }
     }
 
-    // Limitar el número de adisos en localStorage para evitar exceder la cuota
-    // Mantener solo los últimos 50 adisos
-    const adisosLimitados = adisos.slice(0, 50);
+    // LRU Cache: Mantener solo los más recientes y frecuentes
+    // Priorizar adisos recientes (fecha de publicación) y mantener un límite inteligente
+    const MAX_CACHE_SIZE = 50;
     
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(adisosLimitados));
+    // Ordenar por fecha de publicación (más recientes primero) y limitar
+    const adisosOrdenados = adisos
+      .sort((a, b) => {
+        const fechaA = new Date(`${a.fechaPublicacion}T${a.horaPublicacion}:00`).getTime();
+        const fechaB = new Date(`${b.fechaPublicacion}T${b.horaPublicacion}:00`).getTime();
+        return fechaB - fechaA; // Más recientes primero
+      })
+      .slice(0, MAX_CACHE_SIZE);
+    
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(adisosOrdenados));
   } catch (error: any) {
     // Si hay error de cuota, limpiar y guardar solo el nuevo adiso
     if (error?.name === 'QuotaExceededError' || error?.message?.includes('quota')) {

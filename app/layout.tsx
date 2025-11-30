@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://buscadis.com';
 
@@ -66,7 +67,11 @@ export default function RootLayout({
       <head>
         <link rel="canonical" href={siteUrl} />
       </head>
-      <body>{children}</body>
+      <body>
+        <ErrorBoundary>
+          {children}
+        </ErrorBoundary>
+      </body>
     </html>
   );
 }

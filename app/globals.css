@@ -76,3 +76,10 @@ a {
   outline-offset: 2px;
 }
 
+/* Animación de spinner */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+

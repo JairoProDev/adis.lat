@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { Adiso, Categoria, PAQUETES } from '@/types';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { 
@@ -178,25 +179,35 @@ export default function GrillaAdisos({ adisos, onAbrirAdiso, adisoSeleccionadoId
               
               // Mostrar primera imagen si hay múltiples o imagen única
               const imagenUrl = adiso.imagenesUrls?.[0] || adiso.imagenUrl;
+              const imageHeight = tamaño === 'pequeño' 
+                ? isDesktop ? 130 : 120
+                : tamaño === 'mediano' 
+                ? isDesktop ? 150 : 140
+                : tamaño === 'grande' 
+                ? isDesktop ? 190 : 180
+                : isDesktop ? 230 : 220; // gigante
+              
               return imagenUrl ? (
-                <img
-                  src={imagenUrl}
-                  alt={adiso.titulo}
-                  style={{
-                    width: '100%',
-                    height: tamaño === 'pequeño' 
-                      ? isDesktop ? '130px' : '120px'
-                      : tamaño === 'mediano' 
-                      ? isDesktop ? '150px' : '140px'
-                      : tamaño === 'grande' 
-                      ? isDesktop ? '190px' : '180px'
-                      : isDesktop ? '230px' : '220px', // gigante
-                    objectFit: 'cover',
-                    borderRadius: '4px',
-                    marginBottom: '0.3rem',
-                    flexShrink: 0 // No permitir que la imagen se comprima
-                  }}
-                />
+                <div style={{
+                  width: '100%',
+                  height: `${imageHeight}px`,
+                  position: 'relative',
+                  borderRadius: '4px',
+                  marginBottom: '0.3rem',
+                  flexShrink: 0,
+                  overflow: 'hidden'
+                }}>
+                  <Image
+                    src={imagenUrl}
+                    alt={adiso.titulo}
+                    fill
+                    sizes="(max-width: 768px) 50vw, 25vw"
+                    style={{
+                      objectFit: 'cover',
+                    }}
+                    loading="lazy"
+                  />
+                </div>
               ) : null;
             })()}
             <div style={{
@@ -228,7 +239,7 @@ export default function GrillaAdisos({ adisos, onAbrirAdiso, adisoSeleccionadoId
                   : tamaño === 'grande'
                   ? isDesktop ? 15 : 14
                   : isDesktop ? 16 : 15; // gigante
-                return <IconComponent size={iconSize} />;
+                return <IconComponent size={iconSize} aria-hidden="true" />;
               })()}
               {adiso.categoria}
             </div>

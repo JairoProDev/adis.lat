@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Adiso } from '@/types';
 
@@ -27,9 +28,18 @@ export default function AdisoPageContent({ adiso }: AdisoPageContentProps) {
         <p><strong>Ubicación:</strong> {adiso.ubicacion}</p>
         <p><strong>Publicado:</strong> {adiso.fechaPublicacion} {adiso.horaPublicacion}</p>
         {adiso.imagenesUrls && adiso.imagenesUrls.length > 0 && (
-          <div>
+          <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {adiso.imagenesUrls.map((url, index) => (
-              <img key={index} src={url} alt={`${adiso.titulo} - Imagen ${index + 1}`} style={{ maxWidth: '100%', marginTop: '1rem' }} />
+              <div key={index} style={{ position: 'relative', width: '100%', height: '400px' }}>
+                <Image
+                  src={url}
+                  alt={`${adiso.titulo} - Imagen ${index + 1}`}
+                  fill
+                  sizes="100vw"
+                  style={{ objectFit: 'contain' }}
+                  loading={index === 0 ? 'eager' : 'lazy'}
+                />
+              </div>
             ))}
           </div>
         )}

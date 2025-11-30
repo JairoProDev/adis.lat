@@ -258,9 +258,23 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
           }
         })();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error al publicar:', error);
-      onError?.('Hubo un error al publicar el adiso. Por favor intenta nuevamente.');
+      
+      // Mensajes de error más específicos y amigables
+      let errorMessage = 'Hubo un error al publicar el adiso. Por favor intenta nuevamente.';
+      
+      if (error?.message?.includes('conexión') || error?.message?.includes('network') || error?.message?.includes('fetch failed')) {
+        errorMessage = 'No hay conexión a internet. El adiso se guardó localmente y se publicará cuando se restablezca la conexión.';
+      } else if (error?.message?.includes('validación') || error?.message?.includes('inválido')) {
+        errorMessage = 'Por favor verifica que todos los campos estén correctamente completados.';
+      } else if (error?.message?.includes('imagen') || error?.message?.includes('upload')) {
+        errorMessage = 'Hubo un problema al subir las imágenes. El adiso se publicó sin imágenes. Puedes editarlo más tarde.';
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      onError?.(errorMessage);
       setEnviando(false);
     }
   };
@@ -404,7 +418,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
       )}
 
       <div style={{ marginBottom: '1rem' }}>
-        <label style={{
+        <label htmlFor="adiso-titulo" style={{
           display: 'flex',
           alignItems: 'center',
           gap: '0.5rem',
@@ -413,12 +427,16 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
           fontWeight: 500,
           color: 'var(--text-primary)'
         }}>
-          <IconTitle />
+          <IconTitle aria-hidden="true" />
           Título
         </label>
         <input
+          id="adiso-titulo"
           type="text"
           value={formData.titulo}
+          aria-required="true"
+          aria-invalid={!!errors.titulo}
+          aria-describedby={errors.titulo ? 'titulo-error' : 'titulo-helper'}
           onChange={(e) => {
             const value = e.target.value;
             const maxTitulo = modoGratuito ? 30 : LIMITS.TITULO_MAX;
@@ -444,9 +462,9 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
         />
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
           {errors.titulo && (
-            <span style={{ fontSize: '0.75rem', color: '#ef4444' }}>{errors.titulo}</span>
+            <span id="titulo-error" role="alert" style={{ fontSize: '0.75rem', color: '#ef4444' }}>{errors.titulo}</span>
           )}
-          <span style={{ 
+          <span id="titulo-helper" style={{ 
             fontSize: '0.75rem', 
             color: formData.titulo.length > (modoGratuito ? 30 : LIMITS.TITULO_MAX) * 0.9 ? '#f59e0b' : 'var(--text-tertiary)',
             marginLeft: 'auto'
@@ -459,7 +477,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
       {!modoGratuito && (
         <>
           <div style={{ marginBottom: '1rem' }}>
-            <label style={{
+            <label htmlFor="adiso-descripcion" style={{
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem',
@@ -468,11 +486,15 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
               fontWeight: 500,
               color: 'var(--text-primary)'
             }}>
-              <IconDescription />
+              <IconDescription aria-hidden="true" />
               Descripción
             </label>
             <textarea
+              id="adiso-descripcion"
               value={formData.descripcion}
+              aria-required="true"
+              aria-invalid={!!errors.descripcion}
+              aria-describedby={errors.descripcion ? 'descripcion-error' : 'descripcion-helper'}
               onChange={(e) => {
                 const value = e.target.value;
                 if (value.length <= LIMITS.DESCRIPCION_MAX) {
@@ -500,9 +522,9 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
             />
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
               {errors.descripcion && (
-                <span style={{ fontSize: '0.75rem', color: '#ef4444' }}>{errors.descripcion}</span>
+                <span id="descripcion-error" role="alert" style={{ fontSize: '0.75rem', color: '#ef4444' }}>{errors.descripcion}</span>
               )}
-              <span style={{ 
+              <span id="descripcion-helper" style={{ 
                 fontSize: '0.75rem', 
                 color: formData.descripcion.length > LIMITS.DESCRIPCION_MAX * 0.9 ? '#f59e0b' : 'var(--text-tertiary)',
                 marginLeft: 'auto'
@@ -513,7 +535,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
           </div>
 
           <div style={{ marginBottom: '1rem' }}>
-            <label style={{
+            <label htmlFor="adiso-ubicacion" style={{
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem',
@@ -522,12 +544,16 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
               fontWeight: 500,
               color: 'var(--text-primary)'
             }}>
-              <IconLocation />
+              <IconLocation aria-hidden="true" />
               Ubicación
             </label>
             <input
+              id="adiso-ubicacion"
               type="text"
               value={formData.ubicacion}
+              aria-required="true"
+              aria-invalid={!!errors.ubicacion}
+              aria-describedby={errors.ubicacion ? 'ubicacion-error' : 'ubicacion-helper'}
               onChange={(e) => {
                 const value = e.target.value;
                 if (value.length <= LIMITS.UBICACION_MAX) {
@@ -552,9 +578,9 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
             />
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
               {errors.ubicacion && (
-                <span style={{ fontSize: '0.75rem', color: '#ef4444' }}>{errors.ubicacion}</span>
+                <span id="ubicacion-error" role="alert" style={{ fontSize: '0.75rem', color: '#ef4444' }}>{errors.ubicacion}</span>
               )}
-              <span style={{ 
+              <span id="ubicacion-helper" style={{ 
                 fontSize: '0.75rem', 
                 color: formData.ubicacion.length > LIMITS.UBICACION_MAX * 0.9 ? '#f59e0b' : 'var(--text-tertiary)',
                 marginLeft: 'auto'
@@ -567,7 +593,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
       )}
 
       <div style={{ marginBottom: '1.5rem' }}>
-        <label style={{
+        <label htmlFor="adiso-contacto" style={{
           display: 'flex',
           alignItems: 'center',
           gap: '0.5rem',
@@ -576,12 +602,16 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
           fontWeight: 500,
           color: 'var(--text-primary)'
         }}>
-          <IconPhone />
+          <IconPhone aria-hidden="true" />
           Número de contacto (WhatsApp)
         </label>
         <input
+          id="adiso-contacto"
           type="tel"
           value={formData.contacto}
+          aria-required="true"
+          aria-invalid={!!errors.contacto}
+          aria-describedby={errors.contacto ? 'contacto-error' : 'contacto-helper'}
           onChange={(e) => {
             const formatted = formatPhoneNumber(e.target.value);
             setFormData({ ...formData, contacto: formatted });
@@ -604,9 +634,9 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
         />
         <div style={{ marginTop: '0.25rem' }}>
           {errors.contacto ? (
-            <span style={{ fontSize: '0.75rem', color: '#ef4444' }}>{errors.contacto}</span>
+            <span id="contacto-error" role="alert" style={{ fontSize: '0.75rem', color: '#ef4444' }}>{errors.contacto}</span>
           ) : (
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+            <span id="contacto-helper" style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
               Este número no se mostrará públicamente
             </span>
           )}
@@ -615,7 +645,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
 
       {!modoGratuito && (
         <div style={{ marginBottom: '1.5rem' }}>
-          <label style={{
+          <label htmlFor="adiso-images-label" style={{
             display: 'flex',
             alignItems: 'center',
             gap: '0.5rem',
@@ -624,7 +654,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
             fontWeight: 500,
             color: 'var(--text-primary)'
           }}>
-            <FaImage size={16} />
+            <FaImage size={16} aria-hidden="true" />
             Imágenes del adiso (opcional, máx. 5MB cada una)
           </label>
           <input
@@ -737,6 +767,8 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
         <button
           type="submit"
           disabled={enviando}
+          aria-busy={enviando}
+          aria-label={enviando ? 'Publicando adiso...' : 'Publicar adiso'}
           style={{
             flex: 1,
             padding: '0.75rem',
@@ -751,11 +783,29 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '0.5rem'
+            gap: '0.5rem',
+            transition: 'opacity 0.2s'
           }}
         >
-          <IconMegaphone />
-          {enviando ? 'Publicando...' : 'Publicar'}
+          {enviando ? (
+            <>
+              <span style={{ 
+                width: '16px', 
+                height: '16px', 
+                border: '2px solid var(--bg-primary)',
+                borderTop: '2px solid transparent',
+                borderRadius: '50%',
+                animation: 'spin 0.6s linear infinite',
+                display: 'inline-block'
+              }} aria-hidden="true" />
+              Publicando...
+            </>
+          ) : (
+            <>
+              <IconMegaphone aria-hidden="true" />
+              Publicar
+            </>
+          )}
         </button>
       </div>
     </form>

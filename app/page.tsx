@@ -12,18 +12,38 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useToast } from '@/hooks/useToast';
 import { useDebounce } from '@/hooks/useDebounce';
 import { getBusquedaUrl } from '@/lib/utils';
+import dynamic from 'next/dynamic';
 import Header from '@/components/Header';
 import Buscador from '@/components/Buscador';
 import FiltrosCategoria from '@/components/FiltrosCategoria';
 import GrillaAdisos from '@/components/GrillaAdisos';
-import ModalAdiso from '@/components/ModalAdiso';
-import FormularioPublicar from '@/components/FormularioPublicar';
 import SkeletonAdisos from '@/components/SkeletonAdisos';
 import { ToastContainer } from '@/components/Toast';
 import FeedbackButton from '@/components/FeedbackButton';
-import SidebarDesktop, { SeccionSidebar } from '@/components/SidebarDesktop';
-import ModalNavegacionMobile from '@/components/ModalNavegacionMobile';
 import NavbarMobile from '@/components/NavbarMobile';
+
+// Lazy load componentes pesados
+const ModalAdiso = dynamic(() => import('@/components/ModalAdiso'), {
+  loading: () => <div style={{ padding: '2rem', textAlign: 'center' }}>Cargando adiso...</div>,
+  ssr: false,
+});
+
+const FormularioPublicar = dynamic(() => import('@/components/FormularioPublicar'), {
+  loading: () => <div style={{ padding: '2rem', textAlign: 'center' }}>Cargando formulario...</div>,
+  ssr: false,
+});
+
+const SidebarDesktop = dynamic(() => import('@/components/SidebarDesktop').then(mod => ({ default: mod.default })), {
+  loading: () => null,
+  ssr: false,
+});
+
+const ModalNavegacionMobile = dynamic(() => import('@/components/ModalNavegacionMobile'), {
+  loading: () => null,
+  ssr: false,
+});
+
+import type { SeccionSidebar } from '@/components/SidebarDesktop';
 
 type SeccionMobile = 'adiso' | 'mapa' | 'publicar' | 'chatbot' | 'gratuitos';
 
@@ -50,6 +70,20 @@ function HomeContent() {
   const [isSidebarMinimizado, setIsSidebarMinimizado] = useState(false);
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const { toasts, removeToast, success, error } = useToast();
+  const [isOnlineState, setIsOnlineState] = useState(isOnline());
+
+  // Detectar cambios en el estado de conexión
+  useEffect(() => {
+    const cleanup = onOnlineStatusChange((online) => {
+      setIsOnlineState(online);
+      if (!online) {
+        error(getOfflineMessage());
+      } else {
+        success('Conexión restablecida');
+      }
+    });
+    return cleanup;
+  }, [error, success]);
 
   // Carga inicial: mostrar cache primero (instantáneo), luego actualizar desde API
   useEffect(() => {
@@ -387,8 +421,32 @@ function HomeContent() {
     }
   };
 
+  // Structured data para SEO
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Buscadis',
+    url: typeof window !== 'undefined' ? window.location.origin : 'https://buscadis.com',
+    description: 'Publica y encuentra adisos clasificados en Perú',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: typeof window !== 'undefined' ? `${window.location.origin}/?buscar={search_term_string}` : 'https://buscadis.com/?buscar={search_term_string}'
+      },
+      'query-input': 'required name=search_term_string'
+    }
+  };
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
+        <a href="#main-content" className="skip-link">
+          Saltar al contenido principal
+        </a>
         <Header onChangelogClick={() => router.push('/progreso')} />
       <main id="main-content" style={{
         flex: 1,
