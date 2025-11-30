@@ -99,6 +99,14 @@ export default function GrillaAdisos({ adisos, onAbrirAdiso, adisoSeleccionadoId
                 adisoRefs.current[adiso.id] = el;
               }}
               onClick={() => onAbrirAdiso(adiso)}
+              aria-label={`Ver detalles del adiso: ${adiso.titulo} en ${adiso.categoria}`}
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onAbrirAdiso(adiso);
+                }
+              }}
               style={{
                 backgroundColor: estaSeleccionado ? 'var(--hover-bg)' : 'var(--bg-primary)',
                 border: estaSeleccionado 
@@ -131,7 +139,17 @@ export default function GrillaAdisos({ adisos, onAbrirAdiso, adisoSeleccionadoId
                 height: '100%',
                 justifyContent: 'flex-start',
                 overflow: 'hidden', // Asegura que el contenido no se desborde
-                minHeight: 0 // Permite que flexbox funcione correctamente
+                minHeight: 0, // Permite que flexbox funcione correctamente
+                outline: 'none', // Se manejará con focus-visible
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.outline = '2px solid var(--text-primary)';
+                e.currentTarget.style.outlineOffset = '2px';
+              }}
+              onBlur={(e) => {
+                if (!estaSeleccionado) {
+                  e.currentTarget.style.outline = 'none';
+                }
               }}
               onMouseEnter={(e) => {
                 if (!estaSeleccionado) {

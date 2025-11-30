@@ -268,7 +268,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
   const renderForm = () => (
     <form onSubmit={handleSubmit}>
       <div style={{ marginBottom: '1rem' }}>
-        <label style={{
+        <label htmlFor="adiso-categoria" style={{
           display: 'flex',
           alignItems: 'center',
           gap: '0.5rem',
@@ -279,14 +279,16 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
         }}>
           {(() => {
             const IconComponent = getCategoriaIcon(formData.categoria);
-            return <IconComponent size={16} />;
+            return <IconComponent size={16} aria-hidden="true" />;
           })()}
           Categoría
         </label>
         <select
+          id="adiso-categoria"
           value={formData.categoria}
           onChange={(e) => setFormData({ ...formData, categoria: e.target.value as Categoria })}
           required
+          aria-required="true"
           style={{
             width: '100%',
             padding: '0.75rem',

@@ -2,8 +2,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdisoGratuitoInSupabase, getAdisosGratuitosFromSupabase } from '@/lib/supabase';
 import { generarIdUnico } from '@/lib/utils';
 import { AdisoGratuito } from '@/types';
+import { createAdisoGratuitoSchema, sanitizeText } from '@/lib/validations';
+import { rateLimit, getClientIP } from '@/lib/rate-limit';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Rate limiting para GET
+  const ip = getClientIP(request);
+  const limitResult = rateLimit(`get-adisos-gratuitos-${ip}`, {
+    windowMs: 60 * 1000,
+    maxRequests: 120,
+  });
+
+  if (!limitResult.allowed) {
+    return NextResponse.json(
+      { error: 'Demasiadas solicitudes. Por favor intenta más tarde.' },
+      { status: 429 }
+    );
+  }
   try {
     const adisos = await getAdisosGratuitosFromSupabase();
     return NextResponse.json(adisos, { status: 200 });
@@ -29,37 +44,55 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  // Rate limiting más estricto para POST (adisos gratuitos)
+  const ip = getClientIP(request);
+  const limitResult = rateLimit(`post-adisos-gratuitos-${ip}`, {
+    windowMs: 60 * 60 * 1000, // 1 hora
+    maxRequests: 5, // Solo 5 adisos gratuitos por hora por IP
+  });
+
+  if (!limitResult.allowed) {
+    return NextResponse.json(
+      { 
+        error: 'Has alcanzado el límite de adisos gratuitos. Por favor espera antes de crear otro.',
+        retryAfter: Math.ceil((limitResult.resetTime - Date.now()) / 1000)
+      },
+      { 
+        status: 429,
+        headers: {
+          'Retry-After': Math.ceil((limitResult.resetTime - Date.now()) / 1000).toString(),
+        }
+      }
+    );
+  }
+
   try {
     const body = await request.json();
     
-    // Validaciones estrictas para adisos gratuitos
-    if (!body.titulo || typeof body.titulo !== 'string' || body.titulo.trim().length === 0) {
+    // Validar y sanitizar entrada con zod
+    const validationResult = createAdisoGratuitoSchema.safeParse(body);
+    
+    if (!validationResult.success) {
       return NextResponse.json(
-        { error: 'El título es requerido' },
+        { 
+          error: 'Datos de entrada inválidos',
+          details: validationResult.error.errors.map(e => ({
+            path: e.path.join('.'),
+            message: e.message
+          }))
+        },
         { status: 400 }
       );
     }
-
-    if (body.titulo.length > 30) {
-      return NextResponse.json(
-        { error: 'El título no puede exceder 30 caracteres' },
-        { status: 400 }
-      );
-    }
-
-    if (!body.categoria || !['empleos', 'inmuebles', 'vehiculos', 'servicios', 'productos', 'eventos', 'negocios', 'comunidad'].includes(body.categoria)) {
-      return NextResponse.json(
-        { error: 'La categoría es requerida y debe ser válida' },
-        { status: 400 }
-      );
-    }
-
-    if (!body.contacto || typeof body.contacto !== 'string' || body.contacto.trim().length === 0) {
-      return NextResponse.json(
-        { error: 'El número de contacto es requerido' },
-        { status: 400 }
-      );
-    }
+    
+    const validatedData = validationResult.data;
+    
+    // Sanitizar campos de texto
+    const sanitizedData = {
+      ...validatedData,
+      titulo: sanitizeText(validatedData.titulo),
+      contacto: sanitizeText(validatedData.contacto),
+    };
 
     const ahora = new Date();
     const fechaCreacion = ahora.toISOString();
@@ -67,9 +100,9 @@ export async function POST(request: NextRequest) {
 
     const nuevoAdiso: AdisoGratuito = {
       id: generarIdUnico(),
-      categoria: body.categoria,
-      titulo: body.titulo.trim(),
-      contacto: body.contacto.trim(),
+      categoria: sanitizedData.categoria,
+      titulo: sanitizedData.titulo,
+      contacto: sanitizedData.contacto,
       fechaCreacion,
       fechaExpiracion
     };

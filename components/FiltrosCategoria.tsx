@@ -43,6 +43,8 @@ export default function FiltrosCategoria({ categoriaSeleccionada, onChange }: Fi
         <button
           key={cat.value}
           onClick={() => onChange(cat.value)}
+          aria-label={`Filtrar por ${cat.label}`}
+          aria-pressed={categoriaSeleccionada === cat.value}
           style={{
             padding: '0.5rem 1rem',
             fontSize: '0.875rem',
@@ -74,7 +76,7 @@ export default function FiltrosCategoria({ categoriaSeleccionada, onChange }: Fi
         >
           {(() => {
             const IconComponent = cat.icon;
-            return <IconComponent color={categoriaSeleccionada === cat.value ? 'var(--bg-primary)' : 'var(--text-primary)'} />;
+            return <IconComponent aria-hidden="true" color={categoriaSeleccionada === cat.value ? 'var(--bg-primary)' : 'var(--text-primary)'} />;
           })()}
           {cat.label}
         </button>

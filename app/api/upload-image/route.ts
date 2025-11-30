@@ -1,7 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { isValidImageType, isValidImageSize, LIMITS } from '@/lib/validations';
+import { rateLimit, getClientIP } from '@/lib/rate-limit';
+import sharp from 'sharp';
 
 export async function POST(request: NextRequest) {
+  // Rate limiting para upload de imágenes
+  const ip = getClientIP(request);
+  const limitResult = rateLimit(`upload-image-${ip}`, {
+    windowMs: 60 * 1000, // 1 minuto
+    maxRequests: 20, // 20 uploads por minuto
+  });
+
+  if (!limitResult.allowed) {
+    return NextResponse.json(
+      { 
+        error: 'Demasiadas solicitudes de subida. Por favor espera un momento.',
+        retryAfter: Math.ceil((limitResult.resetTime - Date.now()) / 1000)
+      },
+      { 
+        status: 429,
+        headers: {
+          'Retry-After': Math.ceil((limitResult.resetTime - Date.now()) / 1000).toString(),
+        }
+      }
+    );
+  }
+
   try {
     const formData = await request.formData();
     const file = formData.get('image') as File;
@@ -13,18 +38,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validar tamaño (máximo 5MB)
-    if (file.size > 5 * 1024 * 1024) {
+    // Validar tipo MIME
+    if (!isValidImageType(file.type)) {
       return NextResponse.json(
-        { error: 'La imagen es demasiado grande. Máximo 5MB.' },
+        { error: `Tipo de archivo no permitido. Solo se permiten: ${['JPEG', 'PNG', 'WEBP', 'GIF'].join(', ')}` },
         { status: 400 }
       );
     }
 
-    // Validar tipo
-    if (!file.type.startsWith('image/')) {
+    // Validar tamaño
+    if (!isValidImageSize(file.size)) {
       return NextResponse.json(
-        { error: 'El archivo debe ser una imagen' },
+        { error: `La imagen es demasiado grande. Máximo ${LIMITS.IMAGEN_SIZE_MAX / (1024 * 1024)}MB.` },
         { status: 400 }
       );
     }
@@ -36,14 +61,53 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Convertir a buffer
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    // Validar dimensiones reales de la imagen y optimizar
+    let finalBuffer: Buffer;
+    let finalContentType: string;
+    
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      const metadata = await sharp(buffer).metadata();
+      
+      if (!metadata.width || !metadata.height) {
+        return NextResponse.json(
+          { error: 'No se pudieron leer las dimensiones de la imagen' },
+          { status: 400 }
+        );
+      }
+
+      if (metadata.width > LIMITS.IMAGEN_DIMENSION_MAX || metadata.height > LIMITS.IMAGEN_DIMENSION_MAX) {
+        return NextResponse.json(
+          { error: `Las dimensiones de la imagen exceden el máximo permitido (${LIMITS.IMAGEN_DIMENSION_MAX}px)` },
+          { status: 400 }
+        );
+      }
+
+      // Comprimir y optimizar imagen antes de subir
+      finalBuffer = await sharp(buffer)
+        .resize(2048, 2048, { 
+          fit: 'inside',
+          withoutEnlargement: true 
+        })
+        .jpeg({ quality: 85, progressive: true })
+        .toBuffer();
+
+      finalContentType = 'image/jpeg';
+      
+    } catch (imageError: any) {
+      console.error('Error al procesar imagen:', imageError);
+      return NextResponse.json(
+        { error: 'Error al procesar la imagen. Asegúrate de que sea una imagen válida.' },
+        { status: 400 }
+      );
+    }
 
     // Generar nombre único
     const timestamp = Date.now();
     const random = Math.random().toString(36).substring(2, 15);
-    const extension = file.name.split('.').pop() || 'jpg';
+    // Siempre usar .jpg porque optimizamos a JPEG
+    const extension = 'jpg';
     // Determinar si es para feedback o adiso basado en el tipo de archivo o parámetro
     const tipo = request.headers.get('x-upload-type') || 'adisos'; // Por defecto adisos
     const fileName = `${tipo}/${timestamp}-${random}.${extension}`;
@@ -51,11 +115,11 @@ export async function POST(request: NextRequest) {
     // Determinar el bucket según el tipo
     const bucketName = tipo === 'feedback' ? 'feedback-images' : 'adisos-images';
     
-    // Subir a Supabase Storage
+    // Subir a Supabase Storage usando el buffer optimizado
     const { data, error } = await supabase.storage
       .from(bucketName)
-      .upload(fileName, buffer, {
-        contentType: file.type,
+      .upload(fileName, finalBuffer, {
+        contentType: finalContentType,
         upsert: false
       });
 

@@ -43,6 +43,9 @@ export default function ToastItem({ toast, onClose, index }: ToastItemProps) {
 
   return (
     <div
+      role="alert"
+      aria-live={toast.type === 'error' ? 'assertive' : 'polite'}
+      aria-atomic="true"
       style={{
         backgroundColor: 'var(--bg-primary)',
         border: `2px solid ${colors[toast.type]}`,
@@ -68,6 +71,7 @@ export default function ToastItem({ toast, onClose, index }: ToastItemProps) {
           setIsVisible(false);
           setTimeout(onClose, 300);
         }}
+        aria-label="Cerrar notificación"
         style={{
           background: 'none',
           border: 'none',
@@ -79,7 +83,7 @@ export default function ToastItem({ toast, onClose, index }: ToastItemProps) {
           lineHeight: 1,
         }}
       >
-        <FaTimes size={14} />
+        <FaTimes size={14} aria-hidden="true" />
       </button>
     </div>
   );

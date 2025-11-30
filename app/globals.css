@@ -47,3 +47,32 @@ a {
   text-decoration: none;
 }
 
+/* Skip link para navegación por teclado */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  padding: 0.5rem 1rem;
+  text-decoration: none;
+  z-index: 10000;
+  border-radius: 0 0 4px 0;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Mejorar contraste para accesibilidad */
+:root {
+  /* Asegurar contraste WCAG AA (4.5:1) */
+  --text-secondary: #555555; /* Mejorado de #666666 para mejor contraste */
+}
+
+/* Focus visible para navegación por teclado */
+*:focus-visible {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 2px;
+}
+

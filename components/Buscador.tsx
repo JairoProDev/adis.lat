@@ -9,6 +9,7 @@ export default function Buscador({ value, onChange }: BuscadorProps) {
   return (
     <div style={{ position: 'relative' }}>
       <div
+        aria-hidden="true"
         style={{
           position: 'absolute',
           left: '0.75rem',
@@ -24,10 +25,11 @@ export default function Buscador({ value, onChange }: BuscadorProps) {
         <IconSearch />
       </div>
       <input
-        type="text"
+        type="search"
         placeholder="Buscar ofertas y oportunidades..."
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        aria-label="Buscar adisos"
         style={{
           width: '100%',
           padding: '0.75rem 1rem 0.75rem 2.5rem',

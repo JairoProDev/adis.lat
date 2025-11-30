@@ -5,12 +5,65 @@ import {
 } from '@/lib/supabase';
 import { Adiso } from '@/types';
 import { generarIdUnico } from '@/lib/utils';
+import { createAdisoSchema, sanitizeText, sanitizeHtml } from '@/lib/validations';
+import { rateLimit, getClientIP } from '@/lib/rate-limit';
 
 // Esta función maneja GET para obtener todos los adisos
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Rate limiting para GET (más permisivo)
+  const ip = getClientIP(request);
+  const limitResult = rateLimit(`get-adisos-${ip}`, {
+    windowMs: 60 * 1000, // 1 minuto
+    maxRequests: 120, // 120 requests por minuto
+  });
+
+  if (!limitResult.allowed) {
+    return NextResponse.json(
+      { 
+        error: 'Demasiadas solicitudes. Por favor intenta más tarde.',
+        retryAfter: Math.ceil((limitResult.resetTime - Date.now()) / 1000)
+      },
+      { 
+        status: 429,
+        headers: {
+          'Retry-After': Math.ceil((limitResult.resetTime - Date.now()) / 1000).toString(),
+          'X-RateLimit-Limit': '120',
+          'X-RateLimit-Remaining': '0',
+          'X-RateLimit-Reset': limitResult.resetTime.toString(),
+        }
+      }
+    );
+  }
   try {
+    // Soporte para paginación básica
+    const searchParams = request.nextUrl.searchParams;
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = parseInt(searchParams.get('limit') || '100', 10);
+    
+    // Validar límites
+    if (page < 1 || limit < 1 || limit > 1000) {
+      return NextResponse.json(
+        { error: 'Parámetros de paginación inválidos. page >= 1, limit entre 1 y 1000' },
+        { status: 400 }
+      );
+    }
     const adisos = await getAdisosFromSupabase();
-    return NextResponse.json(adisos);
+    
+    // Aplicar paginación
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedAdisos = adisos.slice(startIndex, endIndex);
+    
+    return NextResponse.json({
+      data: paginatedAdisos,
+      pagination: {
+        page,
+        limit,
+        total: adisos.length,
+        totalPages: Math.ceil(adisos.length / limit),
+        hasMore: endIndex < adisos.length
+      }
+    });
   } catch (error: any) {
     console.error('Error al obtener adisos:', error);
     
@@ -35,16 +88,68 @@ export async function GET() {
 
 // Esta función maneja POST para crear un nuevo adiso
 export async function POST(request: NextRequest) {
+  // Rate limiting más estricto para POST
+  const ip = getClientIP(request);
+  const limitResult = rateLimit(`post-adisos-${ip}`, {
+    windowMs: 60 * 1000, // 1 minuto
+    maxRequests: 10, // Solo 10 creaciones por minuto
+  });
+
+  if (!limitResult.allowed) {
+    return NextResponse.json(
+      { 
+        error: 'Demasiadas solicitudes de creación. Por favor espera un momento antes de intentar nuevamente.',
+        retryAfter: Math.ceil((limitResult.resetTime - Date.now()) / 1000)
+      },
+      { 
+        status: 429,
+        headers: {
+          'Retry-After': Math.ceil((limitResult.resetTime - Date.now()) / 1000).toString(),
+          'X-RateLimit-Limit': '10',
+          'X-RateLimit-Remaining': '0',
+          'X-RateLimit-Reset': limitResult.resetTime.toString(),
+        }
+      }
+    );
+  }
+
   try {
     const body = await request.json();
+    
+    // Validar y sanitizar entrada
+    const validationResult = createAdisoSchema.safeParse(body);
+    
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { 
+          error: 'Datos de entrada inválidos',
+          details: validationResult.error.errors.map(e => ({
+            path: e.path.join('.'),
+            message: e.message
+          }))
+        },
+        { status: 400 }
+      );
+    }
+    
+    const validatedData = validationResult.data;
+    
+    // Sanitizar campos de texto
+    const sanitizedData = {
+      ...validatedData,
+      titulo: sanitizeText(validatedData.titulo),
+      descripcion: sanitizeHtml(validatedData.descripcion),
+      ubicacion: sanitizeText(validatedData.ubicacion),
+      contacto: sanitizeText(validatedData.contacto),
+    };
     
     // Si el body ya tiene un adiso completo con id, usarlo directamente
     // Si no, crear uno nuevo
     let nuevoAdiso: Adiso;
     
-    if (body.id && body.fechaPublicacion && body.horaPublicacion) {
+    if (sanitizedData.id && sanitizedData.fechaPublicacion && sanitizedData.horaPublicacion) {
       // El adiso ya está completo, usarlo tal cual
-      nuevoAdiso = body as Adiso;
+      nuevoAdiso = sanitizedData as Adiso;
     } else {
       // Crear un nuevo adiso
       const ahora = new Date();
@@ -52,22 +157,22 @@ export async function POST(request: NextRequest) {
       const hora = ahora.toTimeString().split(' ')[0].substring(0, 5);
 
       // Usar el ID del body si existe, sino generar uno nuevo
-      const idUnico = body.id || generarIdUnico();
+      const idUnico = sanitizedData.id || generarIdUnico();
 
       nuevoAdiso = {
         id: idUnico,
-        categoria: body.categoria,
-        titulo: body.titulo,
-        descripcion: body.descripcion,
-        contacto: body.contacto,
-        ubicacion: body.ubicacion,
-        tamaño: body.tamaño || 'miniatura',
-        fechaPublicacion: body.fechaPublicacion || fecha,
-        horaPublicacion: body.horaPublicacion || hora,
-        imagenesUrls: body.imagenesUrls || undefined,
+        categoria: sanitizedData.categoria,
+        titulo: sanitizedData.titulo,
+        descripcion: sanitizedData.descripcion,
+        contacto: sanitizedData.contacto,
+        ubicacion: sanitizedData.ubicacion,
+        tamaño: sanitizedData.tamaño || 'miniatura',
+        fechaPublicacion: sanitizedData.fechaPublicacion || fecha,
+        horaPublicacion: sanitizedData.horaPublicacion || hora,
+        imagenesUrls: sanitizedData.imagenesUrls || undefined,
         // Compatibilidad hacia atrás
-        imagenUrl: body.imagenUrl || body.imagenesUrls?.[0] || undefined,
-        esGratuito: body.esGratuito || false
+        imagenUrl: sanitizedData.imagenUrl || sanitizedData.imagenesUrls?.[0] || undefined,
+        esGratuito: sanitizedData.esGratuito || false
       };
     }
 

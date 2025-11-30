@@ -2,16 +2,18 @@ import { Adiso, AdisoGratuito } from '@/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
-export async function fetchAdisos(): Promise<Adiso[]> {
+export async function fetchAdisos(page: number = 1, limit: number = 1000): Promise<Adiso[]> {
   try {
-    const response = await fetch(`${API_URL}/adisos`, {
+    const response = await fetch(`${API_URL}/adisos?page=${page}&limit=${limit}`, {
       cache: 'no-store', // Siempre obtener datos frescos
       next: { revalidate: 0 } // Sin caché para datos dinámicos
     });
     if (!response.ok) {
       throw new Error('Error al obtener adisos');
     }
-    return await response.json();
+    const data = await response.json();
+    // Manejar respuesta paginada o lista directa (compatibilidad hacia atrás)
+    return Array.isArray(data) ? data : (data.data || []);
   } catch (error) {
     console.error('Error fetching adisos:', error);
     return [];

@@ -26,6 +26,7 @@ export default function Header({ onChangelogClick }: HeaderProps) {
       {onChangelogClick && (
         <button
           onClick={onChangelogClick}
+          aria-label="Ver nuestro progreso y changelog"
           style={{
             background: 'none',
             border: '1px solid var(--border-color)',
@@ -48,7 +49,7 @@ export default function Header({ onChangelogClick }: HeaderProps) {
             e.currentTarget.style.color = 'var(--text-secondary)';
           }}
         >
-          <FaChartLine size={14} />
+          <FaChartLine size={14} aria-hidden="true" />
           Nuestro Progreso
         </button>
       )}

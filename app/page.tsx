@@ -96,27 +96,35 @@ function HomeContent() {
       try {
         const adisosDesdeAPI = await getAdisos();
         if (adisosDesdeAPI.length > 0 || cache.length === 0) {
-          // Merge inteligente: mantener adisos locales que no están en API (adisos recién publicados)
+          // Merge inteligente usando Map para evitar duplicados
           setAdisos(prev => {
-            const adisosMergeados = [...adisosDesdeAPI];
-            // Agregar adisos locales que no están en API (pueden ser recién publicados)
+            const adisosMap = new Map<string, Adiso>();
+            // Primero agregar adisos desde API
+            adisosDesdeAPI.forEach(adiso => {
+              adisosMap.set(adiso.id, adiso);
+            });
+            // Luego agregar adisos locales que no están en API (pueden ser recién publicados)
             prev.forEach(adisoLocal => {
-              if (!adisosDesdeAPI.find(a => a.id === adisoLocal.id)) {
-                adisosMergeados.unshift(adisoLocal);
+              if (!adisosMap.has(adisoLocal.id)) {
+                adisosMap.set(adisoLocal.id, adisoLocal);
               }
             });
-            return adisosMergeados;
+            return Array.from(adisosMap.values());
           });
           
           setAdisosFiltrados(prev => {
-            const adisosMergeados = [...adisosDesdeAPI];
-            // Agregar adisos locales que no están en API
+            const adisosMap = new Map<string, Adiso>();
+            // Primero agregar adisos desde API
+            adisosDesdeAPI.forEach(adiso => {
+              adisosMap.set(adiso.id, adiso);
+            });
+            // Luego agregar adisos locales que no están en API
             prev.forEach(adisoLocal => {
-              if (!adisosDesdeAPI.find(a => a.id === adisoLocal.id)) {
-                adisosMergeados.unshift(adisoLocal);
+              if (!adisosMap.has(adisoLocal.id)) {
+                adisosMap.set(adisoLocal.id, adisoLocal);
               }
             });
-            return adisosMergeados;
+            return Array.from(adisosMap.values());
           });
           
           // Si hay adisoId, buscar en la lista actualizada
@@ -184,9 +192,6 @@ function HomeContent() {
             const indice = adisosFiltrados.findIndex(a => a.id === adisoId);
             setIndiceAdisoActual(indice >= 0 ? indice : 0);
             // En mobile, abrir sección de adiso si no es desktop
-            if (!isDesktop) {
-              setSeccionMobileActiva('adiso');
-            }
             if (!isDesktop) {
               setSeccionMobileActiva('adiso');
             }
@@ -342,7 +347,6 @@ function HomeContent() {
   };
 
   const handleCerrarSeccionMobile = () => {
-    const seccionAnterior = seccionMobileActiva;
     setSeccionMobileActiva(null);
     // No cerrar el adiso, solo cerrar el overlay
     // El adiso puede seguir abierto y el usuario puede volver a verlo tocando "Adiso" en el navbar
@@ -386,7 +390,7 @@ function HomeContent() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <Header onChangelogClick={() => router.push('/progreso')} />
-      <main style={{
+      <main id="main-content" style={{
         flex: 1,
         padding: '1rem',
         paddingBottom: isDesktop ? '1rem' : '5rem', // Espacio para navbar mobile permanente
