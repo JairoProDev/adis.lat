@@ -26,13 +26,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Páginas de categorías
-  const categoriaPages: MetadataRoute.Sitemap = categorias.map((categoria) => ({
-    url: `${siteUrl}/?categoria=${categoria}`,
-    lastModified: new Date(),
-    changeFrequency: 'daily',
-    priority: 0.8,
-  }));
+  // Páginas de categorías (tanto query param como ruta dedicada)
+  const categoriaPages: MetadataRoute.Sitemap = categorias.flatMap((categoria) => [
+    {
+      url: `${siteUrl}/?categoria=${categoria}`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.8,
+    },
+    {
+      url: `${siteUrl}/categoria/${categoria}`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.7,
+    },
+  ]);
 
   // Páginas de adisos
   let adisoPages: MetadataRoute.Sitemap = [];

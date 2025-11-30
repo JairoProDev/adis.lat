@@ -427,6 +427,57 @@ function HomeContent() {
     }
   };
 
+  // Prefetch de imágenes de adisos relacionados cuando se abre un adiso
+  useEffect(() => {
+    if (!adisoAbierto || adisosFiltrados.length === 0) return;
+
+    // Prefetch anterior si existe
+    if (indiceAdisoActual > 0) {
+      const anterior = adisosFiltrados[indiceAdisoActual - 1];
+      if (anterior) {
+        // Pre-cargar imágenes del adiso anterior
+        if (anterior.imagenesUrls && anterior.imagenesUrls.length > 0) {
+          anterior.imagenesUrls.forEach(url => {
+            const link = document.createElement('link');
+            link.rel = 'prefetch';
+            link.as = 'image';
+            link.href = url;
+            document.head.appendChild(link);
+          });
+        } else if (anterior.imagenUrl) {
+          const link = document.createElement('link');
+          link.rel = 'prefetch';
+          link.as = 'image';
+          link.href = anterior.imagenUrl;
+          document.head.appendChild(link);
+        }
+      }
+    }
+
+    // Prefetch siguiente si existe
+    if (indiceAdisoActual < adisosFiltrados.length - 1) {
+      const siguiente = adisosFiltrados[indiceAdisoActual + 1];
+      if (siguiente) {
+        // Pre-cargar imágenes del adiso siguiente
+        if (siguiente.imagenesUrls && siguiente.imagenesUrls.length > 0) {
+          siguiente.imagenesUrls.forEach(url => {
+            const link = document.createElement('link');
+            link.rel = 'prefetch';
+            link.as = 'image';
+            link.href = url;
+            document.head.appendChild(link);
+          });
+        } else if (siguiente.imagenUrl) {
+          const link = document.createElement('link');
+          link.rel = 'prefetch';
+          link.as = 'image';
+          link.href = siguiente.imagenUrl;
+          document.head.appendChild(link);
+        }
+      }
+    }
+  }, [adisoAbierto?.id, indiceAdisoActual, adisosFiltrados]);
+
   // Structured data para SEO
   const structuredData = {
     '@context': 'https://schema.org',
