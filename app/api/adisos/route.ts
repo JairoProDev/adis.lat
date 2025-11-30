@@ -120,13 +120,23 @@ export async function POST(request: NextRequest) {
     const validationResult = createAdisoSchema.safeParse(body);
     
     if (!validationResult.success) {
+      const errorDetails = validationResult.error.issues.map(e => ({
+        path: e.path.join('.'),
+        message: e.message,
+        code: e.code
+      }));
+      
+      console.error('Error de validación:', {
+        body: JSON.stringify(body, null, 2),
+        errors: errorDetails
+      });
+      
       return NextResponse.json(
         { 
           error: 'Datos de entrada inválidos',
-          details: validationResult.error.issues.map(e => ({
-            path: e.path.join('.'),
-            message: e.message
-          }))
+          details: errorDetails,
+          // Incluir el primer error como mensaje principal para debugging
+          message: errorDetails[0]?.message || 'Datos de entrada inválidos'
         },
         { status: 400 }
       );
@@ -135,12 +145,14 @@ export async function POST(request: NextRequest) {
     const validatedData = validationResult.data;
     
     // Sanitizar campos de texto
+    // Nota: validatedData.contacto ya está normalizado por el transform de Zod (sin espacios)
     const sanitizedData = {
       ...validatedData,
       titulo: sanitizeText(validatedData.titulo),
       descripcion: validatedData.descripcion ? sanitizeText(validatedData.descripcion) : undefined,
       ubicacion: sanitizeText(validatedData.ubicacion),
-      contacto: sanitizeText(validatedData.contacto),
+      // El contacto ya está normalizado por el transform de Zod, solo sanitizar si es necesario
+      contacto: validatedData.contacto, // Ya está normalizado (sin espacios)
     };
     
     // Verificar si el body original tiene id y fechas

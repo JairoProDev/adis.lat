@@ -22,15 +22,32 @@ export const adisoSchema = z.object({
     .optional()
     .nullable(),
   contacto: z.string()
-    .regex(/^\+?[1-9]\d{1,14}$/, 'Número de contacto inválido')
-    .min(9, 'El número de contacto debe tener al menos 9 dígitos'),
+    .transform((val) => {
+      // Normalizar número: eliminar espacios, guiones, paréntesis, etc., pero mantener el + al inicio
+      return val.replace(/\s+/g, '').replace(/[()-]/g, '').trim();
+    })
+    .refine((val) => {
+      // Validar formato después de normalizar: debe tener entre 9 y 15 dígitos (puede incluir + al inicio)
+      return /^\+?[1-9]\d{8,14}$/.test(val);
+    }, {
+      message: 'Número de contacto inválido. Debe tener entre 9 y 15 dígitos (puede incluir + al inicio)'
+    }),
   ubicacion: z.string()
     .min(1, 'La ubicación es requerida')
     .max(100, 'La ubicación no puede exceder 100 caracteres')
     .trim(),
   tamaño: z.enum(['miniatura', 'pequeño', 'mediano', 'grande', 'gigante']).optional(),
-  imagenUrl: z.string().url().optional().nullable(),
-  imagenesUrls: z.array(z.string().url()).optional().nullable(),
+  // Permitir blob: URLs para previews locales antes de subir a Supabase
+  imagenUrl: z.string().refine(
+    (val) => !val || val.startsWith('http') || val.startsWith('blob:') || val.startsWith('data:'),
+    { message: 'URL de imagen inválida' }
+  ).optional().nullable(),
+  imagenesUrls: z.array(
+    z.string().refine(
+      (val) => val.startsWith('http') || val.startsWith('blob:') || val.startsWith('data:'),
+      { message: 'URL de imagen inválida' }
+    )
+  ).optional().nullable(),
   fechaPublicacion: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato de fecha inválido'),
   horaPublicacion: z.string().regex(/^\d{2}:\d{2}$/, 'Formato de hora inválido'),
 });
@@ -52,19 +69,31 @@ export const adisoGratuitoSchema = z.object({
     'comunidad'
   ]),
   contacto: z.string()
-    .regex(/^\+?[1-9]\d{1,14}$/, 'Número de contacto inválido')
-    .min(9, 'El número de contacto debe tener al menos 9 dígitos'),
+    .transform((val) => {
+      // Normalizar número: eliminar espacios, guiones, paréntesis, etc., pero mantener el + al inicio
+      return val.replace(/\s+/g, '').replace(/[()-]/g, '').trim();
+    })
+    .refine((val) => {
+      // Validar formato después de normalizar: debe tener entre 9 y 15 dígitos (puede incluir + al inicio)
+      return /^\+?[1-9]\d{8,14}$/.test(val);
+    }, {
+      message: 'Número de contacto inválido. Debe tener entre 9 y 15 dígitos (puede incluir + al inicio)'
+    }),
 });
 
-// Schema para crear adiso (sin validar campos generados automáticamente)
-export const createAdisoSchema = adisoSchema.omit({
-  id: true,
-  fechaPublicacion: true,
-  horaPublicacion: true,
-}).extend({
-  fechaPublicacion: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  horaPublicacion: z.string().regex(/^\d{2}:\d{2}$/).optional(),
-});
+// Schema para crear adiso (acepta adisos completos o parciales)
+export const createAdisoSchema = adisoSchema
+  .omit({
+    fechaPublicacion: true,
+    horaPublicacion: true,
+  })
+  .extend({
+    // Permitir id opcional - si no se proporciona, se generará en el servidor
+    id: z.string().min(1).optional(),
+    // Permitir fechaPublicacion y horaPublicacion opcionales - si no se proporcionan, se generarán en el servidor
+    fechaPublicacion: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato de fecha inválido (debe ser YYYY-MM-DD)').optional(),
+    horaPublicacion: z.string().regex(/^\d{2}:\d{2}$/, 'Formato de hora inválido (debe ser HH:MM)').optional(),
+  });
 
 // Schema para crear adiso gratuito
 export const createAdisoGratuitoSchema = adisoGratuitoSchema;

@@ -102,8 +102,8 @@ function HomeContent() {
       // Mostrar cache primero (instantáneo, síncrono)
       const cache = getAdisosCache();
       if (cache.length > 0) {
+        // Solo actualizar adisos - el useEffect de ordenamiento se encargará de adisosFiltrados
         setAdisos(cache);
-        setAdisosFiltrados(cache);
         setCargando(false);
         
         // Si hay adisoId, buscarlo en cache
@@ -111,8 +111,6 @@ function HomeContent() {
           const adisoCache = cache.find(a => a.id === adisoId);
           if (adisoCache) {
             setAdisoAbierto(adisoCache);
-            const indice = cache.findIndex(a => a.id === adisoId);
-            setIndiceAdisoActual(indice >= 0 ? indice : 0);
             // En mobile, abrir sección de adiso si no es desktop
             if (!isDesktop) {
               setSeccionMobileActiva('adiso');
@@ -123,8 +121,6 @@ function HomeContent() {
             if (adisoEspecifico) {
               setAdisoAbierto(adisoEspecifico);
               setAdisos(prev => [adisoEspecifico, ...prev]);
-              setAdisosFiltrados(prev => [adisoEspecifico, ...prev]);
-              setIndiceAdisoActual(0);
               // En mobile, abrir sección de adiso si no es desktop
               if (!isDesktop) {
                 setSeccionMobileActiva('adiso');
@@ -139,6 +135,7 @@ function HomeContent() {
         const adisosDesdeAPI = await getAdisos();
         if (adisosDesdeAPI.length > 0 || cache.length === 0) {
           // Merge inteligente usando Map para evitar duplicados
+          // Solo actualizar adisos - el useEffect de ordenamiento se encargará de adisosFiltrados
           setAdisos(prev => {
             const adisosMap = new Map<string, Adiso>();
             // Primero agregar adisos desde API
@@ -154,29 +151,12 @@ function HomeContent() {
             return Array.from(adisosMap.values());
           });
           
-          setAdisosFiltrados(prev => {
-            const adisosMap = new Map<string, Adiso>();
-            // Primero agregar adisos desde API
-            adisosDesdeAPI.forEach(adiso => {
-              adisosMap.set(adiso.id, adiso);
-            });
-            // Luego agregar adisos locales que no están en API
-            prev.forEach(adisoLocal => {
-              if (!adisosMap.has(adisoLocal.id)) {
-                adisosMap.set(adisoLocal.id, adisoLocal);
-              }
-            });
-            return Array.from(adisosMap.values());
-          });
-          
           // Si hay adisoId, buscar en la lista actualizada
           if (adisoId) {
             setAdisos(prev => {
               const adisoEncontrado = prev.find(a => a.id === adisoId);
               if (adisoEncontrado) {
                 setAdisoAbierto(adisoEncontrado);
-                const indice = prev.findIndex(a => a.id === adisoId);
-                setIndiceAdisoActual(indice >= 0 ? indice : 0);
               }
               return prev;
             });
@@ -205,8 +185,6 @@ function HomeContent() {
     const adisoLocal = adisos.find(a => a.id === adisoId);
     if (adisoLocal) {
       setAdisoAbierto(adisoLocal);
-      const indice = adisosFiltrados.findIndex(a => a.id === adisoId);
-      setIndiceAdisoActual(indice >= 0 ? indice : adisos.findIndex(a => a.id === adisoId));
       // En mobile, abrir sección de adiso
       if (!isDesktop) {
         setSeccionMobileActiva('adiso');
@@ -215,34 +193,66 @@ function HomeContent() {
     }
 
     // Si no está en local, cargarlo en background (sin bloquear UI)
-        getAdisoById(adisoId).then(adiso => {
-          if (adiso) {
-            setAdisoAbierto(adiso);
-            // Agregar a la lista si no existe
-            setAdisos(prev => {
-              if (!prev.find(a => a.id === adisoId)) {
-                return [adiso, ...prev];
-              }
-              return prev;
-            });
-            setAdisosFiltrados(prev => {
-              if (!prev.find(a => a.id === adisoId)) {
-                return [adiso, ...prev];
-              }
-              return prev;
-            });
-            const indice = adisosFiltrados.findIndex(a => a.id === adisoId);
-            setIndiceAdisoActual(indice >= 0 ? indice : 0);
-            // En mobile, abrir sección de adiso si no es desktop
-            if (!isDesktop) {
-              setSeccionMobileActiva('adiso');
-            }
+    getAdisoById(adisoId).then(adiso => {
+      if (adiso) {
+        setAdisoAbierto(adiso);
+        // Agregar a la lista si no existe - el useEffect de ordenamiento se encargará de adisosFiltrados
+        setAdisos(prev => {
+          if (!prev.find(a => a.id === adisoId)) {
+            return [adiso, ...prev];
           }
-        }).catch(console.error);
-  }, [adisoId, adisos, adisosFiltrados, cargando]);
+          return prev;
+        });
+        // En mobile, abrir sección de adiso si no es desktop
+        if (!isDesktop) {
+          setSeccionMobileActiva('adiso');
+        }
+      }
+    }).catch(console.error);
+  }, [adisoId, adisos, cargando, isDesktop]);
 
   // Filtrado y ordenamiento
   useEffect(() => {
+    // Si no hay adisos, no hacer nada
+    if (adisos.length === 0) {
+      setAdisosFiltrados([]);
+      return;
+    }
+
+    // Función auxiliar para parsear fechas - DEFINIDA DENTRO del useEffect
+    const parsearFecha = (fechaPublicacion: string, horaPublicacion: string): number => {
+      if (!fechaPublicacion) return 0;
+      
+      try {
+        // Formato esperado: "YYYY-MM-DD" y "HH:MM"
+        let hora = horaPublicacion || '00:00';
+        
+        // Normalizar formato de hora
+        if (hora.length === 4) {
+          // Si es "HHMM" sin los dos puntos, agregarlos
+          hora = `${hora.substring(0, 2)}:${hora.substring(2)}`;
+        } else if (hora.length !== 5) {
+          // Si no tiene el formato correcto, intentar parsearlo
+          hora = '00:00';
+        }
+        
+        // Construir fecha completa en formato ISO
+        const fechaStr = `${fechaPublicacion}T${hora}:00`;
+        const fecha = new Date(fechaStr);
+        
+        // Verificar que la fecha sea válida
+        if (isNaN(fecha.getTime())) {
+          console.warn(`[Ordenamiento] Fecha inválida: ${fechaStr}`);
+          return 0;
+        }
+        
+        return fecha.getTime();
+      } catch (error) {
+        console.warn(`[Ordenamiento] Error parseando fecha: ${fechaPublicacion} ${horaPublicacion}`, error);
+        return 0;
+      }
+    };
+
     let filtrados = [...adisos]; // Crear copia para no mutar
 
     // Filtrar por categoría
@@ -262,43 +272,59 @@ function HomeContent() {
     }
 
     // Ordenar según el tipo seleccionado
-    filtrados.sort((a, b) => {
+    // IMPORTANTE: Crear una nueva copia del array para que React detecte el cambio
+    const filtradosOrdenados = [...filtrados].sort((a, b) => {
       switch (ordenamiento) {
         case 'recientes': {
-          const fechaA = new Date(`${a.fechaPublicacion}T${a.horaPublicacion}:00`).getTime();
-          const fechaB = new Date(`${b.fechaPublicacion}T${b.horaPublicacion}:00`).getTime();
-          if (isNaN(fechaA)) return 1;
-          if (isNaN(fechaB)) return -1;
-          return fechaB - fechaA; // Más recientes primero
+          const fechaA = parsearFecha(a.fechaPublicacion, a.horaPublicacion);
+          const fechaB = parsearFecha(b.fechaPublicacion, b.horaPublicacion);
+          // Más recientes primero (fecha mayor primero)
+          const comparacion = fechaB - fechaA;
+          // Si las fechas son iguales, usar ID como desempate para orden consistente
+          return comparacion !== 0 ? comparacion : a.id.localeCompare(b.id);
         }
         case 'antiguos': {
-          const fechaA = new Date(`${a.fechaPublicacion}T${a.horaPublicacion}:00`).getTime();
-          const fechaB = new Date(`${b.fechaPublicacion}T${b.horaPublicacion}:00`).getTime();
-          if (isNaN(fechaA)) return 1;
-          if (isNaN(fechaB)) return -1;
-          return fechaA - fechaB; // Más antiguos primero
+          const fechaA = parsearFecha(a.fechaPublicacion, a.horaPublicacion);
+          const fechaB = parsearFecha(b.fechaPublicacion, b.horaPublicacion);
+          // Más antiguos primero (fecha menor primero)
+          const comparacion = fechaA - fechaB;
+          // Si las fechas son iguales, usar ID como desempate para orden consistente
+          return comparacion !== 0 ? comparacion : a.id.localeCompare(b.id);
         }
-        case 'titulo-asc': {
+        case 'titulo-asc':
           return a.titulo.localeCompare(b.titulo, 'es', { sensitivity: 'base' });
-        }
-        case 'titulo-desc': {
+        case 'titulo-desc':
           return b.titulo.localeCompare(a.titulo, 'es', { sensitivity: 'base' });
-        }
         default:
           return 0;
       }
     });
 
-    setAdisosFiltrados(filtrados);
-    
-    // Actualizar índice si el adiso abierto sigue visible
-    if (adisoAbierto) {
-      const nuevoIndice = filtrados.findIndex(a => a.id === adisoAbierto.id);
+    // Debug: log para verificar que el ordenamiento funciona
+    console.log(`[Ordenamiento] Tipo: ${ordenamiento}, Total: ${filtradosOrdenados.length}`);
+    if (filtradosOrdenados.length > 0) {
+      const primero = filtradosOrdenados[0];
+      const ultimo = filtradosOrdenados[filtradosOrdenados.length - 1];
+      const fechaPrimero = parsearFecha(primero.fechaPublicacion, primero.horaPublicacion);
+      const fechaUltimo = parsearFecha(ultimo.fechaPublicacion, ultimo.horaPublicacion);
+      console.log(`[Ordenamiento] Primero: ${primero.titulo} (${primero.fechaPublicacion} ${primero.horaPublicacion || '00:00'}) - timestamp: ${fechaPrimero}`);
+      if (filtradosOrdenados.length > 1) {
+        console.log(`[Ordenamiento] Último: ${ultimo.titulo} (${ultimo.fechaPublicacion} ${ultimo.horaPublicacion || '00:00'}) - timestamp: ${fechaUltimo}`);
+      }
+    }
+
+    setAdisosFiltrados(filtradosOrdenados);
+  }, [busquedaDebounced, categoriaFiltro, ordenamiento, adisos]);
+
+  // Actualizar índice del adiso abierto cuando cambian los filtrados o el adiso abierto
+  useEffect(() => {
+    if (adisoAbierto && adisosFiltrados.length > 0) {
+      const nuevoIndice = adisosFiltrados.findIndex(a => a.id === adisoAbierto.id);
       if (nuevoIndice >= 0) {
         setIndiceAdisoActual(nuevoIndice);
       }
     }
-  }, [busquedaDebounced, categoriaFiltro, ordenamiento, adisos, adisoAbierto]);
+  }, [adisoAbierto, adisosFiltrados]);
 
   // Actualizar URL cuando cambian búsqueda o categoría (después del debounce)
   useEffect(() => {
