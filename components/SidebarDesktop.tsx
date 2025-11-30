@@ -45,10 +45,12 @@ export default function SidebarDesktop({
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [tooltipHovered, setTooltipHovered] = useState<SeccionSidebar | null>(null);
 
-  // Si hay aviso abierto, mostrar sección de aviso automáticamente
+  // Si hay aviso abierto, mostrar sección de aviso automáticamente y expandir sidebar si está minimizado
   React.useEffect(() => {
     if (avisoAbierto) {
       setSeccionActiva('aviso');
+      // Si el sidebar está minimizado, expandirlo automáticamente para mostrar el aviso
+      setMinimizado(prev => prev ? false : prev);
     }
   }, [avisoAbierto]);
 
