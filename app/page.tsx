@@ -19,7 +19,6 @@ import dynamicImport from 'next/dynamic';
 import Header from '@/components/Header';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import Buscador from '@/components/Buscador';
-import FiltrosCategoria from '@/components/FiltrosCategoria';
 import Ordenamiento, { TipoOrdenamiento } from '@/components/Ordenamiento';
 import GrillaAdisos from '@/components/GrillaAdisos';
 import SkeletonAdisos from '@/components/SkeletonAdisos';
@@ -593,13 +592,9 @@ function HomeContent() {
               setBusqueda(value);
               // Actualizar URL cuando el usuario deja de escribir (debounce)
               // Esto se hace en un useEffect separado para evitar demasiadas actualizaciones
-            }} 
-          />
-        </div>
-        <div style={{ marginBottom: '1.5rem' }}>
-          <FiltrosCategoria
+            }}
             categoriaSeleccionada={categoriaFiltro}
-            onChange={(categoria) => {
+            onCategoriaChange={(categoria) => {
               setCategoriaFiltro(categoria);
               // Actualizar URL sin recargar
               const params = new URLSearchParams(searchParams.toString());
