@@ -48,12 +48,33 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const adisos = await getAdisosFromSupabase();
     
-    adisoPages = adisos.slice(0, 1000).map((adiso) => ({
-      url: `${siteUrl}/${adiso.categoria}/${adiso.id}`,
-      lastModified: new Date(`${adiso.fechaPublicacion}T${adiso.horaPublicacion}:00`),
-      changeFrequency: 'weekly' as const,
-      priority: 0.6,
-    }));
+    adisoPages = adisos.slice(0, 1000).map((adiso) => {
+      // Validar y crear fecha de forma segura
+      let lastModified: Date;
+      try {
+        if (adiso.fechaPublicacion && adiso.horaPublicacion) {
+          const dateString = `${adiso.fechaPublicacion}T${adiso.horaPublicacion}:00`;
+          const date = new Date(dateString);
+          // Verificar si la fecha es válida
+          if (isNaN(date.getTime())) {
+            lastModified = new Date(); // Usar fecha actual si es inválida
+          } else {
+            lastModified = date;
+          }
+        } else {
+          lastModified = new Date(); // Usar fecha actual si faltan datos
+        }
+      } catch {
+        lastModified = new Date(); // Usar fecha actual en caso de error
+      }
+
+      return {
+        url: `${siteUrl}/${adiso.categoria}/${adiso.id}`,
+        lastModified,
+        changeFrequency: 'weekly' as const,
+        priority: 0.6,
+      };
+    });
   } catch (error) {
     console.error('Error al generar sitemap de adisos:', error);
     // Continuar sin adisos si hay error
