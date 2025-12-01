@@ -152,11 +152,8 @@ export async function getAdisosFavoritos(userId: string): Promise<Adiso[]> {
 
   // Convertir a formato Adiso
   const { dbToAdiso } = await import('./supabase');
-  return (data || []).map((row: any) => {
-    // Necesitamos acceder a la función dbToAdiso, pero está privada
-    // Por ahora, retornamos los datos directamente y los convertimos en el componente
-    return row;
-  }) as any[];
+  return (data || []).map((row: any) => dbToAdiso(row));
 }
+
 
 

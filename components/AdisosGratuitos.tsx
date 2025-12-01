@@ -453,14 +453,19 @@ export default function AdisosGratuitos({ onPublicarGratuito, todosLosAdisos = [
                         Gratis
                       </span>
                     )}
-                    <IconWhatsApp 
-                      size={14} 
-                      style={{ 
-                        color: '#25D366', 
+                    <span
+                      style={{
                         opacity: 0.7,
-                        flexShrink: 0
-                      }} 
-                    />
+                        flexShrink: 0,
+                        display: 'inline-flex',
+                        alignItems: 'center'
+                      }}
+                    >
+                      <IconWhatsApp 
+                        size={14} 
+                        color="#25D366"
+                      />
+                    </span>
                   </div>
                   
                   {/* Descripción solo para adisos de paga */}

@@ -21,7 +21,7 @@ export const supabase = supabaseUrl && supabaseAnonKey
   : null;
 
 // Función para convertir de la base de datos a Adiso
-function dbToAdiso(row: any): Adiso {
+export function dbToAdiso(row: any): Adiso {
   // Soporte para múltiples imágenes (array JSON) o imagen única (string)
   let imagenesUrls: string[] | undefined;
   if (row.imagenes_urls) {

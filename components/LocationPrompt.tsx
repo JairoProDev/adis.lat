@@ -150,3 +150,4 @@ export default function LocationPrompt({ abierto, onCerrar, onAceptar }: Locatio
 }
 
 
+

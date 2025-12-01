@@ -52,7 +52,12 @@ export default function UserProfile({ abierto, onCerrar }: UserProfileProps) {
 
     setCargando(true);
     try {
-      await updateProfile(user.id, formData);
+      // Convertir cadena vacía a undefined para genero (compatibilidad con tipo Genero)
+      const profileData = {
+        ...formData,
+        genero: formData.genero === '' ? undefined : (formData.genero as 'masculino' | 'femenino' | 'otro' | 'prefiero_no_decir' | undefined)
+      };
+      await updateProfile(user.id, profileData);
       await refreshProfile();
       setEditando(false);
     } catch (error: any) {
@@ -368,5 +373,6 @@ export default function UserProfile({ abierto, onCerrar }: UserProfileProps) {
     </>
   );
 }
+
 
 

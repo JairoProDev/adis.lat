@@ -93,7 +93,6 @@ export default function UserMenu({ onProgressClick }: UserMenuProps) {
           alignItems: 'center',
           gap: '0.5rem',
           padding: '0.5rem',
-          backgroundColor: 'transparent',
           border: '1px solid var(--border-color)',
           borderRadius: '50%',
           cursor: 'pointer',
