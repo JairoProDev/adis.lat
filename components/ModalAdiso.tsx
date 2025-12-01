@@ -6,6 +6,8 @@ import { Adiso } from '@/types';
 import { formatFecha, getWhatsAppUrl, copiarLink, compartirNativo } from '@/lib/utils';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { isMyAdiso } from '@/lib/storage';
+import { useAuth } from '@/hooks/useAuth';
+import { esFavorito, toggleFavorito } from '@/lib/favoritos';
 import {
   IconClose,
   IconArrowLeft,
@@ -58,11 +60,39 @@ export default function ModalAdiso({
   const [imagenAmpliada, setImagenAmpliada] = useState<{ url: string; index: number } | null>(null);
   const [mostrarConfirmarEliminar, setMostrarConfirmarEliminar] = useState(false);
   const [eliminando, setEliminando] = useState(false);
+  const [esFavoritoState, setEsFavoritoState] = useState(false);
+  const [cargandoFavorito, setCargandoFavorito] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const esMiAdiso = isMyAdiso(adiso.id);
+  const { user } = useAuth();
 
   const minSwipeDistance = 50;
+
+  // Cargar estado de favorito
+  useEffect(() => {
+    if (user?.id) {
+      esFavorito(user.id, adiso.id).then(setEsFavoritoState).catch(console.error);
+    }
+  }, [user?.id, adiso.id]);
+
+  const handleToggleFavorito = async () => {
+    if (!user?.id) {
+      // TODO: Mostrar modal de autenticación
+      return;
+    }
+
+    setCargandoFavorito(true);
+    try {
+      const nuevoEstado = await toggleFavorito(user.id, adiso.id);
+      setEsFavoritoState(nuevoEstado);
+    } catch (error) {
+      console.error('Error al toggle favorito:', error);
+      alert('Error al guardar favorito');
+    } finally {
+      setCargandoFavorito(false);
+    }
+  };
 
   const getCategoriaIcon = (categoria: Categoria): React.ComponentType<{ size?: number; color?: string }> => {
     const iconMap: Record<Categoria, React.ComponentType<{ size?: number; color?: string }>> = {
@@ -552,6 +582,41 @@ export default function ModalAdiso({
                 <IconShare aria-hidden="true" />
                 Compartir
               </button>
+              {user && (
+                <button
+                  onClick={handleToggleFavorito}
+                  disabled={cargandoFavorito}
+                  style={{
+                    padding: '0.75rem 1rem',
+                    fontSize: '0.875rem',
+                    border: `1px solid ${esFavoritoState ? '#fbbf24' : 'var(--border-color)'}`,
+                    borderRadius: '8px',
+                    backgroundColor: esFavoritoState ? 'rgba(251, 191, 36, 0.2)' : 'var(--bg-primary)',
+                    color: esFavoritoState ? '#fbbf24' : 'var(--text-primary)',
+                    cursor: cargandoFavorito ? 'not-allowed' : 'pointer',
+                    transition: 'background-color 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    whiteSpace: 'nowrap',
+                    opacity: cargandoFavorito ? 0.6 : 1
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!cargandoFavorito) {
+                      e.currentTarget.style.backgroundColor = esFavoritoState ? 'rgba(251, 191, 36, 0.3)' : 'var(--hover-bg)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!cargandoFavorito) {
+                      e.currentTarget.style.backgroundColor = esFavoritoState ? 'rgba(251, 191, 36, 0.2)' : 'var(--bg-primary)';
+                    }
+                  }}
+                >
+                  {cargandoFavorito ? '...' : esFavoritoState ? '⭐' : '☆'}
+                  {esFavoritoState ? 'Favorito' : 'Favorito'}
+                </button>
+              )}
             </div>
             
             {/* Flecha derecha */}
@@ -1131,6 +1196,41 @@ export default function ModalAdiso({
                 <IconShare aria-hidden="true" />
                 Compartir
               </button>
+              {user && (
+                <button
+                  onClick={handleToggleFavorito}
+                  disabled={cargandoFavorito}
+                  style={{
+                    padding: '0.75rem 1rem',
+                    fontSize: '0.875rem',
+                    border: `1px solid ${esFavoritoState ? '#fbbf24' : 'var(--border-color)'}`,
+                    borderRadius: '8px',
+                    backgroundColor: esFavoritoState ? 'rgba(251, 191, 36, 0.2)' : 'var(--bg-primary)',
+                    color: esFavoritoState ? '#fbbf24' : 'var(--text-primary)',
+                    cursor: cargandoFavorito ? 'not-allowed' : 'pointer',
+                    transition: 'background-color 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    whiteSpace: 'nowrap',
+                    opacity: cargandoFavorito ? 0.6 : 1
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!cargandoFavorito) {
+                      e.currentTarget.style.backgroundColor = esFavoritoState ? 'rgba(251, 191, 36, 0.3)' : 'var(--hover-bg)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!cargandoFavorito) {
+                      e.currentTarget.style.backgroundColor = esFavoritoState ? 'rgba(251, 191, 36, 0.2)' : 'var(--bg-primary)';
+                    }
+                  }}
+                >
+                  {cargandoFavorito ? '...' : esFavoritoState ? '⭐' : '☆'}
+                  {esFavoritoState ? 'Favorito' : 'Favorito'}
+                </button>
+              )}
             </div>
             
             {/* Flecha derecha */}

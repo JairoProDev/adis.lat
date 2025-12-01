@@ -1,0 +1,37 @@
+import { useAuth } from './useAuth';
+import { Profile, UserPreferences } from '@/types';
+import { getUserPreferences } from '@/lib/user';
+import { useState, useEffect } from 'react';
+
+/**
+ * Hook para obtener datos del usuario actual
+ */
+export function useUser() {
+  const { user, profile, loading } = useAuth();
+  const [preferences, setPreferences] = useState<UserPreferences | null>(null);
+  const [loadingPreferences, setLoadingPreferences] = useState(false);
+
+  useEffect(() => {
+    if (user?.id && !loading) {
+      setLoadingPreferences(true);
+      getUserPreferences(user.id)
+        .then(setPreferences)
+        .catch(console.error)
+        .finally(() => setLoadingPreferences(false));
+    } else {
+      setPreferences(null);
+    }
+  }, [user?.id, loading]);
+
+  return {
+    user,
+    profile: profile as Profile | null,
+    preferences,
+    loading: loading || loadingPreferences,
+    isAuthenticated: !!user,
+    isAnunciante: profile?.rol === 'anunciante' || profile?.rol === 'admin',
+    isAdmin: profile?.rol === 'admin',
+    isVerificado: profile?.es_verificado || false
+  };
+}
+

@@ -9,10 +9,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 // Crear cliente solo si tenemos las credenciales
+// Habilitar persistencia de sesión para autenticación
 export const supabase = supabaseUrl && supabaseAnonKey
   ? createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
-        persistSession: false
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
       }
     })
   : null;

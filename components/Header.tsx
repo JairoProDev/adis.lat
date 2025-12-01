@@ -4,6 +4,7 @@ import { FaChartLine } from 'react-icons/fa';
 import Breadcrumbs from './Breadcrumbs';
 import ThemeToggle from './ThemeToggle';
 import LanguageSelector from './LanguageSelector';
+import UserMenu from './UserMenu';
 import { useTranslation } from '@/hooks/useTranslation';
 
 interface HeaderProps {
@@ -40,6 +41,7 @@ export default function Header({ onChangelogClick, breadcrumbs }: HeaderProps) {
           alignItems: 'center',
           gap: '0.75rem'
         }}>
+          <UserMenu />
           <LanguageSelector />
           <ThemeToggle />
           {onChangelogClick && (

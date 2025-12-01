@@ -103,3 +103,160 @@ export interface AdisoFormData {
   imagenes?: File[]; // Archivos de imagen (opcional, múltiples)
 }
 
+// ============================================
+// TIPOS DE AUTENTICACIÓN Y USUARIOS
+// ============================================
+
+export type RolUsuario = 'usuario' | 'anunciante' | 'admin';
+export type Genero = 'masculino' | 'femenino' | 'otro' | 'prefiero_no_decir';
+export type TemaPreferencia = 'light' | 'dark' | 'auto';
+export type DisponibilidadProfesional = 'disponible' | 'busco_empleo' | 'no_disponible';
+export type TipoVerificacion = 'identidad' | 'telefono' | 'email' | 'negocio';
+export type EstadoVerificacion = 'pendiente' | 'en_revision' | 'aprobado' | 'rechazado';
+export type TipoEventoAnalytics = 'busqueda' | 'click' | 'favorito' | 'contacto' | 'publicacion' | 'visualizacion';
+
+export interface Profile {
+  id: string;
+  email?: string;
+  nombre?: string;
+  apellido?: string;
+  telefono?: string;
+  avatar_url?: string;
+  ubicacion?: string;
+  latitud?: number;
+  longitud?: number;
+  rol: RolUsuario;
+  es_verificado: boolean;
+  fecha_verificacion?: string;
+  fecha_nacimiento?: string;
+  genero?: Genero;
+  bio?: string;
+  website?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Favorito {
+  id: string;
+  user_id: string;
+  adiso_id: string;
+  created_at: string;
+}
+
+export interface UserPreferences {
+  id: string;
+  user_id: string;
+  categorias_favoritas: Categoria[];
+  notificaciones_email: boolean;
+  notificaciones_push: boolean;
+  idioma: string;
+  tema: TemaPreferencia;
+  radio_busqueda_km: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Verificacion {
+  id: string;
+  user_id: string;
+  tipo: TipoVerificacion;
+  estado: EstadoVerificacion;
+  documento_url?: string;
+  datos_verificacion?: Record<string, any>;
+  motivo_rechazo?: string;
+  revisado_por?: string;
+  fecha_revision?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Educacion {
+  institucion: string;
+  titulo: string;
+  año_inicio?: number;
+  año_fin?: number;
+  descripcion?: string;
+}
+
+export interface ExperienciaLaboral {
+  empresa: string;
+  puesto: string;
+  año_inicio?: number;
+  año_fin?: number;
+  descripcion?: string;
+  actual: boolean;
+}
+
+export interface Certificacion {
+  nombre: string;
+  institucion: string;
+  año?: number;
+  url?: string;
+}
+
+export interface PerfilProfesional {
+  id: string;
+  user_id: string;
+  titulo_profesional?: string;
+  experiencia_anos?: number;
+  habilidades: string[];
+  educacion: Educacion[];
+  experiencia_laboral: ExperienciaLaboral[];
+  certificaciones: Certificacion[];
+  idiomas: string[];
+  disponibilidad?: DisponibilidadProfesional;
+  salario_esperado_min?: number;
+  salario_esperado_max?: number;
+  cv_url?: string;
+  portfolio_url?: string;
+  linkedin_url?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface HorarioAtencion {
+  dia: string; // 'lunes', 'martes', etc.
+  abierto: boolean;
+  hora_apertura?: string;
+  hora_cierre?: string;
+}
+
+export interface RedesSociales {
+  facebook?: string;
+  instagram?: string;
+  twitter?: string;
+  linkedin?: string;
+  youtube?: string;
+}
+
+export interface PerfilNegocio {
+  id: string;
+  user_id: string;
+  nombre_negocio: string;
+  descripcion?: string;
+  categoria?: string;
+  telefono?: string;
+  email?: string;
+  website?: string;
+  direccion?: string;
+  latitud?: number;
+  longitud?: number;
+  horario_atencion?: HorarioAtencion[];
+  redes_sociales: RedesSociales;
+  imagenes: string[];
+  logo_url?: string;
+  es_verificado: boolean;
+  rating_promedio: number;
+  total_calificaciones: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserAnalytics {
+  id: string;
+  user_id?: string;
+  evento: string;
+  tipo_evento: TipoEventoAnalytics;
+  datos: Record<string, any>;
+  created_at: string;
+}
