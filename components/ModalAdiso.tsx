@@ -30,7 +30,24 @@ import {
   IconEdit,
   IconTrash
 } from './Icons';
-import { Categoria } from '@/types';
+import { Categoria, UbicacionDetallada } from '@/types';
+
+// Función helper para formatear ubicación
+function formatearUbicacion(ubicacion: any): { texto: string; coordenadas: { lat: number; lng: number } | null } {
+  if (typeof ubicacion === 'object' && ubicacion !== null && 'distrito' in ubicacion) {
+    const ubi = ubicacion as UbicacionDetallada;
+    let texto = `${ubi.distrito || ''}, ${ubi.provincia || ''}, ${ubi.departamento || ''}`.replace(/^,\s*|,\s*$/g, '');
+    if (ubi.direccion) {
+      texto += `, ${ubi.direccion}`;
+    }
+    const coords = (ubi.latitud && ubi.longitud) ? { lat: ubi.latitud, lng: ubi.longitud } : null;
+    return { texto, coordenadas: coords };
+  }
+  return { 
+    texto: typeof ubicacion === 'string' ? ubicacion : 'Sin ubicación',
+    coordenadas: null
+  };
+}
 
 interface ModalAdisoProps {
   adiso: Adiso;
@@ -438,7 +455,7 @@ export default function ModalAdiso({
             >
               <IconLocation aria-hidden="true" />
               <span>
-                <strong style={{ color: 'var(--text-primary)' }}>Ubicación:</strong> {adiso.ubicacion}
+                <strong style={{ color: 'var(--text-primary)' }}>Ubicación:</strong> {formatearUbicacion(adiso.ubicacion).texto}
               </span>
             </div>
             <div
@@ -1052,7 +1069,7 @@ export default function ModalAdiso({
             >
               <IconLocation aria-hidden="true" />
               <span>
-                <strong style={{ color: 'var(--text-primary)' }}>Ubicación:</strong> {adiso.ubicacion}
+                <strong style={{ color: 'var(--text-primary)' }}>Ubicación:</strong> {formatearUbicacion(adiso.ubicacion).texto}
               </span>
             </div>
             <div

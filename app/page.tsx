@@ -13,6 +13,21 @@ import { useToast } from '@/hooks/useToast';
 import { useDebounce } from '@/hooks/useDebounce';
 import { getBusquedaUrl } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
+import { useUser } from '@/hooks/useUser';
+import { UbicacionDetallada } from '@/types';
+
+// Función para calcular distancia entre dos puntos (Haversine)
+function calcularDistanciaKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Radio de la Tierra en km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
 import { registrarBusqueda } from '@/lib/analytics';
 import { onOnlineStatusChange, getOfflineMessage } from '@/lib/offline';
 import dynamicImport from 'next/dynamic';
@@ -20,6 +35,7 @@ import Header from '@/components/Header';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import Buscador from '@/components/Buscador';
 import Ordenamiento, { TipoOrdenamiento } from '@/components/Ordenamiento';
+import FiltroUbicacion from '@/components/FiltroUbicacion';
 import GrillaAdisos from '@/components/GrillaAdisos';
 import SkeletonAdisos from '@/components/SkeletonAdisos';
 import { ToastContainer } from '@/components/Toast';
@@ -55,6 +71,7 @@ function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
+  const { profile } = useUser();
   const adisoId = searchParams.get('adiso');
   const categoriaUrl = searchParams.get('categoria') as Categoria | null;
   const buscarUrl = searchParams.get('buscar') || '';
@@ -66,6 +83,12 @@ function HomeContent() {
   const busquedaDebounced = useDebounce(busqueda, 300);
   const [categoriaFiltro, setCategoriaFiltro] = useState<Categoria | 'todos'>(categoriaUrl && ['empleos', 'inmuebles', 'vehiculos', 'servicios', 'productos', 'eventos', 'negocios', 'comunidad'].includes(categoriaUrl) ? categoriaUrl : 'todos');
   const [ordenamiento, setOrdenamiento] = useState<TipoOrdenamiento>('recientes');
+  const [filtroUbicacion, setFiltroUbicacion] = useState<{
+    departamento?: string;
+    provincia?: string;
+    distrito?: string;
+    radioKm?: number;
+  } | undefined>(undefined);
   const [adisoAbierto, setAdisoAbierto] = useState<Adiso | null>(null);
   const [indiceAdisoActual, setIndiceAdisoActual] = useState(0);
   const [cargando, setCargando] = useState(true);
@@ -268,14 +291,83 @@ function HomeContent() {
     if (busquedaDebounced.trim()) {
       const busquedaLower = busquedaDebounced.toLowerCase();
       filtrados = filtrados.filter(
-        a =>
-          a.titulo.toLowerCase().includes(busquedaLower) ||
-          a.descripcion.toLowerCase().includes(busquedaLower) ||
-          a.ubicacion.toLowerCase().includes(busquedaLower)
+        a => {
+          const tituloMatch = a.titulo.toLowerCase().includes(busquedaLower);
+          const descripcionMatch = a.descripcion.toLowerCase().includes(busquedaLower);
+          
+          // Buscar en ubicación (string o UbicacionDetallada)
+          let ubicacionMatch = false;
+          if (typeof a.ubicacion === 'string') {
+            ubicacionMatch = a.ubicacion.toLowerCase().includes(busquedaLower);
+          } else if (typeof a.ubicacion === 'object' && a.ubicacion !== null) {
+            const ubi = a.ubicacion as any;
+            ubicacionMatch = 
+              (ubi.departamento?.toLowerCase().includes(busquedaLower)) ||
+              (ubi.provincia?.toLowerCase().includes(busquedaLower)) ||
+              (ubi.distrito?.toLowerCase().includes(busquedaLower)) ||
+              (ubi.direccion?.toLowerCase().includes(busquedaLower));
+          }
+          
+          return tituloMatch || descripcionMatch || ubicacionMatch;
+        }
       );
       
       // Registrar búsqueda (solo una vez por término)
       registrarBusqueda(user?.id, busquedaDebounced.trim(), filtrados.length);
+    }
+
+    // Filtrar por ubicación
+    if (filtroUbicacion) {
+      filtrados = filtrados.filter(a => {
+        // Solo filtrar adisos que tienen ubicación detallada
+        if (typeof a.ubicacion !== 'object' || a.ubicacion === null || !('departamento' in a.ubicacion)) {
+          return false; // Excluir adisos sin ubicación detallada
+        }
+
+        const ubi = a.ubicacion as any;
+        
+        // Filtrar por distrito (más específico)
+        if (filtroUbicacion.distrito) {
+          if (ubi.distrito !== filtroUbicacion.distrito) {
+            // Si hay radio de búsqueda y coordenadas, verificar distancia
+            if (filtroUbicacion.radioKm && ubi.latitud && ubi.longitud && 
+                profile?.latitud && profile?.longitud) {
+              const distancia = calcularDistanciaKm(
+                profile.latitud,
+                profile.longitud,
+                ubi.latitud,
+                ubi.longitud
+              );
+              return distancia <= (filtroUbicacion.radioKm || 5);
+            }
+            return false;
+          }
+        }
+        
+        // Filtrar por provincia
+        if (filtroUbicacion.provincia && !filtroUbicacion.distrito) {
+          if (ubi.provincia !== filtroUbicacion.provincia) return false;
+        }
+        
+        // Filtrar por departamento
+        if (filtroUbicacion.departamento && !filtroUbicacion.provincia) {
+          if (ubi.departamento !== filtroUbicacion.departamento) return false;
+        }
+
+        // Si hay radio de búsqueda y coordenadas del usuario, verificar distancia
+        if (filtroUbicacion.radioKm && ubi.latitud && ubi.longitud && 
+            profile?.latitud && profile?.longitud) {
+          const distancia = calcularDistanciaKm(
+            profile.latitud,
+            profile.longitud,
+            ubi.latitud,
+            ubi.longitud
+          );
+          return distancia <= (filtroUbicacion.radioKm || 5);
+        }
+
+        return true;
+      });
     }
 
     // Ordenar según el tipo seleccionado
@@ -309,7 +401,7 @@ function HomeContent() {
 
 
     setAdisosFiltrados(filtradosOrdenados);
-  }, [busquedaDebounced, categoriaFiltro, ordenamiento, adisos]);
+  }, [busquedaDebounced, categoriaFiltro, ordenamiento, adisos, filtroUbicacion, profile]);
 
   // Actualizar índice del adiso abierto cuando cambian los filtrados o el adiso abierto
   useEffect(() => {
@@ -629,9 +721,9 @@ function HomeContent() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                     <span>
                       Mostrando {adisosFiltrados.length} {adisosFiltrados.length === 1 ? 'adiso' : 'adisos'}
-                      {(busqueda || categoriaFiltro !== 'todos') && ` (de ${adisos.length} total)`}
+                      {(busqueda || categoriaFiltro !== 'todos' || filtroUbicacion) && ` (de ${adisos.length} total)`}
                     </span>
-                    {(busqueda.trim() || categoriaFiltro !== 'todos') && (
+                    {(busqueda.trim() || categoriaFiltro !== 'todos' || filtroUbicacion) && (
                       <button
                         onClick={async () => {
                           const url = getBusquedaUrl(categoriaFiltro, busqueda);
@@ -667,10 +759,24 @@ function HomeContent() {
                       </button>
                     )}
                   </div>
-                  <Ordenamiento
-                    valor={ordenamiento}
-                    onChange={setOrdenamiento}
-                  />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <FiltroUbicacion
+                      value={filtroUbicacion}
+                      onChange={setFiltroUbicacion}
+                      ubicacionUsuario={profile?.latitud && profile?.longitud ? {
+                        pais: 'Perú',
+                        departamento: '', // Se puede extraer de reverse geocoding si es necesario
+                        provincia: '',
+                        distrito: '',
+                        latitud: profile.latitud,
+                        longitud: profile.longitud
+                      } : undefined}
+                    />
+                    <Ordenamiento
+                      valor={ordenamiento}
+                      onChange={setOrdenamiento}
+                    />
+                  </div>
                 </div>
               )}
               <GrillaAdisos

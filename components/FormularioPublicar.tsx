@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, FormEvent, useRef } from 'react';
+import React, { useState, FormEvent, useRef, useEffect } from 'react';
 import { Adiso, AdisoFormData, Categoria, TamañoPaquete, PAQUETES, PaqueteInfo } from '@/types';
 import { saveAdiso } from '@/lib/storage';
 import { LIMITS, formatPhoneNumber, validatePhoneNumber, generarIdUnico } from '@/lib/utils';
@@ -19,7 +19,8 @@ import {
   IconPhone,
   IconMegaphone
 } from './Icons';
-import { FaImage, FaTrash, FaPlus } from 'react-icons/fa';
+import { FaImage, FaTrash, FaPlus, FaCheck, FaArrowRight, FaArrowLeft, FaInfoCircle } from 'react-icons/fa';
+import SelectorUbicacion from './SelectorUbicacion';
 
 interface FormularioPublicarProps {
   onPublicar: (adiso: Adiso) => void;
@@ -36,6 +37,8 @@ interface ImagenPreview {
   preview: string;
 }
 
+type Paso = 1 | 2 | 3 | 4 | 5 | 6;
+
 const CATEGORIAS: Categoria[] = [
   'empleos', 'inmuebles', 'vehiculos', 'servicios', 'productos', 'eventos', 'negocios', 'comunidad'
 ];
@@ -49,6 +52,17 @@ const CATEGORIA_PLACEHOLDERS: Record<Categoria, string> = {
   eventos: 'Ej: Concierto de rock este sábado',
   negocios: 'Ej: Oportunidad de negocio rentable',
   comunidad: 'Ej: Busco compañero de piso'
+};
+
+const CATEGORIA_NOMBRES: Record<Categoria, string> = {
+  empleos: 'Empleos',
+  inmuebles: 'Inmuebles',
+  vehiculos: 'Vehículos',
+  servicios: 'Servicios',
+  productos: 'Productos',
+  eventos: 'Eventos',
+  negocios: 'Negocios',
+  comunidad: 'Comunidad'
 };
 
 const getCategoriaIcon = (categoria: Categoria): React.ComponentType<{ size?: number; color?: string }> => {
@@ -65,13 +79,17 @@ const getCategoriaIcon = (categoria: Categoria): React.ComponentType<{ size?: nu
   return iconMap[categoria];
 };
 
+const PASOS_TOTALES = 6;
+const PASOS_TOTALES_GRATUITO = 4; // Sin paquete ni imágenes
+
 export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSuccess, modoGratuito = false, dentroSidebar = false }: FormularioPublicarProps) {
+  const [pasoActual, setPasoActual] = useState<Paso>(1);
   const [formData, setFormData] = useState<AdisoFormData>({
     categoria: 'empleos',
     titulo: '',
     descripcion: '',
     contacto: '',
-    ubicacion: '',
+    ubicacion: undefined,
     tamaño: 'miniatura'
   });
   const [imagenesPreviews, setImagenesPreviews] = useState<ImagenPreview[]>([]);
@@ -79,49 +97,114 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
   const [errors, setErrors] = useState<Partial<Record<keyof AdisoFormData, string>>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const validateForm = (): boolean => {
+  const totalPasos = modoGratuito ? PASOS_TOTALES_GRATUITO : PASOS_TOTALES;
+  const progreso = (pasoActual / totalPasos) * 100;
+
+  // Validación por paso
+  const validarPaso = (paso: Paso): boolean => {
     const newErrors: Partial<Record<keyof AdisoFormData, string>> = {};
-    
-    if (!formData.titulo.trim()) {
-      newErrors.titulo = 'El título es requerido';
-    } else {
-      const maxTitulo = modoGratuito ? 30 : LIMITS.TITULO_MAX;
-      if (formData.titulo.length > maxTitulo) {
-        newErrors.titulo = `El título no puede exceder ${maxTitulo} caracteres`;
-      }
-    }
-    
-    if (!modoGratuito) {
-      if (!formData.descripcion.trim()) {
-        newErrors.descripcion = 'La descripción es requerida';
-      } else if (formData.descripcion.length > LIMITS.DESCRIPCION_MAX) {
-        newErrors.descripcion = `La descripción no puede exceder ${LIMITS.DESCRIPCION_MAX} caracteres`;
-      }
-    }
-    
-    if (!formData.contacto.trim()) {
-      newErrors.contacto = 'El número de contacto es requerido';
-    } else if (!validatePhoneNumber(formData.contacto)) {
-      newErrors.contacto = 'Ingresa un número de teléfono válido (mínimo 8 dígitos)';
-    }
-    
-    if (!modoGratuito) {
-      if (!formData.ubicacion.trim()) {
-        newErrors.ubicacion = 'La ubicación es requerida';
-      } else if (formData.ubicacion.length > LIMITS.UBICACION_MAX) {
-        newErrors.ubicacion = `La ubicación no puede exceder ${LIMITS.UBICACION_MAX} caracteres`;
-      }
+    let esValido = true;
+
+    switch (paso) {
+      case 1:
+        // Categoría siempre tiene valor por defecto
+        break;
+      case 2:
+        if (!formData.titulo.trim()) {
+          newErrors.titulo = 'El título es requerido';
+          esValido = false;
+        } else {
+          const maxTitulo = modoGratuito ? 30 : LIMITS.TITULO_MAX;
+          if (formData.titulo.length > maxTitulo) {
+            newErrors.titulo = `El título no puede exceder ${maxTitulo} caracteres`;
+            esValido = false;
+          }
+        }
+        if (!modoGratuito && !formData.descripcion.trim()) {
+          newErrors.descripcion = 'La descripción es requerida';
+          esValido = false;
+        } else if (!modoGratuito && formData.descripcion.length > LIMITS.DESCRIPCION_MAX) {
+          newErrors.descripcion = `La descripción no puede exceder ${LIMITS.DESCRIPCION_MAX} caracteres`;
+          esValido = false;
+        }
+        break;
+      case 3:
+        // Solo validar si no es gratuito
+        if (!modoGratuito && !formData.tamaño) {
+          newErrors.tamaño = 'Selecciona un paquete';
+          esValido = false;
+        }
+        break;
+      case 4:
+        if (!formData.contacto.trim()) {
+          newErrors.contacto = 'El número de contacto es requerido';
+          esValido = false;
+        } else if (!validatePhoneNumber(formData.contacto)) {
+          newErrors.contacto = 'Ingresa un número de teléfono válido (mínimo 8 dígitos)';
+          esValido = false;
+        }
+        break;
+      case 5:
+        if (!modoGratuito && formData.tamaño) {
+          const paqueteSeleccionado = PAQUETES[formData.tamaño];
+          if (imagenesPreviews.length > paqueteSeleccionado.maxImagenes) {
+            newErrors.tamaño = `El paquete "${paqueteSeleccionado.nombre}" permite máximo ${paqueteSeleccionado.maxImagenes} imagen${paqueteSeleccionado.maxImagenes !== 1 ? 'es' : ''}`;
+            esValido = false;
+          }
+        }
+        break;
     }
 
-    if (!modoGratuito) {
-      const paqueteSeleccionado = formData.tamaño ? PAQUETES[formData.tamaño] : PAQUETES.miniatura;
-      if (imagenesPreviews.length > paqueteSeleccionado.maxImagenes) {
-        newErrors.tamaño = `El paquete "${paqueteSeleccionado.nombre}" permite máximo ${paqueteSeleccionado.maxImagenes} imagen${paqueteSeleccionado.maxImagenes !== 1 ? 'es' : ''}`;
+    // Solo actualizar errores si hay cambios reales
+    const erroresActuales = Object.keys(newErrors).reduce((acc, key) => {
+      const k = key as keyof AdisoFormData;
+      if (newErrors[k]) {
+        acc[k] = newErrors[k];
       }
+      return acc;
+    }, {} as Partial<Record<keyof AdisoFormData, string>>);
+
+    const erroresAnteriores = Object.keys(errors).reduce((acc, key) => {
+      const k = key as keyof AdisoFormData;
+      if (errors[k]) {
+        acc[k] = errors[k];
+      }
+      return acc;
+    }, {} as Partial<Record<keyof AdisoFormData, string>>);
+
+    const erroresCambiaron = JSON.stringify(erroresActuales) !== JSON.stringify(erroresAnteriores);
+
+    if (erroresCambiaron) {
+      setErrors(erroresActuales);
     }
     
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return esValido;
+  };
+
+  const siguientePaso = () => {
+    const esValido = validarPaso(pasoActual);
+    if (!esValido) return;
+    
+    // Saltar paso 3 (paquete) si es gratuito
+    if (modoGratuito && pasoActual === 2) {
+      setPasoActual(4);
+    } else if (modoGratuito && pasoActual === 4) {
+      // Saltar paso 5 (imágenes) si es gratuito
+      setPasoActual(6);
+    } else if (pasoActual < totalPasos) {
+      setPasoActual((prev) => (prev + 1) as Paso);
+    }
+  };
+
+  const pasoAnterior = () => {
+    // Saltar paso 3 (paquete) si es gratuito
+    if (modoGratuito && pasoActual === 4) {
+      setPasoActual(2);
+    } else if (modoGratuito && pasoActual === 6) {
+      setPasoActual(4);
+    } else if (pasoActual > 1) {
+      setPasoActual((prev) => (prev - 1) as Paso);
+    }
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -170,8 +253,8 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
 
   const handleRemoveImage = (idToRemove: string) => {
     setImagenesPreviews(prev => {
-      const nuevas = prev.filter(img => img.id !== idToRemove);
-      const removedImage = prev.find(img => img.id === idToRemove);
+      const nuevas = prev.filter(img => idToRemove !== img.id);
+      const removedImage = prev.find(img => idToRemove === img.id);
       if (removedImage) {
         URL.revokeObjectURL(removedImage.preview);
       }
@@ -184,8 +267,8 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
     
     if (enviando) return;
     
-    if (!validateForm()) {
-      onError?.('Por favor corrige los errores en el formulario');
+    if (!validarPaso(6)) {
+      onError?.('Por favor completa todos los campos requeridos');
       return;
     }
 
@@ -198,13 +281,19 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
       const idUnico = generarIdUnico();
       const previewsUrls = imagenesPreviews.map(img => img.preview);
       
+      const ubicacionFinal = formData.ubicacion 
+        ? (formData.ubicacion.distrito 
+            ? `${formData.ubicacion.distrito}, ${formData.ubicacion.provincia}, ${formData.ubicacion.departamento}${formData.ubicacion.direccion ? `, ${formData.ubicacion.direccion}` : ''}`
+            : formData.ubicacion as any)
+        : '';
+
       const nuevoAdiso: Adiso = {
         id: idUnico,
         categoria: formData.categoria,
         titulo: formData.titulo,
         descripcion: formData.descripcion,
         contacto: formData.contacto,
-        ubicacion: formData.ubicacion,
+        ubicacion: formData.ubicacion || ubicacionFinal,
         tamaño: formData.tamaño || 'miniatura',
         imagenesUrls: previewsUrls,
         fechaPublicacion: fecha,
@@ -260,8 +349,6 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
       }
     } catch (error: any) {
       console.error('Error al publicar:', error);
-      
-      // Mensajes de error más específicos y amigables
       let errorMessage = 'Hubo un error al publicar el adiso. Por favor intenta nuevamente.';
       
       if (error?.message?.includes('conexión') || error?.message?.includes('network') || error?.message?.includes('fetch failed')) {
@@ -279,143 +366,178 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
     }
   };
 
-  const renderForm = () => (
-    <form onSubmit={handleSubmit}>
-      <div style={{ marginBottom: '1rem' }}>
-        <label htmlFor="adiso-categoria" style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem',
-          marginBottom: '0.5rem',
+  // Renderizar barra de progreso
+  const renderProgreso = () => (
+    <div style={{ marginBottom: '2rem' }}>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '0.75rem'
+      }}>
+        <span style={{
           fontSize: '0.875rem',
           fontWeight: 500,
+          color: 'var(--text-secondary)'
+        }}>
+          Paso {pasoActual} de {totalPasos}
+        </span>
+        <span style={{
+          fontSize: '0.875rem',
+          fontWeight: 600,
           color: 'var(--text-primary)'
         }}>
-          {(() => {
-            const IconComponent = getCategoriaIcon(formData.categoria);
-            return <IconComponent size={16} aria-hidden="true" />;
-          })()}
-          Categoría
-        </label>
-        <select
-          id="adiso-categoria"
-          value={formData.categoria}
-          onChange={(e) => setFormData({ ...formData, categoria: e.target.value as Categoria })}
-          required
-          aria-required="true"
-          style={{
-            width: '100%',
-            padding: '0.75rem',
-            fontSize: '1rem',
-            border: '1px solid var(--border-color)',
-            borderRadius: '8px',
-            backgroundColor: 'var(--bg-primary)',
-            color: 'var(--text-primary)',
-            outline: 'none'
-          }}
-        >
-          {CATEGORIAS.map((cat) => (
-            <option key={cat} value={cat}>
-              {cat.charAt(0).toUpperCase() + cat.slice(1)}
-            </option>
-          ))}
-        </select>
+          {Math.round(progreso)}%
+        </span>
       </div>
+      <div style={{
+        width: '100%',
+        height: '8px',
+        backgroundColor: 'var(--bg-secondary)',
+        borderRadius: '4px',
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          width: `${progreso}%`,
+          height: '100%',
+          backgroundColor: 'var(--text-primary)',
+          transition: 'width 0.3s ease',
+          borderRadius: '4px'
+        }} />
+      </div>
+    </div>
+  );
 
-      {!modoGratuito && (
+  // Paso 1: Categoría - usar useRef para evitar loops
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const handleCategoriaSelect = (categoria: Categoria) => {
+    if (formData.categoria === categoria) return; // Evitar actualizaciones innecesarias
+    
+    // Limpiar timeout anterior si existe
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    setFormData(prev => ({ ...prev, categoria }));
+    
+    // Auto-avanzar después de seleccionar
+    timeoutRef.current = setTimeout(() => {
+      siguientePaso();
+      timeoutRef.current = null;
+    }, 300);
+  };
+
+  // Cleanup al desmontar
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  const renderPaso1 = () => {
+    const IconComponent = getCategoriaIcon(formData.categoria);
+    
+    return (
+      <div>
         <div style={{ marginBottom: '1.5rem' }}>
-          <label style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            marginBottom: '0.75rem',
-            fontSize: '0.875rem',
+          <h3 style={{
+            fontSize: '1.125rem',
             fontWeight: 600,
-            color: 'var(--text-primary)'
+            color: 'var(--text-primary)',
+            marginBottom: '0.5rem'
           }}>
-            📦 Paquete de Publicación
-          </label>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-            gap: '0.75rem'
+            ¿Qué tipo de anuncio quieres publicar?
+          </h3>
+          <p style={{
+            fontSize: '0.875rem',
+            color: 'var(--text-secondary)',
+            margin: 0
           }}>
-            {(Object.values(PAQUETES) as PaqueteInfo[]).map((paquete) => {
-              const estaSeleccionado = formData.tamaño === paquete.tamaño;
-              const paqueteInfo = PAQUETES[paquete.tamaño];
-              return (
-                <button
-                  key={paquete.tamaño}
-                  type="button"
-                  onClick={() => {
-                    const nuevoTamaño = paquete.tamaño;
-                    setFormData({ ...formData, tamaño: nuevoTamaño });
-                    if (imagenesPreviews.length > paqueteInfo.maxImagenes) {
-                      setImagenesPreviews(prev => {
-                        const nuevas = prev.slice(0, paqueteInfo.maxImagenes);
-                        prev.slice(paqueteInfo.maxImagenes).forEach(img => {
-                          URL.revokeObjectURL(img.preview);
-                        });
-                        return nuevas;
-                      });
-                    }
-                    if (errors.tamaño) {
-                      setErrors({ ...errors, tamaño: undefined });
-                    }
-                  }}
-                  style={{
-                    padding: '1rem',
-                    border: `2px solid ${estaSeleccionado ? 'var(--text-primary)' : 'var(--border-color)'}`,
-                    borderRadius: '8px',
-                    backgroundColor: estaSeleccionado ? 'var(--text-primary)' : 'var(--bg-primary)',
-                    color: estaSeleccionado ? 'var(--bg-primary)' : 'var(--text-primary)',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    textAlign: 'left',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.5rem'
-                  }}
-                >
-                  <div style={{
-                    fontSize: '1rem',
-                    fontWeight: 600,
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                  }}>
-                    <span>{paquete.nombre}</span>
-                    <span style={{ fontSize: '0.875rem', opacity: 0.9 }}>
-                      S/ {paquete.precio}
-                    </span>
-                  </div>
-                  <div style={{
-                    fontSize: '0.75rem',
-                    opacity: 0.8,
-                    lineHeight: 1.4
-                  }}>
-                    {paquete.descripcion}
-                  </div>
-                  {paquete.maxImagenes > 0 && (
-                    <div style={{
-                      fontSize: '0.7rem',
-                      opacity: 0.7,
-                      marginTop: '0.25rem'
-                    }}>
-                      {paquete.maxImagenes} imagen{paquete.maxImagenes !== 1 ? 'es' : ''}
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-          {errors.tamaño && (
-            <span style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '0.5rem', display: 'block' }}>
-              {errors.tamaño}
-            </span>
-          )}
+            Selecciona la categoría que mejor describe tu anuncio
+          </p>
         </div>
-      )}
+
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+          gap: '0.75rem'
+        }}>
+          {CATEGORIAS.map((categoria) => {
+            const IconCat = getCategoriaIcon(categoria);
+            const estaSeleccionada = formData.categoria === categoria;
+            
+            return (
+              <button
+                key={categoria}
+                type="button"
+                onClick={() => handleCategoriaSelect(categoria)}
+                style={{
+                  padding: '1rem',
+                  border: `2px solid ${estaSeleccionada ? 'var(--text-primary)' : 'var(--border-color)'}`,
+                  borderRadius: '12px',
+                  backgroundColor: estaSeleccionada ? 'var(--text-primary)' : 'var(--bg-primary)',
+                  color: estaSeleccionada ? 'var(--bg-primary)' : 'var(--text-primary)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  textAlign: 'center'
+                }}
+                onMouseEnter={(e) => {
+                  if (!estaSeleccionada) {
+                    e.currentTarget.style.borderColor = 'var(--text-secondary)';
+                    e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!estaSeleccionada) {
+                    e.currentTarget.style.borderColor = 'var(--border-color)';
+                    e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
+                  }
+                }}
+              >
+                <IconCat size={32} color={estaSeleccionada ? 'var(--bg-primary)' : 'var(--text-primary)'} />
+                <span style={{
+                  fontSize: '0.875rem',
+                  fontWeight: 500
+                }}>
+                  {CATEGORIA_NOMBRES[categoria]}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  // Paso 2: Información básica
+  const renderPaso2 = () => (
+    <div>
+      <div style={{ marginBottom: '1.5rem' }}>
+        <h3 style={{
+          fontSize: '1.125rem',
+          fontWeight: 600,
+          color: 'var(--text-primary)',
+          marginBottom: '0.5rem'
+        }}>
+          Cuéntanos sobre tu anuncio
+        </h3>
+        <p style={{
+          fontSize: '0.875rem',
+          color: 'var(--text-secondary)',
+          margin: 0
+        }}>
+          {modoGratuito 
+            ? 'Escribe un título claro y atractivo (máximo 30 caracteres)'
+            : 'Describe tu anuncio de manera clara y atractiva para que más personas lo vean'}
+        </p>
+      </div>
 
       <div style={{ marginBottom: '1rem' }}>
         <label htmlFor="adiso-titulo" style={{
@@ -428,15 +550,12 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
           color: 'var(--text-primary)'
         }}>
           <IconTitle aria-hidden="true" />
-          Título
+          Título {modoGratuito && <span style={{ color: 'var(--text-tertiary)', fontWeight: 400 }}>(máx. 30 caracteres)</span>}
         </label>
         <input
           id="adiso-titulo"
           type="text"
           value={formData.titulo}
-          aria-required="true"
-          aria-invalid={!!errors.titulo}
-          aria-describedby={errors.titulo ? 'titulo-error' : 'titulo-helper'}
           onChange={(e) => {
             const value = e.target.value;
             const maxTitulo = modoGratuito ? 30 : LIMITS.TITULO_MAX;
@@ -457,14 +576,21 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
             borderRadius: '8px',
             backgroundColor: 'var(--bg-primary)',
             color: 'var(--text-primary)',
-            outline: 'none'
+            outline: 'none',
+            transition: 'border-color 0.2s'
+          }}
+          onFocus={(e) => {
+            e.target.style.borderColor = errors.titulo ? '#ef4444' : 'var(--text-primary)';
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = errors.titulo ? '#ef4444' : 'var(--border-color)';
           }}
         />
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
           {errors.titulo && (
-            <span id="titulo-error" role="alert" style={{ fontSize: '0.75rem', color: '#ef4444' }}>{errors.titulo}</span>
+            <span role="alert" style={{ fontSize: '0.75rem', color: '#ef4444' }}>{errors.titulo}</span>
           )}
-          <span id="titulo-helper" style={{ 
+          <span style={{ 
             fontSize: '0.75rem', 
             color: formData.titulo.length > (modoGratuito ? 30 : LIMITS.TITULO_MAX) * 0.9 ? '#f59e0b' : 'var(--text-tertiary)',
             marginLeft: 'auto'
@@ -475,122 +601,321 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
       </div>
 
       {!modoGratuito && (
-        <>
-          <div style={{ marginBottom: '1rem' }}>
-            <label htmlFor="adiso-descripcion" style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              marginBottom: '0.5rem',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              color: 'var(--text-primary)'
-            }}>
-              <IconDescription aria-hidden="true" />
-              Descripción
-            </label>
-            <textarea
-              id="adiso-descripcion"
-              value={formData.descripcion}
-              aria-required="true"
-              aria-invalid={!!errors.descripcion}
-              aria-describedby={errors.descripcion ? 'descripcion-error' : 'descripcion-helper'}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value.length <= LIMITS.DESCRIPCION_MAX) {
-                  setFormData({ ...formData, descripcion: value });
-                  if (errors.descripcion) {
-                    setErrors({ ...errors, descripcion: undefined });
-                  }
+        <div style={{ marginBottom: '1rem' }}>
+          <label htmlFor="adiso-descripcion" style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            marginBottom: '0.5rem',
+            fontSize: '0.875rem',
+            fontWeight: 500,
+            color: 'var(--text-primary)'
+          }}>
+            <IconDescription aria-hidden="true" />
+            Descripción
+          </label>
+          <textarea
+            id="adiso-descripcion"
+            value={formData.descripcion}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value.length <= LIMITS.DESCRIPCION_MAX) {
+                setFormData({ ...formData, descripcion: value });
+                if (errors.descripcion) {
+                  setErrors({ ...errors, descripcion: undefined });
                 }
-              }}
-              required
-              placeholder="Describe tu adiso..."
-              rows={4}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                fontSize: '1rem',
-                border: `1px solid ${errors.descripcion ? '#ef4444' : 'var(--border-color)'}`,
-                borderRadius: '8px',
-                backgroundColor: 'var(--bg-primary)',
-                color: 'var(--text-primary)',
-                outline: 'none',
-                resize: 'vertical',
-                fontFamily: 'inherit'
-              }}
-            />
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
-              {errors.descripcion && (
-                <span id="descripcion-error" role="alert" style={{ fontSize: '0.75rem', color: '#ef4444' }}>{errors.descripcion}</span>
-              )}
-              <span id="descripcion-helper" style={{ 
-                fontSize: '0.75rem', 
-                color: formData.descripcion.length > LIMITS.DESCRIPCION_MAX * 0.9 ? '#f59e0b' : 'var(--text-tertiary)',
-                marginLeft: 'auto'
-              }}>
-                {formData.descripcion.length}/{LIMITS.DESCRIPCION_MAX}
-              </span>
-            </div>
-          </div>
-
-          <div style={{ marginBottom: '1rem' }}>
-            <label htmlFor="adiso-ubicacion" style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              marginBottom: '0.5rem',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              color: 'var(--text-primary)'
+              }
+            }}
+            required
+            placeholder="Describe tu anuncio con detalles importantes..."
+            rows={5}
+            style={{
+              width: '100%',
+              padding: '0.75rem',
+              fontSize: '1rem',
+              border: `1px solid ${errors.descripcion ? '#ef4444' : 'var(--border-color)'}`,
+              borderRadius: '8px',
+              backgroundColor: 'var(--bg-primary)',
+              color: 'var(--text-primary)',
+              outline: 'none',
+              resize: 'vertical',
+              fontFamily: 'inherit',
+              transition: 'border-color 0.2s'
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = errors.descripcion ? '#ef4444' : 'var(--text-primary)';
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = errors.descripcion ? '#ef4444' : 'var(--border-color)';
+            }}
+          />
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
+            {errors.descripcion && (
+              <span role="alert" style={{ fontSize: '0.75rem', color: '#ef4444' }}>{errors.descripcion}</span>
+            )}
+            <span style={{ 
+              fontSize: '0.75rem', 
+              color: formData.descripcion.length > LIMITS.DESCRIPCION_MAX * 0.9 ? '#f59e0b' : 'var(--text-tertiary)',
+              marginLeft: 'auto'
             }}>
-              <IconLocation aria-hidden="true" />
-              Ubicación
-            </label>
-            <input
-              id="adiso-ubicacion"
-              type="text"
-              value={formData.ubicacion}
-              aria-required="true"
-              aria-invalid={!!errors.ubicacion}
-              aria-describedby={errors.ubicacion ? 'ubicacion-error' : 'ubicacion-helper'}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value.length <= LIMITS.UBICACION_MAX) {
-                  setFormData({ ...formData, ubicacion: value });
-                  if (errors.ubicacion) {
-                    setErrors({ ...errors, ubicacion: undefined });
-                  }
-                }
-              }}
-              required
-              placeholder="Ej: Ciudad, Barrio"
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                fontSize: '1rem',
-                border: `1px solid ${errors.ubicacion ? '#ef4444' : 'var(--border-color)'}`,
-                borderRadius: '8px',
-                backgroundColor: 'var(--bg-primary)',
-                color: 'var(--text-primary)',
-                outline: 'none'
-              }}
-            />
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
-              {errors.ubicacion && (
-                <span id="ubicacion-error" role="alert" style={{ fontSize: '0.75rem', color: '#ef4444' }}>{errors.ubicacion}</span>
-              )}
-              <span id="ubicacion-helper" style={{ 
-                fontSize: '0.75rem', 
-                color: formData.ubicacion.length > LIMITS.UBICACION_MAX * 0.9 ? '#f59e0b' : 'var(--text-tertiary)',
-                marginLeft: 'auto'
-              }}>
-                {formData.ubicacion.length}/{LIMITS.UBICACION_MAX}
-              </span>
-            </div>
+              {formData.descripcion.length}/{LIMITS.DESCRIPCION_MAX}
+            </span>
           </div>
-        </>
+        </div>
       )}
+
+      {!modoGratuito && (
+        <div style={{
+          padding: '1rem',
+          backgroundColor: 'var(--bg-secondary)',
+          borderRadius: '8px',
+          border: '1px solid var(--border-color)',
+          marginTop: '1rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'start',
+            gap: '0.75rem'
+          }}>
+            <FaInfoCircle size={18} style={{ color: 'var(--text-secondary)', marginTop: '0.125rem', flexShrink: 0 }} />
+            <div>
+              <div style={{
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+                marginBottom: '0.25rem'
+              }}>
+                💡 Tip para mejores resultados
+              </div>
+              <div style={{
+                fontSize: '0.75rem',
+                color: 'var(--text-secondary)',
+                lineHeight: 1.5
+              }}>
+                En el siguiente paso podrás elegir un paquete de publicación. Los paquetes más grandes tienen mayor visibilidad y permiten más imágenes, lo que aumenta las posibilidades de que tu anuncio sea visto.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  // Paso 3: Paquete (solo si no es gratuito)
+  const renderPaso3 = () => {
+    if (modoGratuito) return null;
+
+    return (
+      <div>
+        <div style={{ marginBottom: '1.5rem' }}>
+          <h3 style={{
+            fontSize: '1.125rem',
+            fontWeight: 600,
+            color: 'var(--text-primary)',
+            marginBottom: '0.5rem'
+          }}>
+            Elige tu paquete de publicación
+          </h3>
+          <p style={{
+            fontSize: '0.875rem',
+            color: 'var(--text-secondary)',
+            margin: 0
+          }}>
+            Mayor visibilidad = Mayor tamaño. Elige el que mejor se adapte a tus necesidades.
+          </p>
+        </div>
+
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+          gap: '1rem'
+        }}>
+          {(Object.values(PAQUETES) as PaqueteInfo[]).map((paquete) => {
+            const estaSeleccionado = formData.tamaño === paquete.tamaño;
+            const paqueteInfo = PAQUETES[paquete.tamaño];
+            const esPopular = paquete.tamaño === 'mediano';
+            
+            return (
+              <button
+                key={paquete.tamaño}
+                type="button"
+                onClick={() => {
+                  const nuevoTamaño = paquete.tamaño;
+                  setFormData({ ...formData, tamaño: nuevoTamaño });
+                  if (imagenesPreviews.length > paqueteInfo.maxImagenes) {
+                    setImagenesPreviews(prev => {
+                      const nuevas = prev.slice(0, paqueteInfo.maxImagenes);
+                      prev.slice(paqueteInfo.maxImagenes).forEach(img => {
+                        URL.revokeObjectURL(img.preview);
+                      });
+                      return nuevas;
+                    });
+                  }
+                  if (errors.tamaño) {
+                    setErrors({ ...errors, tamaño: undefined });
+                  }
+                }}
+                style={{
+                  padding: '1.25rem',
+                  border: `2px solid ${estaSeleccionado ? 'var(--text-primary)' : esPopular ? 'var(--text-secondary)' : 'var(--border-color)'}`,
+                  borderRadius: '12px',
+                  backgroundColor: estaSeleccionado ? 'var(--text-primary)' : 'var(--bg-primary)',
+                  color: estaSeleccionado ? 'var(--bg-primary)' : 'var(--text-primary)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  textAlign: 'left',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.75rem',
+                  position: 'relative',
+                  boxShadow: estaSeleccionado ? '0 4px 12px rgba(0,0,0,0.15)' : 'none'
+                }}
+                onMouseEnter={(e) => {
+                  if (!estaSeleccionado) {
+                    e.currentTarget.style.borderColor = 'var(--text-secondary)';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!estaSeleccionado) {
+                    e.currentTarget.style.borderColor = esPopular ? 'var(--text-secondary)' : 'var(--border-color)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }
+                }}
+              >
+                {esPopular && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '-0.5rem',
+                    right: '0.75rem',
+                    backgroundColor: 'var(--text-primary)',
+                    color: 'var(--bg-primary)',
+                    padding: '0.25rem 0.5rem',
+                    borderRadius: '12px',
+                    fontSize: '0.7rem',
+                    fontWeight: 600
+                  }}>
+                    Popular
+                  </div>
+                )}
+                {estaSeleccionado && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '0.75rem',
+                    right: '0.75rem',
+                    color: 'var(--bg-primary)'
+                  }}>
+                    <FaCheck size={16} />
+                  </div>
+                )}
+                <div>
+                  <div style={{
+                    fontSize: '1.125rem',
+                    fontWeight: 700,
+                    marginBottom: '0.25rem'
+                  }}>
+                    {paquete.nombre}
+                  </div>
+                  <div style={{
+                    fontSize: '1.5rem',
+                    fontWeight: 700,
+                    marginTop: '0.5rem'
+                  }}>
+                    S/ {paquete.precio}
+                  </div>
+                </div>
+                <div style={{
+                  fontSize: '0.75rem',
+                  opacity: estaSeleccionado ? 0.9 : 0.7,
+                  lineHeight: 1.5
+                }}>
+                  {paquete.descripcion}
+                </div>
+                {paquete.maxImagenes > 0 && (
+                  <div style={{
+                    fontSize: '0.7rem',
+                    opacity: estaSeleccionado ? 0.8 : 0.6,
+                    marginTop: '0.25rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.25rem'
+                  }}>
+                    <FaImage size={10} />
+                    {paquete.maxImagenes} imagen{paquete.maxImagenes !== 1 ? 'es' : ''}
+                  </div>
+                )}
+                {paquete.maxImagenes === 0 && (
+                  <div style={{
+                    fontSize: '0.7rem',
+                    opacity: estaSeleccionado ? 0.8 : 0.6,
+                    marginTop: '0.25rem'
+                  }}>
+                    Sin imágenes
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {errors.tamaño && (
+          <span style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '0.5rem', display: 'block' }}>
+            {errors.tamaño}
+          </span>
+        )}
+
+        <div style={{
+          padding: '1rem',
+          backgroundColor: 'var(--bg-secondary)',
+          borderRadius: '8px',
+          border: '1px solid var(--border-color)',
+          marginTop: '1.5rem'
+        }}>
+          <div style={{
+            fontSize: '0.875rem',
+            fontWeight: 600,
+            color: 'var(--text-primary)',
+            marginBottom: '0.5rem'
+          }}>
+            💡 ¿Por qué elegir un paquete más grande?
+          </div>
+          <ul style={{
+            fontSize: '0.75rem',
+            color: 'var(--text-secondary)',
+            lineHeight: 1.8,
+            margin: 0,
+            paddingLeft: '1.25rem'
+          }}>
+            <li>Mayor visibilidad: tu anuncio ocupa más espacio y llama más la atención</li>
+            <li>Más imágenes: las imágenes aumentan las conversiones hasta 3x</li>
+            <li>Mejor posicionamiento: los anuncios grandes aparecen primero en búsquedas</li>
+            <li>Mayor confianza: los anuncios con imágenes generan más confianza</li>
+          </ul>
+        </div>
+      </div>
+    );
+  };
+
+  // Paso 4: Contacto y ubicación
+  const renderPaso4 = () => (
+    <div>
+      <div style={{ marginBottom: '1.5rem' }}>
+        <h3 style={{
+          fontSize: '1.125rem',
+          fontWeight: 600,
+          color: 'var(--text-primary)',
+          marginBottom: '0.5rem'
+        }}>
+          Información de contacto
+        </h3>
+        <p style={{
+          fontSize: '0.875rem',
+          color: 'var(--text-secondary)',
+          margin: 0
+        }}>
+          Necesitamos tu número para que los interesados puedan contactarte
+        </p>
+      </div>
 
       <div style={{ marginBottom: '1.5rem' }}>
         <label htmlFor="adiso-contacto" style={{
@@ -603,15 +928,12 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
           color: 'var(--text-primary)'
         }}>
           <IconPhone aria-hidden="true" />
-          Número de contacto (WhatsApp)
+          Número de WhatsApp
         </label>
         <input
           id="adiso-contacto"
           type="tel"
           value={formData.contacto}
-          aria-required="true"
-          aria-invalid={!!errors.contacto}
-          aria-describedby={errors.contacto ? 'contacto-error' : 'contacto-helper'}
           onChange={(e) => {
             const formatted = formatPhoneNumber(e.target.value);
             setFormData({ ...formData, contacto: formatted });
@@ -629,185 +951,528 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
             borderRadius: '8px',
             backgroundColor: 'var(--bg-primary)',
             color: 'var(--text-primary)',
-            outline: 'none'
+            outline: 'none',
+            transition: 'border-color 0.2s'
+          }}
+          onFocus={(e) => {
+            e.target.style.borderColor = errors.contacto ? '#ef4444' : 'var(--text-primary)';
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = errors.contacto ? '#ef4444' : 'var(--border-color)';
           }}
         />
         <div style={{ marginTop: '0.25rem' }}>
           {errors.contacto ? (
-            <span id="contacto-error" role="alert" style={{ fontSize: '0.75rem', color: '#ef4444' }}>{errors.contacto}</span>
+            <span role="alert" style={{ fontSize: '0.75rem', color: '#ef4444' }}>{errors.contacto}</span>
           ) : (
-            <span id="contacto-helper" style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-              Este número no se mostrará públicamente
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+              🔒 Este número no se mostrará públicamente
             </span>
           )}
         </div>
       </div>
 
       {!modoGratuito && (
-        <div style={{ marginBottom: '1.5rem' }}>
-          <label htmlFor="adiso-images-label" style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            marginBottom: '0.5rem',
-            fontSize: '0.875rem',
-            fontWeight: 500,
-            color: 'var(--text-primary)'
-          }}>
-            <FaImage size={16} aria-hidden="true" />
-            Imágenes del adiso (opcional, máx. 5MB cada una)
-          </label>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleImageChange}
-            style={{ display: 'none' }}
-            id="adiso-images-input"
-          />
-          <label
-            htmlFor="adiso-images-input"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.75rem',
-              border: '1px dashed var(--border-color)',
-              borderRadius: '8px',
-              cursor: formData.tamaño && PAQUETES[formData.tamaño].maxImagenes > 0 ? 'pointer' : 'not-allowed',
-              fontSize: '0.875rem',
-              color: formData.tamaño && PAQUETES[formData.tamaño].maxImagenes > 0 ? 'var(--text-secondary)' : 'var(--text-tertiary)',
-              transition: 'all 0.2s',
-              justifyContent: 'center',
-              opacity: formData.tamaño && PAQUETES[formData.tamaño].maxImagenes > 0 ? 1 : 0.5
+        <div style={{ marginBottom: '1rem' }}>
+          <SelectorUbicacion
+            value={formData.ubicacion}
+            onChange={(ubicacion) => {
+              setFormData({ ...formData, ubicacion });
+              if (errors.ubicacion) {
+                setErrors({ ...errors, ubicacion: undefined });
+              }
             }}
-          >
-            <FaPlus size={16} />
-            Agregar imágenes
-          </label>
-          
-          {imagenesPreviews.length > 0 && (
-            <div style={{
-              marginTop: '0.75rem',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
-              gap: '0.75rem'
+            required={false}
+            label="Ubicación del anuncio (opcional)"
+          />
+          {errors.ubicacion && (
+            <span role="alert" style={{ 
+              fontSize: '0.75rem', 
+              color: '#ef4444',
+              marginTop: '0.25rem',
+              display: 'block'
             }}>
-              {imagenesPreviews.map((imgPreview) => (
-                <div
-                  key={imgPreview.id}
-                  style={{
-                    position: 'relative',
-                    aspectRatio: '1',
-                    borderRadius: '8px',
-                    overflow: 'hidden',
-                    border: '1px solid var(--border-color)'
-                  }}
-                >
-                  <img
-                    src={imgPreview.preview}
-                    alt={`Preview ${imgPreview.id}`}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      display: 'block'
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveImage(imgPreview.id)}
-                    style={{
-                      position: 'absolute',
-                      top: '0.25rem',
-                      right: '0.25rem',
-                      background: 'rgba(0, 0, 0, 0.7)',
-                      border: 'none',
-                      borderRadius: '50%',
-                      width: '24px',
-                      height: '24px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      color: 'white',
-                      padding: 0
-                    }}
-                  >
-                    <FaTrash size={10} />
-                  </button>
-                </div>
-              ))}
-            </div>
+              {errors.ubicacion}
+            </span>
           )}
         </div>
       )}
+    </div>
+  );
 
-      <div style={{
-        display: 'flex',
-        gap: '0.75rem'
-      }}>
-        <button
-          type="button"
-          onClick={onCerrar}
-          style={{
-            flex: 1,
-            padding: '0.75rem',
-            fontSize: '1rem',
-            border: '1px solid var(--border-color)',
-            borderRadius: '8px',
-            backgroundColor: 'var(--bg-secondary)',
+  // Paso 5: Imágenes (solo si no es gratuito y el paquete lo permite)
+  const renderPaso5 = () => {
+    if (modoGratuito) return null;
+    
+    const paqueteSeleccionado = formData.tamaño ? PAQUETES[formData.tamaño] : PAQUETES.miniatura;
+    const puedeSubirImagenes = paqueteSeleccionado.maxImagenes > 0;
+
+    if (!puedeSubirImagenes) {
+      // Si el paquete no permite imágenes, saltar este paso
+      return null;
+    }
+
+    return (
+      <div>
+        <div style={{ marginBottom: '1.5rem' }}>
+          <h3 style={{
+            fontSize: '1.125rem',
+            fontWeight: 600,
             color: 'var(--text-primary)',
-            cursor: 'pointer'
-          }}
-        >
-          Cancelar
-        </button>
-        <button
-          type="submit"
-          disabled={enviando}
-          aria-busy={enviando}
-          aria-label={enviando ? 'Publicando adiso...' : 'Publicar adiso'}
+            marginBottom: '0.5rem'
+          }}>
+            Agrega imágenes a tu anuncio
+          </h3>
+          <p style={{
+            fontSize: '0.875rem',
+            color: 'var(--text-secondary)',
+            margin: 0
+          }}>
+            Puedes agregar hasta {paqueteSeleccionado.maxImagenes} imagen{paqueteSeleccionado.maxImagenes !== 1 ? 'es' : ''}. Las imágenes aumentan las conversiones.
+          </p>
+        </div>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={handleImageChange}
+          style={{ display: 'none' }}
+          id="adiso-images-input"
+        />
+        <label
+          htmlFor="adiso-images-input"
           style={{
-            flex: 1,
-            padding: '0.75rem',
-            fontSize: '1rem',
-            border: 'none',
-            borderRadius: '8px',
-            backgroundColor: 'var(--text-primary)',
-            color: 'var(--bg-primary)',
-            cursor: enviando ? 'not-allowed' : 'pointer',
-            opacity: enviando ? 0.6 : 1,
-            pointerEvents: enviando ? 'none' : 'auto',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: '0.5rem',
-            transition: 'opacity 0.2s'
+            padding: '2rem',
+            border: '2px dashed var(--border-color)',
+            borderRadius: '12px',
+            cursor: 'pointer',
+            fontSize: '0.875rem',
+            color: 'var(--text-secondary)',
+            transition: 'all 0.2s',
+            backgroundColor: 'var(--bg-secondary)',
+            marginBottom: '1rem'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = 'var(--text-primary)';
+            e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
+            e.currentTarget.style.color = 'var(--text-primary)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = 'var(--border-color)';
+            e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
+            e.currentTarget.style.color = 'var(--text-secondary)';
+          }}
+        >
+          <FaPlus size={20} />
+          <span>Haz clic o arrastra imágenes aquí</span>
+        </label>
+        
+        {imagenesPreviews.length > 0 && (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+            gap: '0.75rem'
+          }}>
+            {imagenesPreviews.map((imgPreview) => (
+              <div
+                key={imgPreview.id}
+                style={{
+                  position: 'relative',
+                  aspectRatio: '1',
+                  borderRadius: '8px',
+                  overflow: 'hidden',
+                  border: '1px solid var(--border-color)'
+                }}
+              >
+                <img
+                  src={imgPreview.preview}
+                  alt={`Preview ${imgPreview.id}`}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    display: 'block'
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => handleRemoveImage(imgPreview.id)}
+                  style={{
+                    position: 'absolute',
+                    top: '0.25rem',
+                    right: '0.25rem',
+                    background: 'rgba(0, 0, 0, 0.7)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '28px',
+                    height: '28px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: 'white',
+                    padding: 0,
+                    transition: 'background 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(239, 68, 68, 0.9)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(0, 0, 0, 0.7)';
+                  }}
+                >
+                  <FaTrash size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {imagenesPreviews.length === 0 && (
+          <div style={{
+            padding: '1rem',
+            backgroundColor: 'var(--bg-secondary)',
+            borderRadius: '8px',
+            border: '1px solid var(--border-color)',
+            marginTop: '1rem'
+          }}>
+            <div style={{
+              fontSize: '0.75rem',
+              color: 'var(--text-secondary)',
+              textAlign: 'center'
+            }}>
+              💡 Tip: Los anuncios con imágenes reciben hasta 3x más contactos
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Paso 6: Revisión
+  const renderPaso6 = () => {
+    const IconComponent = getCategoriaIcon(formData.categoria);
+    const paqueteSeleccionado = formData.tamaño ? PAQUETES[formData.tamaño] : PAQUETES.miniatura;
+    
+    return (
+      <div>
+        <div style={{ marginBottom: '1.5rem' }}>
+          <h3 style={{
+            fontSize: '1.125rem',
+            fontWeight: 600,
+            color: 'var(--text-primary)',
+            marginBottom: '0.5rem'
+          }}>
+            Revisa tu anuncio
+          </h3>
+          <p style={{
+            fontSize: '0.875rem',
+            color: 'var(--text-secondary)',
+            margin: 0
+          }}>
+            Verifica que toda la información sea correcta antes de publicar
+          </p>
+        </div>
+
+        <div style={{
+          border: '1px solid var(--border-color)',
+          borderRadius: '12px',
+          padding: '1.5rem',
+          backgroundColor: 'var(--bg-secondary)'
+        }}>
+          <div style={{ marginBottom: '1rem' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              marginBottom: '0.5rem'
+            }}>
+              <IconComponent size={20} />
+              <span style={{
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                color: 'var(--text-primary)'
+              }}>
+                {CATEGORIA_NOMBRES[formData.categoria]}
+              </span>
+            </div>
+            <h4 style={{
+              fontSize: '1.125rem',
+              fontWeight: 600,
+              color: 'var(--text-primary)',
+              margin: 0
+            }}>
+              {formData.titulo || 'Sin título'}
+            </h4>
+          </div>
+
+          {!modoGratuito && formData.descripcion && (
+            <div style={{
+              fontSize: '0.875rem',
+              color: 'var(--text-secondary)',
+              lineHeight: 1.6,
+              marginBottom: '1rem',
+              whiteSpace: 'pre-wrap'
+            }}>
+              {formData.descripcion}
+            </div>
+          )}
+
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.75rem',
+            paddingTop: '1rem',
+            borderTop: '1px solid var(--border-color)'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              fontSize: '0.875rem',
+              color: 'var(--text-secondary)'
+            }}>
+              <IconPhone size={16} />
+              <span>{formData.contacto || 'Sin contacto'}</span>
+            </div>
+
+            {formData.ubicacion && typeof formData.ubicacion === 'object' && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '0.875rem',
+                color: 'var(--text-secondary)'
+              }}>
+                <IconLocation size={16} />
+                <span>
+                  {formData.ubicacion.distrito}, {formData.ubicacion.provincia}, {formData.ubicacion.departamento}
+                </span>
+              </div>
+            )}
+
+            {!modoGratuito && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '0.875rem',
+                color: 'var(--text-secondary)'
+              }}>
+                <span style={{ fontWeight: 600 }}>Paquete:</span>
+                <span>{paqueteSeleccionado.nombre} - S/ {paqueteSeleccionado.precio}</span>
+              </div>
+            )}
+
+            {imagenesPreviews.length > 0 && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '0.875rem',
+                color: 'var(--text-secondary)'
+              }}>
+                <FaImage size={16} />
+                <span>{imagenesPreviews.length} imagen{imagenesPreviews.length !== 1 ? 'es' : ''}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div style={{
+          padding: '1rem',
+          backgroundColor: 'var(--bg-secondary)',
+          borderRadius: '8px',
+          border: '1px solid var(--border-color)',
+          marginTop: '1.5rem'
+        }}>
+          <div style={{
+            fontSize: '0.875rem',
+            color: 'var(--text-secondary)',
+            lineHeight: 1.6
+          }}>
+            ✅ Al publicar, tu anuncio será visible inmediatamente para todos los usuarios.
+            {!modoGratuito && ` El costo de S/ ${paqueteSeleccionado.precio} se aplicará al publicar.`}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderPaso = () => {
+    switch (pasoActual) {
+      case 1: return renderPaso1();
+      case 2: return renderPaso2();
+      case 3: return renderPaso3();
+      case 4: return renderPaso4();
+      case 5: return renderPaso5();
+      case 6: return renderPaso6();
+      default: return null;
+    }
+  };
+
+  // Validación sin actualizar estado (para evitar loops)
+  const validarPasoSinEstado = (paso: Paso): boolean => {
+    switch (paso) {
+      case 1:
+        return true; // Categoría siempre tiene valor
+      case 2:
+        if (!formData.titulo.trim()) return false;
+        const maxTitulo = modoGratuito ? 30 : LIMITS.TITULO_MAX;
+        if (formData.titulo.length > maxTitulo) return false;
+        if (!modoGratuito && !formData.descripcion.trim()) return false;
+        if (!modoGratuito && formData.descripcion.length > LIMITS.DESCRIPCION_MAX) return false;
+        return true;
+      case 3:
+        return modoGratuito || !!formData.tamaño;
+      case 4:
+        if (!formData.contacto.trim()) return false;
+        return validatePhoneNumber(formData.contacto);
+      case 5:
+        if (modoGratuito || !formData.tamaño) return true;
+        const paqueteSeleccionado = PAQUETES[formData.tamaño];
+        return imagenesPreviews.length <= paqueteSeleccionado.maxImagenes;
+      case 6:
+        return true; // Revisión siempre permite avanzar
+      default:
+        return false;
+    }
+  };
+
+  const puedeAvanzar = () => {
+    return validarPasoSinEstado(pasoActual);
+  };
+
+  const puedeRetroceder = () => pasoActual > 1;
+
+  const renderControles = () => (
+    <div style={{
+      display: 'flex',
+      gap: '0.75rem',
+      marginTop: '2rem',
+      paddingTop: '1.5rem',
+      borderTop: '1px solid var(--border-color)'
+    }}>
+      {puedeRetroceder() && (
+        <button
+          type="button"
+          onClick={pasoAnterior}
+          style={{
+            padding: '0.75rem 1.5rem',
+            fontSize: '0.875rem',
+            border: '1px solid var(--border-color)',
+            borderRadius: '8px',
+            backgroundColor: 'var(--bg-secondary)',
+            color: 'var(--text-primary)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            transition: 'all 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
+            e.currentTarget.style.borderColor = 'var(--text-secondary)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
+            e.currentTarget.style.borderColor = 'var(--border-color)';
+          }}
+        >
+          <FaArrowLeft size={14} />
+          Anterior
+        </button>
+      )}
+      
+      <div style={{ flex: 1 }} />
+      
+      {pasoActual < totalPasos ? (
+        <button
+          type="button"
+          onClick={siguientePaso}
+          disabled={!puedeAvanzar()}
+          style={{
+            padding: '0.75rem 1.5rem',
+            fontSize: '0.875rem',
+            border: 'none',
+            borderRadius: '8px',
+            backgroundColor: puedeAvanzar() ? 'var(--text-primary)' : 'var(--bg-secondary)',
+            color: puedeAvanzar() ? 'var(--bg-primary)' : 'var(--text-tertiary)',
+            cursor: puedeAvanzar() ? 'pointer' : 'not-allowed',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            transition: 'all 0.2s',
+            opacity: puedeAvanzar() ? 1 : 0.6
+          }}
+          onMouseEnter={(e) => {
+            if (puedeAvanzar()) {
+              e.currentTarget.style.opacity = '0.9';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (puedeAvanzar()) {
+              e.currentTarget.style.opacity = '1';
+            }
+          }}
+        >
+          Siguiente
+          <FaArrowRight size={14} />
+        </button>
+      ) : (
+        <button
+          type="submit"
+          disabled={enviando || !puedeAvanzar()}
+          style={{
+            padding: '0.75rem 1.5rem',
+            fontSize: '0.875rem',
+            border: 'none',
+            borderRadius: '8px',
+            backgroundColor: enviando || !puedeAvanzar() ? 'var(--bg-secondary)' : 'var(--text-primary)',
+            color: enviando || !puedeAvanzar() ? 'var(--text-tertiary)' : 'var(--bg-primary)',
+            cursor: enviando || !puedeAvanzar() ? 'not-allowed' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            transition: 'all 0.2s',
+            opacity: enviando || !puedeAvanzar() ? 0.6 : 1
           }}
         >
           {enviando ? (
             <>
               <span style={{ 
-                width: '16px', 
-                height: '16px', 
-                border: '2px solid var(--bg-primary)',
+                width: '14px', 
+                height: '14px', 
+                border: '2px solid currentColor',
                 borderTop: '2px solid transparent',
                 borderRadius: '50%',
                 animation: 'spin 0.6s linear infinite',
                 display: 'inline-block'
-              }} aria-hidden="true" />
+              }} />
               Publicando...
             </>
           ) : (
             <>
-              <IconMegaphone aria-hidden="true" />
-              Publicar
+              <IconMegaphone size={16} />
+              Publicar ahora
             </>
           )}
         </button>
-      </div>
+      )}
+    </div>
+  );
+
+  const renderForm = () => (
+    <form onSubmit={handleSubmit}>
+      {renderProgreso()}
+      {renderPaso()}
+      {renderControles()}
     </form>
   );
 
@@ -822,9 +1487,6 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
           overflowY: 'auto'
         }}
       >
-        {/* Header sin botón de cerrar cuando está dentro del sidebar */}
-        {/* En desktop: el usuario puede colapsar el sidebar o cambiar de sección */}
-        {/* En mobile: ya hay un botón de cerrar en el header del ModalNavegacionMobile */}
         <h2 style={{
           fontSize: '1.25rem',
           fontWeight: 600,
@@ -861,7 +1523,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
           borderRadius: '12px',
           padding: '1.5rem',
           width: '100%',
-          maxWidth: '500px',
+          maxWidth: '600px',
           maxHeight: '90vh',
           overflowY: 'auto'
         }}
@@ -871,7 +1533,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: '1.5rem'
+          marginBottom: '1rem'
         }}>
           <h2 style={{
             fontSize: '1.25rem',
@@ -889,7 +1551,14 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
               background: 'none',
               border: 'none',
               padding: '0.25rem',
-              lineHeight: 1
+              lineHeight: 1,
+              transition: 'color 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = 'var(--text-primary)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'var(--text-secondary)';
             }}
           >
             ×
