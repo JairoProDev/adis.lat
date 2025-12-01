@@ -36,9 +36,10 @@ interface GrillaAdisosProps {
   onAbrirAdiso: (adiso: Adiso) => void;
   adisoSeleccionadoId?: string | null;
   espacioAdicional?: number; // Espacio adicional disponible (píxeles) cuando el sidebar está minimizado
+  cargandoMas?: boolean; // Indica si se están cargando más anuncios
 }
 
-export default function GrillaAdisos({ adisos, onAbrirAdiso, adisoSeleccionadoId, espacioAdicional = 0 }: GrillaAdisosProps) {
+export default function GrillaAdisos({ adisos, onAbrirAdiso, adisoSeleccionadoId, espacioAdicional = 0, cargandoMas = false }: GrillaAdisosProps) {
   const adisoRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const { user } = useAuth();
@@ -325,6 +326,27 @@ export default function GrillaAdisos({ adisos, onAbrirAdiso, adisoSeleccionadoId
           </button>
           );
         })}
+        {/* Sentinel para scroll infinito */}
+        <div 
+          id="sentinel-carga"
+          style={{
+            gridColumn: `1 / -1`,
+            height: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem'
+          }}
+        >
+          {cargandoMas && (
+            <div style={{
+              fontSize: '0.875rem',
+              color: 'var(--text-secondary)'
+            }}>
+              Cargando más anuncios...
+            </div>
+          )}
+        </div>
       </div>
     </>
   );

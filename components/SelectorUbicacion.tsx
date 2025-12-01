@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { UbicacionDetallada } from '@/types';
 import { 
   getDepartamentos, 
@@ -53,11 +53,17 @@ export default function SelectorUbicacion({
     }
   }, [provincia, distrito, distritos]);
 
-  // Actualizar valor cuando cambian los campos
+  // Usar useRef para evitar loops infinitos
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  // Actualizar valor cuando cambian los campos (sin incluir onChange en dependencias)
   useEffect(() => {
     if (incluirUbicacion && departamento && provincia && distrito) {
       const coords = getCoordenadasAproximadas(departamento, provincia, distrito);
-      onChange({
+      const nuevaUbicacion: UbicacionDetallada = {
         pais: 'Perú',
         departamento,
         provincia,
@@ -65,11 +71,22 @@ export default function SelectorUbicacion({
         direccion: direccion.trim() || undefined,
         latitud: coords?.lat,
         longitud: coords?.lng
-      });
-    } else if (!incluirUbicacion) {
-      onChange(undefined);
+      };
+      // Solo actualizar si cambió realmente
+      const ubicacionActual = value;
+      const cambioReal = !ubicacionActual || 
+        ubicacionActual.departamento !== nuevaUbicacion.departamento ||
+        ubicacionActual.provincia !== nuevaUbicacion.provincia ||
+        ubicacionActual.distrito !== nuevaUbicacion.distrito ||
+        ubicacionActual.direccion !== nuevaUbicacion.direccion;
+      
+      if (cambioReal) {
+        onChangeRef.current(nuevaUbicacion);
+      }
+    } else if (!incluirUbicacion && value) {
+      onChangeRef.current(undefined);
     }
-  }, [incluirUbicacion, departamento, provincia, distrito, direccion, onChange]);
+  }, [incluirUbicacion, departamento, provincia, distrito, direccion, value]);
 
   const handleUsarMiUbicacion = async () => {
     setObteniendoCoordenadas(true);

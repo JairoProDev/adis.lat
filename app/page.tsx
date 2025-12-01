@@ -8,6 +8,7 @@ import { Suspense, useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Adiso, Categoria } from '@/types';
 import { getAdisos, getAdisoById, saveAdiso, getAdisosCache } from '@/lib/storage';
+import { getAdisosFromSupabase } from '@/lib/supabase';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useToast } from '@/hooks/useToast';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -92,6 +93,10 @@ function HomeContent() {
   const [adisoAbierto, setAdisoAbierto] = useState<Adiso | null>(null);
   const [indiceAdisoActual, setIndiceAdisoActual] = useState(0);
   const [cargando, setCargando] = useState(true);
+  // Estados para scroll infinito
+  const [cargandoMas, setCargandoMas] = useState(false);
+  const [hayMasAdisos, setHayMasAdisos] = useState(true);
+  const ITEMS_POR_PAGINA = 50;
   const [modalMobileAbierto, setModalMobileAbierto] = useState(false);
   const [seccionMobileInicial, setSeccionMobileInicial] = useState<SeccionMobile>('gratuitos');
   const [seccionMobileActiva, setSeccionMobileActiva] = useState<SeccionSidebar | null>(null);
@@ -156,12 +161,19 @@ function HomeContent() {
         }
       }
       
-      // Actualizar desde API en background
+      // Actualizar desde API en background - cargar primera página
       try {
-        const adisosDesdeAPI = await getAdisos();
+        const adisosDesdeAPI = await getAdisosFromSupabase({ 
+          limit: ITEMS_POR_PAGINA, 
+          offset: 0,
+          soloActivos: false // Mostrar todos, incluyendo históricos
+        });
+        
         if (adisosDesdeAPI.length > 0 || cache.length === 0) {
+          // Si hay menos de ITEMS_POR_PAGINA, no hay más páginas
+          setHayMasAdisos(adisosDesdeAPI.length === ITEMS_POR_PAGINA);
+          
           // Merge inteligente usando Map para evitar duplicados
-          // Solo actualizar adisos - el useEffect de ordenamiento se encargará de adisosFiltrados
           setAdisos(prev => {
             const adisosMap = new Map<string, Adiso>();
             // Primero agregar adisos desde API
@@ -187,12 +199,15 @@ function HomeContent() {
               return prev;
             });
           }
+        } else {
+          setHayMasAdisos(false);
         }
       } catch (error) {
         // Solo mostrar errores en desarrollo
         if (process.env.NODE_ENV === 'development') {
           console.error('Error al actualizar desde API:', error);
         }
+        setHayMasAdisos(false);
       } finally {
         setCargando(false);
       }
@@ -556,6 +571,59 @@ function HomeContent() {
     }
   };
 
+  // Función para cargar más anuncios (scroll infinito)
+  const cargarMasAdisos = async () => {
+    if (cargandoMas || !hayMasAdisos) return;
+    
+    setCargandoMas(true);
+    try {
+      const nuevosAdisos = await getAdisosFromSupabase({ 
+        limit: ITEMS_POR_PAGINA, 
+        offset: adisos.length,
+        soloActivos: false
+      });
+      
+      if (nuevosAdisos.length > 0) {
+        setAdisos(prev => {
+          const adisosMap = new Map<string, Adiso>();
+          // Agregar adisos existentes
+          prev.forEach(adiso => adisosMap.set(adiso.id, adiso));
+          // Agregar nuevos adisos
+          nuevosAdisos.forEach(adiso => adisosMap.set(adiso.id, adiso));
+          return Array.from(adisosMap.values());
+        });
+        
+        // Si hay menos de ITEMS_POR_PAGINA, no hay más páginas
+        setHayMasAdisos(nuevosAdisos.length === ITEMS_POR_PAGINA);
+      } else {
+        setHayMasAdisos(false);
+      }
+    } catch (error) {
+      console.error('Error al cargar más adisos:', error);
+      setHayMasAdisos(false);
+    } finally {
+      setCargandoMas(false);
+    }
+  };
+
+  // Intersection Observer para detectar cuando el usuario llega al final
+  useEffect(() => {
+    const sentinel = document.getElementById('sentinel-carga');
+    if (!sentinel || cargandoMas || !hayMasAdisos) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !cargandoMas && hayMasAdisos) {
+          cargarMasAdisos();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [cargandoMas, hayMasAdisos, adisos.length]);
+
   // Prefetch de imágenes de adisos relacionados cuando se abre un adiso
   useEffect(() => {
     if (!adisoAbierto || adisosFiltrados.length === 0) return;
@@ -784,6 +852,7 @@ function HomeContent() {
                 onAbrirAdiso={handleAbrirAdiso}
                 adisoSeleccionadoId={adisoAbierto?.id}
                 espacioAdicional={isSidebarMinimizado ? 360 : 0}
+                cargandoMas={cargandoMas}
               />
               {adisosFiltrados.length === 0 && (
                 <div style={{

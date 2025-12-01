@@ -59,6 +59,8 @@ interface ModalAdisoProps {
   dentroSidebar?: boolean; // Indica si está dentro del sidebar (sin overlay)
   onEditar?: (adiso: Adiso) => void; // Callback para editar adiso
   onEliminar?: (adisoId: string) => void; // Callback para eliminar adiso
+  onSuccess?: (message: string) => void; // Callback para mensajes de éxito
+  onError?: (message: string) => void; // Callback para mensajes de error
 }
 
 export default function ModalAdiso({
@@ -70,7 +72,9 @@ export default function ModalAdiso({
   puedeSiguiente,
   dentroSidebar = false,
   onEditar,
-  onEliminar
+  onEliminar,
+  onSuccess,
+  onError
 }: ModalAdisoProps) {
   const [copiado, setCopiado] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -204,10 +208,69 @@ export default function ModalAdiso({
       await compartirNativo(adiso.categoria, adiso.id, adiso.titulo);
     };
 
-    const handleContactar = () => {
-      // Registrar contacto
+    const handleContactar = async (contactoEspecifico?: string) => {
+      const contactoAUsar = contactoEspecifico || adiso.contacto;
+      
+      // Verificar si el anuncio está caducado
+      const ahora = new Date();
+      const estaCaducado = 
+        adiso.estaActivo === false || 
+        (adiso.fechaExpiracion && new Date(adiso.fechaExpiracion) < ahora);
+      
+      if (estaCaducado) {
+        // Anuncio caducado - registrar interés
+        try {
+          const response = await fetch('/api/intereses-caducados', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              adisoId: adiso.id,
+              contactoUsuario: contactoAUsar,
+              mensaje: `Interesado en: ${adiso.titulo}`
+            })
+          });
+          
+          if (response.ok) {
+            // Mostrar mensaje de éxito
+            const mensaje = 'Hemos registrado tu interés. Notificaremos al anunciante para que pueda renovar su anuncio.';
+            if (onSuccess) {
+              onSuccess(mensaje);
+            } else {
+              alert(mensaje);
+            }
+          } else {
+            throw new Error('Error al registrar interés');
+          }
+        } catch (error) {
+          console.error('Error al registrar interés:', error);
+          const mensajeError = 'Error al registrar tu interés. Por favor, intenta nuevamente.';
+          if (onError) {
+            onError(mensajeError);
+          } else {
+            alert(mensajeError);
+          }
+        }
+        return;
+      }
+      
+      // Anuncio activo - contacto directo normal
       registrarContacto(user?.id, adiso.id, adiso.categoria);
-      window.open(getWhatsAppUrl(adiso.contacto, adiso.titulo, adiso.categoria, adiso.id), '_blank');
+      
+      // Determinar tipo de contacto y abrir según corresponda
+      if (contactoEspecifico) {
+        // Si es un contacto específico de contactosMultiples, verificar tipo
+        const contactoObj = adiso.contactosMultiples?.find(c => c.valor === contactoEspecifico);
+        if (contactoObj?.tipo === 'whatsapp' || contactoObj?.tipo === 'telefono') {
+          window.open(getWhatsAppUrl(contactoAUsar, adiso.titulo, adiso.categoria, adiso.id), '_blank');
+        } else if (contactoObj?.tipo === 'email') {
+          window.location.href = `mailto:${contactoAUsar}?subject=Interesado en: ${encodeURIComponent(adiso.titulo)}`;
+        } else {
+          // Por defecto, intentar WhatsApp
+          window.open(getWhatsAppUrl(contactoAUsar, adiso.titulo, adiso.categoria, adiso.id), '_blank');
+        }
+      } else {
+        window.open(getWhatsAppUrl(contactoAUsar, adiso.titulo, adiso.categoria, adiso.id), '_blank');
+      }
     };
 
     const handleEditar = () => {
@@ -479,35 +542,93 @@ export default function ModalAdiso({
           flexDirection: 'column',
           gap: '0.75rem'
         }}>
-          <button
-            onClick={handleContactar}
-            aria-label={`Contactar al publicador de ${adiso.titulo} por WhatsApp`}
-            style={{
-              width: '100%',
-              padding: '0.875rem',
-              fontSize: '1rem',
-              fontWeight: 600,
-              backgroundColor: '#25D366',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              transition: 'opacity 0.2s',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.opacity = '0.9';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.opacity = '1';
-            }}
-          >
-            <IconWhatsApp aria-hidden="true" />
-            Contactar por WhatsApp
-          </button>
+          {/* Botones de contacto - múltiples o único */}
+          {(() => {
+            const contactosMultiples = adiso.contactosMultiples && adiso.contactosMultiples.length > 0
+              ? adiso.contactosMultiples
+              : null;
+            
+            // Verificar si está caducado
+            const ahora = new Date();
+            const estaCaducado = 
+              adiso.estaActivo === false || 
+              (adiso.fechaExpiracion && new Date(adiso.fechaExpiracion) < ahora);
+            
+            if (contactosMultiples && contactosMultiples.length > 1) {
+              // Múltiples contactos
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {contactosMultiples.map((contacto, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleContactar(contacto.valor)}
+                      aria-label={`Contactar por ${contacto.tipo}`}
+                      style={{
+                        width: '100%',
+                        padding: '0.875rem',
+                        fontSize: '0.9rem',
+                        fontWeight: 600,
+                        backgroundColor: contacto.tipo === 'whatsapp' ? '#25D366' : contacto.tipo === 'email' ? '#3b82f6' : '#10b981',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        transition: 'opacity 0.2s',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.5rem'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.opacity = '0.9';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.opacity = '1';
+                      }}
+                    >
+                      {contacto.tipo === 'whatsapp' && <IconWhatsApp aria-hidden="true" />}
+                      {contacto.tipo === 'email' && '✉️'}
+                      {contacto.tipo === 'telefono' && '📞'}
+                      {contacto.etiqueta || `Contactar por ${contacto.tipo}`}
+                    </button>
+                  ))}
+                </div>
+              );
+            } else {
+              // Contacto único
+              return (
+                <button
+                  onClick={() => handleContactar()}
+                  aria-label={estaCaducado ? 'Registrar interés en anuncio caducado' : `Contactar al publicador de ${adiso.titulo} por WhatsApp`}
+                  style={{
+                    width: '100%',
+                    padding: '0.875rem',
+                    fontSize: '1rem',
+                    fontWeight: 600,
+                    backgroundColor: estaCaducado ? '#f59e0b' : '#25D366',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'opacity 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.opacity = '0.9';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.opacity = '1';
+                  }}
+                >
+                  <IconWhatsApp aria-hidden="true" />
+                  {estaCaducado ? 'Registrar interés' : 'Contactar por WhatsApp'}
+                </button>
+              );
+            }
+          })()}
           
           {/* Botones de acción y navegación en la misma línea */}
           <div style={{
@@ -1093,35 +1214,93 @@ export default function ModalAdiso({
           flexDirection: 'column',
           gap: '0.75rem'
         }}>
-          <button
-            onClick={handleContactar}
-            aria-label={`Contactar al publicador de ${adiso.titulo} por WhatsApp`}
-            style={{
-              width: '100%',
-              padding: '0.875rem',
-              fontSize: '1rem',
-              fontWeight: 600,
-              backgroundColor: '#25D366',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              transition: 'opacity 0.2s',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.opacity = '0.9';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.opacity = '1';
-            }}
-          >
-            <IconWhatsApp aria-hidden="true" />
-            Contactar por WhatsApp
-          </button>
+          {/* Botones de contacto - múltiples o único */}
+          {(() => {
+            const contactosMultiples = adiso.contactosMultiples && adiso.contactosMultiples.length > 0
+              ? adiso.contactosMultiples
+              : null;
+            
+            // Verificar si está caducado
+            const ahora = new Date();
+            const estaCaducado = 
+              adiso.estaActivo === false || 
+              (adiso.fechaExpiracion && new Date(adiso.fechaExpiracion) < ahora);
+            
+            if (contactosMultiples && contactosMultiples.length > 1) {
+              // Múltiples contactos
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {contactosMultiples.map((contacto, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleContactar(contacto.valor)}
+                      aria-label={`Contactar por ${contacto.tipo}`}
+                      style={{
+                        width: '100%',
+                        padding: '0.875rem',
+                        fontSize: '0.9rem',
+                        fontWeight: 600,
+                        backgroundColor: contacto.tipo === 'whatsapp' ? '#25D366' : contacto.tipo === 'email' ? '#3b82f6' : '#10b981',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        transition: 'opacity 0.2s',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.5rem'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.opacity = '0.9';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.opacity = '1';
+                      }}
+                    >
+                      {contacto.tipo === 'whatsapp' && <IconWhatsApp aria-hidden="true" />}
+                      {contacto.tipo === 'email' && '✉️'}
+                      {contacto.tipo === 'telefono' && '📞'}
+                      {contacto.etiqueta || `Contactar por ${contacto.tipo}`}
+                    </button>
+                  ))}
+                </div>
+              );
+            } else {
+              // Contacto único
+              return (
+                <button
+                  onClick={() => handleContactar()}
+                  aria-label={estaCaducado ? 'Registrar interés en anuncio caducado' : `Contactar al publicador de ${adiso.titulo} por WhatsApp`}
+                  style={{
+                    width: '100%',
+                    padding: '0.875rem',
+                    fontSize: '1rem',
+                    fontWeight: 600,
+                    backgroundColor: estaCaducado ? '#f59e0b' : '#25D366',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'opacity 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.opacity = '0.9';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.opacity = '1';
+                  }}
+                >
+                  <IconWhatsApp aria-hidden="true" />
+                  {estaCaducado ? 'Registrar interés' : 'Contactar por WhatsApp'}
+                </button>
+              );
+            }
+          })()}
           
           {/* Botones de acción y navegación en la misma línea */}
           <div style={{

@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { Adiso, AdisoGratuito } from '@/types';
+import { Adiso, AdisoGratuito, InteresAnuncioCaducado } from '@/types';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -38,19 +38,54 @@ export function dbToAdiso(row: any): Adiso {
     imagenesUrls = [row.imagen_url];
   }
 
+  // Manejar ubicación: si hay campos detallados, crear UbicacionDetallada, sino usar string
+  let ubicacion: any = row.ubicacion; // Por defecto, usar el string de ubicación
+  if (row.departamento && row.provincia && row.distrito) {
+    // Si hay campos detallados, crear objeto UbicacionDetallada
+    ubicacion = {
+      pais: row.pais || 'Perú',
+      departamento: row.departamento,
+      provincia: row.provincia,
+      distrito: row.distrito,
+      direccion: row.direccion || undefined,
+      latitud: row.latitud || undefined,
+      longitud: row.longitud || undefined
+    };
+  }
+
+  // Manejar contactos múltiples
+  let contactosMultiples: any[] | undefined;
+  if (row.contactos_multiples) {
+    try {
+      contactosMultiples = typeof row.contactos_multiples === 'string' 
+        ? JSON.parse(row.contactos_multiples) 
+        : row.contactos_multiples;
+    } catch {
+      contactosMultiples = undefined;
+    }
+  }
+
   return {
     id: row.id,
     categoria: row.categoria,
     titulo: row.titulo,
     descripcion: row.descripcion,
     contacto: row.contacto,
-    ubicacion: row.ubicacion,
+    ubicacion,
     fechaPublicacion: row.fecha_publicacion,
     horaPublicacion: row.hora_publicacion,
     tamaño: row.tamaño || 'miniatura',
     imagenesUrls,
     // Compatibilidad hacia atrás
-    imagenUrl: imagenesUrls?.[0]
+    imagenUrl: imagenesUrls?.[0],
+    // Nuevos campos
+    fechaExpiracion: row.fecha_expiracion || undefined,
+    estaActivo: row.esta_activo !== undefined ? row.esta_activo : true,
+    esHistorico: row.es_historico !== undefined ? row.es_historico : false,
+    fuenteOriginal: row.fuente_original || undefined,
+    edicionNumero: row.edicion_numero || undefined,
+    fechaPublicacionOriginal: row.fecha_publicacion_original || undefined,
+    contactosMultiples: contactosMultiples || undefined
   };
 }
 
@@ -61,19 +96,71 @@ function adisoToDb(adiso: Adiso): any {
     ? JSON.stringify(adiso.imagenesUrls)
     : null;
 
+  // Manejar ubicación: si es UbicacionDetallada, extraer campos; sino usar string
+  let ubicacionString: string;
+  let ubicacionDetallada: any = {};
+
+  if (typeof adiso.ubicacion === 'object' && adiso.ubicacion !== null && 'departamento' in adiso.ubicacion) {
+    // Es UbicacionDetallada
+    const ubi = adiso.ubicacion as any;
+    ubicacionString = `${ubi.distrito || ''}, ${ubi.provincia || ''}, ${ubi.departamento || ''}`.replace(/^,\s*|,\s*$/g, '');
+    ubicacionDetallada = {
+      pais: ubi.pais || 'Perú',
+      departamento: ubi.departamento,
+      provincia: ubi.provincia,
+      distrito: ubi.distrito,
+      direccion: ubi.direccion || null,
+      latitud: ubi.latitud || null,
+      longitud: ubi.longitud || null
+    };
+  } else {
+    // Es string (compatibilidad hacia atrás)
+    ubicacionString = adiso.ubicacion as string || '';
+  }
+
+  // Serializar contactos múltiples a JSONB
+  const contactosMultiplesJson = adiso.contactosMultiples && adiso.contactosMultiples.length > 0
+    ? JSON.stringify(adiso.contactosMultiples)
+    : null;
+
   const dbData: any = {
     id: adiso.id,
     categoria: adiso.categoria,
     titulo: adiso.titulo,
     descripcion: adiso.descripcion,
     contacto: adiso.contacto,
-    ubicacion: adiso.ubicacion,
+    ubicacion: ubicacionString, // Mantener para compatibilidad
     fecha_publicacion: adiso.fechaPublicacion,
     hora_publicacion: adiso.horaPublicacion,
     imagenes_urls: imagenesUrlsJson,
     // Mantener imagen_url para compatibilidad
-    imagen_url: adiso.imagenUrl || adiso.imagenesUrls?.[0] || null
+    imagen_url: adiso.imagenUrl || adiso.imagenesUrls?.[0] || null,
+    // Nuevos campos
+    fecha_expiracion: adiso.fechaExpiracion || null,
+    esta_activo: adiso.estaActivo !== undefined ? adiso.estaActivo : true,
+    es_historico: adiso.esHistorico !== undefined ? adiso.esHistorico : false,
+    fuente_original: adiso.fuenteOriginal || null,
+    edicion_numero: adiso.edicionNumero || null,
+    fecha_publicacion_original: adiso.fechaPublicacionOriginal || null,
+    contactos_multiples: contactosMultiplesJson
   };
+
+  // Agregar campos de ubicación detallada si existen
+  if (ubicacionDetallada.departamento) {
+    dbData.pais = ubicacionDetallada.pais;
+    dbData.departamento = ubicacionDetallada.departamento;
+    dbData.provincia = ubicacionDetallada.provincia;
+    dbData.distrito = ubicacionDetallada.distrito;
+    if (ubicacionDetallada.direccion) {
+      dbData.direccion = ubicacionDetallada.direccion;
+    }
+    if (ubicacionDetallada.latitud !== null && ubicacionDetallada.latitud !== undefined) {
+      dbData.latitud = ubicacionDetallada.latitud;
+    }
+    if (ubicacionDetallada.longitud !== null && ubicacionDetallada.longitud !== undefined) {
+      dbData.longitud = ubicacionDetallada.longitud;
+    }
+  }
 
   // Solo incluir tamaño si existe (para evitar errores si la columna no existe en la BD)
   if (adiso.tamaño !== undefined) {
@@ -83,7 +170,11 @@ function adisoToDb(adiso: Adiso): any {
   return dbData;
 }
 
-export async function getAdisosFromSupabase(options?: { limit?: number; offset?: number }): Promise<Adiso[]> {
+export async function getAdisosFromSupabase(options?: { 
+  limit?: number; 
+  offset?: number; 
+  soloActivos?: boolean;
+}): Promise<Adiso[]> {
   if (!supabase) {
     throw new Error('Supabase no está configurado');
   }
@@ -91,8 +182,18 @@ export async function getAdisosFromSupabase(options?: { limit?: number; offset?:
   try {
     let query = supabase
       .from('adisos')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .select('*');
+    
+    // Filtrar por activos si se solicita
+    if (options?.soloActivos === true) {
+      query = query.eq('esta_activo', true);
+      // También filtrar por fecha de expiración si existe
+      query = query.or('fecha_expiracion.is.null,fecha_expiracion.gt.' + new Date().toISOString());
+    }
+    
+    // Ordenar por fecha de publicación (más recientes primero)
+    query = query.order('fecha_publicacion', { ascending: false })
+                 .order('hora_publicacion', { ascending: false });
     
     // Aplicar paginación si se proporciona
     if (options?.limit) {
@@ -353,6 +454,88 @@ export async function createAdisoGratuitoInSupabase(adiso: AdisoGratuito): Promi
     }
 
     return dbToAdisoGratuito(data);
+  } catch (error: any) {
+    throw error;
+  }
+}
+
+// ============================================
+// FUNCIONES PARA SISTEMA DE ANUNCIOS HISTÓRICOS
+// ============================================
+
+export async function registrarInteresAnuncioCaducado(
+  adisoId: string,
+  usuarioId: string | undefined,
+  contactoUsuario: string,
+  mensaje?: string
+): Promise<InteresAnuncioCaducado> {
+  if (!supabase) {
+    throw new Error('Supabase no está configurado');
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('intereses_anuncios_caducados')
+      .insert({
+        adiso_id: adisoId,
+        usuario_id: usuarioId || null,
+        contacto_usuario: contactoUsuario,
+        mensaje: mensaje || null,
+        notificado_anunciante: false
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error al registrar interés:', error);
+      throw error;
+    }
+
+    return {
+      id: data.id,
+      adisoId: data.adiso_id,
+      usuarioId: data.usuario_id || undefined,
+      contactoUsuario: data.contacto_usuario,
+      mensaje: data.mensaje || undefined,
+      fechaInteres: data.fecha_interes,
+      notificadoAnunciante: data.notificado_anunciante,
+      fechaNotificacion: data.fecha_notificacion || undefined,
+      createdAt: data.created_at
+    };
+  } catch (error: any) {
+    throw error;
+  }
+}
+
+export async function getInteresesPorAnuncio(adisoId: string): Promise<InteresAnuncioCaducado[]> {
+  if (!supabase) {
+    throw new Error('Supabase no está configurado');
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('intereses_anuncios_caducados')
+      .select('*')
+      .eq('adiso_id', adisoId)
+      .eq('notificado_anunciante', false)
+      .order('fecha_interes', { ascending: false });
+
+    if (error) {
+      console.error('Error al obtener intereses:', error);
+      throw error;
+    }
+
+    return data ? data.map((row: any) => ({
+      id: row.id,
+      adisoId: row.adiso_id,
+      usuarioId: row.usuario_id || undefined,
+      contactoUsuario: row.contacto_usuario,
+      mensaje: row.mensaje || undefined,
+      fechaInteres: row.fecha_interes,
+      notificadoAnunciante: row.notificado_anunciante,
+      fechaNotificacion: row.fecha_notificacion || undefined,
+      createdAt: row.created_at
+    })) : [];
   } catch (error: any) {
     throw error;
   }

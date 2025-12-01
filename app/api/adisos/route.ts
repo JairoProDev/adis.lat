@@ -144,13 +144,22 @@ export async function POST(request: NextRequest) {
     
     const validatedData = validationResult.data;
     
+    // Preservar ubicación original del body (puede ser objeto o string)
+    const ubicacionOriginal = body.ubicacion;
+    const tieneUbicacionDetallada = typeof ubicacionOriginal === 'object' && 
+                                     ubicacionOriginal !== null && 
+                                     'departamento' in ubicacionOriginal;
+    
     // Sanitizar campos de texto
     // Nota: validatedData.contacto ya está normalizado por el transform de Zod (sin espacios)
     const sanitizedData = {
       ...validatedData,
       titulo: sanitizeText(validatedData.titulo),
       descripcion: validatedData.descripcion ? sanitizeText(validatedData.descripcion) : undefined,
-      ubicacion: sanitizeText(validatedData.ubicacion),
+      // Preservar objeto de ubicación si existe, sino sanitizar el string
+      ubicacion: tieneUbicacionDetallada 
+        ? ubicacionOriginal 
+        : (typeof validatedData.ubicacion === 'string' ? sanitizeText(validatedData.ubicacion) : ''),
       // El contacto ya está normalizado por el transform de Zod, solo sanitizar si es necesario
       contacto: validatedData.contacto, // Ya está normalizado (sin espacios)
     };
@@ -170,6 +179,8 @@ export async function POST(request: NextRequest) {
         id: body.id as string,
         fechaPublicacion: body.fechaPublicacion as string,
         horaPublicacion: body.horaPublicacion as string,
+        // Preservar ubicación detallada si existe
+        ubicacion: sanitizedData.ubicacion,
       } as Adiso;
     } else {
       // Crear un nuevo adiso
@@ -186,6 +197,7 @@ export async function POST(request: NextRequest) {
         titulo: sanitizedData.titulo,
         descripcion: sanitizedData.descripcion || '',
         contacto: sanitizedData.contacto,
+        // Preservar ubicación detallada si existe
         ubicacion: sanitizedData.ubicacion,
         tamaño: sanitizedData.tamaño || 'miniatura',
         fechaPublicacion: sanitizedData.fechaPublicacion || fecha,

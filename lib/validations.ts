@@ -32,10 +32,21 @@ export const adisoSchema = z.object({
     }, {
       message: 'Número de contacto inválido. Debe tener entre 9 y 15 dígitos (puede incluir + al inicio)'
     }),
-  ubicacion: z.string()
-    .min(1, 'La ubicación es requerida')
-    .max(100, 'La ubicación no puede exceder 100 caracteres')
-    .trim(),
+  ubicacion: z.union([
+    z.string()
+      .min(1, 'La ubicación es requerida')
+      .max(100, 'La ubicación no puede exceder 100 caracteres')
+      .trim(),
+    z.object({
+      pais: z.string().optional(),
+      departamento: z.string(),
+      provincia: z.string(),
+      distrito: z.string(),
+      direccion: z.string().optional(),
+      latitud: z.number().optional(),
+      longitud: z.number().optional()
+    })
+  ]),
   tamaño: z.enum(['miniatura', 'pequeño', 'mediano', 'grande', 'gigante']).optional(),
   // Permitir blob: URLs para previews locales antes de subir a Supabase
   imagenUrl: z.string().refine(

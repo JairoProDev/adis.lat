@@ -10,6 +10,23 @@ export type Categoria =
 
 export type TamañoPaquete = 'miniatura' | 'pequeño' | 'mediano' | 'grande' | 'gigante';
 
+// ============================================
+// TIPOS DE UBICACIÓN
+// ============================================
+
+export interface UbicacionDetallada {
+  pais: string; // Por defecto "Perú"
+  departamento: string;
+  provincia: string;
+  distrito: string;
+  direccion?: string; // Dirección específica (opcional)
+  latitud?: number; // Coordenada de latitud
+  longitud?: number; // Coordenada de longitud
+}
+
+// Mantener compatibilidad: ubicación puede ser string (antigua) o UbicacionDetallada (nueva)
+export type Ubicacion = string | UbicacionDetallada;
+
 export interface PaqueteInfo {
   tamaño: TamañoPaquete;
   precio: number;
@@ -74,7 +91,7 @@ export interface Adiso {
   titulo: string;
   descripcion: string;
   contacto: string;
-  ubicacion: string;
+  ubicacion: Ubicacion; // Puede ser string (compatibilidad) o UbicacionDetallada
   fechaPublicacion: string;
   horaPublicacion: string;
   tamaño?: TamañoPaquete; // Tamaño del paquete seleccionado
@@ -82,6 +99,14 @@ export interface Adiso {
   // Mantener imagenUrl para compatibilidad hacia atrás
   imagenUrl?: string;
   esGratuito?: boolean; // Indica si es un adiso gratuito
+  // Nuevos campos para sistema de anuncios históricos
+  fechaExpiracion?: string; // Fecha de expiración en formato ISO
+  estaActivo?: boolean; // Indica si el anuncio está activo
+  esHistorico?: boolean; // Indica si es un anuncio histórico (de PDFs)
+  fuenteOriginal?: 'rueda_negocios' | 'usuario' | 'otro'; // Origen del anuncio
+  edicionNumero?: string; // Número de edición de la revista
+  fechaPublicacionOriginal?: string; // Fecha original de publicación en formato YYYY-MM-DD
+  contactosMultiples?: ContactoMultiple[]; // Array de contactos múltiples
 }
 
 export interface AdisoGratuito {
@@ -98,7 +123,7 @@ export interface AdisoFormData {
   titulo: string;
   descripcion: string;
   contacto: string;
-  ubicacion: string;
+  ubicacion?: UbicacionDetallada; // Opcional: el anunciante puede decidir no incluir ubicación
   tamaño?: TamañoPaquete; // Tamaño del paquete seleccionado
   imagenes?: File[]; // Archivos de imagen (opcional, múltiples)
 }
@@ -259,4 +284,50 @@ export interface UserAnalytics {
   tipo_evento: TipoEventoAnalytics;
   datos: Record<string, any>;
   created_at: string;
+}
+
+// ============================================
+// TIPOS PARA SISTEMA DE ANUNCIOS HISTÓRICOS
+// ============================================
+
+export type TipoContacto = 'telefono' | 'whatsapp' | 'email';
+
+export interface ContactoMultiple {
+  tipo: TipoContacto;
+  valor: string;
+  principal?: boolean; // Indica si es el contacto principal
+  etiqueta?: string; // Etiqueta opcional (ej: "Oficina", "Celular", etc.)
+}
+
+export interface InteresAnuncioCaducado {
+  id: string;
+  adisoId: string;
+  usuarioId?: string;
+  contactoUsuario: string;
+  mensaje?: string;
+  fechaInteres: string;
+  notificadoAnunciante: boolean;
+  fechaNotificacion?: string;
+  createdAt: string;
+}
+
+export interface DatosToonAnuncio {
+  id: string;
+  adisoId: string;
+  contenidoToon: string;
+  fechaActualizacion: string;
+  createdAt: string;
+}
+
+export interface ApiKey {
+  id: string;
+  keyHash: string;
+  nombre: string;
+  descripcion?: string;
+  activa: boolean;
+  rateLimitPerHour: number;
+  permisos: string[];
+  createdAt: string;
+  lastUsedAt?: string;
+  expiresAt?: string;
 }
