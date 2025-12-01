@@ -2,7 +2,7 @@
  * Script para cargar anuncios procesados a Supabase en chunks
  * 
  * Uso:
- *   npx ts-node scripts/cargar-anuncios-masivo.ts <ruta-json-anuncios> [--chunk-size 1000]
+ *   npx ts-node scripts/cargar-anuncios-masivo.ts <ruta-json-anuncios> [--chunk-size 500]
  * 
  * Requiere variables de entorno:
  *   - NEXT_PUBLIC_SUPABASE_URL
@@ -11,227 +11,294 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { createAdisoInSupabase } from '@/lib/supabase';
-import { Adiso, ContactoMultiple } from '@/types';
-import { ResultadoProcesamiento, AnuncioExtraido } from './procesar-con-llm';
+import { createClient } from '@supabase/supabase-js';
+import * as dotenv from 'dotenv';
 
-// Mapeo de ediciones a fechas (ajustar según tus datos)
-const MAPA_EDICIONES_FECHAS: Record<string, string> = {
-  // Ejemplo: '2587': '2024-12-16'
-  // Agregar más según necesites
-};
+// Cargar variables de entorno
+dotenv.config({ path: path.join(process.cwd(), '.env.local') });
+dotenv.config({ path: path.join(process.cwd(), '.env') });
 
-function calcularFechaPublicacion(edicionNumero: string, fechaMencionada?: string): string {
-  // Si hay fecha mencionada en el anuncio, usarla
-  if (fechaMencionada) {
-    return fechaMencionada;
-  }
-  
-  // Si hay mapeo de edición a fecha, usarlo
-  if (MAPA_EDICIONES_FECHAS[edicionNumero]) {
-    return MAPA_EDICIONES_FECHAS[edicionNumero];
-  }
-  
-  // Por defecto, usar fecha actual (para anuncios históricos, esto debería ajustarse)
-  return new Date().toISOString().split('T')[0];
+interface Contacto {
+  tipo: 'telefono' | 'whatsapp' | 'email';
+  valor: string;
+  principal?: boolean;
+  etiqueta?: string;
 }
 
+interface AnuncioConsolidado {
+  id: string;
+  titulo: string;
+  descripcion: string;
+  categoria: string;
+  contactos: Contacto[];
+  ubicacion: string;
+  tamaño_visual: string;
+  precio?: string;
+  edicion: string;
+  pagina: number;
+  fuente_original: string;
+  fecha_publicacion_original: string;
+  es_historico: boolean;
+  esta_activo: boolean;
+}
+
+interface ResultadoConsolidado {
+  fechaConsolidacion: string;
+  totalAnuncios: number;
+  porCategoria: { [key: string]: number };
+  porEdicion: { [key: string]: number };
+  anuncios: AnuncioConsolidado[];
+}
+
+// Mapeo de tamaño visual a días de expiración
+const DIAS_EXPIRACION: Record<string, number> = {
+  miniatura: 7,
+  pequeño: 14,
+  mediano: 21,
+  grande: 30,
+  gigante: 45
+};
+
+/**
+ * Calcula la fecha de expiración basada en la fecha de publicación y tamaño
+ */
 function calcularFechaExpiracion(fechaPublicacion: string, tamañoVisual: string): string {
   const fecha = new Date(fechaPublicacion);
-  
-  // Días de expiración según tamaño (para anuncios históricos, ya expiraron)
-  // Pero calculamos la fecha original de expiración
-  const diasExpiracion: Record<string, number> = {
-    miniatura: 7,
-    pequeño: 14,
-    mediano: 21,
-    grande: 30,
-    gigante: 45
-  };
-  
-  const dias = diasExpiracion[tamañoVisual] || 14;
+  const dias = DIAS_EXPIRACION[tamañoVisual] || 14;
   fecha.setDate(fecha.getDate() + dias);
-  
   return fecha.toISOString();
 }
 
-function convertirAnuncioExtraido(
-  anuncio: AnuncioExtraido,
-  edicionNumero: string,
-  fechaPublicacionOriginal: string
-): Adiso {
-  // Generar ID único
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substr(2, 9);
-  const id = `rueda-negocios-${edicionNumero}-${timestamp}-${random}`;
-  
-  // Convertir contactos múltiples
-  const contactosMultiples: ContactoMultiple[] = anuncio.contactos.map((c, index) => ({
-    tipo: c.tipo,
-    valor: c.valor,
-    principal: c.principal || index === 0,
-    etiqueta: c.etiqueta
-  }));
-  
-  // Si no hay contactos múltiples pero hay contacto principal, crear uno
-  if (contactosMultiples.length === 0 && anuncio.contactos.length > 0) {
-    contactosMultiples.push({
-      tipo: anuncio.contactos[0].tipo,
-      valor: anuncio.contactos[0].valor,
-      principal: true
-    });
-  }
-  
-  // Determinar contacto principal para el campo contacto (compatibilidad)
-  const contactoPrincipal = contactosMultiples.find(c => c.principal) || contactosMultiples[0];
+/**
+ * Convierte un anuncio consolidado al formato de la base de datos
+ */
+function convertirAFormatoDB(anuncio: AnuncioConsolidado): Record<string, any> {
+  // Obtener contacto principal
+  const contactoPrincipal = anuncio.contactos.find(c => c.principal) || anuncio.contactos[0];
   const contactoString = contactoPrincipal?.valor || '';
   
-  // Calcular fechas
-  const fechaPublicacion = calcularFechaPublicacion(edicionNumero, anuncio.fecha_publicacion);
-  const fechaExpiracion = calcularFechaExpiracion(fechaPublicacion, anuncio.tamaño_visual);
+  // Calcular fecha de expiración (ya pasó para históricos)
+  const fechaExpiracion = calcularFechaExpiracion(
+    anuncio.fecha_publicacion_original,
+    anuncio.tamaño_visual
+  );
+  
+  // Parsear ubicación
+  const partes = anuncio.ubicacion.split(',').map(s => s.trim());
+  const ubicacion = {
+    distrito: partes[0] || 'Cusco',
+    provincia: partes[1] || 'Cusco',
+    departamento: partes[2] || 'Cusco'
+  };
   
   return {
-    id,
-    categoria: anuncio.categoria as any,
-    titulo: anuncio.titulo.substring(0, 100), // Asegurar máximo 100 caracteres
-    descripcion: anuncio.descripcion.substring(0, 2000), // Asegurar máximo 2000 caracteres
+    id: anuncio.id,
+    categoria: anuncio.categoria,
+    titulo: anuncio.titulo.substring(0, 100),
+    descripcion: anuncio.descripcion.substring(0, 2000),
     contacto: contactoString,
-    ubicacion: anuncio.ubicacion || 'Cusco, Cusco, Cusco',
-    fechaPublicacion,
-    horaPublicacion: '00:00',
+    ubicacion: JSON.stringify(ubicacion),
+    fecha_publicacion: anuncio.fecha_publicacion_original,
+    hora_publicacion: '00:00',
     tamaño: anuncio.tamaño_visual,
-    esHistorico: true,
-    fuenteOriginal: 'rueda_negocios',
-    edicionNumero,
-    fechaPublicacionOriginal,
-    estaActivo: false, // Todos los históricos inician como inactivos
-    fechaExpiracion,
-    contactosMultiples: contactosMultiples.length > 0 ? contactosMultiples : undefined
+    es_gratuito: true,
+    fecha_expiracion: fechaExpiracion,
+    esta_activo: false,
+    es_historico: true,
+    fuente_original: 'rueda_negocios',
+    edicion_numero: anuncio.edicion,
+    fecha_publicacion_original: anuncio.fecha_publicacion_original,
+    // Guardar contactos múltiples como JSON
+    contactos_multiples: anuncio.contactos.length > 0 ? JSON.stringify(anuncio.contactos) : null
   };
 }
 
-async function cargarChunk(anuncios: Adiso[], chunkNum: number, totalChunks: number): Promise<{ exitosos: number; errores: number }> {
+/**
+ * Carga un chunk de anuncios a Supabase
+ */
+async function cargarChunk(
+  supabase: any, 
+  anuncios: Record<string, any>[], 
+  chunkNum: number, 
+  totalChunks: number
+): Promise<{ exitosos: number; errores: number; erroresDetalle: string[] }> {
   let exitosos = 0;
   let errores = 0;
+  const erroresDetalle: string[] = [];
   
-  console.log(`  Cargando chunk ${chunkNum}/${totalChunks} (${anuncios.length} anuncios)...`);
+  console.log(`  📦 Cargando chunk ${chunkNum}/${totalChunks} (${anuncios.length} anuncios)...`);
   
-  for (let i = 0; i < anuncios.length; i++) {
+  // Insertar en batches de 50 para mejor rendimiento
+  const batchSize = 50;
+  for (let i = 0; i < anuncios.length; i += batchSize) {
+    const batch = anuncios.slice(i, i + batchSize);
+    
     try {
-      await createAdisoInSupabase(anuncios[i]);
-      exitosos++;
+      const { data, error } = await supabase
+        .from('adisos')
+        .upsert(batch, { 
+          onConflict: 'id',
+          ignoreDuplicates: true 
+        });
       
-      if ((i + 1) % 100 === 0) {
-        console.log(`    Progreso: ${i + 1}/${anuncios.length} anuncios cargados`);
+      if (error) {
+        errores += batch.length;
+        erroresDetalle.push(`Batch ${Math.floor(i/batchSize)}: ${error.message}`);
+      } else {
+        exitosos += batch.length;
       }
+      
+      process.stdout.write(`\r    ✓ ${Math.min(i + batchSize, anuncios.length)}/${anuncios.length} anuncios procesados`);
     } catch (error: any) {
-      errores++;
-      console.error(`    Error al cargar anuncio ${anuncios[i].id}:`, error.message);
+      errores += batch.length;
+      erroresDetalle.push(`Batch ${Math.floor(i/batchSize)}: ${error.message}`);
     }
   }
   
-  return { exitosos, errores };
+  console.log('');
+  
+  return { exitosos, errores, erroresDetalle };
 }
 
-async function main() {
+/**
+ * Función principal
+ */
+async function main(): Promise<void> {
   const args = process.argv.slice(2);
   
-  if (args.length < 1) {
-    console.error('Uso: npx ts-node scripts/cargar-anuncios-masivo.ts <ruta-json-anuncios> [--chunk-size 1000]');
-    process.exit(1);
+  if (args.length < 1 || args.includes('--help')) {
+    console.log(`
+📤 CARGADOR MASIVO DE ANUNCIOS A SUPABASE
+${'='.repeat(50)}
+
+Uso:
+  npx ts-node scripts/cargar-anuncios-masivo.ts <json-consolidado> [opciones]
+
+Opciones:
+  --chunk-size <n>  Tamaño de cada chunk (default: 500)
+  --dry-run         Simular sin cargar
+  --help            Mostrar ayuda
+
+Ejemplo:
+  npx ts-node scripts/cargar-anuncios-masivo.ts ./output/anuncios-consolidados.json --chunk-size 500
+    `);
+    process.exit(0);
   }
 
   const rutaEntrada = args[0];
   const chunkSizeIndex = args.indexOf('--chunk-size');
   const chunkSize = chunkSizeIndex >= 0 && args[chunkSizeIndex + 1]
     ? parseInt(args[chunkSizeIndex + 1], 10)
-    : 1000;
+    : 500;
+  const dryRun = args.includes('--dry-run');
 
-  console.log('=== Carga Masiva de Anuncios ===');
-  console.log(`Archivo entrada: ${rutaEntrada}`);
-  console.log(`Tamaño de chunk: ${chunkSize}`);
-  console.log('');
-
+  // Verificar archivo de entrada
   if (!fs.existsSync(rutaEntrada)) {
-    console.error(`Error: El archivo ${rutaEntrada} no existe`);
+    console.error(`❌ Error: El archivo no existe: ${rutaEntrada}`);
     process.exit(1);
   }
 
   // Verificar variables de entorno
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    console.error('Error: Variables de entorno de Supabase no configuradas');
-    console.error('Necesitas: NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY');
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('❌ Error: Variables de entorno de Supabase no configuradas');
+    console.error('   Necesitas: NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY');
+    console.error('   Verifica tu archivo .env.local');
     process.exit(1);
   }
 
-  try {
-    const resultados: ResultadoProcesamiento[] = JSON.parse(fs.readFileSync(rutaEntrada, 'utf-8'));
-    console.log(`Cargados ${resultados.length} resultados de procesamiento`);
+  console.log('🚀 CARGADOR MASIVO DE ANUNCIOS');
+  console.log('='.repeat(50));
+  console.log(`   Archivo: ${rutaEntrada}`);
+  console.log(`   Chunk size: ${chunkSize}`);
+  console.log(`   Modo: ${dryRun ? 'DRY RUN (simulación)' : 'PRODUCCIÓN'}`);
+  console.log(`   Supabase: ${supabaseUrl.substring(0, 30)}...`);
+
+  // Crear cliente Supabase
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  // Leer y parsear el archivo
+  console.log('\n📖 Leyendo archivo de anuncios...');
+  const contenido = fs.readFileSync(rutaEntrada, 'utf-8');
+  const datos: ResultadoConsolidado = JSON.parse(contenido);
+
+  console.log(`   ✓ ${datos.totalAnuncios} anuncios encontrados`);
+  console.log(`   ✓ ${Object.keys(datos.porEdicion).length} ediciones`);
+
+  // Convertir anuncios al formato de BD
+  console.log('\n🔄 Convirtiendo anuncios al formato de BD...');
+  const anunciosDB = datos.anuncios.map(convertirAFormatoDB);
+  console.log(`   ✓ ${anunciosDB.length} anuncios convertidos`);
+
+  if (dryRun) {
+    console.log('\n⚠️  MODO DRY RUN - No se cargarán datos');
+    console.log('   Ejecuta sin --dry-run para cargar realmente');
     
-    // Convertir todos los anuncios
-    const anuncios: Adiso[] = [];
-    for (const resultado of resultados) {
-      if (resultado.error) {
-        console.warn(`⚠ Omitiendo página ${resultado.pagina} (edición ${resultado.edicion}): ${resultado.error}`);
-        continue;
-      }
-      
-      for (const anuncioExtraido of resultado.anuncios) {
-        try {
-          const adiso = convertirAnuncioExtraido(
-            anuncioExtraido,
-            resultado.edicion,
-            calcularFechaPublicacion(resultado.edicion, anuncioExtraido.fecha_publicacion)
-          );
-          anuncios.push(adiso);
-        } catch (error: any) {
-          console.error(`Error al convertir anuncio:`, error.message);
-        }
-      }
-    }
-    
-    console.log(`Total de anuncios a cargar: ${anuncios.length}`);
-    console.log('');
-    
-    // Dividir en chunks
-    const chunks: Adiso[][] = [];
-    for (let i = 0; i < anuncios.length; i += chunkSize) {
-      chunks.push(anuncios.slice(i, i + chunkSize));
-    }
-    
-    console.log(`Divididos en ${chunks.length} chunks de máximo ${chunkSize} anuncios`);
-    console.log('');
-    
-    // Cargar cada chunk
-    let totalExitosos = 0;
-    let totalErrores = 0;
-    
-    for (let i = 0; i < chunks.length; i++) {
-      const resultado = await cargarChunk(chunks[i], i + 1, chunks.length);
-      totalExitosos += resultado.exitosos;
-      totalErrores += resultado.errores;
-      
-      // Pausa entre chunks para no saturar
-      if (i < chunks.length - 1) {
-        console.log(`  Pausa de 2 segundos antes del siguiente chunk...`);
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
-    }
-    
-    console.log('');
-    console.log('=== Resumen Final ===');
-    console.log(`✓ Anuncios cargados exitosamente: ${totalExitosos}`);
-    console.log(`✗ Errores: ${totalErrores}`);
-    console.log(`Total procesado: ${totalExitosos + totalErrores}`);
-  } catch (error: any) {
-    console.error('Error:', error);
-    process.exit(1);
+    // Mostrar muestra
+    console.log('\n📋 Muestra del primer anuncio:');
+    console.log(JSON.stringify(anunciosDB[0], null, 2));
+    process.exit(0);
   }
+
+  // Dividir en chunks
+  const chunks: Record<string, any>[][] = [];
+  for (let i = 0; i < anunciosDB.length; i += chunkSize) {
+    chunks.push(anunciosDB.slice(i, i + chunkSize));
+  }
+
+  console.log(`\n📦 Divididos en ${chunks.length} chunks de máximo ${chunkSize} anuncios`);
+
+  // Cargar cada chunk
+  let totalExitosos = 0;
+  let totalErrores = 0;
+  const todosErrores: string[] = [];
+
+  const tiempoInicio = Date.now();
+
+  for (let i = 0; i < chunks.length; i++) {
+    const resultado = await cargarChunk(supabase, chunks[i], i + 1, chunks.length);
+    totalExitosos += resultado.exitosos;
+    totalErrores += resultado.errores;
+    todosErrores.push(...resultado.erroresDetalle);
+
+    // Pausa entre chunks
+    if (i < chunks.length - 1) {
+      console.log(`   ⏳ Pausa de 1 segundo...`);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
+
+  const tiempoTotal = ((Date.now() - tiempoInicio) / 1000).toFixed(1);
+
+  // Resumen final
+  console.log('\n' + '='.repeat(50));
+  console.log('📊 RESUMEN FINAL');
+  console.log('='.repeat(50));
+  console.log(`   ✓ Anuncios cargados: ${totalExitosos}`);
+  console.log(`   ✗ Errores: ${totalErrores}`);
+  console.log(`   ⏱️  Tiempo total: ${tiempoTotal} segundos`);
+  console.log(`   📈 Velocidad: ${(totalExitosos / parseFloat(tiempoTotal)).toFixed(0)} anuncios/segundo`);
+
+  if (todosErrores.length > 0) {
+    console.log('\n⚠️  Errores encontrados:');
+    for (const error of todosErrores.slice(0, 10)) {
+      console.log(`   - ${error}`);
+    }
+    if (todosErrores.length > 10) {
+      console.log(`   ... y ${todosErrores.length - 10} errores más`);
+    }
+  }
+
+  console.log('\n✅ Carga completada');
+  console.log('   Verifica los anuncios en tu plataforma\n');
 }
 
-if (require.main === module) {
-  main();
-}
+// Ejecutar
+main().catch(error => {
+  console.error('❌ Error fatal:', error);
+  process.exit(1);
+});
 
-export { convertirAnuncioExtraido, cargarChunk };
-
+export { convertirAFormatoDB, cargarChunk };
