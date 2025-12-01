@@ -6,6 +6,7 @@ import { Adiso, Categoria } from '@/types';
 import Header from '@/components/Header';
 import GrillaAdisos from '@/components/GrillaAdisos';
 import Breadcrumbs from '@/components/Breadcrumbs';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 interface CategoriaPageContentProps {
   categoria: Categoria;
@@ -25,6 +26,7 @@ const categoriaLabels: Record<Categoria, string> = {
 
 export default function CategoriaPageContent({ categoria, adisos }: CategoriaPageContentProps) {
   const router = useRouter();
+  const isDesktop = useMediaQuery('(min-width: 768px)');
 
   // Redirigir a la página principal con filtro de categoría para mantener compatibilidad
   useEffect(() => {
@@ -36,12 +38,18 @@ export default function CategoriaPageContent({ categoria, adisos }: CategoriaPag
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-secondary)' }}>
-      <Header 
-        breadcrumbs={[
+      <Header />
+      <div style={{
+        padding: isDesktop ? '0.5rem 1.5rem' : '0.5rem 1rem',
+        paddingRight: isDesktop ? 'calc(1.5rem + 80px)' : '1rem',
+        maxWidth: '1400px',
+        margin: '0 auto',
+      }}>
+        <Breadcrumbs items={[
           { label: 'Inicio', href: '/' },
           { label: categoriaLabels[categoria] },
-        ]}
-      />
+        ]} />
+      </div>
       <main style={{ flex: 1, padding: '1rem', maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
         <div itemScope itemType="https://schema.org/CollectionPage">
           <meta itemProp="name" content={categoriaLabels[categoria]} />

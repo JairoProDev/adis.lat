@@ -1,11 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { FaSun, FaMoon } from 'react-icons/fa';
+import { useEffect, useState, useRef } from 'react';
+import { FaSun, FaMoon, FaDesktop } from 'react-icons/fa';
+
+const themeOptions = [
+  { value: 'light' as const, label: 'Claro', icon: FaSun },
+  { value: 'auto' as const, label: 'Automático', icon: FaDesktop },
+  { value: 'dark' as const, label: 'Oscuro', icon: FaMoon },
+];
 
 export default function ThemeToggle() {
   const [theme, setTheme] = useState<'light' | 'dark' | 'auto'>('auto');
   const [mounted, setMounted] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -33,6 +41,22 @@ export default function ThemeToggle() {
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
   const applyTheme = (newTheme: 'light' | 'dark' | 'auto') => {
     const root = document.documentElement;
     root.classList.remove('light-mode', 'dark-mode');
@@ -55,108 +79,102 @@ export default function ThemeToggle() {
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme);
     applyTheme(newTheme);
+    setIsOpen(false);
   };
 
   if (!mounted) {
     return null; // Evitar flash de contenido incorrecto
   }
 
+  const currentOption = themeOptions.find(opt => opt.value === theme) || themeOptions[1];
+  const CurrentIcon = currentOption.icon;
+
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: '0.5rem',
-      padding: '0.5rem',
-      borderRadius: '8px',
-      backgroundColor: 'var(--bg-secondary)',
-      border: '1px solid var(--border-color)',
-    }}>
+    <div ref={dropdownRef} style={{ position: 'relative' }}>
       <button
-        onClick={() => handleThemeChange('light')}
-        aria-label="Modo claro"
+        onClick={() => setIsOpen(!isOpen)}
+        aria-label="Cambiar tema"
+        aria-expanded={isOpen}
+        aria-haspopup="true"
         style={{
-          padding: '0.5rem',
-          border: 'none',
-          background: theme === 'light' ? 'var(--text-primary)' : 'transparent',
-          color: theme === 'light' ? 'var(--bg-primary)' : 'var(--text-secondary)',
-          borderRadius: '6px',
-          cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
+          gap: '0.5rem',
+          padding: '0.5rem 0.75rem',
+          border: '1px solid var(--border-color)',
+          borderRadius: '6px',
+          backgroundColor: 'var(--bg-primary)',
+          color: 'var(--text-primary)',
+          cursor: 'pointer',
+          fontSize: '0.875rem',
           transition: 'all 0.2s',
         }}
         onMouseEnter={(e) => {
-          if (theme !== 'light') {
-            e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-          }
+          e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
         }}
         onMouseLeave={(e) => {
-          if (theme !== 'light') {
-            e.currentTarget.style.backgroundColor = 'transparent';
-          }
+          e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
         }}
       >
-        <FaSun size={16} aria-hidden="true" />
+        <CurrentIcon size={14} aria-hidden="true" />
+        <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>▼</span>
       </button>
-      <button
-        onClick={() => handleThemeChange('auto')}
-        aria-label="Modo automático"
-        style={{
-          padding: '0.5rem',
-          border: 'none',
-          background: theme === 'auto' ? 'var(--text-primary)' : 'transparent',
-          color: theme === 'auto' ? 'var(--bg-primary)' : 'var(--text-secondary)',
-          borderRadius: '6px',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          transition: 'all 0.2s',
-          fontSize: '0.75rem',
-          fontWeight: 600,
-        }}
-        onMouseEnter={(e) => {
-          if (theme !== 'auto') {
-            e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (theme !== 'auto') {
-            e.currentTarget.style.backgroundColor = 'transparent';
-          }
-        }}
-      >
-        A
-      </button>
-      <button
-        onClick={() => handleThemeChange('dark')}
-        aria-label="Modo oscuro"
-        style={{
-          padding: '0.5rem',
-          border: 'none',
-          background: theme === 'dark' ? 'var(--text-primary)' : 'transparent',
-          color: theme === 'dark' ? 'var(--bg-primary)' : 'var(--text-secondary)',
-          borderRadius: '6px',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          transition: 'all 0.2s',
-        }}
-        onMouseEnter={(e) => {
-          if (theme !== 'dark') {
-            e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (theme !== 'dark') {
-            e.currentTarget.style.backgroundColor = 'transparent';
-          }
-        }}
-      >
-        <FaMoon size={16} aria-hidden="true" />
-      </button>
+
+      {isOpen && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '100%',
+            right: 0,
+            marginTop: '0.5rem',
+            backgroundColor: 'var(--bg-primary)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px var(--shadow)',
+            zIndex: 1000,
+            minWidth: '150px',
+            overflow: 'hidden',
+          }}
+        >
+          {themeOptions.map((option) => {
+            const OptionIcon = option.icon;
+            return (
+              <button
+                key={option.value}
+                onClick={() => handleThemeChange(option.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem 1rem',
+                  textAlign: 'left',
+                  border: 'none',
+                  backgroundColor: theme === option.value ? 'var(--text-primary)' : 'transparent',
+                  color: theme === option.value ? 'var(--bg-primary)' : 'var(--text-primary)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  fontSize: '0.875rem',
+                  transition: 'background-color 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  if (theme !== option.value) {
+                    e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (theme !== option.value) {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }
+                }}
+              >
+                <OptionIcon size={14} aria-hidden="true" />
+                <span>{option.label}</span>
+                {theme === option.value && <span style={{ marginLeft: 'auto' }}>✓</span>}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

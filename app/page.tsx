@@ -17,6 +17,7 @@ import { registrarBusqueda } from '@/lib/analytics';
 import { onOnlineStatusChange, getOfflineMessage } from '@/lib/offline';
 import dynamicImport from 'next/dynamic';
 import Header from '@/components/Header';
+import Breadcrumbs from '@/components/Breadcrumbs';
 import Buscador from '@/components/Buscador';
 import FiltrosCategoria from '@/components/FiltrosCategoria';
 import Ordenamiento, { TipoOrdenamiento } from '@/components/Ordenamiento';
@@ -554,12 +555,25 @@ function HomeContent() {
         </a>
         <Header 
           onChangelogClick={() => router.push('/progreso')}
-          breadcrumbs={[
-            { label: 'Inicio', href: '/' },
-            ...(categoriaFiltro !== 'todos' ? [{ label: categoriaFiltro, href: `/?categoria=${categoriaFiltro}` }] : []),
-            ...(adisoAbierto ? [{ label: adisoAbierto.titulo }] : []),
-          ]}
         />
+        {([
+          { label: 'Inicio', href: '/' },
+          ...(categoriaFiltro !== 'todos' ? [{ label: categoriaFiltro, href: `/?categoria=${categoriaFiltro}` }] : []),
+          ...(adisoAbierto ? [{ label: adisoAbierto.titulo }] : []),
+        ].length > 1 || adisoAbierto) && (
+          <div style={{
+            padding: isDesktop ? '0.5rem 1.5rem' : '0.5rem 1rem',
+            paddingRight: isDesktop ? 'calc(1.5rem + 80px)' : '1rem',
+            maxWidth: '1400px',
+            margin: '0 auto',
+          }}>
+            <Breadcrumbs items={[
+              { label: 'Inicio', href: '/' },
+              ...(categoriaFiltro !== 'todos' ? [{ label: categoriaFiltro, href: `/?categoria=${categoriaFiltro}` }] : []),
+              ...(adisoAbierto ? [{ label: adisoAbierto.titulo }] : []),
+            ]} />
+          </div>
+        )}
       <main id="main-content" style={{
         flex: 1,
         padding: '1rem',
@@ -610,10 +624,6 @@ function HomeContent() {
               router.push(newUrl, { scroll: false });
             }}
           />
-          <Ordenamiento
-            valor={ordenamiento}
-            onChange={setOrdenamiento}
-          />
         </div>
         {cargando ? (
           <SkeletonAdisos />
@@ -631,45 +641,51 @@ function HomeContent() {
                   flexWrap: 'wrap',
                   gap: '0.5rem'
                 }}>
-                  <span>
-                    Mostrando {adisosFiltrados.length} {adisosFiltrados.length === 1 ? 'adiso' : 'adisos'}
-                    {(busqueda || categoriaFiltro !== 'todos') && ` (de ${adisos.length} total)`}
-                  </span>
-                  {(busqueda.trim() || categoriaFiltro !== 'todos') && (
-                    <button
-                      onClick={async () => {
-                        const url = getBusquedaUrl(categoriaFiltro, busqueda);
-                        try {
-                          await navigator.clipboard.writeText(url);
-                          success('Link de búsqueda copiado');
-                        } catch (err) {
-                          console.error('Error al copiar:', err);
-                          error('Error al copiar link');
-                        }
-                      }}
-                      style={{
-                        padding: '0.375rem 0.75rem',
-                        fontSize: '0.75rem',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '6px',
-                        backgroundColor: 'var(--bg-primary)',
-                        color: 'var(--text-primary)',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.35rem',
-                        transition: 'all 0.2s'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-                      }}
-                    >
-                      📋 Compartir búsqueda
-                    </button>
-                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <span>
+                      Mostrando {adisosFiltrados.length} {adisosFiltrados.length === 1 ? 'adiso' : 'adisos'}
+                      {(busqueda || categoriaFiltro !== 'todos') && ` (de ${adisos.length} total)`}
+                    </span>
+                    {(busqueda.trim() || categoriaFiltro !== 'todos') && (
+                      <button
+                        onClick={async () => {
+                          const url = getBusquedaUrl(categoriaFiltro, busqueda);
+                          try {
+                            await navigator.clipboard.writeText(url);
+                            success('Link de búsqueda copiado');
+                          } catch (err) {
+                            console.error('Error al copiar:', err);
+                            error('Error al copiar link');
+                          }
+                        }}
+                        style={{
+                          padding: '0.375rem 0.75rem',
+                          fontSize: '0.75rem',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '6px',
+                          backgroundColor: 'var(--bg-primary)',
+                          color: 'var(--text-primary)',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
+                        }}
+                      >
+                        📋 Compartir búsqueda
+                      </button>
+                    )}
+                  </div>
+                  <Ordenamiento
+                    valor={ordenamiento}
+                    onChange={setOrdenamiento}
+                  />
                 </div>
               )}
               <GrillaAdisos

@@ -29,7 +29,7 @@ export default function Breadcrumbs({ items }: BreadcrumbsProps) {
   };
 
   return (
-    <nav aria-label="Breadcrumb" style={{ marginBottom: '1rem' }}>
+    <nav aria-label="Breadcrumb" style={{ margin: 0, padding: 0 }}>
       <ol
         itemScope
         itemType="https://schema.org/BreadcrumbList"
@@ -41,8 +41,9 @@ export default function Breadcrumbs({ items }: BreadcrumbsProps) {
           padding: 0,
           margin: 0,
           flexWrap: 'wrap',
-          fontSize: '0.875rem',
+          fontSize: '0.8125rem',
           color: 'var(--text-secondary)',
+          lineHeight: 1.2,
         }}
       >
         {items.map((item, index) => {
