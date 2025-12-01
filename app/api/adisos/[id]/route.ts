@@ -100,25 +100,36 @@ export async function PUT(
       );
     }
 
-    // Sanitizar campos de texto
-    const sanitizedData = {
-      ...validatedData,
+    // Sanitizar campos de texto y convertir null a undefined para compatibilidad con el tipo Adiso
+    // Convertir explícitamente null a undefined con verificación de tipo estricta
+    let imagenesUrlsSanitized: string[] | undefined = undefined;
+    if (validatedData.imagenesUrls !== null && validatedData.imagenesUrls !== undefined) {
+      imagenesUrlsSanitized = validatedData.imagenesUrls;
+    }
+    
+    let imagenUrlSanitized: string | undefined = undefined;
+    if (validatedData.imagenUrl !== null && validatedData.imagenUrl !== undefined) {
+      imagenUrlSanitized = validatedData.imagenUrl;
+    }
+
+    // Actualizar el adiso (mantener fechas originales)
+    // Construir explícitamente para evitar problemas de tipos con null
+    const adisoActualizado = {
+      id,
+      categoria: validatedData.categoria,
       titulo: sanitizeText(validatedData.titulo),
       descripcion: validatedData.descripcion 
         ? sanitizeText(validatedData.descripcion) 
         : adisoExistente.descripcion, // Mantener descripción existente si no se proporciona
-      ubicacion: sanitizeText(validatedData.ubicacion),
       contacto: sanitizeText(validatedData.contacto),
-    };
-
-    // Actualizar el adiso (mantener fechas originales)
-    const adisoActualizado: Adiso = {
-      ...adisoExistente,
-      ...sanitizedData,
-      id, // Asegurar que el ID no cambie
+      ubicacion: sanitizeText(validatedData.ubicacion),
       fechaPublicacion: adisoExistente.fechaPublicacion,
       horaPublicacion: adisoExistente.horaPublicacion,
-    };
+      tamaño: validatedData.tamaño ?? adisoExistente.tamaño,
+      imagenesUrls: imagenesUrlsSanitized,
+      imagenUrl: imagenUrlSanitized,
+      esGratuito: adisoExistente.esGratuito,
+    } as Adiso;
 
     const resultado = await updateAdisoInSupabase(adisoActualizado);
 
