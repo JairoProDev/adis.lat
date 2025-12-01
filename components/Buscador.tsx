@@ -71,7 +71,7 @@ export default function Buscador({ value, onChange, categoriaSeleccionada = 'tod
   };
 
   return (
-    <div style={{ position: 'relative', width: '100%' }}>
+    <div style={{ width: '100%' }}>
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         {/* Botón de categoría */}
         <div ref={contenedorRef} style={{ position: 'relative', flexShrink: 0 }}>
@@ -99,7 +99,10 @@ export default function Buscador({ value, onChange, categoriaSeleccionada = 'tod
               e.currentTarget.style.borderColor = 'var(--border-color)';
             }}
           >
-            <CategoriaIcon size={18} color={categoriaSeleccionada !== 'todos' ? 'var(--bg-primary)' : 'var(--text-primary)'} />
+            {(() => {
+              const iconColor = categoriaSeleccionada !== 'todos' ? 'var(--bg-primary)' : 'var(--text-primary)';
+              return <CategoriaIcon size={18} color={iconColor} />;
+            })()}
             <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>
               {t(categoriaActual.labelKey)}
             </span>
@@ -152,22 +155,18 @@ export default function Buscador({ value, onChange, categoriaSeleccionada = 'tod
         </div>
       </div>
 
-      {/* Dropdown de categorías horizontal */}
+      {/* Dropdown de categorías horizontal - desplaza contenido */}
       {mostrarCategorias && (
         <div
           ref={categoriasRef}
           style={{
-            position: 'absolute',
-            top: 'calc(100% + 0.5rem)',
-            left: 0,
-            right: 0,
+            marginTop: '0.75rem',
             backgroundColor: 'var(--bg-primary)',
             border: '1px solid var(--border-color)',
             borderRadius: '12px',
             boxShadow: '0 4px 16px var(--shadow)',
-            zIndex: 1000,
             padding: '1rem',
-            maxHeight: '200px',
+            transition: 'all 0.3s ease',
           }}
         >
           <div
@@ -231,7 +230,7 @@ export default function Buscador({ value, onChange, categoriaSeleccionada = 'tod
                   >
                     <CatIcon 
                       size={24} 
-                      color={estaSeleccionada ? 'var(--bg-primary)' : 'var(--text-primary)'} 
+                      color={estaSeleccionada ? 'var(--text-primary)' : 'var(--text-primary)'} 
                     />
                   </div>
                   <span

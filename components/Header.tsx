@@ -50,10 +50,10 @@ export default function Header({ onChangelogClick }: HeaderProps) {
           gap: '0.5rem',
           flexShrink: 0
         }}>
-          <UserMenu />
+          <UserMenu onProgressClick={onChangelogClick} />
           <LanguageSelector />
           <ThemeToggle />
-          {onChangelogClick && (
+          {onChangelogClick && isDesktop && (
             <button
               onClick={onChangelogClick}
               aria-label={t('header.progress')}

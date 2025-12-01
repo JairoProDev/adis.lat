@@ -9,10 +9,17 @@ import LocationPrompt from './LocationPrompt';
 import ConvertirAnunciante from './ConvertirAnunciante';
 import UserProfile from './UserProfile';
 import { IconClose } from './Icons';
+import { FaChartLine } from 'react-icons/fa';
+import { useTranslation } from '@/hooks/useTranslation';
 
-export default function UserMenu() {
+interface UserMenuProps {
+  onProgressClick?: () => void;
+}
+
+export default function UserMenu({ onProgressClick }: UserMenuProps) {
   const { user, signOut, refreshProfile } = useAuth();
   const { profile, isAnunciante, isVerificado } = useUser();
+  const { t } = useTranslation();
   const [mostrarMenu, setMostrarMenu] = useState(false);
   const [mostrarAuthModal, setMostrarAuthModal] = useState(false);
   const [mostrarFavoritos, setMostrarFavoritos] = useState(false);
@@ -203,6 +210,37 @@ export default function UserMenu() {
             >
               ⭐ Favoritos
             </button>
+            {onProgressClick && (
+              <button
+                onClick={() => {
+                  setMostrarMenu(false);
+                  onProgressClick();
+                }}
+                style={{
+                  width: '100%',
+                  padding: '0.5rem 0.75rem',
+                  textAlign: 'left',
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  borderRadius: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                <FaChartLine size={14} aria-hidden="true" />
+                {t('header.progress')}
+              </button>
+            )}
             <button
               onClick={() => {
                 setMostrarMenu(false);
