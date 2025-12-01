@@ -526,18 +526,19 @@ function HomeContent() {
     }
   }, [adisoAbierto?.id, indiceAdisoActual, adisosFiltrados]);
 
-  // Structured data para SEO
+  // Structured data para SEO - usar URL base consistente
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://buscadis.com';
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'Buscadis',
-    url: typeof window !== 'undefined' ? window.location.origin : 'https://buscadis.com',
+    url: siteUrl,
     description: 'Publica y encuentra adisos clasificados en Perú',
     potentialAction: {
       '@type': 'SearchAction',
       target: {
         '@type': 'EntryPoint',
-        urlTemplate: typeof window !== 'undefined' ? `${window.location.origin}/?buscar={search_term_string}` : 'https://buscadis.com/?buscar={search_term_string}'
+        urlTemplate: `${siteUrl}/?buscar={search_term_string}`
       },
       'query-input': 'required name=search_term_string'
     }
