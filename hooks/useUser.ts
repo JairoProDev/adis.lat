@@ -16,7 +16,13 @@ export function useUser() {
       setLoadingPreferences(true);
       getUserPreferences(user.id)
         .then(setPreferences)
-        .catch(console.error)
+        .catch((error: any) => {
+          // Si la tabla no existe aún (PGRST205), no es un error crítico
+          if (error?.code !== 'PGRST205') {
+            console.error('Error al cargar preferencias:', error);
+          }
+          setPreferences(null);
+        })
         .finally(() => setLoadingPreferences(false));
     } else {
       setPreferences(null);

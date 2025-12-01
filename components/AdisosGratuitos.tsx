@@ -4,7 +4,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { AdisoGratuito, Categoria, Adiso } from '@/types';
 import { IconWhatsApp, IconGratuitos } from './Icons';
 import { getWhatsAppUrl, generarIdUnico } from '@/lib/utils';
-import { fetchAdisosGratuitos, createAdisoGratuito } from '@/lib/api';
+import { createAdisoGratuito } from '@/lib/api';
+import { useAdisosGratuitosCache } from '@/contexts/AdisosGratuitosCache';
 import { 
   IconEmpleos, 
   IconInmuebles, 
@@ -41,9 +42,8 @@ type AdisoUnificado =
   | { tipo: 'gratuito'; adiso: AdisoGratuito };
 
 export default function AdisosGratuitos({ onPublicarGratuito, todosLosAdisos = [] }: AdisosGratuitosProps) {
-  const [adisosGratuitos, setAdisosGratuitos] = useState<AdisoGratuito[]>([]);
-  const [cargando, setCargando] = useState(true);
-  const [errorCargandoGratuitos, setErrorCargandoGratuitos] = useState(false);
+  // Usar el caché global en lugar de estado local
+  const { adisosGratuitos, cargando, error: errorCargandoGratuitos, cargarAdisos, agregarAdiso, removerAdiso } = useAdisosGratuitosCache();
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [publicando, setPublicando] = useState(false);
   const [formData, setFormData] = useState({
@@ -52,25 +52,10 @@ export default function AdisosGratuitos({ onPublicarGratuito, todosLosAdisos = [
     contacto: ''
   });
 
+  // Cargar adisos solo una vez cuando el componente se monta por primera vez
   useEffect(() => {
-    const cargarAdisos = async () => {
-      try {
-        const adisos = await fetchAdisosGratuitos();
-        setAdisosGratuitos(adisos);
-        setErrorCargandoGratuitos(false);
-      } catch (error: any) {
-        console.error('Error al cargar adisos gratuitos:', error);
-        // Si la tabla no existe aún (error 500/503), simplemente no mostrar error
-        // Los adisos de paga se mostrarán de todas formas
-        if (error?.message?.includes('Error al obtener adisos gratuitos')) {
-          setErrorCargandoGratuitos(true);
-        }
-      } finally {
-        setCargando(false);
-      }
-    };
     cargarAdisos();
-  }, []);
+  }, []); // Solo se ejecuta una vez al montar
 
   // Función para parsear fecha de adiso de paga
   const parsearFechaPaga = (adiso: Adiso): number => {
@@ -135,8 +120,8 @@ export default function AdisosGratuitos({ onPublicarGratuito, todosLosAdisos = [
       fechaExpiracion
     };
 
-    // Agregar inmediatamente al estado (optimistic update)
-    setAdisosGratuitos(prev => [adisoTemporal, ...prev]);
+    // Agregar inmediatamente al caché (optimistic update)
+    agregarAdiso(adisoTemporal);
     setPublicando(true);
     setFormData({ categoria: 'empleos', titulo: '', contacto: '' });
     setMostrarFormulario(false);
@@ -146,16 +131,17 @@ export default function AdisosGratuitos({ onPublicarGratuito, todosLosAdisos = [
       const nuevoAdiso = await createAdisoGratuito(datosParaEnviar);
 
       // Reemplazar el temporal con el real (con el ID correcto del servidor)
-      setAdisosGratuitos(prev => 
-        prev.map(a => a.id === adisoTemporal.id ? nuevoAdiso : a)
-      );
+      // Remover el temporal primero
+      removerAdiso(adisoTemporal.id);
+      // Agregar el real
+      agregarAdiso(nuevoAdiso);
       
       onPublicarGratuito?.(nuevoAdiso);
     } catch (error: any) {
       console.error('Error al publicar adiso gratuito:', error);
       
-      // Revertir optimistic update si falla
-      setAdisosGratuitos(prev => prev.filter(a => a.id !== adisoTemporal.id));
+      // Revertir optimistic update si falla - remover el temporal
+      removerAdiso(adisoTemporal.id);
       
       // Restaurar formulario
       setFormData({

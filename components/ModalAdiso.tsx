@@ -8,6 +8,7 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { isMyAdiso } from '@/lib/storage';
 import { useAuth } from '@/hooks/useAuth';
 import { esFavorito, toggleFavorito } from '@/lib/favoritos';
+import { registrarVisualizacion, registrarClick, registrarContacto, registrarFavorito } from '@/lib/analytics';
 import {
   IconClose,
   IconArrowLeft,
@@ -76,6 +77,13 @@ export default function ModalAdiso({
     }
   }, [user?.id, adiso.id]);
 
+  // Registrar visualización del adiso
+  useEffect(() => {
+    if (user?.id) {
+      registrarVisualizacion(user.id, adiso.id);
+    }
+  }, [user?.id, adiso.id]);
+
   const handleToggleFavorito = async () => {
     if (!user?.id) {
       // TODO: Mostrar modal de autenticación
@@ -86,6 +94,10 @@ export default function ModalAdiso({
     try {
       const nuevoEstado = await toggleFavorito(user.id, adiso.id);
       setEsFavoritoState(nuevoEstado);
+      // Registrar favorito solo si se agregó (no si se removió)
+      if (nuevoEstado) {
+        registrarFavorito(user.id, adiso.id);
+      }
     } catch (error) {
       console.error('Error al toggle favorito:', error);
       alert('Error al guardar favorito');
@@ -176,6 +188,8 @@ export default function ModalAdiso({
     };
 
     const handleContactar = () => {
+      // Registrar contacto
+      registrarContacto(user?.id, adiso.id, adiso.categoria);
       window.open(getWhatsAppUrl(adiso.contacto, adiso.titulo, adiso.categoria, adiso.id), '_blank');
     };
 

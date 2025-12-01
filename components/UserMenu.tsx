@@ -5,14 +5,20 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUser } from '@/hooks/useUser';
 import AuthModal from './AuthModal';
 import FavoritosList from './FavoritosList';
+import LocationPrompt from './LocationPrompt';
+import ConvertirAnunciante from './ConvertirAnunciante';
+import UserProfile from './UserProfile';
 import { IconClose } from './Icons';
 
 export default function UserMenu() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, refreshProfile } = useAuth();
   const { profile, isAnunciante, isVerificado } = useUser();
   const [mostrarMenu, setMostrarMenu] = useState(false);
   const [mostrarAuthModal, setMostrarAuthModal] = useState(false);
   const [mostrarFavoritos, setMostrarFavoritos] = useState(false);
+  const [mostrarLocationPrompt, setMostrarLocationPrompt] = useState(false);
+  const [mostrarConvertirAnunciante, setMostrarConvertirAnunciante] = useState(false);
+  const [mostrarPerfil, setMostrarPerfil] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Cerrar menú al hacer click fuera
@@ -150,7 +156,7 @@ export default function UserMenu() {
             <button
               onClick={() => {
                 setMostrarMenu(false);
-                // TODO: Navegar a perfil
+                setMostrarPerfil(true);
               }}
               style={{
                 width: '100%',
@@ -226,7 +232,7 @@ export default function UserMenu() {
               <button
                 onClick={() => {
                   setMostrarMenu(false);
-                  // TODO: Convertirse en anunciante
+                  setMostrarConvertirAnunciante(true);
                 }}
                 style={{
                   width: '100%',
@@ -277,6 +283,25 @@ export default function UserMenu() {
         </div>
       )}
       <FavoritosList abierto={mostrarFavoritos} onCerrar={() => setMostrarFavoritos(false)} />
+      <LocationPrompt 
+        abierto={mostrarLocationPrompt} 
+        onCerrar={() => setMostrarLocationPrompt(false)}
+        onAceptar={() => {
+          // Refrescar perfil después de guardar ubicación
+          refreshProfile();
+        }}
+      />
+      <ConvertirAnunciante 
+        abierto={mostrarConvertirAnunciante} 
+        onCerrar={() => setMostrarConvertirAnunciante(false)}
+        onExito={() => {
+          // Mostrar mensaje de éxito o actualizar UI
+        }}
+      />
+      <UserProfile 
+        abierto={mostrarPerfil} 
+        onCerrar={() => setMostrarPerfil(false)}
+      />
     </div>
   );
 }

@@ -28,8 +28,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const profileData = await getProfile(userId);
       setProfile(profileData);
-    } catch (error) {
-      console.error('Error al cargar perfil:', error);
+    } catch (error: any) {
+      // Si la tabla no existe aún (PGRST205), no es un error crítico
+      if (error?.code !== 'PGRST205') {
+        console.error('Error al cargar perfil:', error);
+      }
       setProfile(null);
     }
   };

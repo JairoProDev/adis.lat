@@ -12,6 +12,8 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useToast } from '@/hooks/useToast';
 import { useDebounce } from '@/hooks/useDebounce';
 import { getBusquedaUrl } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
+import { registrarBusqueda } from '@/lib/analytics';
 import { onOnlineStatusChange, getOfflineMessage } from '@/lib/offline';
 import dynamicImport from 'next/dynamic';
 import Header from '@/components/Header';
@@ -52,6 +54,7 @@ type SeccionMobile = 'adiso' | 'mapa' | 'publicar' | 'chatbot' | 'gratuitos';
 function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user } = useAuth();
   const adisoId = searchParams.get('adiso');
   const categoriaUrl = searchParams.get('categoria') as Categoria | null;
   const buscarUrl = searchParams.get('buscar') || '';
@@ -269,6 +272,9 @@ function HomeContent() {
           a.descripcion.toLowerCase().includes(busquedaLower) ||
           a.ubicacion.toLowerCase().includes(busquedaLower)
       );
+      
+      // Registrar búsqueda (solo una vez por término)
+      registrarBusqueda(user?.id, busquedaDebounced.trim(), filtrados.length);
     }
 
     // Ordenar según el tipo seleccionado

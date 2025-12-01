@@ -16,8 +16,9 @@ export async function getProfile(userId: string): Promise<Profile | null> {
     .single();
 
   if (error) {
-    if (error.code === 'PGRST116') {
-      return null; // Perfil no encontrado
+    if (error.code === 'PGRST116' || error.code === 'PGRST205') {
+      // Perfil no encontrado o tabla no existe (aún no se ejecutó el SQL)
+      return null;
     }
     console.error('Error al obtener perfil:', error);
     throw error;
@@ -28,12 +29,43 @@ export async function getProfile(userId: string): Promise<Profile | null> {
 
 /**
  * Actualiza el perfil de un usuario
+ * Si el perfil no existe, lo crea primero
  */
 export async function updateProfile(userId: string, updates: Partial<Profile>): Promise<Profile> {
   if (!supabase) {
     throw new Error('Supabase no está configurado');
   }
 
+  // Verificar si el perfil existe
+  const perfilExistente = await getProfile(userId);
+
+  if (!perfilExistente) {
+    // Si no existe, crearlo primero
+    const { data: userData } = await supabase.auth.getUser();
+    const user = userData?.user;
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .insert({
+        id: userId,
+        email: user?.email,
+        nombre: updates.nombre || user?.user_metadata?.nombre || 'Usuario',
+        apellido: updates.apellido || user?.user_metadata?.apellido || '',
+        ...updates,
+        rol: 'usuario' // Valor por defecto
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error al crear perfil:', error);
+      throw error;
+    }
+
+    return data as Profile;
+  }
+
+  // Si existe, actualizarlo
   const { data, error } = await supabase
     .from('profiles')
     .update(updates)
@@ -42,6 +74,10 @@ export async function updateProfile(userId: string, updates: Partial<Profile>): 
     .single();
 
   if (error) {
+    // Si el error es que no se encontró (PGRST116), intentar crear
+    if (error.code === 'PGRST116') {
+      return updateProfile(userId, updates); // Recursión para crear
+    }
     console.error('Error al actualizar perfil:', error);
     throw error;
   }
@@ -64,9 +100,18 @@ export async function getUserPreferences(userId: string): Promise<UserPreference
     .single();
 
   if (error) {
-    if (error.code === 'PGRST116') {
-      // Crear preferencias por defecto si no existen
-      return await createDefaultPreferences(userId);
+    if (error.code === 'PGRST116' || error.code === 'PGRST205') {
+      // Preferencias no encontradas o tabla no existe (aún no se ejecutó el SQL)
+      // Crear preferencias por defecto si la tabla existe, sino retornar null
+      try {
+        return await createDefaultPreferences(userId);
+      } catch (createError: any) {
+        if (createError.code === 'PGRST205') {
+          // Tabla no existe aún
+          return null;
+        }
+        throw createError;
+      }
     }
     console.error('Error al obtener preferencias:', error);
     throw error;
@@ -153,12 +198,57 @@ export async function updateUserLocation(
 }
 
 /**
- * Cambia el rol de un usuario (solo admins)
+ * Cambia el rol de un usuario
+ * Nota: En producción, esto debería verificar permisos de admin
  */
 export async function updateUserRole(
   userId: string,
   nuevoRol: 'usuario' | 'anunciante' | 'admin'
 ): Promise<Profile> {
-  return updateProfile(userId, { rol: nuevoRol });
+  if (!supabase) {
+    throw new Error('Supabase no está configurado');
+  }
+
+  // Asegurar que el perfil existe primero
+  let perfil = await getProfile(userId);
+  
+  if (!perfil) {
+    // Crear perfil si no existe
+    const { data: userData } = await supabase.auth.getUser();
+    const user = userData?.user;
+
+    const { data: newProfile, error: createError } = await supabase
+      .from('profiles')
+      .insert({
+        id: userId,
+        email: user?.email,
+        nombre: user?.user_metadata?.nombre || 'Usuario',
+        rol: nuevoRol
+      })
+      .select()
+      .single();
+
+    if (createError) {
+      console.error('Error al crear perfil:', createError);
+      throw createError;
+    }
+
+    return newProfile as Profile;
+  }
+
+  // Actualizar rol
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ rol: nuevoRol })
+    .eq('id', userId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error al actualizar rol:', error);
+    throw error;
+  }
+
+  return data as Profile;
 }
 

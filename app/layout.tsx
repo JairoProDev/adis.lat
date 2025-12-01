@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { AdisosGratuitosCacheProvider } from '@/contexts/AdisosGratuitosCache';
 import { defaultLocale } from '@/i18n';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://buscadis.com';
@@ -98,7 +99,9 @@ export default function RootLayout({
       <body>
         <ErrorBoundary>
           <AuthProvider>
-            {children}
+            <AdisosGratuitosCacheProvider>
+              {children}
+            </AdisosGratuitosCacheProvider>
           </AuthProvider>
         </ErrorBoundary>
       </body>

@@ -45,22 +45,32 @@ export default function AuthModal({ abierto, onCerrar, modoInicial = 'login' }: 
         }
 
         if (user) {
-          setMensaje('¡Registro exitoso! Revisa tu email para confirmar tu cuenta.');
-          // Cerrar después de 2 segundos
+          setMensaje('¡Registro exitoso! Revisa tu email para confirmar tu cuenta. El modal se cerrará automáticamente en 5 segundos.');
+          // No cerrar inmediatamente, dar tiempo para leer el mensaje
           setTimeout(() => {
             onCerrar();
             refreshProfile();
-          }, 2000);
+          }, 5000);
         }
       } else if (modo === 'login') {
         const { user, error: signInError } = await signIn({ email, password });
 
         if (signInError) {
-          setError(signInError.message || 'Error al iniciar sesión');
+          // Manejar error de email no confirmado
+          if (signInError.message?.includes('email') || signInError.message?.includes('confirm')) {
+            setError('Por favor, confirma tu email antes de iniciar sesión. Revisa tu bandeja de entrada.');
+          } else {
+            setError(signInError.message || 'Error al iniciar sesión');
+          }
           return;
         }
 
         if (user) {
+          // Verificar si el email está confirmado
+          if (!user.email_confirmed_at) {
+            setError('Por favor, confirma tu email antes de iniciar sesión. Revisa tu bandeja de entrada.');
+            return;
+          }
           onCerrar();
           refreshProfile();
         }

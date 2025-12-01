@@ -4,6 +4,8 @@ import React, { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Adiso, Categoria, PAQUETES } from '@/types';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { useAuth } from '@/hooks/useAuth';
+import { registrarClick } from '@/lib/analytics';
 import { 
   IconEmpleos, 
   IconInmuebles, 
@@ -39,6 +41,13 @@ interface GrillaAdisosProps {
 export default function GrillaAdisos({ adisos, onAbrirAdiso, adisoSeleccionadoId, espacioAdicional = 0 }: GrillaAdisosProps) {
   const adisoRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
   const isDesktop = useMediaQuery('(min-width: 768px)');
+  const { user } = useAuth();
+  
+  const handleClickAdiso = (adiso: Adiso) => {
+    // Registrar click
+    registrarClick(user?.id, adiso.id, adiso.categoria);
+    onAbrirAdiso(adiso);
+  };
   
   // Calcular número de columnas basado en el espacio disponible
   // En desktop, con sidebar expandido (420px): 4 columnas
@@ -99,13 +108,13 @@ export default function GrillaAdisos({ adisos, onAbrirAdiso, adisoSeleccionadoId
               ref={(el) => {
                 adisoRefs.current[adiso.id] = el;
               }}
-              onClick={() => onAbrirAdiso(adiso)}
+              onClick={() => handleClickAdiso(adiso)}
               aria-label={`Ver detalles del adiso: ${adiso.titulo} en ${adiso.categoria}`}
               tabIndex={0}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
-                  onAbrirAdiso(adiso);
+                  handleClickAdiso(adiso);
                 }
               }}
               style={{
