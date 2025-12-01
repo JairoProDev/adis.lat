@@ -91,15 +91,6 @@ export async function PUT(
 
     const validatedData = validationResult.data;
 
-    // Sanitizar campos de texto
-    const sanitizedData = {
-      ...validatedData,
-      titulo: sanitizeText(validatedData.titulo),
-      descripcion: validatedData.descripcion ? sanitizeText(validatedData.descripcion) : undefined,
-      ubicacion: sanitizeText(validatedData.ubicacion),
-      contacto: sanitizeText(validatedData.contacto),
-    };
-
     // Verificar que el adiso existe
     const adisoExistente = await getAdisoByIdFromSupabase(id);
     if (!adisoExistente) {
@@ -108,6 +99,17 @@ export async function PUT(
         { status: 404 }
       );
     }
+
+    // Sanitizar campos de texto
+    const sanitizedData = {
+      ...validatedData,
+      titulo: sanitizeText(validatedData.titulo),
+      descripcion: validatedData.descripcion 
+        ? sanitizeText(validatedData.descripcion) 
+        : adisoExistente.descripcion, // Mantener descripción existente si no se proporciona
+      ubicacion: sanitizeText(validatedData.ubicacion),
+      contacto: sanitizeText(validatedData.contacto),
+    };
 
     // Actualizar el adiso (mantener fechas originales)
     const adisoActualizado: Adiso = {
