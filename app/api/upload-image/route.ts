@@ -122,9 +122,25 @@ export async function POST(request: NextRequest) {
       });
 
     if (error) {
-      console.error('Error al subir imagen:', error);
+      // Log detallado solo en desarrollo
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error al subir imagen a Supabase Storage:', {
+          message: error.message,
+          statusCode: error.statusCode,
+          error: error
+        });
+      }
+      
+      // Mensaje más específico según el tipo de error
+      let errorMessage = 'Error al subir la imagen';
+      if (error.message?.includes('bucket') || error.message?.includes('Bucket')) {
+        errorMessage = 'El bucket de almacenamiento no está configurado. Verifica la configuración de Supabase Storage.';
+      } else if (error.message?.includes('permission') || error.message?.includes('403')) {
+        errorMessage = 'No tienes permisos para subir imágenes. Verifica las políticas de Supabase Storage.';
+      }
+      
       return NextResponse.json(
-        { error: 'Error al subir la imagen' },
+        { error: errorMessage },
         { status: 500 }
       );
     }

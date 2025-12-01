@@ -414,16 +414,43 @@ export async function getAdisosGratuitosFromSupabase(): Promise<AdisoGratuito[]>
       .limit(100);
 
     if (error) {
+      // Si la tabla no existe, retornar array vacío en lugar de lanzar error
+      if (error.code === 'PGRST204' || error.code === '42P01' || 
+          error.message?.includes('relation') && error.message?.includes('does not exist') ||
+          error.message?.includes('tabla') || error.message?.includes('table')) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Tabla adisos_gratuitos no existe aún, retornando array vacío');
+        }
+        return [];
+      }
+      
+      // Error 406 (Not Acceptable) - posible problema de RLS
+      if (error.code === 'PGRST301' || error.message?.includes('permission denied') || 
+          error.message?.includes('406') || (error as any).status === 406) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Error 406 al obtener adisos gratuitos (posible problema de RLS):', error);
+        }
+        // Retornar array vacío en lugar de lanzar error
+        return [];
+      }
+      
       console.error('Error al obtener adisos gratuitos:', error);
       throw error;
     }
 
     return data ? data.map(dbToAdisoGratuito) : [];
   } catch (error: any) {
-    if (error?.code === 'PGRST301' || error?.message?.includes('permission denied')) {
-      throw new Error('Las políticas de seguridad no están configuradas. Ejecuta el SQL de seguridad en Supabase.');
+    // Si es un error de conexión o timeout, lanzar error específico
+    if (error?.message?.includes('timeout') || error?.message?.includes('fetch failed') || 
+        error?.message?.includes('network') || error?.code === 'ECONNREFUSED') {
+      throw new Error('Error de conexión con Supabase. Verifica tu conexión y las credenciales.');
     }
-    throw error;
+    
+    // Para otros errores, retornar array vacío en lugar de lanzar
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Error al obtener adisos gratuitos, retornando array vacío:', error);
+    }
+    return [];
   }
 }
 

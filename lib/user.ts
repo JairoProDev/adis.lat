@@ -16,11 +16,22 @@ export async function getProfile(userId: string): Promise<Profile | null> {
     .single();
 
   if (error) {
+    // Errores no críticos que no deben lanzar excepciones
     if (error.code === 'PGRST116' || error.code === 'PGRST205') {
       // Perfil no encontrado o tabla no existe (aún no se ejecutó el SQL)
       return null;
     }
-    console.error('Error al obtener perfil:', error);
+    // Error 406 (Not Acceptable) generalmente es por RLS o permisos, no crítico
+    if (error.message?.includes('406') || (error as any).status === 406 || (error as any).statusCode === 406) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Error 406 al obtener perfil (posible problema de RLS):', error);
+      }
+      return null;
+    }
+    // Solo mostrar errores críticos en desarrollo
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error al obtener perfil:', error);
+    }
     throw error;
   }
 

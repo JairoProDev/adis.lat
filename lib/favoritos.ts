@@ -16,7 +16,17 @@ export async function getFavoritos(userId: string): Promise<Favorito[]> {
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Error al obtener favoritos:', error);
+    // Error 406 (Not Acceptable) generalmente es por RLS o permisos, no crítico
+    if (error.message?.includes('406') || (error as any).status === 406 || (error as any).statusCode === 406) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Error 406 al obtener favoritos (posible problema de RLS):', error);
+      }
+      return [];
+    }
+    // Solo mostrar errores críticos en desarrollo
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error al obtener favoritos:', error);
+    }
     throw error;
   }
 
@@ -42,7 +52,17 @@ export async function esFavorito(userId: string, adisoId: string): Promise<boole
     if (error.code === 'PGRST116') {
       return false; // No encontrado = no es favorito
     }
-    console.error('Error al verificar favorito:', error);
+    // Error 406 (Not Acceptable) generalmente es por RLS o permisos, no crítico
+    if (error.message?.includes('406') || (error as any).status === 406 || (error as any).statusCode === 406) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Error 406 al verificar favorito (posible problema de RLS):', error);
+      }
+      return false;
+    }
+    // Solo mostrar errores críticos en desarrollo
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error al verificar favorito:', error);
+    }
     return false;
   }
 
