@@ -15,7 +15,10 @@ export async function fetchAdisos(page: number = 1, limit: number = 1000): Promi
     // Manejar respuesta paginada o lista directa (compatibilidad hacia atrás)
     return Array.isArray(data) ? data : (data.data || []);
   } catch (error) {
-    console.error('Error fetching adisos:', error);
+    // Solo mostrar errores en desarrollo
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error fetching adisos:', error);
+    }
     return [];
   }
 }
@@ -123,7 +126,10 @@ export async function fetchAdisosGratuitos(): Promise<AdisoGratuito[]> {
     }
     return await response.json();
   } catch (error) {
-    console.error('Error fetching adisos gratuitos:', error);
+    // Solo mostrar errores en desarrollo
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error fetching adisos gratuitos:', error);
+    }
     return [];
   }
 }

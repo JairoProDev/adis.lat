@@ -166,7 +166,10 @@ function HomeContent() {
           }
         }
       } catch (error) {
-        console.error('Error al actualizar desde API:', error);
+        // Solo mostrar errores en desarrollo
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error al actualizar desde API:', error);
+        }
       } finally {
         setCargando(false);
       }
@@ -245,13 +248,11 @@ function HomeContent() {
         
         // Verificar que la fecha sea válida
         if (isNaN(fecha.getTime())) {
-          console.warn(`[Ordenamiento] Fecha inválida: ${fechaStr}`);
           return 0;
         }
         
         return fecha.getTime();
       } catch (error) {
-        console.warn(`[Ordenamiento] Error parseando fecha: ${fechaPublicacion} ${horaPublicacion}`, error);
         return 0;
       }
     };
@@ -306,18 +307,6 @@ function HomeContent() {
       }
     });
 
-    // Debug: log para verificar que el ordenamiento funciona
-    console.log(`[Ordenamiento] Tipo: ${ordenamiento}, Total: ${filtradosOrdenados.length}`);
-    if (filtradosOrdenados.length > 0) {
-      const primero = filtradosOrdenados[0];
-      const ultimo = filtradosOrdenados[filtradosOrdenados.length - 1];
-      const fechaPrimero = parsearFecha(primero.fechaPublicacion, primero.horaPublicacion);
-      const fechaUltimo = parsearFecha(ultimo.fechaPublicacion, ultimo.horaPublicacion);
-      console.log(`[Ordenamiento] Primero: ${primero.titulo} (${primero.fechaPublicacion} ${primero.horaPublicacion || '00:00'}) - timestamp: ${fechaPrimero}`);
-      if (filtradosOrdenados.length > 1) {
-        console.log(`[Ordenamiento] Último: ${ultimo.titulo} (${ultimo.fechaPublicacion} ${ultimo.horaPublicacion || '00:00'}) - timestamp: ${fechaUltimo}`);
-      }
-    }
 
     setAdisosFiltrados(filtradosOrdenados);
   }, [busquedaDebounced, categoriaFiltro, ordenamiento, adisos]);
