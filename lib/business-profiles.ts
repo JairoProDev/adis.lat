@@ -153,3 +153,4 @@ export async function getPerfilesNegociosPublicos(
   return (data || []) as PerfilNegocio[];
 }
 
+

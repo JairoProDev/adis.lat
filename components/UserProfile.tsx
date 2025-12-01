@@ -369,3 +369,4 @@ export default function UserProfile({ abierto, onCerrar }: UserProfileProps) {
   );
 }
 
+

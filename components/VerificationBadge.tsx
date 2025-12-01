@@ -54,3 +54,4 @@ export default function VerificationBadge({ esVerificado, tipo, size = 'small' }
   );
 }
 
+
