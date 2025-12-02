@@ -229,9 +229,11 @@ export default function ModalNavegacionMobile({
           )}
 
           {seccionActiva === 'chatbot' && (
-            <div style={{ width: '100%', height: '100%', padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <ChatbotIA />
-            </div>
+            <ChatbotIA
+              onPublicar={onPublicar}
+              onError={onError}
+              onSuccess={onSuccess}
+            />
           )}
 
           {seccionActiva === 'gratuitos' && (

@@ -50,3 +50,4 @@ COMMENT ON TABLE profiles IS 'Perfiles de usuario. RLS habilitado para control d
 
 
 
+

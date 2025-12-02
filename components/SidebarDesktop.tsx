@@ -357,7 +357,11 @@ export default function SidebarDesktop({
             )}
 
             {seccionActiva === 'chatbot' && (
-              <ChatbotIA />
+              <ChatbotIA
+                onPublicar={onPublicar}
+                onError={onError}
+                onSuccess={onSuccess}
+              />
             )}
 
             {seccionActiva === 'gratuitos' && (
