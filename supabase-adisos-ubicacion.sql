@@ -93,3 +93,5 @@ COMMENT ON COLUMN adisos.longitud IS 'Coordenada de longitud para ubicación en 
 -- Nota: La columna 'ubicacion' (texto) se mantiene para compatibilidad hacia atrás
 -- Los nuevos adisos deberían usar los campos detallados (departamento, provincia, distrito, etc.)
 
+
+

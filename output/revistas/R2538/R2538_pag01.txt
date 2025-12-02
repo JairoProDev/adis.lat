@@ -1,0 +1,163 @@
+Eres un experto en extraer información estructurada de anuncios clasificados de la revista peruana "Rueda de Negocios" de Cusco.
+
+CONTEXTO:
+Estoy procesando el texto extraído de una página de la revista. La página contiene múltiples anuncios clasificados de diferentes categorías. Cada anuncio puede tener diferentes tamaños visuales según el precio pagado por el anunciante.
+
+TAREA:
+Extrae TODOS los anuncios presentes en el texto y estructura cada uno en formato JSON estricto. NO omitas ningún anuncio, incluso los más pequeños.
+
+FORMATO DE SALIDA (JSON estricto, sin markdown, sin código, solo JSON puro):
+
+{
+  "edicion": "2538",
+  "pagina": 1,
+  "fecha_publicacion": "2024-06-20",
+  "anuncios": [
+    {
+      "titulo": "Título descriptivo (máx 100 caracteres)",
+      "descripcion": "Descripción completa (máx 2000 caracteres)",
+      "categoria": "empleos|inmuebles|vehiculos|servicios|productos|eventos|negocios|comunidad",
+      "contactos": [
+        {
+          "tipo": "telefono|whatsapp|email",
+          "valor": "número/email normalizado",
+          "principal": true
+        }
+      ],
+      "ubicacion": "Ubicación mencionada",
+      "tamaño_visual": "miniatura|pequeño|mediano|grande|gigante",
+      "precio": "Precio si existe"
+    }
+  ]
+}
+
+REGLAS CRÍTICAS:
+1. Categorías: empleos (trabajo), inmuebles (casas/alquiler), vehiculos (autos/motos), servicios (profesionales), productos (venta), eventos (cursos), negocios (traspasos), comunidad (otros)
+2. Contactos: Normaliza números (sin espacios/guiones). Si dice "WhatsApp", usa tipo "whatsapp"
+3. Tamaño: miniatura (1-3 líneas), pequeño (4-8), mediano (9-15), grande (16-25), gigante (+25)
+4. NO inventes información. Solo extrae lo explícito
+5. Extrae TODOS los anuncios, incluso pequeños
+
+TEXTO DE LA PÁGINA A PROCESAR:
+
+Precio S/.
+ 
+0.80 vía aérea
+Precio S/.
+ 
+0.50
+Edición Regional Cusco, Abancay, Sicuani, Quillabamba
+RuedadeNegocios
+Encuentranos en:
+Www.ruedadenegocios.com.pe
+Oficina Wanchaq: Av. Tomasa Tito Condemayta 1018 (Frente a la Región Inka), Telf. 084 236939
+Oficina San Sebastián: Prolog. Av. de la Cultura 2148–A (Paradero Camionero), Cels. 984 938228
+Oficina Cusco: Calle Mesón de la Estrella 158, 2do. Piso–Of. 4 (Frente al Teatro Municipal), Telf. 084 229954 
+Cel. 979 913190
+Año: 28 / Edición: 2538 / Cusco, del 20 al 26 de Junio del 2024
+e
+s
+c
+u
+c
+h
+a
+n
+o
+s
+ 
+e
+n
+LA RADIO
+96.1
+FM
+Precio S/.
+ 
+1.00
+R
+Buscanos como
+Más cerca a ti
+Rueda de negocios
+Peluquería  con  baño  y  desparasitación  S/25,  vacuna  y  desp.  S/.30,  
+anticonceptivo S/26, esterilización hembra desde S/.35 a 70, esterilización 
+de  macho  aprox.  S/.20,  limpieza  dental  de  sarro  S/30.  Extracción  dental.  
+Eutanasia aprox. S/35. Venta de Golden Retriever. Gatos y cachorros damos 
+en adopción.
+VETERINARIOS DE LOS POBRES A DOMICILIO
+CAMPAÑA A PRECIOS ECONOMICOS
+Para la atención reservar CUPO al WhatsApp 924349665
+VENTA DE DEPARTAMENTOS
+Trato directo con el propietario
+Ofrece departamentos:
+ VENTAS  MINI  DEPARTAMENTOS de   2   habitaciones   desde   
+$40,000 a más en Av. Costaneras (paradero Virgen del Carmen).
+ VENTAS DEPARTAMENTOS desde $70,000, en Urb. Túpac Amaru, 
+San Sebastián, de 3 dormitorios, sala, comedor, cocina y 2 baños.
+Informes: San Jerónimo paradero San Juan (ex Banco de la Nación)
+Razón Cels. 956717470, 953278234, 913104198, Telf. 084-217140
+POR OCASIÓN VENDO DÚPLEX DE
+200 M² Y DEPARTAMENTO DE 220 M²
+En calle Bellavista Huancaro “Edificio Concordia”, ambos 
+constan  de  sala,  comedor,  cocina  con  reposteros  altos  
+y  bajos,  3  dormitorios,  3  baños,  lavandería,  ascensor  y  
+estacionamiento. Precio a tratar.
+Llamar a los Cels. 984237167, 958192254
+“POLLERIA DAYANA”
+Requiere el siguiente personal:
+• 01 Ayudante de cocina de 
+preferencia que sea varón con 
+experiencia
+• 01 Maestro pollero con 
+experiencia
+• 01 Motorizado
+• Personal de limpieza (Sede 
+Paradero Penal)
+• 01 Barman (Sede Paradero Penal)
+• Mozos medio tiempo turno tarde
+Entrevistas en Urb. Túpac Amaru N-1 Lote 9, San Sebastián (plazoleta Micaela 
+Bastidas – Frente a la “U” Andina), llamar a partir de 12:00 pm al Cel. 984255309 
+(LAS ENTREVISTAS SON PRESENCIALES)
+TERRENOS EN VENTA AL 
+FRENTE DE LA LAGUNA DE 
+HUAYPO. DESDE S/.30,000 
+LOTES DESDE 120 m²
+RAZON Cel. 991465833, 908644771
+POR OCASIÓN VENDO TERRENO 
+EN URB. LARAPA
+• Área 160 m²
+• Precio negociable
+• Trato directo con el 
+propietario
+• Documentos en regla
+• Financiamiento con Banco
+Informes al Cel. 994936666
+OFRECE:
+• Profesionales capacitados para atención al adulto mayor:
+• Evaluación médica psiquiátrica y psicológica permanente
+• Enfermería las 24 horas (control de signos vitales todos los 
+días)
+• Alimentación balanceada supervisada por nutricionista
+Buena infraestructura:
+• Amplias áreas verdes y árboles frutales
+• Habitaciones amplias, acogedoras, con iluminación natural, 
+privadas y colectivas
+• Baños propios y comunes
+• Salón de juegos y diversión
+• Lavandería
+Otros servicios:
+• Transporte y acompañamiento a consultas medicas
+• Ambulancia las 24 horas (emergencias)
+• Estacionamiento privado
+Ubícanos en Prolongación Grau (costado de aldeas infantiles y 
+Colegio Didaskalio)
+Informe a los n 964211120, 984898702, 997488977
+Facebook: “Casa Hogar Adulto”
+ALQUILO LOCAL DE 50 m²
+CON VENTANA A LA CALLE, BAÑO Y SERVICIOS INDEPENDIENTES; 
+A UNOS PASOS DEL MERCADO SAN PEDRO CUSCO, EN CALLE 
+NUEVA Nº455 CENTRO COMERCIAL “IMPERIO INCA”, 2do. PISO, 
+Of.   201   (FRENTE   AL   C.C.   TAHUANTINSUYO).   IDEAL   PARA   
+CONSULTORIO DENTAL OBSTÉTRICO Y OTROS.
+INFORMES Cel. 951134744
+
+IMPORTANTE: Responde SOLO con JSON válido, sin texto adicional.

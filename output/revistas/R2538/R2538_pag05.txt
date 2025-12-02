@@ -1,0 +1,301 @@
+Eres un experto en extraer información estructurada de anuncios clasificados de la revista peruana "Rueda de Negocios" de Cusco.
+
+CONTEXTO:
+Estoy procesando el texto extraído de una página de la revista. La página contiene múltiples anuncios clasificados de diferentes categorías. Cada anuncio puede tener diferentes tamaños visuales según el precio pagado por el anunciante.
+
+TAREA:
+Extrae TODOS los anuncios presentes en el texto y estructura cada uno en formato JSON estricto. NO omitas ningún anuncio, incluso los más pequeños.
+
+FORMATO DE SALIDA (JSON estricto, sin markdown, sin código, solo JSON puro):
+
+{
+  "edicion": "2538",
+  "pagina": 5,
+  "fecha_publicacion": "2024-06-20",
+  "anuncios": [
+    {
+      "titulo": "Título descriptivo (máx 100 caracteres)",
+      "descripcion": "Descripción completa (máx 2000 caracteres)",
+      "categoria": "empleos|inmuebles|vehiculos|servicios|productos|eventos|negocios|comunidad",
+      "contactos": [
+        {
+          "tipo": "telefono|whatsapp|email",
+          "valor": "número/email normalizado",
+          "principal": true
+        }
+      ],
+      "ubicacion": "Ubicación mencionada",
+      "tamaño_visual": "miniatura|pequeño|mediano|grande|gigante",
+      "precio": "Precio si existe"
+    }
+  ]
+}
+
+REGLAS CRÍTICAS:
+1. Categorías: empleos (trabajo), inmuebles (casas/alquiler), vehiculos (autos/motos), servicios (profesionales), productos (venta), eventos (cursos), negocios (traspasos), comunidad (otros)
+2. Contactos: Normaliza números (sin espacios/guiones). Si dice "WhatsApp", usa tipo "whatsapp"
+3. Tamaño: miniatura (1-3 líneas), pequeño (4-8), mediano (9-15), grande (16-25), gigante (+25)
+4. NO inventes información. Solo extrae lo explícito
+5. Extrae TODOS los anuncios, incluso pequeños
+
+TEXTO DE LA PÁGINA A PROCESAR:
+
+55
+Estamos trabajando para servirlo mejor
+R
+LA RADIO
+96.1
+FM
+Revista: Publicación Lunes y Jueves, venta diaria
+RN Radio 96.1 FM de 8 a 10 a.m.
+Cusco, del 20 al 26 de Junio del 2024–Edición Nº 2538
+POR OCASIÓN VENDO CASA EN 
+CENTRO HISTÓRICO DE CUSCO
+En calle Av. Baja, a 1/2 cuadra del templo San 
+Pedro,  área  251  m²  Tiene  12  habitaciones,  
+8  habitaciones  con  baño  privado,  cocina,  
+patio techado, lavandería. Actualmente con 
+negocios   en   funcionamiento,   generando   
+rentas  mensuales.  Documentos  en  regla,  
+financiable  con  banco.  Trato  directo  con 
+propietario. Razón Cel. 974372801.
+¡EL MOMENTO PERFECTO PARA ADQUIRIR 
+UN INMUEBLE EN AV. SOL 457, JUNTO A 
+CREDINKA, ES AHORA!
+Este lugar es más que ideal para tu inversión: perfecto para establecer 
+una clínica odontológica, jurídica, contable, empresarial, turística, una 
+joyería, etc.
+¡No dejes pasar esta inmejorable oportunidad! Llama ya al 984313163.
+VENDO CASA DE 
+LUJO DE 300 M²
+De 3 pisos, 4 dormitorios, C/ u con baño 
+privado, sala, comedor y cocina amplia, 
+oficina,  departamento  de  invitados, 
+3  terrazas,  cochera  para  3  vehículos,  
+etc.  Ubicada  en  Huayna  Picol  (encima  
+de  Larapa).  Costo  $390,000  (dólares).  
+Razón Cel. 940145182.
+VENDO 
+DEPARTAMENTO EN 
+LARAPA PARQUE 1
+De  67  m²,  $89  mil  dólares.  Dos  
+habitaciones, un baño, último piso, 
+amplia terraza, edificio nuevo, vista 
+al bosque. Razón Cel. 978751228.
+VENDO DEPARTAMENTO 
+DE ESTRENO 2DO. PISO
+111    m²,    consta    de    sala,    comedor,    
+cocina     C/     muebles     bajos,     baño     
+social,   lavandería,   baño   completo,   2   
+dormitorios    secundarios    C/    closet,    
+dormitorio    principal    C/    closet    y    
+baño,  garaje;  en  Urb.  Larapa  Grande,  
+independizado. Razón Cel. 984634856.
+VENDO CASA COMO 
+TERRENO DE 220 M²
+En   Urb.   Progreso   Jr.   Lamay   E-6   
+Wánchaq   espaldas   de   comisaria   
+de  la  familia  y  altura  de  la  escuelita  
+progreso,    precio    $1900    dólares    
+el    m²,  conversable,  documentos  en  
+regla, trato directo con el propietario. 
+Razón Cel. 959133330, 997071550.
+REMATO POR MOTIVO DE 
+VIAJE MODERNA CASA DE 
+3 PISOS EN LARAPA
+De   8   habitaciones,   3   baños,   2   
+jardines,   cochera   para   2   carros,   
+área construida 365 m² Informes al 
+WhatsApp: 974781884, 974781885 
+(abstenerse intermediarios).
+VENDO DEPARTAMENTO
+EN URB. MARISCAL GAMARRA
+Vendo  departamento  en  1er.  piso  con  4  dormitorios,  amplia  sala-
+comedor,  cocina,  baño  y  habitación  de  servicio,  acceso  a  un  patio,  
+jardín  de  42  m²  con  lavandería  baño  y  deposito;  en  Urb.  Mariscal  
+Gamarra Block A-10-104. todo saneado para financiamiento.
+Tratar al Cel. 984621326
+SE VENDE 
+DEPARTAMENTO DE 
+62.61 M²
+En  3er.  piso  +  cochera  independiente  
+de  14 m²;  ubicado  en  Kennedy  “B”, 
+Av.    Velasco    Astete,    consta    de    3    
+dormitorios,    sala,    comedor,    cocina,    
+lavandería    y    baño.    Razón    a    los    
+Cels. 984464092, 984117024.
+VENDO DEPARTAMENTO EN 
+ESTRENO DE 104 M², EN 6TO. PISO
+Con  iluminación  360°;  cuenta  con  3  
+habitaciones,  sala,  comedor,  cocina,  2  
+baños,  lavandería,  ascensor  y  terraza  
+compartida;  ubicado  en  Urbanización  
+Las   Joyas   –   Cusco   (al   costado   del   
+parque).     Tú     elijes     los     acabados,     
+facilidades  de  pago.  Solo  llamadas  al  
+Cel. 984503022
+VENDO DEPARTAMENTO 
+EN ESTRENO
+Con  excelente  iluminación,  doble  
+frontis,   de   3   dormitorios,   sala-
+comedor,  cocina,  lavandería,  con  
+muebles  empotrados;  en  Urb.  Los  
+Andenes,  detrás  de  la  UNSAAC,  a  
+5 minutos del Real Plaza. Informes 
+a los Cels. 983714133, 987879892.
+VENTA DE DEPARTAMENTOS 
+A PRECIO DE OCASIÓN CON 
+FACILIDADES DE PAGO
+Departamentos   amplios,   cómodos   y   bien   
+iluminados,  constan  de  2  y  3  habitaciones.  
+Ubicados en la Residencial “Divino Niño Jesús” 
+zona céntrica, al costado del C.C El Molino I (ref. 
+puerta 2). Con todos los documentos en regla 
+cuenta   con   ascensor,   intercomunicadores,   
+cámaras de seguridad y acabados de primera 
+calidad. Informes Cels. 970953565, 989364326.
+INVERSIONES OPS SRL
+Proyecto por terminar
+(entrega en 30 días) “Residencial 
+Cataleya” con departamentos en 
+ANTICRESIS y VENTA
+Con diseño exclusivo, excelentes acabados, 
+áreas de 60, 67, 93 a 137 m² con 3 y 4 
+dormitorios, 1, 2 y 3 baños, en 7mo, 9no y 
+10mo piso, estacionamientos, depósitos, 
+ÁREA DE USO COMÚN, ascensor, agua 
+con sistema de presión constante, 
+intercomunicador, agua caliente y local 
+en sótano de 220 o 100 m² con ingreso 
+independiente y ascensor
+E
+n Urb. Huancaro, Av. Asociación esquina 
+con calle Los Rosales. ¡Separa ya!
+Informes Cels. 983328382, 994701398, 975971396, 902902076
+VENDO STAND DE 
+10 M² (2 PISOS) 
+EXCELENTE
+Ubicación  en  el  mercado  “Virgen  
+del  Carmen”  Alto  Qosqo  –  San 
+Sebastián,   con   documentos   en   
+regla. Razón al Cel. 997728868.
+SE VENDE DEPARTAMENTO 
+EN EL PISO 10 DEL EDIFICIO 
+CREDINKA
+Av.   de   la   Cultura,   114   m²,   bien   
+iluminado,    3    habitaciones    con    
+roperos,    1    estudio,    2    baños,    
+lavandería    amplia,    cocina    con    
+reposteros. Razón Cel. 974799707.
+VENTA CON FACILIDAD DE PAGO 
+DE DÚPLEX DE ESTRENO
+2do.     piso     amplia     sala-comedor,     
+3     dormitorios,     3     baños,     cocina     
+C/ reposteros altos y bajos; en Kennedy 
+“A”  a  $125  mil  dólares  conversables. 
+Documentos  en  regla  y  financiable. 
+Razón   Cels.   974325541,   958198488.   
+Visitas       programadas,       abstenerse       
+intermediarios.
+Se vende casa de 3 pisos de 76 m², excelente 
+ubicación,  esquina  de  Urb.  Santa  Beatriz  y  
+Urb.  Santa  Mónica,  (a  una  cuadra  de  Av.  de  
+la  Cultura,  frente  al  Real  Plaza).  Se  puede  
+vender  toda  la  casa  o  sólo  el  1er.  piso  (local  
+comercial). Telf. 987020122 - 973684836
+Se vende casa de 100 m² con construcción de 
+material noble, ubicado en APV Ayuda Mutua 
+Calle Acomayo (Comité 6 Asociación Zorritos-
+Cusco)  cuenta  todos  los  servicios  básicos,  
+documento   en   regla,   precio   conversable,   
+trato    directo    con    el    propietario.    Razón    
+Cel. 999484347, 945164651.
+Se  vende  casa  de  300  m²  con  todos  los  
+servicios  básicos;  ubicado  en  Oropesa  lote  
+F-1  (detrás  de  la  pista  principal  y  comisaria);  
+cuenta   con   documentos   en   regla.   Razón   
+Cel. 984750919, 976858830
+Vendo casa de 300  m²  o  terreno  de  100  m²  
+en   Huasao,   tiene   2   fachadas,   altura   del   
+paradero  estadio,  buena  ubicación  especial  
+para  fábricas,  inscrita  en  RR.PP.  trato  directo  
+con  el  propietario.  Informes  Cel.  935860192,  
+967791520.
+Vendo  casa  de dos  pisos,  cerca  de  Agua  
+Buena,   a   1   cuadra   de   línea   de   tren,   en   
+Patrón  San  Sebastián,  220  m²  Hermosa  vista  
+panorámica.   Primer   piso   consta   de,   sala-
+comedor-cocina,    dos    dormitorios,    baño    
+completo, cochera para varios autos y, amplio 
+patio para proyecto de construcción. Segundo 
+piso en casco rojo con 6 habitaciones. 138,000 
+dólares. Negociable. Casamax 993040359.
+Vendo inmueble en 
+Av. El Sol (420 m²). Trato 
+directo  con  el  propietario.  Precio  a  4  mil  
+dólares el m² Razón Cel. 961909895.
+Por ocasión Vendo departamento  de  80  m²  
+en   Condominio   Las   Torres   Kayser   (doble   
+ingreso,  Av.  de  la  Cultura  Marcavalle  y  Urb.  
+Quispicanchis) en 3er. piso, con 3 dormitorios, 
+2   baños,   sala-comedor,   cocina,   lavandería,   
+ascensores     seguridad     las     24hrs.     Trato     
+directo.   Abstenerse   intermediarios.   Razón   
+Cel. 922826509.
+Por  ocasión  vendo departamento   en   el   
+2do.  piso  con  una  inicial  de  $40,000  dólares,  
+consta  de  3  habitaciones,  cocina  amoblada,  
+sala, comedor, 2 baños; cerca de la Av. Grau 2 
+paraderos de Ramiro Priale, cerca al mercado 
+y al Hospital Lorena, abstenerse inmobiliarias. 
+Razón Cel. 983347255.
+Vendo  departamento  de 62.50   m²   en   el   
+4to.   piso   consta   de   2   dormitorios,   baño,   
+sala-comedor,  cocina  y  lavandería;  en  Hilario  
+Mendívil,   1era   etapa,   a   unos   pasos   del   
+aeropuerto,  inscrito  en  SUNARP  totalmente  
+independizado.   $57,000   negociable.   Razón   
+Cel. 933146388.
+Vendo  departamento  de 65   m²   con   3   
+dormitorios,    baño,    sala-comedor,    cocina,    
+ascensor  y  azotea;  en  Urb.  Larapa,  detrás  del  
+Hospital de Solidaridad, a $63,000 conversable. 
+Razón Cel. 925564904, 992273728.
+Vendo  departamentos  de 115 m²,    de 
+estreno, en esquina, de 3 dormitorios, 3 baños, 
+estudio,   amplia   cocina,   lavandería,   amplia   
+sala-comedor y balcón; en la Urb. José Carlos 
+Mariátegui – Wanchaq (frente a PRONAA) en 
+el  5to.  piso.  Un  Dpto.  por  piso,  (con  sistema  
+de ascensor a entregar), totalmente acabado, 
+inscrito en RR.PP. Razón Cel. 984335401.
+Vendo departamentos en el  2do.  piso,  con  
+3  dormitorios,  sala-comedor,  cocina,  2  baños  
+y  patio.  en  el  3er.  piso  con  3  dormitorios,  
+sala-comedor, cocina, 2 baños y aires; ambos 
+con  playa  de  estacionamiento;  en  la  Urb.  
+Centenario, Banco de Crédito, frente a Promart 
+y Maestro, a 2 cuadras de la U. Andina. Razón 
+Cel. 941002507.
+Vendo departamentos en estreno 4to, 5to. y 
+7mo. piso de 80 m² constan de 3 dormitorios, 
+2 baños, sala-comedor, cocina, azotea; en Urb. 
+Larapa  entre  calle  7  y  5,  en  $79,000  precio  
+conversable,  documentos  en  RR.PP.  también  
+un  departamento  en  1er.  piso  a  $75,000  a  
+tratar. Razón Cel. 925564904, 992273728.
+Vendo  dpto  105 m², de  4  dormitorios  en  
+perfecto   estado,   zona   céntrica   por   C.C.   
+Confraternidad,   inscrito   en   RR.PP.,   y   otros   
+dptos.  De  estreno  en  Larapa  de  126  m²,  de  
+3  dormitorios,  3  baños,  el  edificio  cuenta 
+con  ascensor,  estacionamiento,  trato  directo.  
+Razón Cels. 984328866, 984272742.
+¡Venta de terreno! Ubicado  en  Urb.  Picchu  
+San Martin, Área de 61.20 m², en esquina con 
+doble ingreso, acceso carrozable, documentos 
+en regla, a solo 10 min de la plaza de Armas. 
+Trato   directo   con   el   propietario.   $53,000.   
+Razón a los Cel. 927157185 y 958154181
+
+IMPORTANTE: Responde SOLO con JSON válido, sin texto adicional.

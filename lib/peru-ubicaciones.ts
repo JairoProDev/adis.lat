@@ -292,3 +292,5 @@ export function getCoordenadasAproximadas(departamento: string, provincia: strin
   return coordenadas[key] || null;
 }
 
+
+

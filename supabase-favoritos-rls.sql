@@ -60,3 +60,5 @@ USING (auth.uid()::text = user_id);
 -- Comentarios
 COMMENT ON TABLE favoritos IS 'Favoritos de usuarios. RLS habilitado para control de acceso.';
 
+
+

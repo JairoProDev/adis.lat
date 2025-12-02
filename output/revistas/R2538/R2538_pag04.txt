@@ -1,0 +1,401 @@
+Eres un experto en extraer información estructurada de anuncios clasificados de la revista peruana "Rueda de Negocios" de Cusco.
+
+CONTEXTO:
+Estoy procesando el texto extraído de una página de la revista. La página contiene múltiples anuncios clasificados de diferentes categorías. Cada anuncio puede tener diferentes tamaños visuales según el precio pagado por el anunciante.
+
+TAREA:
+Extrae TODOS los anuncios presentes en el texto y estructura cada uno en formato JSON estricto. NO omitas ningún anuncio, incluso los más pequeños.
+
+FORMATO DE SALIDA (JSON estricto, sin markdown, sin código, solo JSON puro):
+
+{
+  "edicion": "2538",
+  "pagina": 4,
+  "fecha_publicacion": "2024-06-20",
+  "anuncios": [
+    {
+      "titulo": "Título descriptivo (máx 100 caracteres)",
+      "descripcion": "Descripción completa (máx 2000 caracteres)",
+      "categoria": "empleos|inmuebles|vehiculos|servicios|productos|eventos|negocios|comunidad",
+      "contactos": [
+        {
+          "tipo": "telefono|whatsapp|email",
+          "valor": "número/email normalizado",
+          "principal": true
+        }
+      ],
+      "ubicacion": "Ubicación mencionada",
+      "tamaño_visual": "miniatura|pequeño|mediano|grande|gigante",
+      "precio": "Precio si existe"
+    }
+  ]
+}
+
+REGLAS CRÍTICAS:
+1. Categorías: empleos (trabajo), inmuebles (casas/alquiler), vehiculos (autos/motos), servicios (profesionales), productos (venta), eventos (cursos), negocios (traspasos), comunidad (otros)
+2. Contactos: Normaliza números (sin espacios/guiones). Si dice "WhatsApp", usa tipo "whatsapp"
+3. Tamaño: miniatura (1-3 líneas), pequeño (4-8), mediano (9-15), grande (16-25), gigante (+25)
+4. NO inventes información. Solo extrae lo explícito
+5. Extrae TODOS los anuncios, incluso pequeños
+
+TEXTO DE LA PÁGINA A PROCESAR:
+
+44
+28 años uniendo los Agentes Económicos de la Región
+R
+Revista: Publicación Lunes y Jueves, venta diaria
+RN Radio 96.1 FM de 8 a 10 a.m.
+LA RADIO
+96.1
+FM
+Cusco, del 20 al 26 de Junio del 2024–Edición Nº 2538
+Doy en anticresis 1  habitación  amplia  más  
+cocina en S/18,000 soles, por 2 años, ubicado 
+por la U. Continental y U. Andina; se encuentra 
+en  plena  pista  principal  de  Av.  de  la  Cultura.  
+Razón Cel. 910075882.
+Doy en anticresis 2 habitaciones contiguas en 
+3er. piso, con baño privado; para estudiante o 
+persona sola; ubicado en 4to. paradero de San 
+Sebastián (detrás del mercado Modelo). Razón 
+Cel. 946737013.
+Doy en anticresis departamento completamente 
+amoblado,  buena  iluminación  de  2  dormitorios,  
+sala,   comedor,   cocina,   lavandería,   servicios   
+higiénicos,   ubicado   en   Urb.   Larapa   Grande,   
+antes del 2do. parque por un año o año y medio. 
+Razón Cel. 957081400, 951223879.
+Doy  en  anticresis departamento    de    2    
+habitaciones,  sala,  comedor  y  baño;  en  el  
+Barrio  de  Zarzuela  –  Santiago  (altura  Colegio  
+Francisco  Bolognesi,  costado  de  la  posta),  
+en  S/.  40,000  soles  por  1  o  2  años.  Razón  
+Cels. 954160127, 984346474.
+Doy  en  Anticresis departamento   de   3   
+dormitorios, sala, comedor, cocina, lavandería, 
+2  baños,  ducha  C/  agua  caliente,  playa  de  
+estacionamiento; en Av. 31 de Enero Mz I lote 
+A-1  Santiago,  rutas  E.T.  Illary  Qosqo,  Nuevo  
+Amanecer,  en  S/.55,000  soles  por  3  años.  
+Razón Cel. 988015254.
+Doy  en  anticresis habitación   con   baño   
+privado  en  1er.  nivel  y  mini  departamentos  
+en  2do,  3er.  y  4to.  piso,  constan  de  una  
+habitación  amplia,  cocina  múltiple  y  baño,  
+ideal  para  persona  sola  o  pareja;  ubicados  
+en  Urb.  San  Borja  Jr.  Anta  –  Wánchaq.  Razón  
+Cels. 900637137, 975003518.
+Doy en anticresis habitación con baño privado 
+en  4to.  piso  para  persona  sola  o  estudiante  
+(sin  mascota).  Ubicado  en  3er.  paradero  de  
+San  Sebastián,  Urb.  Los  Rosales  D-10  (a  una  
+cuadra   de   la   pista   principal).   Informes   al   
+celular 992228840.
+Doy  en  anticresis habitación   con   baño   
+privado,  detrás  de  la  UNSAAC,  a  personas  
+sola  o  estudiante.  llamar  Cels.  984753615,  
+984140509, 984420438.
+Doy  en  anticresis habitación  con  cocina  y  
+baño  privado  1er.  piso,  ideal  para  ejecutivos  
+o   pareja   joven,   agua   caliente,   acceso   a   
+lavandería, jardín, áreas comunes, en S/.35,000. 
+Pago de Servicios mes S/70 por wifi 5G, luz, 
+agua. Ubicado cerca al puente Grau, frente a la 
+comisaria Coripata. al Cel. 992009619.
+Doy  en  anticresis habitaciones  con  o  sin  
+baño  privado,  ubicadas  en  el  4to.  paradero  
+de San Sebastián Av. Tomas Tuyrutupac (altura 
+TOTTUS).  También  alquilo  habitaciones  en  el  
+mismo lugar. Razón Cel. 968841482.
+Doy en Anticresis HABITACIONES:  2do.  piso  
+(habitación  de  12  m²  a  S/30,000  soles  con  
+baño privado). En el 8vo Piso HABITACIÓN de 
+14 m² con baño privado, espacio para cocina y 
+zona de lavandería a S/. 25,000 soles). Ambos 
+con  servicios  de  agua  y  luz  independientes.  
+Ubicado  en  la  Urb.  Los  Andenes  B-5  detrás  
+de  la  Unsaac;  Ideal  para  estudiantes.  Mayor  
+información al Cel. 901905674.
+Doy  en  anticresis local  departamento,  en  
+1er.  piso,  hacia  la  calle  con  2  habitaciones,  
+cocina,  baño  y  sala  amplia;  ubicado  en  el  
+ingreso  principal  de  Paraíso  De  Fátima,  vía  
+de  evitamiento  -  San  Sebastián,  con  acceso  
+vehicular,  ideal  para  vivienda  y/o  comercio.  
+Informes al Cel. 974790637.
+DOY  en  Anticresis mini  departamento,  en  
+2do. o 3er. piso consta de 2 habitaciones, sala, 
+comedor, Cocina, lavandería, baño, ubicado en 
+balconcillo  Alto  A-4  Cusco,  referencia  frente  
+a  la  Casona  Del  Inka,  por  2  o  3  años.  Razón  
+Cel. 940934389, 957078264.
+Doy en anticresis oficina en estreno de 30 m² 
+con baño privado, 3er. piso (con ascensor), con 
+servicios  independientes,  acabados  de  1era.  
+En  excelente  ubicación  “Centro  Empresarial  
+Amauta” Psj. Constanza (detrás del paradero 
+Amauta).   En   $25,000   (conversable)   de   2   
+a   3   años   (conversable).   Cels.   976843461,   
+974462628.
+Doy en anticresis habitación con baño privado. Y 
+una habitación, cocina - comedor social, a 4 cuadras 
+de  La  Plaza  de  Armas,  también  habitaciones  con  
+baño  compartido,  acceso  independiente.  Razón  
+Cel. 973448555, 940809056.
+Doy en anticresis una  habitación  con  baño  
+privado,  entrada  privada  opcional,  cocina  y  
+comedor. Ubicada en zona céntrica y comercial 
+detrás  de  la  UNSAAC.  Contrato  notarial.  Los  
+interesados llamar al Cel. 928773349.
+Doy  en  anticrisis local  comercial  de  40  m²  
+en  esquina,  ubicado  en  la  urb.  Magisterio  
+2da.  etapa,  cuenta  con  servicios  higiénicos,  
+servicios   propios   de   luz   y   agua.   Razón   
+Cel. 948500038.
+Se  da  en  anticresis  1  habitación  con  baño  
+compartido, en un área de 3x3 m², 2do. piso, 
+costo   s/12   mil   soles,   precio   conversable,   
+ubicado en Urb. Francisco Morales Bermúdez 
+B-4  (altura  del  Bypass  -  Wanchaq).  Razón  
+Cel. 916996145.
+Se   da   en   anticresis   departamento   de   3   
+habitaciones,    baño,    sala-comedor,    cocina    
+y  lavandería;  en  APV  Santa  Anita  A-12  Tica  
+Tica,  referencia  frente  al  mercadillo  de  Tica  
+Tica.   También   un   local   comercial.   Razón   
+Cel. 942350590, 972311510.
+Se    da    en    anticresis    departamento    de    
+estreno    en    buena    zona    e    iluminación,    
+modelo  americano  en  2do.  piso,  consta  de  
+3   dormitorios   con   cortinas,   sala-comedor   
+con  cortinas,  cocina  con  reposteros,  baño,  
+lavandería y servicios independientes; ubicado 
+en edificio en esquina, 4to. paradero de Ttio 
+(carril de subida). Cel. 987236084, 940184560
+Se da en anticresis departamento en 1er. piso, 
+de 3 habitaciones, sala, comedor, cocina, baño, 
+a 38,000 dólares; ubicado en Psje. San Martin 
+X-   2-16   (1er.   paradero   de   Ttio,   Wanchaq.   
+Llamar al Cel. 963832963.
+Se  da  en  anticresis  una  habitación  amoblada  
+en  el  8vo  piso  con  ascensor;  ubicada  en  
+Psje.  San  Martin  X-  2-16,  1er.  paradero  de  
+Ttio,  Wanchaq.  En  $9,000  dólares.  Llamar  al  
+Cel. 963832963.
+• Ofertados
+Se vende espacio comercial de 24 m²; ubicado 
+en  Saylla  en  el  Centro  Comercial  -  Unión  
+Baratillo del Bicentenario, con certificado de 
+posesión, entrega inmediata, buena visibilidad 
+(ubicado  en  esquina),  centro  comercial  en  
+crecimiento. Razón Cel. 937490595.
+Vendo  por  emergencia: stand   Q-19   en   
+1er.   piso,   esquina   del   Centro   Comercial   
+Confraternidad-Wanchaq,     con     pasadizos     
+amplios,        documentos        inscritos        en        
+Registros  Públicos.  Trato  directo.  Razón  al  
+Cel. 949098955.
+Peritos   Judiciales   y Tasadores     SBS     
+Valorizamos    el    precio    de    tu    inmueble    
+Casas/Terrenos/Edificios/Departamentos 
+y  todo  tipo  daños,  mejoras  para  procesos  
+judiciales o financiamiento para tu compra y 
+construcción. Somos Verificadores Catastrales 
+autorizados  por  SUNARP.  Estamos  en  Urb.  
+Ttio  P1-16  (frente  al  colegio  Uriel  García),  
+Cels. 958191999, 984022220.
+Por  emergencia  Vendo casa   de   2   pisos   
+material  noble  en  45  m²,  el  área  total  de  
+120 m², en Ccachona-Huancaro, Santiago (a 6 
+minutos de la feria y del mercado de Huancaro), 
+tomar ruta Inka Express y a 2 cuadras del final 
+de  E.T.  Patrón  San  Jerónimo  (buses  Rojos),  
+con  servicios  básicos,  trato  directo  con  el  
+propietario. Razón Cel. 935010562.
+Por  motivo  de viaje,   Remato   Casa   amplia   
+A.T.   163   m²,   2   pisos,   material   noble;   con   3   
+dormitorios,   sala-comedor,   cocina,   2   baños,   
+lavandería y patio amplio; ubicada en Av. Ramiro 
+Priale – Santiago. Razón Cel. 989445401.
+Por  ocasión  vendo casa  de  400  m²  (o  en  
+fracción  de  120  m²),  con  frentera  de  25  mts  
+y  lote  de  200  m²,  ubicados  en  Collana  San  
+Jerónimo,  con  servicios  básicos,  zona  urbana  
+con  calles,  precio  conversable,  inscritos  en  
+RR.PP., trato directo con el propietario. Razón 
+Cels. 924108060, 995637832.
+Por  ocasión  vendo casa  en  el  centro  de  
+la   ciudad   de   Cusco,   consta   de   2   pisos   
+material  adobe  con  patio,  servicios  básicos  
+y   documentos   en   regla;   en   Saphy   calle   
+Conquista  B-2  a  dos  cuadras  de  la  plaza  de  
+armas. Razón Cel. 984484776.
+Vendo casa en zona altamente comercial, área 
+670  m²  y  otro  de  447  m²;  ubicados  en  zona  
+céntrica,  Av.  Tres  Cruces  de  Oro,  ideal  para  
+empresas. Comunicare al Cel. 957213280
+PROPIETARIA VENDE 
+DEPARTAMENTOS DE 101.8 M²
+En   el   piso   2   al   5to.   Consta   de   3   
+dormitorios, 3 baños, lavandería, cocina 
+y  sala-comedor,  ascensor,  saneados  e  
+inscritos en Registros Públicos. Ubicado 
+en   Surihuaylla   Grande-Los   Nogales   
+(sobre  Vía  Evitamiento),  precio  a  tratar.  
+Informes al Cel. 971929233.
+DOY EN ANTICRESIS ($15,000.00) 
+DEPARTAMENTO EN 1ER. PISO
+De 2 dormitorios, sala, comedor, cocina, lavandería 
+y  un  baño,  ubicado  en  Urb.  Lucerinas  -  San  
+Jerónimo, llamar al Cel. 984002088.
+PROPIETARIO VENDE 
+DEPARTAMENTO DE 115 M²
+En   Av.   Tupac   Amaru,   Urb.   Progreso   -   
+3er. piso con ascensor, construcción solida 
+asísmica,  iluminación  natural,  carpintería  
+en  madera  Cedro,  piso  parquetón,  100%  
+saneado.  Precio  $156,000  a  tratar.  Razón  
+Cels. 989294661, 950172319. (No agentes 
+inmobiliarios).
+SE VENDE OFICINAS 
+AMPLIAS
+CON    ASCENSOR    EN    CENTRO    
+EMPRESARIAL                  AMAUTA,                  
+CERCA   DE   LA   UNIVERSIDAD   Y   
+LA    REGIÓN,    TRATO    DIRECTO    
+CON   LA   EMPRESA.   RAZÓN   AL 
+Telf. 084-283991, Cel. 974985050.
+VENDO DEPARTAMENTO 
+MODERNO DE 90 M² POR 
+MOTIVOS DE SALUD
+Ubicado    en    Urb.    Progreso,    calle    
+Chumbivilcas  O-2,  con  3  dormitorios,  
+sala-comedor,    cocina,    2    baños    y    
+deposito,    inscrito    en    RR.PP.    Trato    
+directo    con    el    propietario.    Razón    
+Cels. 991120237, 984692032
+SE VENDE DEPARTAMENTO 
+CONSERVADO Y LUMINOSO 
+DE 86 M²
+En  2do.  piso;  cuenta  con  3  dormitorios,  
+sala-comedor, cocina, 2 baños, lavandería y 
+servicios  básicos  independientes;  ubicado  
+en  Urb.  Villa  Paraíso,  San  Sebastián  (cerca  
+Wimpillay),  con  documentos  en  regla  y  
+titulo.   Trato   directo   con   el   propietario.   
+Razón Cel. 942785005
+VENDO STAND EN EL 
+C.C. EL MOLINO I
+Jr.       Arica       P-11,       buena       
+ubicación,        cuenta        con        
+almacén   en   2do.   piso,   con   
+documentos al día. Razón a los 
+Cels. 984400909, 925782430.
+PERMUTO O CAMBIO MINI 
+DEPARTAMENTO EN LA 
+CIUDAD DE TRUJILLO
+Urb. Primavera con vista frente a parque, 
+a  4  cuadras  del  Centro  Histórico  de  
+Trujillo  Av.  España,  con  otro  en  Cusco,  
+con    las    mismas    características,    de    
+preferencia persona sola o estudiantes. 
+Informes Cel. 957383346, 914071850.
+ANTICRESIS, DÚPLEX, 
+INTERIOR, EN LAS JOYAS, 
+FAMILIA CORTA, OFERTA 
+S/50,000 SOLES
+A una cuadra del puente las Joyas (Vía de 
+Evitamiento), frente a parque. Consta de 
+2 dormitorios, sala, cocina, baño, cuarto 
+de estudio patio, lavandería, tendedero. 
+Cels. 981161226, 961688413.
+EN ANTICRESIS O VENTA 
+DEPARTAMENTO
+DE 90 M² APROX
+En 4to. piso (con proyección a ascensor), 
+de  3  dormitorios  (principal  con  baño  
+privado),   sala-comedor,   cocina,   baño   
+y  lavandería;  en  Urb.  Velasco  Astete  
+C-16-B,  Wanchaq  (antes  de  llegar  al  
+aeropuerto,  paradero  Velasco  Astete),  
+inscrito en RR.PP. Razón Cel. 989563084
+VENTA DE 
+DEPARTAMENTO
+3ER. NIVEL
+Área  65.87  m²  Ubicado  en  Wanchaq  
+Av. Tacna 113, cuenta con 2 dormitorios, 
+baño,  cocina,  sala,  lavandería.  Precio  
+$80,000.00.      Llámanos      para      más      
+información y visitas al Cel. 925801694. 
+Guido Vega.
+VENDO LOCAL 
+COMERCIAL EN 1ER. PISO 
+DE 60 M²
+En  zona  altamente  comercial  de  la  1ra  
+cuadra   de   Av.   Velasco   Astete   (recta   
+del  aeropuerto).  Precio  de  ocasión:  60  
+MIL   DÓLARES,   ideal   para   salón-spa,   
+consultorios, pizzería, fast food, oficinas, 
+restobar y otros, con documentos al día. 
+Razón Cel. 959112132.
+DOY EN ANTICRESIS HABITACIONES 
+CON BAÑO PRIVADO
+Amobladas,    zona    residencial,    total    
+seguridad,   todos   los   servicios,   para   
+ejecutivos,  parejas  o  estudiantes  desde  
+S/.17,000 soles por 1 año, conversable. 
+Verlas       en       Urb.       Quispicanchis       
+Jr.  Nicaragua  H-6  (a  1  cuadra  del  C.C.  
+Real Plaza, altura BCP a 100 m de Clínica 
+Peruano Suiza). Informes 941255304.
+DOY EN ANTICRESIS 
+TIENDA COMERCIAL 
+CON BAÑO Y 
+COCINA
+En la calle Nueva Alta Nro. 491. 
+En $25,000 dólares por 3 años. 
+Razón al Cel. 984904049.
+• Anticresis
+Anticresis  departamento  en 3er.  piso  con  
+vista a la calle, con 2 dormitorios, sala-comedor, 
+cocina,  baño  y  lavandería,  servicios  de  agua  
+y  luz  independientes;  en  APV  Agua  Buena  
+B-2,  Psje.  Capulí  -  San  Sebastián,  paradero  
+Hilario  (cerca  al  parque  –  aeropuerto).  Razón  
+Cels. 979408221, 986098583, 901969561.
+Anticresis  departamento  moderno de 
+estreno a la fachada en 2do. piso, cuenta con 
+3 habitaciones con closet, Cocina con muebles 
+altos y bajos, Sala comedor, Lavandería, Terma 
+a  gas,  Cochera  independiente  el  Edificio 
+cuenta   con   ascensor   y   seguridad   24   hrs,   
+está  ubicado  en  Urb.  Larapa  San  Jerónimo.  
+Interesados. Llamar al Cel. 912973754.
+Anticresis  por  2 años   notarial   y/o   vendo   
+departamento en Agua Buena (Bloque B) – Psje. 
+Retama  P-2  pasando  el  aeropuerto,  costado  de  
+Hilario  Mendívil  (entrando  por  el  lado  derecho  
+de Agua Buena), de 3 dormitorios, sala-comedor 
+amplio,  2  baños,  cocina-lavandería  en  3er.  piso.  
+RR.PP. (11300745). Razón Cel. 984650722.
+¡En  anticresis!  Local comercial    ubicado    
+en   zona   altamente   comercial.   Aprovecha   
+esta   oportunidad   y   asegura   tu   inversión   
+en  el  corazón  de  Wanchaq.  Informes  a  los  
+Cels. 943408068, 976359988.
+Bonita y moderna habitación en anticresis. Y 
+otra  habitación  en  alquiler  con  cocina,  sala  y  
+comedor compartidos; en edificio residencial, 
+en  parque  Micaela  Bastidas  San  Sebastián,  
+cerca  a  la  U-Andina,  ideal  para  estudiantes  
+universitarios     y/o     profesionales.     Razón     
+Cels. 952324151, 925113067.
+Doy en anticresis a persona sola o estudiante, 
+un   mini   departamento   que   consta   de   2   
+habitaciones,  cocina  y  baño  privado;  en  Calle  
+Francisco Romaña Nº156 Santiago Cusco (ref. 
+altura de la puerta del nuevo hospital Antonio 
+Lorena).  Interesados  llamar  Cel.  954723006,  
+984143339.
+
+IMPORTANTE: Responde SOLO con JSON válido, sin texto adicional.

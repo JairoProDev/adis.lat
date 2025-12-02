@@ -82,3 +82,5 @@ export function generarApiKey(): string {
   return 'adis_' + crypto.randomBytes(32).toString('hex');
 }
 
+
+

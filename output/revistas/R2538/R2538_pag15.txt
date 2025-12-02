@@ -1,0 +1,340 @@
+Eres un experto en extraer información estructurada de anuncios clasificados de la revista peruana "Rueda de Negocios" de Cusco.
+
+CONTEXTO:
+Estoy procesando el texto extraído de una página de la revista. La página contiene múltiples anuncios clasificados de diferentes categorías. Cada anuncio puede tener diferentes tamaños visuales según el precio pagado por el anunciante.
+
+TAREA:
+Extrae TODOS los anuncios presentes en el texto y estructura cada uno en formato JSON estricto. NO omitas ningún anuncio, incluso los más pequeños.
+
+FORMATO DE SALIDA (JSON estricto, sin markdown, sin código, solo JSON puro):
+
+{
+  "edicion": "2538",
+  "pagina": 15,
+  "fecha_publicacion": "2024-06-20",
+  "anuncios": [
+    {
+      "titulo": "Título descriptivo (máx 100 caracteres)",
+      "descripcion": "Descripción completa (máx 2000 caracteres)",
+      "categoria": "empleos|inmuebles|vehiculos|servicios|productos|eventos|negocios|comunidad",
+      "contactos": [
+        {
+          "tipo": "telefono|whatsapp|email",
+          "valor": "número/email normalizado",
+          "principal": true
+        }
+      ],
+      "ubicacion": "Ubicación mencionada",
+      "tamaño_visual": "miniatura|pequeño|mediano|grande|gigante",
+      "precio": "Precio si existe"
+    }
+  ]
+}
+
+REGLAS CRÍTICAS:
+1. Categorías: empleos (trabajo), inmuebles (casas/alquiler), vehiculos (autos/motos), servicios (profesionales), productos (venta), eventos (cursos), negocios (traspasos), comunidad (otros)
+2. Contactos: Normaliza números (sin espacios/guiones). Si dice "WhatsApp", usa tipo "whatsapp"
+3. Tamaño: miniatura (1-3 líneas), pequeño (4-8), mediano (9-15), grande (16-25), gigante (+25)
+4. NO inventes información. Solo extrae lo explícito
+5. Extrae TODOS los anuncios, incluso pequeños
+
+TEXTO DE LA PÁGINA A PROCESAR:
+
+1515
+Estamos trabajando para servirlo mejor
+R
+LA RADIO
+96.1
+FM
+Revista: Publicación Lunes y Jueves, venta diaria
+RN Radio 96.1 FM de 8 a 10 a.m.
+Cusco, del 20 al 26 de Junio del 2024–Edición Nº 2538
+Vendo  Camioneta  Mitsubishi L-200   del   
+2012  en  excelente  estado,  solo  se  usó  los  
+fines de semana, full equipo, lunas y pestillos 
+eléctricos,  pintura  recién  retocada.  Aros  de  
+Magnesio.  Equipo  de  música  nuevo  marca  
+Kenwood  con  bluetooth  +  amplificador. 
+Único  dueño.  Precio:  $13,000  (conversable).  
+Razón Cel. 931533990.
+Vendo  camioneta  semi nueva   Hyundai   
+Tucson    Limited    turbo    1.6    full    equipo    
+conservada  en  garaje  sótano,  rodada  solo  
+en pista 6,990 k. de recorrido, 36 mil dólares, 
+trato   directo   con   el   propietario.   Razón   
+Cel. 984339104.
+Vendo  Toyota  Rush, uso  particular.  Buen  
+estado    de    conservación,    recorrido    53    
+000km,   Año   2019.   Interesados   llamar   al   
+Cel. 984762829.
+Joyería Ccorihuaman compra oro  y  plata,  
+monedas 9 y 5 décimos, joyas usadas y otros; 
+también  fabrica  aros  de  matrimonio  en  oro  
+18,  plata950,  oro  blanco  24  klts.  sortijas  de  
+compromiso  C/ piedras  finas/brillantes  rubí, 
+zafiro  azul,  etc.  Cadenas,  pulseras  y  otras 
+joyas.  Razón  Portal  Mantas  158  Plaza  de  
+Armas, Cel. 946573700.
+Vendo citrato de magnesio y citrato de potasio 
+en   polvo   en   dos   presentaciones   producto   
+alemán juntos o por separado S/.70 soles el par, 
+entrega  a  domicilio  en  Cusco,  se  hace  envió  a  
+provincias. En Av. Los Incas 1500 Edificio Inkas 
+Platinum dpto 104 Wánchaq (frente al Hospital 
+Regional) Razón WhatsApp 944127069.
+Vendo en ocasión 300  puntales  de  metal,  8  
+cuerpos  de  andamios,  tablas  de  diferentes  
+medidas,  1  trompo  mezcladora,  4  llantas  de  
+camioneta  Hilux  con  sus  aros  respectivos,  1  
+parachoque  para  camioneta  Hilux,  carrybag,  
+todos semi nuevos. No soy revendedor. Razón 
+Cel. 953578385.
+Se  requiere  administrador con    o    sin    
+experiencia para Clínica Veterinaria en Cusco. 
+Interesados enviar C.V. y llamar al 960142774.
+Se requiere Asistente Contable (estudiantes 
+o   egresados)   sin   experiencia,   de   lunes   a   
+viernes,  horario  de  oficina,  de  preferencia 
+vivir  cerca  al  aeropuerto  Alejandro  Velasco  
+Astete. Se ofrece buena remuneración. Enviar 
+CV  documentado  y  con  foto  actualizada  al  
+correo: luzycolorsrl@hotmail.com / WhatsApp 
+960653271.
+Se  requiere  ayudante de   cocina   para   
+restaurante  en  Cusco  ubicado  en  Tullumayu  
+Alto. Razón Cels. 992324576, 994936520
+Se requiere conductor a A2b Para Santo Tomás 
+PROYECTO   CUSCO.   Manejo   de   camioneta,   
+tiempo de contrato meses. Enviar C.V al correo: 
+rodano.ticona@gmail.com
+ Cel. 939857683.
+Se requiere personal, de preferencia señorita 
+con  inglés  básico  para  atender  tienda  de  
+artesanías en la plazoleta de San Blas, jornada 
+completa,  buen  ambiente  de  trabajo.  Razón  
+WhatsApp 984740037, 959771600
+Se  requiere  practicante y    Técnico    en    
+Farmacia;   Presentarse   frente   al   Hospital   
+Regional. Informes al Cel. 997468055.
+Se requiere señoras, señoritas,  jóvenes  y/o  
+caballeros  de  20  a  40  años  para  trabajar  en  
+atención de mostrador de día o noche a tiempo 
+completo  o  1/2  tiempo,  buen  ambiente  de  
+trabajo y buen sueldo. Mayor información en 
+los  Cels.  903179841,942835335,  963592552,  
+940387026.
+Se requiere técnico practicante de: eléctrica, 
+electrónica  o  ramas  afines,  para  el  área 
+de  soporte  técnico  e  instalaciones.  Razón  
+Urb.   Manuel   Prado,   paradero   de   subida,   
+Cel. 966747684.
+Se requiere trabajadora de hogar (señora o 
+señorita) con experiencia, a medio tiempo, se 
+paga buen sueldo, de preferencia de 30 años 
+a más. Presentarse en Av. Cusco N° 817, San 
+Sebastián. Entrevistas a partir de las 5:00 p.m. 
+Informes al Cel. 902443195, 997591061.
+Se  requiere  trabajadora de  hogar  medio  
+tiempo  y  niñera  medio  tiempo.  Razón  al  
+Cel. 951955392.
+Se requiere un personal  auditor  nocturno,  
+housekeping,  cafetería  medio  tiempo  todos  
+con   experiencia   disponibilidad   inmediata.   
+Razón enviar C.V. al WhatsApp 988008910.
+Se  requiere  trabajadora del   hogar   para   
+apoyo   en   casa,   altura   del   4to.   paradero   
+San  Sebastián,  de  preferencia  que  viva  por  
+San  Sebastián.  Comunicarse  con  la  Sra.  Luz  
+Cel. 959100324.
+Urgente ROMULO’S barber SHOP.  necesito  
+barberos o señorita cosmetóloga con amplia 
+experiencia   y   una   practicante,   trabajo   de   
+inmediato. Razón Cel. 956759554.
+Urgente se necesita, 2  jóvenes  o  señoritas  
+con  experiencia  para  housekeping,  personal  
+para  cafetín,  practicantes  de  turismo  para  
+hotel    de    renombre,    cocineros,    trabajo    
+inmediato.  Presentarse  en  calle  pavitos  527  
+costado del terminal a Ollantaytambo. Razón 
+Cels. 961825194, 900215177.
+• Servicios
+Maestro  albañil  ofrece sus   servicios   en:   
+acabados,  yeso,  cemento,  enchapados,  pisos  
+laminados,  pintura,  gasfitería,  electricidad, 
+muros de contención, vaciado de loza y más. 
+Razón al Cel. 919025847.
+Maestro  de  obra con  amplia  experiencia  
+ofrece     sus     servicios     de     construcción     
+de   edificios   multifamiliares,   hoteles, 
+remodelaciones,    refacciones,    hospedajes,    
+casas    de    campo,    cercos    perimétricos,    
+muro  m²  s/10  soles,  tarrajeo  m²  s/10  soles,  
+Estucado    m²    S/10    soles,    enchapado    m²    
+S/10  soles.  Salimos  a  provincias.  Informes  y  
+cotizaciones a WhatsApp 931450518.
+Maestro  de  obra ofrece   su   servicio   en   
+construcción de edificios, zapatas, columnas, 
+losa     aligerada,     acabados     en     general,     
+instalaciones   en   general   y   otros.   Cuenta   
+con  maquinarias  y  herramientas  completas.  
+Se    saca    presupuesto    sin    compromiso.    
+Interesados llamar al Cel. 984282938.
+Maestro  de  obra ofrece    sus    servicios    
+de:  edificación  de  viviendas  de  material 
+noble,     asentado     de     muros,     tarrajeo,     
+estucado,  enchapado  mayólica/porcelanato,  
+construcción    en    general.    Con    garantía,    
+responsabilidad   y   eficacia.   Razón 
+Cel. 992636604.
+Maestro   ofrece   sus servicios      con      
+mano  calificada  como:  cercos,  tarrajeos, 
+enchapados,  falso  piso,  pintura,  instalación  
+eléctrica,  gasfitería,  acabados  de  primera. 
+Razón Cel. 992193311.
+VARIOS
+$
+Traspasos–Muebles–Vehículos y otros
+ALQUILER Y VENTA DE 
+PUNTALES METÁLICOS
+Andamios con plataformas, encofrados 
+metálicos, triplay fenólico, espárragos, 
+tuercas   plato,   puntales   nuevos   de   
+todas  las  medidas;  almacén  en  Urb.  
+Túpac   Amaru,   Calle   Tomas   Katari   
+N° 813 2do. Bypass - Vía Evitamiento, 
+Cels. 993663593, 982040404.
+PRESTO DINERO
+AL INSTANTE
+Con  garantía  prendaria  como:  autos,  
+motocicletas,      televisores,      laptops,      
+artefactos      en      general,      absoluta      
+confiabilidad, disponibilidad inmediata, 
+sobre  todo  seguridad  y  confianza, 
+intereses        negociables.        Estamos        
+ubicados  en  Wanchaq,  cerca  al  Real  
+Plaza. Razón Cel. 984323309.
+TRASPASO SALÓN 
+DE BELLEZA
+Totalmente implementado 
+en pleno funcionamiento con 
+clientela fija en zona céntrica. 
+Precio conversable. Llamar al 
+Cel. 986212841
+SE TRASPASA 
+GYMNASIO
+Con máquinas nuevas 
+(ACTIVE LIVE). Por s/30 
+mil soles. Informes al
+Cel. 926622749
+SE TRASPASA 
+POLLERÍA
+BIEN IMPLEMENTADA CON 
+CLIENTELA FIJA Y EN ZONA 
+ESTRATÉGICA. RAZÓN 
+JUAN ESPINOZA MEDRANO 
+(HUANCARO). INFORMES AL
+Cel. 941646948
+POR MOTIVO DE VIAJE 
+TRASPASO HERMOSO SALÓN 
+SPA DE 70 M²
+Urb. Marcavalle – Cusco, cuenta con: Clientela 
+fija, totalmente implementado, Zona Exclusiva 
+y   Comercial,   listo   parar   trabajar.   Incluye   
+materiales   de   calidad.   Precio   conversable.   
+También  alquilo  un  local  para  oficina  de 
+25 m² con baño y servicios independientes en 
+Av. Tupac Amaru Urb. Progreso, precio a tratar. 
+Informes a los Cels. 962379133, 930219130.
+POR OCASIÓN 
+VENDO MUEBLES
+Ideal    para    negocio    especie    y    
+frutos  secos,  (mostradores  y  bar)  
+además muebles de sala comedor 
+de  6  sillas.  Razón  Cel.  Informes  
+Cel. 984707574, 968841465.
+BUSCO SOCIO 
+PARA NEGOCIO DE 
+PIZZAS AL PASO
+Persona    emprendedora    y    con    
+perfil  vendedor.  Razón  escribir  al 
+WhatsApp 997583312.
+SE TRASPASA BOTICA 
+PERFUMERÍA EN
+AV. 28 DE JULIO
+A la altura del 1er. paradero de Ttio 
+carril  de  bajada,  con  variedad  de  
+productos y clientela fija. Informes 
+a los Cels. 932118815, 925412557.
+POR MOTIVO DE VIAJE 
+TRASPASO RESTOBAR 
+EN CALLE TEQSECOCHA 
+- PLAZA DE ARMAS DE 
+CUSCO
+Informes al
+Cel. 946465052
+POR MOTIVO DE SALUD 
+TRASPASASE CEVICHERÍA - 
+RESTAURANTE
+Bien     implementado,     excelente     
+ubicación  y  clientela  fija,  con 
+posibilidad  de  ampliar,  horario  de  
+atención;  ubicado  en  Av.  Camino  
+Real N°112 (al costado de la UGEL). 
+Razón Cel. 984296326
+CON URGENCIA 
+TRASPASO 2 STANDS 
+CON MERCADERÍA
+Ubicado en “centro comercial el 
+Hueco” más abajo del Paraíso, 
+con clientela fija. Informes a los 
+Cels. 959752026, 999966591.
+• Traspasos
+Por  motivo  de salud  traspaso  AIRBNB  u  
+hospedaje con vista panorámica en 2do. piso 
+de  2  camas  plaza  media  y  un  matrimonial,  2  
+roperos, mueble de sala, comedor reposteros, 
+frigobar,   microondas,   utensillos   de   cocina   
+completo, totalmente nuevos, a 2 cuadras del 
+Mercado San Blas Lucrepata-Cusco, precio de 
+ocasión. Cel. 918642154, 989905422.
+Por  motivo  de viaje   doy   en   traspaso   y   
+alquiler   stánd   de   casacas   de   damas   y   
+caballeros, importados y nacionales, en el real 
+Altiplano Copacabana Av. de la Cultura frente 
+al colegio Garcilaso, buena ubicación clientela 
+fija. Informes al Cel. 950719925.
+Se traspasa puesto de  comida  con  clientela  
+fija; en el Centro Comercial “Las Poderosas” 
+en     Amauta.     Para     mayor     información     
+comunicarse al Cel. 965352500.
+Se  traspasa  tienda de    abarrotes    por    
+urgencia,  con  trastienda  para  vivienda;  en  la  
+vía  de  evitamiento  altura  Horacio  Zevallos.  
+Precio a tratar. Razón Cel. 974209800.
+Traspaso hospedaje totalmente en estreno, 
+con  todo  implementado,  en  zona  turística;  
+ubicado en Av. Pachacutec (frente a Perurail). 
+Precio de ocasión. Llamar al Cel. 932429892.
+Traspaso  restaurante  bien equipado  listo  
+para  trabajar,  en  Av.  Jorge  Chávez  B-3-12  
+ref. costado del jardín de “Nuevo Amanecer” 
+a    pasos    del    Terminal    Terrestre    Cusco.    
+Comunicarse al Cel. 934855530.
+Ocasión por motivo de viaje: Traspaso horno 
+pollero  de  18  pollos,  cafetera  profesional  de  
+café  expreso,  de  acero  inoxidable,  muebles,  
+balones de gas, también vendo mesas y sillas 
+de spa. Razón Cel. 984847567.
+Te dejes sorprender
+Con imitaciones
+NO!!
+ANUNCIA
+ ✓CASAS
+ ✓DEPARTAMENTOS
+ ✓TERRENOS
+ ✓TIENDAS
+ ✓OFICINAS
+ ✓Y MUChO MÁS
+COMPRA–VENTA–ANTICRESIS–ALQUILER
+
+IMPORTANTE: Responde SOLO con JSON válido, sin texto adicional.

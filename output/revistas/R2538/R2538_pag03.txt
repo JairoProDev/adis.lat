@@ -1,0 +1,430 @@
+Eres un experto en extraer información estructurada de anuncios clasificados de la revista peruana "Rueda de Negocios" de Cusco.
+
+CONTEXTO:
+Estoy procesando el texto extraído de una página de la revista. La página contiene múltiples anuncios clasificados de diferentes categorías. Cada anuncio puede tener diferentes tamaños visuales según el precio pagado por el anunciante.
+
+TAREA:
+Extrae TODOS los anuncios presentes en el texto y estructura cada uno en formato JSON estricto. NO omitas ningún anuncio, incluso los más pequeños.
+
+FORMATO DE SALIDA (JSON estricto, sin markdown, sin código, solo JSON puro):
+
+{
+  "edicion": "2538",
+  "pagina": 3,
+  "fecha_publicacion": "2024-06-20",
+  "anuncios": [
+    {
+      "titulo": "Título descriptivo (máx 100 caracteres)",
+      "descripcion": "Descripción completa (máx 2000 caracteres)",
+      "categoria": "empleos|inmuebles|vehiculos|servicios|productos|eventos|negocios|comunidad",
+      "contactos": [
+        {
+          "tipo": "telefono|whatsapp|email",
+          "valor": "número/email normalizado",
+          "principal": true
+        }
+      ],
+      "ubicacion": "Ubicación mencionada",
+      "tamaño_visual": "miniatura|pequeño|mediano|grande|gigante",
+      "precio": "Precio si existe"
+    }
+  ]
+}
+
+REGLAS CRÍTICAS:
+1. Categorías: empleos (trabajo), inmuebles (casas/alquiler), vehiculos (autos/motos), servicios (profesionales), productos (venta), eventos (cursos), negocios (traspasos), comunidad (otros)
+2. Contactos: Normaliza números (sin espacios/guiones). Si dice "WhatsApp", usa tipo "whatsapp"
+3. Tamaño: miniatura (1-3 líneas), pequeño (4-8), mediano (9-15), grande (16-25), gigante (+25)
+4. NO inventes información. Solo extrae lo explícito
+5. Extrae TODOS los anuncios, incluso pequeños
+
+TEXTO DE LA PÁGINA A PROCESAR:
+
+33
+Estamos trabajando para servirlo mejor
+R
+LA RADIO
+96.1
+FM
+Revista: Publicación Lunes y Jueves, venta diaria
+RN Radio 96.1 FM de 8 a 10 a.m.
+Cusco, del 20 al 26 de Junio del 2024–Edición Nº 2538
+Alquilo  y/o  Vendo: Departamento   semi   
+amoblado     en     Residencial     Kantus,     con     
+90    m²    de    espacio    funcional.    Consta    de    
+3   habitaciones,   2   baños,   sala   y   comedor   
+amplios,  cocina  equipada,  lavandería  interna,  
+terraza     compartida,     Garaje.     ¡Aprovecha     
+esta    oportunidad    imperdible,    por    viaje!    
+Contáctanos  para  más  detalles  y  visitas  al  
+Cel. 993539396.
+Se alquila bonito departamento  de  160  m²,  
+de   3   habitaciones,   sala,   comedor,   cocina,   
+3   baños,   garaje   y   deposito,   con   ascensor   
+servicios  independientes;  en  Urb.  Huancaro  
+Calle Bellavista N-1-2. Razón Cel. 948179015.
+Se  alquila  departamento amoblado  de  2  
+dormitorios,  sala  -  comedor,  cocina  y  baño,  
+en  zona  céntrica  a  10  minutos  de  la  plaza  
+de    Armas    (caminando),    Urb.    Lucrepata,    
+por   la   recta   de   San   Blas.   Informes   a   los   
+Cels. 946741478, 958365453.
+Se alquila departamento de  2  dormitorios,  
+sala-comedor,    cocina,    2    baños    C/    ducha    
+eléctrica  lavandería  y  un  mini  departamento  
+con    1    ambiente    amplio,    baño,    cocina,    
+lavandería;  ubicado  a  10  min.  caminando  a  
+la plaza de armas en la Urb. Jardines del Inca 
+C-12  San  Blas  Cusco  (referencia  encima  de  la  
+Urb. Lucreapata). Razón Cel. 984905878.
+Se alquila departamento independiente  en  
+1er.  piso,  cuenta  con  3  habitaciones  amplias,  
+patio   y   lavandería;   en   Av.   Huayruropata   
+Nº  1110  (altura  de  la  Región  Inka  y  pasando  
+del BCP). Razón al Cel. 949391656.
+Se alquila departamento nuevo en estreno de 
+2 habitaciones, 2 baños completos con duchas 
+multifuncionales  incluidos  hidromasajes,  sala,  
+comedor, cocina, lavandería, en Urb. Los Pinos 
+(detrás  de  la  Urb.  Santa  Úrsula  referencia  
+cevichería Pez Limón). Razón Cel. 984403864.
+Se  alquila  departamentos en    2do.    y    
+4to.  nivel  amoblados  y  sin  amoblar,  constan  
+de  3  habitaciones  con  piso  parquet,  sala-
+comedor,  cocina,  baño,  lavandería  y  servicios  
+independientes;   ubicado   en   Av.   Collasuyo,   
+(altura  del  paradero  COVIPOL,  a  una  cuadra  
+de Promart). Razón Cel. 973106285 (Visitas de 
+preferencia por las tardes).
+Se  alquila  un 
+departamento  en  5to.  piso  
+con  2  habitaciones,  sala,  comedor,  cocina,  
+baño,    servicios    independientes;    ubicado    
+en  2do.  puente  de  Ttio  28  de  Julio  Psje.  
+Democrático   Lote-2   -8B.   Wánchaq.   Razón   
+Cel. 933184824.
+Se  alquila  un departamento   totalmente   
+amoblado,   de   3   habitaciones;   ubicado   en   
+el  distrito  Cercado  de  Lima,  con  acceso  a  
+todos  los  servicios.  Informes  solo  WhatsApp  
+992783321
+Alquiler  en  Santiago mini   departamento   
+(fachada),  (e  interior)  en  el  4to.  piso,  con  
+dos  dormitorios,  solo  para  persona  sola(o)  o  
+pareja sin niños ni mascotas, (No Extranjeros) 
+frente  al  colegio  Fe  y  Alegría,  calle  Rocopata.  
+Cel. 974782577.
+Alquilo mini departamento de 2 habitaciones 
+y  baño;  en  Urb.  Aprovite  D-1,  San  Jerónimo  
+(frente  a  MAESTRO).  Razón  Cels.  990738103,  
+926252426.
+Alquilo  mini  departamento para  persona  
+sola,  amplio,  cómodo  e  independiente,  con  
+todos   los   servicios   y   en   buena   ubicación   
+(Villa El Periodista). Precio a tratar. Razón a los 
+Cels. 949873306, 980708300.
+Alquilo  minidepartamento  en el  3er.  piso  
+de  1  dormitorio,  sala,  cocina  semi  amoblada,  
+baño  con  terma  a  gas  y  acceso  a  terraza  
+techada;  en  Urb.  Progreso  Jr.  Acomayo  C-4  
+Wánchaq. Razón Celular: 994978331.
+Alquilo un mini 
+departamento  en  3er.  nivel  
+consta  de  2  habitaciones,  1  baño,  cocina,  
+lavandería   y   terraza,   ubicado   en   General   
+Ollanta    F-7    Santiago    (paradero    Ollanta)    
+a   2   paraderos   del   C.C.   El   Molino.   Razón   
+Cel. 969141461, 950725886. Sra. Gloria
+Alquiló  una  habitación, con    cocina    y    
+baño   privado,   en   estreno,   para   una   sola   
+persona, precio a tratar, todo panorámico, en 
+3er. paradero de San Sebastián, media cuadra 
+de la pista. Informes al Cel. 952325601.
+Alquiler  de  habitación amoblada   o   sin   
+amoblar  cómoda,  segura  y  económica,  con  
+baño  privado  en  esquina  de  la  Universidad  
+Andina   de   Larapa;   para   persona   sola   o   
+estudiante,  desde  S/.  280  incluye  servicios.  
+Informes Cels. 958199955, 974397824.
+Alquilo  1  habitación para   estudiante   o   
+persona  sola,  en  Ucchullo  Alto,  costado  de  
+ONG  Yanapanacusun,  detrás  de  la  UNSAAC.  
+Razón Cel. 956344995.
+Alquilo  2  habitaciones amplias  contiguas  
+con    cocina,    para    estudiante    o    pareja;    
+ubicadas  en  Ucchullo  Alto,  costado  de  ONG  
+Yanapanacusun,  detrás  de  la  UNSAAC.  Razón  
+Cel. 956344995.
+Alquilo 3 habitaciones continuas, una grande 
+y 2 pequeños, en 2do. piso, referencia Arcopata-
+Cusco,    Grifo    petroamerica,    Prolongación    
+Apurímac. Razón Cel. 974570479, 932468006.
+Alquilo  bonitas  habitaciones solamente 
+amobladas   desde   S/390   a   más,   incluye   
+servicios,   internet   gratis,   baños   privados/
+compartidos,   agua   caliente   24hr.   Acceso   
+independiente,  para  persona  sola,  pareja  y  
+ejecutivas;  en  Urb.  Santa  Beatriz  F-4  (altura  
+Real Plaza, cruzando Av. de la Cultura). Razón 
+Cel. 969772697.
+Alquilo  habitación  amoblada amplia  con  
+baño  privado  y  cocina  con  reposteros  altos  
+y  bajos  a  S/.650  (incluye  servicios  agua,  luz  
+e  internet).  Y  alquilo  habitación  con  ropero  
+empotrado   de   tamaño   regular   con   baño   
+privado,  a  S/.410  incluye  servicios.  detrás  de  
+la  UNSAAC  Av.  Collasuyo  P-19  en  la  misma  
+avenida  con  vista  a  la  universidad,  para  2  
+personas. Razón Cel. 913507172.
+Alquilo  habitación  con baño     privado     
+totalmente  independiente;  para  persona  sola;  
+ubicada a 4 cuadras de la “U” Andina, en Larapa 
+H14-11  San  Jerónimo  (frente  al  2do.  parque).  
+Razón en la misma dirección, RPC 991668933.
+Alquilo habitación con baño privado y agua 
+caliente,  en  1er.  piso  y  otra  habitación  con  
+baño privado y agua caliente, en el 2do. piso; 
+en  Jr.  Atahuallpa  N°  135  Urb.  Tahuantinsuyo  
+(detrás de CC.HH. Zarumilla, cerca de la UTEA), 
+de   preferencia   para   persona   sola   (mujer).   
+Razón Cel. 974220172.
+Alquilo  habitación  con baño   privado   y   
+servicios    completos,    ideal    para    señorita;    
+ubicada  en  la  Urb.  Santa  Rosa,  Pasaje  Los  
+Geranios Nº 285 (frente al colegio Santa Ana). 
+Razón Cel. 961858187.
+Alquilo   habitación   en departamento 
+amoblado   en   estreno   (compartido),   a   5   
+minutos  de  la  plaza  de  armas.  Cuenta  con  
+todas  las  comodidades  y  servicios.  Razón  al  
+984832952 (enviar solo mensajes WhatsApp).
+Alquilo  habitación  semi amoblada    a    
+extranjero  con  baño  privado,  incluye  servicio  
+de  luz,  agua  caliente  e  internet;  ubicada  en  
+Av. Baja 132 interior, cerca al mercado central 
+y  a  una  cuadra  del  templo  San  Pedro,  a  4  
+cuadras  de  la  plaza  de  armas.  Precio  a  tratar.  
+Razón Cel. 974678047, 953747816.
+Alquilo  habitación  semi amoblada   para   
+señoritas,  en  la  Urb.  Lucrepata  Cercado  del  
+Cusco,  con  hermosa  vista  panorámica,  con  
+internet, Fibra Óptica, ducha con agua caliente, 
+sin mascotas. Contacto al Cel. 984763803.
+Alquilo  habitaciones  a personas   solas   o   
+estudiantes:  sin  amoblar  C/  baño  compartido  
+desde  S/200,  con  baño  privado/ducha  S/250  
+y  amobladas  S/300  incluye  todos  los  servicios,  
+además wifi/tv cable; también departamentos en 
+Jr. Junín Q-7 Independencia (a 10 min. Mercado 
+San Pedro-final E.T. C-4M). Cel. 936794351.
+Alquilo  habitaciones  amobladas zona 
+residencial,   por   días,   semanas   o   meses,   
+baño  privado,  agua  caliente,  Wi-fi,  servicio 
+de   limpieza   y   desinfección   diaria,   accesos   
+independientes.  Total  seguridad  y  privacidad,  
+servicio de desayunos opcional. Verlos en Urb. 
+Quispicanchis Jr. Nicaragua H-6 (altura puente 
+Marcavalle,  a  3  cuadras  del  C.C  Real  Plaza).  
+Informes 941255304.
+Alquilo  habitaciones  independientes con 
+internet;   ubicadas   en   zona   céntrica,   Urb.   
+Mariscal Gamarra, 2da etapa, Chalet A-29 (Ref. 
+cerca  al  Colegio  Comercio  41,  hacia  derecha  
+hasta llegar al parquero de carros, seguir hasta 
+el  Bloque  A-9,  subir  escaleras).  Interesados  
+llamar al Cel. 966438519.
+Alquilo  una  habitación amplia  con  baño  
+privado  y  otra  habitación  para  persona  sola;  
+ubicadas  en  Urb.  Los  Sauces  F-2-A  Wanchaq.  
+Llamar a los Cels. 984502919, 984020933.
+Para  señoritas  alquilo habitación    con    
+baño  y  ducha  privada,  con  ropero  (acceso  a  
+lavandería  y  cocina),  en  calle  Unión  L-6  Urb.  
+Flor  de  La  Cantuta,  3er.  paradero  de  San  
+Sebastián,  detrás  de  la  pollería  “Dayana”  a 
+100  mts  de  Av.  de  la  Cultura,  a  S/.350  soles  
+incluyen servicios. Razón Cel. 946686164.
+Se alquila habitaciones con  baño  privado  y  
+departamentos  de  3  dormitorios,  baño,  sala  
+–  comedor,  cocina,  lavandería  independiente,  
+en   zona   céntrica   Wanchaq.   Informes   al   
+Cel. 984712010.
+Alquilo departamento de 65 m², cuenta con 
+dormitorio amplio, sala-comedor, cocina, baño 
+y  lavandería,  ubicado  en  Av.  Velasco  Astete,  
+Urb. Santa Lucila, Psje. Tupac Amaru (paradero 
+desvío).  Comunicarse  a  los  Cels.  935643834,  
+931952375
+Alquilo departamento en 
+1er. piso con vista 
+a  la  calle,  acceso  de  salida  independiente,  
+de    2    dormitorios,    sala-comedor,    cocina,    
+baño,   cochera,   servicios   de   agua   y   luz   
+independientes;   en   APV   Agua   Buena   B-2,   
+Psje.    Capulí    -    San    Sebastián,    paradero    
+Hilario  (cerca  al  parque  –  aeropuerto).  Razón  
+Cels. 979408221, 986098583, 901969561.
+Alquilo departamento en 1er.  piso,  consta  
+de   3   dormitorios,   sala   comedor,   cocina,   
+lavandería  y  baño,  zona  tranquila,  ubicado  
+en  Urb.  Larapa.  Informes  al  Cel.  984106297,  
+974783031.
+Alquilo  departamento  en 
+1er.  piso,  frente  
+al  parque,  con  3  habitaciones,  sala-comedor,  
+cocina, estudio, 2 baños y lavandería; ubicada 
+en  Larapa  H14-11  San  Jerónimo,  detrás  de  la  
+“U” Andina (frente al 2do. parque de Larapa). 
+Razón en la misma dirección, RPC 991668933.
+Alquilo departamento en 2do.  piso  en  Urb.  
+Larapa,  con  2  dormitorios  pequeños,  sala,  
+comedor,  cocina  y  baño,  en  S/.650.00  soles  
+para estudiantes; en la Av. 1 Condominio Costa 
+Verde - (4 cuadras del Colegio De Ingenieros). 
+Razón Cels. 933549761, 974673594.
+Alquilo  departamento  en 3er.  piso,  de  2  
+dormitorios,   sala,   cocina   y   baño;   ubicado   
+Av. de la Cultura, paradero Sol de oro (detrás 
+de COVIDUC), en S/500. Razón Cel. 957743810
+Alquilo departamento en 3er.  piso;  ubicado  
+(frente   a   la   piscina   de   Wanchaq).   Razón   
+Cel. 984697769.
+Alquilo departamento en 3er. Piso, consta de 
+3 dormitorios, comedor-cocina, baño y azotea; 
+ubicado  en  los  Marqueses  A-12  Camino  Real  
+(frente a la Quinta Camino Real a una cuadra 
+de la UGEL Cusco). Razón al Cel. 964200430.
+Alquilo departamento en Cruz Verde – Arco 
+Tica Tica, en 2do. piso consta de 3 dormitorios, 
+2  baños,  sala-comedor,  cocina,  lavandería  y  
+garaje,  también  vendo  propiedad  700  m²  en  
+el  mismo  lugar,  por  motivo  de  viaje.  Razón  
+Cel. 974794910.
+Alquilo  departamento  incluido tienda- 
+librería  consta  de  1  tienda,  3  dormitorios,  
+cocina,        baño,        lavandería,        servicios        
+independientes;   ubicado   en   la   Urb.   José   
+Carlos   Mariátegui   C-14   Wánchaq.   Razón   
+Cel. 984049880.
+Alquilo  departamento  independiente en 
+1er.  piso,  en  Condominio  Los  Robles,  detrás  
+del   Hospital   de   Solidaridad-Larapa,   consta   
+de 2 dormitorios, cocina, baño, sala-comedor, 
+jardín    interior/exterior    y    estacionamiento.    
+Cel. 984250202. (Visitas a partir de 4pm)
+Alquilo departamento semi amoblado  para  
+familia  corta,  2  dormitorios,  sala  comedor,  
+cocina, baño y lavandería. En el centro histórico 
+Calle Hospital. Razón Cel. 984652502.
+Alquilo  departamento,  en Manco   Cápac   
+Wánchaq   414   DPTO.   202,   consta   de   3   
+habitaciones,  sala,  comedor,  cocina,  2  baños,  
+lavandería   pequeña,   precio   S/1000   .Razón   
+Cel. 957477054.
+Alquilo departamentos en 1ero  y  2do.  piso  
+consta   de   3   dormitorios,   sala,   comedor,   
+cocina amoblada con reposteros altos y bajos, 
+baño,   lavandería,   servicios   independientes,   
+ubicado  en  Los  Nogales  (referencia  pasando  
+El Aeropuerto, Jr. Wari). Razón Cel. 974255897, 
+946870365.
+Alquilo hermoso departamento 
+en 1er. piso 
+con    2    dormitorios,    baño,    sala-comedor,    
+cocina  amplia  y  lavandería/patio;  en  la  Asc.  
+Villa  El  Mollecito  B-4  (1er.  puente  de  la  vía  
+de   Evitamiento,   al   lado   de   Los   Nogales).   
+Precios   S/550.   Para   familia   corta.   Razón   
+Cel. 946671098.
+Alquilo  lindo  departamento sin  amoblar,  
+con  ascensor,  para  deportistas,  familia  corta,  
+extranjeros,  en  Urb.  Quispicanchis  Las  Torres  
+Kayser, 10mo. piso, con 3 dormitorios C/ closet 
+y cortinas, sala, comedor, cocina C/ reposteros 
+altos  y  bajos,  baño  y  lavandería.  Informes  al  
+Cel. 984809295.
+Alquilo o doy en anticresis un departamento 
+en   4to.   piso,   consta   de   sala,   comedor,   4   
+dormitorios,   2   baños,   cocina,   lavandería,   
+totalmente     independiente,     ubicado     en     
+APV San Judas Chico III A-7, paradero desvío, 
+Av.   Velasco   Astete.   (frente   a   Kennedy-   B)   
+Razón Cel. 961797447, 976322058.
+ALQUILO: DEPARTAMENTO 
+DE 120 M² EN 5TO. PISO
+De   3   dorm.   C/   roperos   empotrados,   
+3    baños,    sala,    comedor,    cocina    C/    
+reposteros  (altos  y  bajos)  y  lavandería.  Y  
+habitación  semi  amoblada  para  persona  
+sola;  en  Av.  Tomasa  Tito  Condemayta  
+Nº408,  Wanchaq,  (costado  de  EsSalud  y  
+Seda Cusco). Cel. 984353923, 974250423.
+ALQUILO 2 LOCALES EN 
+ESTRENO C/ U CON BAÑO 
+PROPIO Y SERVICIOS 
+INDEPENDIENTES
+Ideal  para  Consultorio  Odontológico  o  
+Medico;  excelente  ubicación  en  Av.  de  
+la  Cultura,  frente  al  Hospital  Regional,  
+a  lado  del  C.C.  Plaza  Sur.  Razón  al  
+Cel. 982726345.
+ALQUILO O VENDO 
+EDIFICIO DE 6 PISOS
+Consta     de     tienda     comercial     y     
+departamentos completos; en Santiago 
+a   unos   pasos   del   hospital   Antonio   
+Lorena,     ideal     para     instituciones,     
+empresas  y  otros,  trato  directo  con  el  
+propietario. Informes al Cel. 932021864.
+ALQUILO LOCAL 
+UBICADO POR LA 
+FERIA DE MUEBLES
+Altura del C.C. El Molino, ideal para 
+venta   de   colchones,   muebles   u   
+otros. Razón al Cel. 984762818.
+BUSCO LOCAL DE 5 M² 
+HASTA 100 M²
+Para  pizzería  por  avenida  la  Cultura,  
+cerca  de  la  UNSAAC,  Av.  Los  Incas,  
+Jr.  De  la  unión,  cerca  al  C.C.  Molino,  
+Calle  Belén,  Calle  Ayacucho,  cerca  al  
+Mercado San Pedro o cualquier zona de 
+alto tránsito peatonal. Razón escribir al 
+WhatsApp 997583312.
+ALQUILO 2 OFICINAS
+Nuevas   por   estrenar   de   60   m²   C/   u,   
+expeditas  para  funcionar  de  inmediato,  
+costo   S/.   900   conversable,   en   zona   
+céntrica  a  ½  cuadra  Av.  de  la  Cultura  
+San  Sebastián,  cada  oficina  tiene  baño 
+privados y cocheras independientes, ideal 
+para consultorio médico, oficinas de Ings 
+o abogados u otros profesionales. Razón 
+Cel. 974257029, Telf. 084-655560.
+ALQUILO TIENDA
+Ideal  para  abarrotes,  internet,  
+plastiqueria  u  otros  similares  
+(no     restaurant);     en     Urb.     
+Tupac  Amaru  parque  Micaela  
+Bastidas  San  Sebastián.  Razón  
+Cel. 974226767.
+ALQUILO 2 BONITOS 
+MINI DEPARTAMENTOS 
+AMOBLADOS
+Por  días,  semanas  o  meses,  en  3er.  y  
+4to. piso, ideal para turistas o ejecutivos; 
+ubicado  en  Urb.  Tahuantinsuyo,  calle  
+Recoleta  Nro.  47  (pista  principal,  a  8  
+minutos de la Plaza de Armas). Razón al 
+Cel. 962701903.
+DOY EN ALQUILER LOCAL 
+COMERCIAL INCLUYE
+2 HABITACIONES
+Servicios independientes Y alquiler 
+departamento 3 habitaciones, sala, 
+comedor,  cocina,  baño;  ubicado  a  
+2 cuadras del mercado de Tica Tica 
+en    la    pista    principal.    Razón    
+Cel. 975503122, 995872922.
+
+IMPORTANTE: Responde SOLO con JSON válido, sin texto adicional.

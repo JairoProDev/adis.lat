@@ -1,0 +1,446 @@
+Eres un experto en extraer información estructurada de anuncios clasificados de la revista peruana "Rueda de Negocios" de Cusco.
+
+CONTEXTO:
+Estoy procesando el texto extraído de una página de la revista. La página contiene múltiples anuncios clasificados de diferentes categorías. Cada anuncio puede tener diferentes tamaños visuales según el precio pagado por el anunciante.
+
+TAREA:
+Extrae TODOS los anuncios presentes en el texto y estructura cada uno en formato JSON estricto. NO omitas ningún anuncio, incluso los más pequeños.
+
+FORMATO DE SALIDA (JSON estricto, sin markdown, sin código, solo JSON puro):
+
+{
+  "edicion": "2538",
+  "pagina": 14,
+  "fecha_publicacion": "2024-06-20",
+  "anuncios": [
+    {
+      "titulo": "Título descriptivo (máx 100 caracteres)",
+      "descripcion": "Descripción completa (máx 2000 caracteres)",
+      "categoria": "empleos|inmuebles|vehiculos|servicios|productos|eventos|negocios|comunidad",
+      "contactos": [
+        {
+          "tipo": "telefono|whatsapp|email",
+          "valor": "número/email normalizado",
+          "principal": true
+        }
+      ],
+      "ubicacion": "Ubicación mencionada",
+      "tamaño_visual": "miniatura|pequeño|mediano|grande|gigante",
+      "precio": "Precio si existe"
+    }
+  ]
+}
+
+REGLAS CRÍTICAS:
+1. Categorías: empleos (trabajo), inmuebles (casas/alquiler), vehiculos (autos/motos), servicios (profesionales), productos (venta), eventos (cursos), negocios (traspasos), comunidad (otros)
+2. Contactos: Normaliza números (sin espacios/guiones). Si dice "WhatsApp", usa tipo "whatsapp"
+3. Tamaño: miniatura (1-3 líneas), pequeño (4-8), mediano (9-15), grande (16-25), gigante (+25)
+4. NO inventes información. Solo extrae lo explícito
+5. Extrae TODOS los anuncios, incluso pequeños
+
+TEXTO DE LA PÁGINA A PROCESAR:
+
+1414
+28 años uniendo los Agentes Económicos de la Región
+R
+Revista: Publicación Lunes y Jueves, venta diaria
+RN Radio 96.1 FM de 8 a 10 a.m.
+LA RADIO
+96.1
+FM
+Cusco, del 20 al 26 de Junio del 2024–Edición Nº 2538
+SE  BUSCA  Auxiliar o    practicante    de    
+MARKETING  TIEMPO  PARCIAL  para  diseño  
+gráfico,  edición  de  videos,  community 
+manager,    realización    de    ADS    y    apoyo    
+en   grabación   de   contenido.   Interesados   
+enviar    CV    ateneaingeneriasac@gmail.com, 
+Cel. 915347578.
+Se busca un socio  chefs  o  cocineros  para  
+reapertura  de  restaurante  turístico  en  San  
+Blas. Restaurante amplio y cuenta con horno 
+pizzero,    bien    implementado.    Llamar    al    
+Cel. 946699224, visitas por la tarde.
+Se necesita 2 señoritas con o sin experiencia 
+para  atención  en  tienda  comercial,  venta  de  
+protectores  de  celulares,  medio  tiempo  y  
+tiempo  completo.  Presentarse  en  calle  Teqte  
+350-A tienda “Gorilas Phone”, Cel. 950753592.
+Se necesita 2 señoritas:  una  jaladora  y  una  
+ayudante  de  cocina  para  los  días  domingos  
+de 5 a.m. a 12 del mediodía, ubicación frente 
+a  la  U.  Andina  -  Larapa  paradero  de  bajada.  
+Informes Cel. 949779857.
+Se necesita Asistente Dental.  Enviar  C.V  al  
+WhatsApp o llamar Cel. 984932593.
+Se
+ necesita cocinero para restaurante ubicado 
+en  la  plaza  de  armas,  se  paga  buen  sueldo  y  
+comisiones. Interesados enviar CV al 984747296
+Se necesita Cocinero(a) especialista en comida 
+rápida. Interesados llamar al Cel. 915062554.
+Se  necesita  joven con   conocimientos   de   
+mecánica  básica,  para  tienda  de  motocicletas  
+(ventas).   Informes   Av.   Huayna   Cápac   162-
+C,  Telf.  084-246009  o  al  Cel.  986005290  de  
+09:00 a.m.a 01:00pm y de 02:00 pm a 06:00pm.
+Se  necesita  niñera  de  25  a  35  años  con  
+experiencia  para  el  cuidado  exclusivamente  
+de una bebé de 4 mes (solo personas serias), 
+horario  de  lunes  a  sábado  2  p.m.  a  7  p.m.,  
+para  San  Sebastián,  se  ofrece  trato  familiar.  
+Llamar al Cel. 986133427.
+Se  necesita  recepcionista con    o    sin    
+experiencia,  tiempo  completo.  Para  atención  
+en  clínica  Veterinaria  en  Cusco.  Interesadas  
+enviar C.V. y llamar al 960142774.
+Se necesita señora responsable  y  de  buen  
+trato  para  el  cuidado  y  atención  de  Adulto  
+mayor  (mujer).  En  el  horario  de  7:00  a.m.a  
+6:00  p.m.  Para  más  información  llamar  al  
+Cel. 941062150.
+Se necesita señorita para  Asistenta  Dental.  
+Interesadas  llamar  a  los  Cels.  984860666,  
+984919939.
+Se
+  necesita  señorita para  atención  al  cliente  
+en  venta  de  accesorios  de  celulares,  con  o  sin  
+experiencia.  A  tiempo  completo  o  medio  tiempo.  
+Presentarse en el C.C. El Paraíso Stand G2 o llamar 
+al Cel. 942774668 o al WhatsApp 967633725.
+Se necesita señorita para  cuidado  de  niños  
+y  labores  de  casa.  Razón  Cels.  974786968,  
+979359379.
+Se
+ necesita señorita para servicio de limpieza en 
+hospedaje,  de  7  a.m.  a  1  p.m.  trabajo  inmediato.  
+Comunicarse al WhatsApp 917806424.
+Se  necesita  señoritas a  tiempo  completo  para  
+venta de joyería y artesanías, en la Plaza de Armas 
+Cusco. Razón Cel. 918622477, 931099764.
+Se necesita señoritas proactivas para ventas 
+en la feria de San Francisco stand Nº57 turno 
+tarde  y  turno  mañana.  Se  paga  bien.  Mas  
+Informes al Cel. 938890089.
+Se necesita técnica en farmacia. Turno tarde 
+con experiencia. Para el Ovalo de Pachacutec 
+y   una   practicante,   turno   mañana,   llamar   
+personas serias. Informes Cel. 983734391.
+Se necesita un ayudante de cocina de lunes 
+a sábado de 8:00am a 4:00pm, sueldo s/1100 
+soles   y   un   vajillero,   también   aceptamos   
+practicantes.    Manuel    prado    “Restaurant    
+Olluquitos”. Informes al Cel. 946699224.
+Se  necesita  una señorita    activa,    con    
+experiencia  en  atención  al  cliente,  de  buena  
+presencia  (cafetín)  para  un  “Sauna  spa”. 
+Informes al WhatsApp 984712010.
+Se  necesita  una señorita   para   atención   
+e  informes  al  cliente  en  una  academia  de  
+matemática,  ser  alegre,  puntual,  honesta,  no  
+tímida,  que  sepa  convencer  al  cliente,  turno  
+tarde  de  3:15  pm  hasta  8:45  pm,  de  lunes  
+a   viernes   (a   unos   pasos   del   Aeropuerto,   
+paradero San Luis). Llamar al Cel. 930151071.
+Se  necesita  urgente señorita   o   joven   
+peruano  o  extranjero  activo  para  trabajo  de  
+jalador  y/o  volantero.  Se  paga  buen  sueldo  
+mas  comisiones.  Interesados  llamar  a  los  
+Cels. 973515038, 967758844
+Necesito señora o señorita  (cama  adentro)  
+para  atención  del  hogar  con  conocimientos  
+de  cocina  para  una  señora  de  70  años.  Se  
+paga buen sueldo. Cel. 997366263
+Necesito señora o señorita no mayor de 35 
+años que sepa de cocina y le guste la limpieza, 
+para  preparar  almuerzo  para  4  personas,  de  
+lunes a sábado medio tiempo turno mañana, 
+de  preferencia  que  viva  en  San  Jerónimo  
+o  San  Sebastián,  ingreso  a  planilla  desde  el  
+1er. mes. Informes Cel. 962726563.
+Necesito  señorita  de 18  a  28  años,  con  
+experiencia   en   ventas,   administración   o   
+afines,  pagos  de  acuerdo  a  experiencia, 
+ingresos  semanales.  Interesadas  enviar  CV.  
+con foto actualizada al Whatsapp 901695668, 
+correo: ckrd5apps@gmail.com
+Necesito señorita solo con  experiencia  en  
+ventas,  facilidad  de  palabra,  experiencia  en  
+venta  de  medicinas  naturales.  Se  paga  buen  
+sueldo. Llamar al Cel. 961019100.
+Necesito  urgente  ayudante de  carpintería  
+con licencia A-1. Informes Cel. 974618934.
+Necesito  urgente  personal técnico    en    
+enfermería o farmacia con/sin experiencia para 
+atención  de  botica,  turno  mañana;  ubicada  en  
+Av. Vía de Evitamiento (entre paradero Horacio 
+Zeballos y Uvima) San Sebastián. Razón escribir 
+vía WhatsApp. 937245719.
+Panadería  y  pastelería “Horno  Industrial” 
+necesita   maestro   y   joven   ayudante   en   
+panadería, con experiencia, también señoritas 
+para  atención,  turno  tarde  y  turno  mañana;  
+ubícanos en el 4to. paradero de San Sebastián 
+Av. Tomas Tuyrutupac, Cel. 956703918.
+Para Sicuani (frente al  hospital)  se  requiere  
+técnica   en   farmacia   o   enfermería,   con   o   
+sin   experiencia   para   atención   en   botica.   
+Interesadas llamar al Cel. 974674732.
+PIZZERÍA  Solicita  urgente personal:  Moza  
+medio tiempo. Horario de trabajo a partir de 
+la  6:00pm  con  experiencia.  Se  ofrece  buen  
+sueldo. Informes al Cel. 961889103.
+Povea - Empresa reconocida  en  el  rubro  de  
+pastelería  y  cafetería  necesita  personal  para  
+sgtes.  áreas:  pastelería,  repostería,  decoración,  
+cajeras con domino en atención, snack-baristas, 
+limpieza,   auxiliar   en   cocina,   elaboración   de   
+kekes. Se paga buen sueldo. Enviar CV Whatsapp 
+978669327, 991193707, rrhh@povea.pe
+Prestigiosa  Agencia  de Viajes   requiere   
+jaladores  con  o  sin  experiencia  para  venta  
+de  tours  de  preferencia  con  ingles  básico  
+o   intermedio,   medio   tiempo   o   tiempo   
+completo. Se paga por comisiones + propinas. 
+Interesados llamar o escribir al Cel/Whatsapp 
+958314893, correo: peruvip1@gmail.com
+Quinta Chicharroneria “El Maizal” necesita 
+mozos(as)  con  o  sin  experiencia,  proactivo,  
+responsables para fines de semana, se ofrece 
+buen sueldo y grato ambiente laboral. Enviar 
+CV al WhatsApp 974530125.
+Requiero  trabajadora  de hogar   (cocina,   
+lavado y limpieza) para familia corta. Horario: 
+De 8:00 a.m.a 1:00 p.m. Dirección: Urb. Santa 
+Mónica,  Jr.  Ricardo  Palma  Nº14  Dpto.  601  
+(detrás  del  Colegio  Sta.  Ana).  Se  paga  buen  
+sueldo. Interesadas llamar al Cel. 984117130.
+Requiero  urgente  personal técnico   en   
+farmacia  y/  o  enfermería  para  atención  en  
+botica   con   experiencia,   también   requiero   
+practicantes,   turnos   mañana   y   tarde   de   
+preferencia  que  vivan  por  las  zonas  de  San  
+Jerónimo. Comunicarse al Cel. 925301372.
+RESTAURANT    MAKIPURA    CUSCO 
+REQUIERE: 2 cocineros, 2 cocineras, Ayudantes 
+de  cocina,  con  o  sin  experiencia  y  Jaladores  
+para  restaurant  (mujer  o  varón).  Razón  Calle  
+Hatún  Rumiyoq  480  Cusco,  ref.  piedra  12  
+ángulos. Informes al Cel. 953394615.
+Restaurante “Kaypi Sumaq Puku” necesita 
+ayudante    de    cocina,    Moza(o),    personal    
+de    limpieza    o    vajillero.    Presentarse    en    
+3er. Paradero de Ttio, Av. Jorge Chávez C2-2. 
+Enviar  su  C.V.  a  los  WhatsApp  y  llamar  a  los  
+Cels. 973522286 o 974272753
+Se  necesita  1 joven   y   1   señorita   para   
+atención en grifo, con experiencia para “Grifo 
+Andree Oropesa”, se paga buen sueldo. Los 
+interesados llamar al Cel. 997876476.
+RESTAURANTE   EN   CUSCO BUSCA:      1      
+COCINERO,   1   AYUDANTE   DE   COCINA,   tiempo   
+completo  (9:00am  a  5:00pm),  1  MOZO(a)  MEDIO  
+TIEMPO (12:00 a 5:00pm). Buen ambiente laboral, 
+pago   puntual   quincenal,   almuerzo.   Dirección:   
+Urb.    Mariscal    Gamarra    Cusco.    Informes    al    
+Cel. 900664517, WhatsApp 984903210.
+Empresa  hotelera  requiere personal   con   
+experiencia  en  el  área  de  cafetería,  lavandería  
+y recepción. Enviar CV al WhatsApp 984637476.
+Empresa hotelera requiere personal para las 
+siguientes  áreas:  cocina  y  comedor  y  house  
+keeping  experiencia  en  la  ciudad  de  Cusco.  
+Interesados  comunicarse  al  Cel.  984899304,  
+telf.084-772417.
+Empresa  importante  necesita asistente 
+administrativo   con   conocimiento   básicos   
+en  contrataciones  con  el  estado  y  atención  
+al  público.  Interesados  enviar  C.V  al  correo:  
+mafetsursac12@gmail.com   o   al   WhatsApp   
+932540078
+Empresa  importante  requiere: 1  Experto  
+en marketing y ventas con dominio de Redes 
+Sociales. 1 Administrador con experiencia en 
+Planeamiento  Estratégico.  Interesados  llamar  
+o  enviar  CV  al  Cel/Whatsapp.  987185610,  
+correo: vlasco31@gmail.com
+Empresa   Importante,   requiere una 
+Asistente    Contable    a    tiempo    completo,    
+proactiva   y   responsable.   Remuneración   a   
+tratar con todos los beneficios de ley. Enviar 
+CV al Whatsapp 974939405.
+Empresa requiere para el área de marketing 
+un   profesional   Community   Manager   con   
+experiencia.    Presentarse    previa    cita    al    
+Cel.  941701416  en  prolongación  Av.  de  la  
+Cultura 1575 of. 402, altura del 2do. paradero 
+San Sebastián. Ref. Edificio de 8 pisos frente al 
+grifo.  También  requiere  empleada  doméstica  
+medio tiempo.
+Estamos
+ buscando personal para los siguientes 
+puestos:  cajero(a),  vendedor(a)  para  librería  con  
+disponibilidad  para  turno  tarde  y  posibilidad  a  
+tiempo completo para la posición de vendedor(a) 
+de  librería,  también  se  considera  disponibilidad  
+para    turno    mañana    y    tarde.    Comunicarse    
+Cel. 984489011, 900759118.
+Hostal requiere señoritas para  el  área  de  
+Housekeeping  y  Recepción,  con  experiencia  
+en  hostelería,  no  mayor  de  30  años,  trabajo  
+inmediato. Contactarse a los Cels. 984119285, 
+974791451.
+Hostel  Turístico  en el   Centro   Histórico   
+requiere personal de housekeeping/limpieza, 
+cocinero   con   experiencia   y   ayudante   de   
+cocina.  Interesados  enviar  C.V.  y/o  llamar  al  
+Cel. 986819423.
+Hotel  necesita  personal para   Nochero   
+con  experiencia,  en  el  horario  de  6:00  pm  a  
+6:00  a.m.  Disponibilidad  inmediata  y  grato  
+ambiente  laboral.  Presentar  con  C.V.  en  calle  
+Recoleta Angosta Nº559. Llamar o enviar C.V. 
+a los WhatsApp 984692488, 974929770.
+Hotel  Tika  Wasi Casa   Boutique   requiere   
+urgente personal para el área de housekeeping 
+y  lavandería,  también  recepcionista  (varón)  
+para el turno II de 2 p.m. a 10 p.m. con ingles 
+intermedio,  disponibilidad  inmediata.  Enviar  
+CV  al  WhatsApp  984115598  o  Presentar  CV  
+en calle Tandapata 491 San Blas.
+La  “Nana”  Agencia de  empleos  necesita  
+trabajadoras  del  hogar,  niñeras,  técnicas  en  
+enfermería,   personal   de   limpieza   y   otros.   
+Razón  Calle  Cruz  Verde  336  Interior  (frente  
+a Cinerama), horario de atención de 9 a.m. a 
+1 p.m. y de 3 p.m. a 7 p.m. Cel. 953483813.
+Necesito cocinera para Puerto Maldonado, se 
+paga puntual S/. 1,700, atención a 10 personas, 
+trato familiar. Informes Cel. 974618934.
+Necesito  joven  o señorita    de    buena    
+presencia   con   facilidad   de   palabra,   para   
+trabajo en oficina de Katering y eventos, para 
+la zona de Tica Tica (salida de cusco) tiempo 
+completo. Razón Cel. 951144042, 921794316.
+Necesito joven para el área de ventas (atención 
+al  cliente)  tiempo  completo  de  10:30  a.m.  a  
+9   p.m.   disponibilidad   inmediata,   requisitos:   
+ingles  básico,  proactividad,  desenvolvimiento.  
+Para  tienda  en  la  plazoleta  San  Blas.  Informes  
+Solo WhatsApp 910981448.
+Necesito  personal  con experiencia   para   
+atención  al  cliente,  repostero(a)  y  ayudante  
+de  cocina,  para  heladería  en  la  plaza  San  
+Francisco Nº144, diferentes horarios. llamar al 
+Telf. 084-234099, Cel. 982050587.
+Necesito  practicantes  en farmacia   turno   
+mañana  Y  técnica  turno  tarde  para  atención  
+en Botica “MedFarma”; ubicada en el 4to. Y 
+5to.  Paradero  de  San  Sebastián.  Razón  al  
+Cel. 966348033.
+Necesito   señora   cocinera(o) para 
+preparación   únicamente   de   menú   y   una   
+señorita  ayudante  de  cocina.  Razón  Manuel  
+Prado D-18-A, Cel. 929529472.
+Agencia de turismo requiere joven o señorita 
+para  transfer,  horarios  flexibles.  Llamar  al 
+Cel.    984727737  o  presentarse  en  la  oficina 
+Av. El Sol Nº988 costado del Hotel Sonesta.
+Agencia de viaje requiere  egresados  de  la  
+carrera de turismo para Asistentes de guía en 
+rutas  de  Trekking.  Interesados  enviar  CV  al  
+correo gestion@lifeadventures.biz
+Agencia de viajes requiere señorita asistente 
+contable con experiencia de un año mínima 
+en  el  área,  educación  mínima  técnico,  con  
+manejo  de  programa  DSCONT,  responsable  
+con   iniciativa   y   disponibilidad   inmediata   
+enviar C.V. al WhatsApp 937446112.
+Agencia de viajes y  turismo  tour  operador  
+requiere  practicantes  para  el  área  counter  y  
+transfer, de la carrera de truismo. Enviar CV al 
+WhatsApp 985224949.
+“  PASTORE  tortas” empresa   dedicada   
+al  a  elaboración  de  tortas  requiere  para  
+AYUDANTES de 18 a 24 años edad. Informes 
+al WhatsApp: 978400715
+“Laser 
+Shop”  requiere Diseñador(a)  Grafico; 
+También 1 joven o señorita ayudante. Interesados 
+presentarse en Av. Infancia Nro. 504.
+“PASTORE tortas”; requiere señoritas  con  
+experiencia  en  VENTAS  de  19  a  23  años  
+edad. Informes al WhatsApp 978400715
+“Villa
+ Carbón” Necesita Mozos con experiencia 
+de 12:30pm a 10pm. Sueldo S/1,300. Y Ayudante 
+de  Cocina  de  12:30pm  a  10pm.  Sueldo  S/1,200.  
+Presentarse  en  Av.  28  de  Julio,  Urb.  La  Florida  
+-  Wanchaq,  altura  del  3er.  paradero  de  Ttio.  
+Cels. 964290771, 983312810.
+¡Urgente!  Se  requiere Técnica(o)    en    
+Farmacia    con    experiencia,    turno    tarde.    
+Disponibilidad inmediata. Interesados llamar 
+a los Cels. 932247481, 928084712.
+Buscamos  personal  proactivo, empático 
+y   excelente   actitud   positiva,   con   ganas   
+de  trabajar  en  equipo  para  integrarse  a  
+una  gran  empresa  y  desarrollar  línea  de  
+carrera  para  Cusco.  Puesto:  Recepcionista,  
+Botones  y  camarero  de  house  keeping.  De  
+preferencia tener experiencia en el puesto y 
+conocimiento  de  inglés.  Interesados  enviar  
+CV a: rrhh@tierravivahoteles.com
+Cooperativ
+a “INTICOOP”, requiere: Gestor(a) 
+de recuperaciones con moto propia, promotor(a) 
+de   crédito   y   ahorro   con   o   sin   experiencia   
+y    practicantes.    Enviar    C.V.    al    Correo:    cac.
+inticoop@gmail.com o al WhatsApp 970359211.
+Detalles  Valentino’s  requiere con   suma   
+urgencia:    2    señoritas    con    conocimiento    
+en    manicurie,    pintado,    diseño    de    uñas,    
+depilaciones  en  hilo  y  cera  (rostro,  cejas  y  
+otros),  planchado,  Rizado  y  lash  lifting  de  
+pestañas. Se ofrece sueldo básico + incentivos. 
+Presentarse  en  Jr.  Anta  B-17,  Urb.  Progreso,  
+Wanchaq o llamar al Cel. 992754571.
+Discoteca  en  Cusco necesita   personal   
+de  seguridad,  señoritas  para  volantear  y  
+personal para barra. Razón Cel. 987463347.
+Distribuidor de Claro Autorizado  Dimera.  
+requiere:  asesores  de  ventas  para  campo,  
+internet  hogar  (Fibra  óptica),  medio  tiempo  
+o tiempo completo, ofrecemos, sueldo fijo, 
+C/s   experiencia,   disponibilidad   inmediata.   
+Comunicarse al Cel. 980629034.
+Empleo  o  trabajo: Necesito  una  persona  
+para  atención  de  local  comercial  -  frente  
+de  la  UNSAAC.  Interesados  presentarse  en  
+Av. Los Incas Nro. 1032 (frente a la UNSAAC) 
+o llamar al Cel. 994801125.
+Empresa  chocolatera  busca personas 
+responsables para ventas en tienda boutique 
+(idiomas son ventaja) horario medio tiempo. 
+Buen   ambiente   laboral   y   oportunidades   
+de   crecimiento.   Enviar   C.V.   al   WhatsApp   
+931604027 o peruorganicsac@gmail.com
+Empresa  de  seguridad “Security  Jaguar” 
+solicita   personal   masculino   y   femenino   
+de  contextura  gruesa  de  25  a  35  años,  
+estatura mínima 1.80 C/ experiencia, trabajo 
+en   discoteca   y   eventos.   Presentarse   con   
+C.V.  en  Urb.  Ramiro  Priale  B-15  –  Santiago  
+(entrando por el paradero desvió Huancaro). 
+Cel. 960200652. Carlos.
+Empresa  de  Transportes EXCURSIONES 
+OASIS     EIRL     requiere     conductor     con     
+experiencia  en  turismo  y  licencia  de  A2B  a  
+más.  EXCLUSIVAMENTE  CON  EXPERIENCIA  
+EN  TURISMO.  Enviar  CV  a  administracion.
+oasis@excursionesoasis.com,    dejar    en    la    
+siguiente  dirección  Av.  Huayruropata  1634-
+A  Wanchaq  referencia  el  Grifo  Márcelos,  
+Cel. 984708630.
+
+IMPORTANTE: Responde SOLO con JSON válido, sin texto adicional.

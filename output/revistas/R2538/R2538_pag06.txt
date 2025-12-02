@@ -1,0 +1,350 @@
+Eres un experto en extraer información estructurada de anuncios clasificados de la revista peruana "Rueda de Negocios" de Cusco.
+
+CONTEXTO:
+Estoy procesando el texto extraído de una página de la revista. La página contiene múltiples anuncios clasificados de diferentes categorías. Cada anuncio puede tener diferentes tamaños visuales según el precio pagado por el anunciante.
+
+TAREA:
+Extrae TODOS los anuncios presentes en el texto y estructura cada uno en formato JSON estricto. NO omitas ningún anuncio, incluso los más pequeños.
+
+FORMATO DE SALIDA (JSON estricto, sin markdown, sin código, solo JSON puro):
+
+{
+  "edicion": "2538",
+  "pagina": 6,
+  "fecha_publicacion": "2024-06-20",
+  "anuncios": [
+    {
+      "titulo": "Título descriptivo (máx 100 caracteres)",
+      "descripcion": "Descripción completa (máx 2000 caracteres)",
+      "categoria": "empleos|inmuebles|vehiculos|servicios|productos|eventos|negocios|comunidad",
+      "contactos": [
+        {
+          "tipo": "telefono|whatsapp|email",
+          "valor": "número/email normalizado",
+          "principal": true
+        }
+      ],
+      "ubicacion": "Ubicación mencionada",
+      "tamaño_visual": "miniatura|pequeño|mediano|grande|gigante",
+      "precio": "Precio si existe"
+    }
+  ]
+}
+
+REGLAS CRÍTICAS:
+1. Categorías: empleos (trabajo), inmuebles (casas/alquiler), vehiculos (autos/motos), servicios (profesionales), productos (venta), eventos (cursos), negocios (traspasos), comunidad (otros)
+2. Contactos: Normaliza números (sin espacios/guiones). Si dice "WhatsApp", usa tipo "whatsapp"
+3. Tamaño: miniatura (1-3 líneas), pequeño (4-8), mediano (9-15), grande (16-25), gigante (+25)
+4. NO inventes información. Solo extrae lo explícito
+5. Extrae TODOS los anuncios, incluso pequeños
+
+TEXTO DE LA PÁGINA A PROCESAR:
+
+66
+28 años uniendo los Agentes Económicos de la Región
+R
+Revista: Publicación Lunes y Jueves, venta diaria
+RN Radio 96.1 FM de 8 a 10 a.m.
+LA RADIO
+96.1
+FM
+Cusco, del 20 al 26 de Junio del 2024–Edición Nº 2538
+Venta  de  departamentos desde   45 m², 
+90 m², 110 m² y 130 m²; ubicados a 2 cuadras 
+antes del aeropuerto, paradero Kiosco; con un 
+80 % de adelanto y el resto financiable. Razón 
+Cel. 984486939, 984383681.
+A  solo  $39.000 dólares   en   Pisaq   vendo   
+hermoso  lote  de  150  m²,  de  doble  fachada  
+en, en plena pista, zona turística; con servicios 
+de agua, luz y desagüe instalados. Inscritos en 
+RR.PP., se recibe auto o camioneta como parte 
+de pago. Razón Cel. 953578385.
+En Oropesa vendo terreno de 300 m² frentera 
+15mx20m de fondo (cerca al parque Jurásico), 
+ideal para casa de campo, con documentos al 
+día e inscrito en RR.PP. Precio a tratar directo 
+con el propietario. Razón Cel. 922009572.
+Gran Remate de 40  lotes  de  200  m²  desde  
+S/15,000  soles,  en  Chinchero  lotes  al  escoger  
+(con  calles  amplias  de  8  mtrs.),  a  50  mtrs.  de  
+la  pista  principal,  km  20,  inscrito  en  RR.PP.  
+trato  directo  con  la  propietaria.  Informes  en  
+el C.C. Confraternidad, 2do. piso, stand M-34, 
+Cel. 963223358, 984517817.
+Lotes en el COAR  –  Pucyura,  costado  de  la  
+panamericana Cusco - Abancay con avenida de 
+12 m de ancho, todos los servicios e inscritos 
+en  los  RR.PP.  Desde  120  m²  hasta  1,000  m²  
+Precio de ocasión. Razón al Cel. 910479268.
+Ocasión  en  Pisaq  en  plena  pista,  cerca  al  
+complejo   recreacional   Royal   Inka,   bonito   
+terreno de doble fachada de 401 m², cercado 
+con piedras talladas tipo Inca, con luz, agua y 
+desagüe  instalados,  inscrito  en  RR.PP.  colinda  
+con un proyecto turístico en ejecución. Acepto 
+automóvil  o  camioneta  como  parte  de  pago.  
+Razón Cel. 953578385.
+Por  emergencia  Vendo terreno  de  203  m²,  
+plano   en   San   Sebastián,   entre   el   3ero   y   
+4to.  paradero  en  la  vía  principal  de  Quilla  
+huata,  3  minutos  de  la  Av.  de  la  Cultura  con  
+servicios básicos por instalar, partida registral 
+número 11173760, al día autovaluo en RR.PP., 
+trato   directo,   precio   a   $290   el   m²   Razón   
+Cel. 984612442, 974256625.
+Por  emergencia:  Vendo lote  de  terreno  de  
+150  m²;  ubicado  en  el  Sector  Siete  Cajones,  
+más  abajo  del  aeropuerto,  altura  del  colegio  
+Bolivariano  –  San  Sebastián.  Y  otro  terreno  de  
+300 m² en Av. Juan Velasco - Angostura Nuevo, 
+con todos los servicios, antes de la U. Continental, 
+Saylla – Cusco. Razón al Cel. 949098955.
+Por motivo de salud Vendo lote de terreno de 
+160  m²,  ubicado  en  APV  San  Pedro  Santiago  
+con  servicios  básicos  trato  directo  con  el  
+propietario. Razón Cel. 988188254.
+Por motivo de salud  vendo  terreno  a  precio  
+de  remate,  de  132.70  m²  cerca  al  atractivo  
+turístico “la morada de los dioses”, inscrito en 
+Registros  Públicos  con  título,  precio  S/35,000  
+conversable.  también  vendo  batidora  de  15  
+litros, nueva a S/2500. razón Cel. 983078784.
+Por motivo de salud Vendo terreno de 150 m² 
+en  APV  FEDETRAC  San  Sebastián,  ref.  a  una  
+cuadra  del  paradero  gradas  de  la  E.T.  Chaski,  
+con servicios de agua, desagüe y luz, inscrito 
+en RR.PP.. Razón Cel. 984783786.
+Por motivo de salud vendo terreno de 190 m² 
+(en  fracción  o  su  totalidad),  en  esquina,  con  
+3   frontis,   al   frente   de   Sábado   Baratillo   –   
+Angostura, cerca de Puente Cristal a 5 min. de 
+U. Continental, con todos los servicios, acceso 
+vehicular,  título  de  propiedad,  trato  directo  
+con el propietario. Razón Cel. 951185151.
+Por  motivo  de salud   Vendo   terreno   de   
+200  m²  en  Coop.  Bolognesi  parte  alta,  vía  
+principal  (Santiago),  cuenta  con  agua  y  luz,  
+desagüe  en  proyecto,  precio  cómodo.  Razón  
+Cel. 962608422, 973689127, 963022143.
+Por motivo de salud: Vendo terreno de 600 m² 
+(o 3 lotes de 200 m²); en la Urb. San Antonio – 
+distrito de San Sebastián. Y una casa de 3 pisos 
+(área total de 140 m²) en Agua Buena. Precio a 
+tratar  directamente  con  el  propietario.  Razón  
+al Cel. 984395938.
+Por  motivo  de viaje  Vendo  2  terrenos  de  
+120  m²,  ubicado  en  Tica  Tica  (costado  de  la  
+piscigranja  y  Pampa  cruz  verde)  con  servicios  
+completos  e  inscrito  en  RR.PP.,  otro  terreno  
+de   300   m²,   con   pequeña   construcción   en   
+Cachimayo-Anta, ambos con acceso vehicular 
+documentos en regla. Razón Cel. 984950509.
+Por  ocasión  remato terreno   cercado   de   
+313  m²  con  título  de  propiedad  inscrito  en  
+RR.PP.   con   servicios   básicos   en   $100,000   
+dólares;  ubicado  en  la  misma  pista  principal  
+frente  al  Colegio  La  Salle  (ingreso  por  Hilario  
+Mendívil). Precio conversable y con facilidades 
+de pago. Razón Cel. 994754123.
+Por  ocasión  Vendo terreno  de  120  m²  con  
+calles  amplias  de  8  mtrs.  en  San  Jerónimo  
+sector  Huayllapampa,  a  5  min  del  paradero  
+final  de  Ttio  La  Florida,  inscrito  en  RR.PP. 
+trato    directo    con    el    propietario.    Razón    
+Cel. 974530125.
+Por  ocasión  vendo terreno  de  500  m²,  en  
+Andahuaylillas, excelente ubicación muy cerca 
+de plaza de Armas, a $29,500 dólares y terreno 
+de 180 m², en esquina, en buena ubicación en 
+Izcuchaca,  pertenece  a  una  asociación  cuyos  
+propietarios  vienen  edificando  sus  casas  de 
+campo,  inscritos  en  RR.PP.,  acepto  auto  o  
+camioneta. Razón Cel. 964141075.
+Por  ocasión.  Terreno en  venta  de  300  m²  
+en  OROPESA,  con  acceso,  servicios  básicos  
+y   ubicación   estratégica.   Comunícate   a   los   
+Cels. 943408068, 976359988.
+Por  viaje  Vendo terreno  de  600  m²  en  el  
+centro  poblado  de  Ccorao  San  Sebastián,  al  
+lado  del  mercado,  inscrito  en  RR.PP.  precio  a  
+tratar  directamente  con  el  propietario.  Razón  
+Cel. 984763199.
+Remato  2  terrenos de  130  m²  y  120  m²,  
+en     ENACO     San     Sebastián     Comunidad     
+Pumamarca, en la pista principal documentos 
+al día y trato directo con el propietario. Razón 
+Cel. 992125861.
+Remato lote terreno de  120  m²  con  casa  de  
+media  agua  todo  plano,  listo  para  construir;  
+por villa el sol Cusco referencia a 5 minutos de 
+la E.T. Chaska, trato directo con el propietario. 
+Razón Cel. 958114818.
+¡REMATO ÚLTIMOS DOS LOTES, A 
+15 MIL SOLES EN CUSCO – EN ZONA 
+ESTRATÉGICA Y DE EXPANSIÓN!
+Con  servicios  básicos,  totalmente  saneado.  Crédito  
+fácil, a sola firma Hasta por 36 meses financiado. 
+Llamar al Cel. 986669073.
+VENDO LOTE
+DE 5,120 M²
+En la Urb. Santa María (cerca de Larapa: 
+colegio de Ingenieros y a la Universidad 
+Andina),  inscrito  en  SUNARP,  amplia  
+fachada,  pistas  asfaltadas,  luz,  agua  y  
+seguridad 24 horas. Precio: 580 dólares 
+por  m²  (negociable).  Trato  directo  (sin  
+intermediarios). Razón Cel. 984693359.
+VENDO POR MOTIVO DE VIAJE 
+TERRENO DE 7000 M² EN 
+YANAHUARA-URUBAMBA
+5to. paradero entre Calle Vilcanota con 
+Camino Real (por la Posta Medica); con 
+servicios básicos, documentos en regla. 
+Precio $100 m² ideal para Condominio, 
+hotel   u   otros.   Trato   directo.   Razón   
+Cel. 999691029.
+VENDO TERRENO 
+DE 4000 M²
+Ubicado  en  Ramal  de  Cachimayo,  
+con  título  de  propiedad  y  acceso  
+a   servicios.   Vendo   terreno   de   
+200  m²,  en  Poroy  a  pocos  metros  
+de   la   Estación   de   tren.   Razón   
+WhatsApp 952714456.
+POR EMERGENCIA: VENDO 
+TERRENO DE 150 M²
+Ubicado   en   Saylla   –   Naciones   
+Unidas,   cuenta   con   servicio   de   
+agua y luz, documentos en regla e 
+inscrito en Registros Públicos. Trato 
+directo con el propietario. Razón a 
+los Cels. 983135785, 986763568.
+SE VENDE TERRENO 
+DE 5132.47 M²
+Con    vista    panorámica    a    toda    la    
+población  de  Mollepata,  distrito  de  la  
+provincia de Anta, tiene agua, desagüe 
+y luz, a pie de carretera y calle principal 
+(dentro del radio urbano), documentos 
+inscritos  en  Registros  Públicos.  Tratar  
+con los Cels. 979100809, 984934332.
+OCASIÓN - VENDO LOTES 
+DE TERRENO URBANO EN 
+CURAHUASI
+De  200  m²  frente  al  coliseo  de  gallos,  
+totalmente  independizados  y  saneado,  
+inscritos   en   Registros   Públicos   (con   
+título   de   propiedad),   precios   desde   
+$50 m² hasta $80 m² Con facilidades de 
+pago. Llamar al Cel. 984992330.
+VENDO TERRENOS DE 
+120, 150 Y 170 M²
+A  5  min  del  Arco  Tica  Tica  hacia  
+la   nueva   carretera   de   Cusco   –   
+Chinchero,      con      documentos      
+en  regla  inscrito  en  RR.PP.,  con  
+proyección  de  agua  y  luz.  Razón  
+Cel. 984602711.
+VENDO TERRENO 
+DE 4,000 M²
+(todo  o  en  partes);  ubicado  en  
+el  Sector  Vicho  –  San  Salvador  
+(al  pie  de  la  carretera),  ideal  para  
+restaurant  campestre  o  casa  de  
+campo. Razón Cel. 984650463.
+VENDO TERRENO DE 
+440 M² EN TICAPATA 
+SAN SEBASTIÁN
+(a    5 minutos del paradero ENACO), 
+inscritos  en  RR.PP.,  con  servicios  
+básicos,  precio  conversable,  trato  
+directo  con  el  propietario.  Razón  
+Cels. 941706845, 944724712.
+VENDO TERRENO 
+EN PURMAMARCA 
+DE 200 M²
+Inscrito  en  RRPP,  trato  directo  
+con  el  propietario.  Informes  a  
+los Cel. 994530085, 945979791.
+VENDO CASA COMO 
+TERRENO DE 320 M²
+EN URB. LOS INCAS, PASAJE INCA ROCA 
+I-9  (ALTURA  DE  LA  ALDEA  INFANTIL  
+JUAN   PABLO   II   –   Av.   COLLASUYO,   
+CERCA  A  LA  UNSAAC).  PRECIO  $1,900  
+EL        m²        (CONVERSABLE).        RAZÓN 
+Cel. 969737017, 943291765.
+EN VENTA TERRENO DE 124.66 M²
+Esquina  con  3  frenteras,  ubicado  por  la  vía  de  evitamiento  entre  
+Urb. Villa Mollecito y Fedetrac, a 5 min. del mercado de Urb. Los 
+Nogales,  Hilario  Mendivil,  aeropuerto  Velasco  Astete  y  colegio  
+Bolivariano, inscrito en RR.PP. independizado, con servicios básicos. 
+Trato directo con el propietario. Razón Cel. 983799383.
+TERRENO COMERCIAL 
+EN WANCHAQ
+Av.  La  Paz,  en  venta,  de  284  m²  
+con documentos en regla; ubicado 
+cerca   al   grifo   de   Infancia,   a   2   
+cuadras    del    ovalo    Pachacuteq    
+y  3  cuadras  de  Av.  El  Sol.  Razón  
+Cel. 984116224, 953758033
+VENDO TERRENO DE 
+1,970 M², EN EL VALLE 
+SAGRADO
+De  Los  Incas-Urubamba  con  hermosa  
+vista  hacia  el  Rio  Vilcanota,  instalación  
+de  agua  potable  y  acceso  vehicular,  
+ideal  para  Casa  de  Campo,  Mansión  o  
+CONDOMINIO. Inscrito en RR.PP. Razón 
+Cel. 974374533.
+SE VENDE TERRENO 
+CERCADO DE 305 M²
+Ubicado    en    sector    Molleray,    Valle    
+Huatanay   –   San   Sebastián   –   Cusco,   
+cuenta  con  luz,  agua  independiente  y  
+documentos en registros públicos. Precio 
+de ocasión a 60 mil dólares (conversable). 
+Trato  directo  con  el  propietario.  Razón  
+Cel.    910452372    (Llamar    de    4:00    a 
+8:00 pm), 953402019 (cualquier horario).
+LOTES AL FRENTE DE LA 
+LAGUNA DE HUAYPO, IDEAL 
+PARA CASA DE CAMPO O 
+AIRBNB DESDE S/.35,000
+RAZON Cel. 930646093, 963871262
+POR OCASIÓN VENDO 
+TERRENO DE 120 M²
+En  zona  residencial,  ubicado  en  
+La  residencial  Posada  del  Sol  Lote  
+I - 20, San Sebastián, con servicios 
+básicos    completos,    Inscrito    en    
+RRPP,   precio   conversable,   trato   
+directo  con  el  propietario.  Razón  
+Cels: 944399183, 965019032.
+VENDO TERRENO 
+EN URB. LARAPA
+DE   232   m²   CON   DOCUMENTOS   
+SANEADO    EN    SUNARP    AGUA    
+Y       DESAGÜE,       LISTO       PARA       
+CONSTRUIR.     TRATO     DIRECTO.     
+RAZÓN Cel. 990813122.
+VENDO LOTE DE 7,500 M², 
+CON VISTA PANORÁMICA
+Buena ubicación; ubicado en Yanahuara 
+–   Urubamba,   acceso   independiente   
+carrozable,      ideal      para      albergue      
+turístico  o  similares.  Trato  directo  con  
+el   propietario.   A   precio   de   ocasión.   
+Comunicarse al Cel. 983241746.
+SE VENDE TERRENO 
+DE 580 M²
+A  3  cuadras  de  la  Av.  de  la  Cultura  y  
+de  la  U.  Andina  –  Larapa,  excelente  
+zona   comercial   y   residencial,   precio   
+de    ocasión,    negociable,    listo    para    
+transferencia  notarial.  Precio  $470  mil  
+dólares,  no  financiable,  trato  directo. 
+Informes al Cel. 940575688.
+
+IMPORTANTE: Responde SOLO con JSON válido, sin texto adicional.

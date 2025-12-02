@@ -1,0 +1,347 @@
+Eres un experto en extraer información estructurada de anuncios clasificados de la revista peruana "Rueda de Negocios" de Cusco.
+
+CONTEXTO:
+Estoy procesando el texto extraído de una página de la revista. La página contiene múltiples anuncios clasificados de diferentes categorías. Cada anuncio puede tener diferentes tamaños visuales según el precio pagado por el anunciante.
+
+TAREA:
+Extrae TODOS los anuncios presentes en el texto y estructura cada uno en formato JSON estricto. NO omitas ningún anuncio, incluso los más pequeños.
+
+FORMATO DE SALIDA (JSON estricto, sin markdown, sin código, solo JSON puro):
+
+{
+  "edicion": "2538",
+  "pagina": 13,
+  "fecha_publicacion": "2024-06-20",
+  "anuncios": [
+    {
+      "titulo": "Título descriptivo (máx 100 caracteres)",
+      "descripcion": "Descripción completa (máx 2000 caracteres)",
+      "categoria": "empleos|inmuebles|vehiculos|servicios|productos|eventos|negocios|comunidad",
+      "contactos": [
+        {
+          "tipo": "telefono|whatsapp|email",
+          "valor": "número/email normalizado",
+          "principal": true
+        }
+      ],
+      "ubicacion": "Ubicación mencionada",
+      "tamaño_visual": "miniatura|pequeño|mediano|grande|gigante",
+      "precio": "Precio si existe"
+    }
+  ]
+}
+
+REGLAS CRÍTICAS:
+1. Categorías: empleos (trabajo), inmuebles (casas/alquiler), vehiculos (autos/motos), servicios (profesionales), productos (venta), eventos (cursos), negocios (traspasos), comunidad (otros)
+2. Contactos: Normaliza números (sin espacios/guiones). Si dice "WhatsApp", usa tipo "whatsapp"
+3. Tamaño: miniatura (1-3 líneas), pequeño (4-8), mediano (9-15), grande (16-25), gigante (+25)
+4. NO inventes información. Solo extrae lo explícito
+5. Extrae TODOS los anuncios, incluso pequeños
+
+TEXTO DE LA PÁGINA A PROCESAR:
+
+1313
+Estamos trabajando para servirlo mejor
+R
+LA RADIO
+96.1
+FM
+Revista: Publicación Lunes y Jueves, venta diaria
+RN Radio 96.1 FM de 8 a 10 a.m.
+Cusco, del 20 al 26 de Junio del 2024–Edición Nº 2538
+ASISTENTE DE ALMACÉN Y 
+TREKKING
+Agencia     de     viajes     de     aventura,     
+requiere   de   un   personal   de   apoyo,   
+para  el  manejo  de  almacén  y  trekking,  
+con   disponibilidad   para   trabajar   en   
+horarios  flexibles  24/7  (madrugadas, 
+noches,       feriados).       Enviar       CV       
+incluyendo   expectativas   salariales   a:   
+jania@view-peru.com
+SE NECESITA 
+AYUDANTES
+PARA   UNA   FERRETERÍA   EN   
+Av.  MANCO  CAPAC  404-406  
+WANCHAQ,   Telf.   084261748,   
+Cel. 950105531.
+NECESITO SEÑORITAS CON 
+INGLÉS BÁSICO (TURNO 
+MAÑANA ½ TIEMPO, DE 10AM 
+A 2PM Y TURNO TARDE DE 2PM 
+A 9PM) PARA ATENCIÓN EN 
+TIENDA DEL SECTOR TURISMO
+Sueldo  S/1,025.  Interesadas  presentar  CV  no  
+documentado  en  calle  Santa  Catalina  Nro.  
+345   ó   enviar   a   los   Whatsapp   983714133,   
+962213191.
+RESTAURANTE 
+NECESITA SEÑORITA
+DE    BUENA    PRESENCIA    PARA    
+ATENCIÓN  EN  EL  TURNO  DE  LA  
+MAÑANA DE 9:00 a.m.A 3:30 p.m. 
+Y  UNA  AYUDANTE  DE  COCINA.  
+LLAMAR AL Cel. 980655282.
+SE NECESITA JOVEN O 
+SEÑORITA PARA ATENCIÓN 
+AL PÚBLICO EN FERRETERÍA
+Con o sin conocimientos, de lunes a 
+sábado, de 8 a.m.a 7pm. interesadas 
+presentarse  en  Av.  Manco  Cápac  
+Nro.  723-B,  Wanchaq  o  llamar  al  
+Cel. 984002287.
+HOTEL “SUEÑOS DEL INKA”
+Requiere Botones, 
+Recepcionista y Ejecutivo 
+de Reservas
+Enviar CV a: 
+operaciones@suenosdelinka.com 
+o presentar en el hotel (final calle 
+Ruinas cruce con Tullumayo)
+CLÍNICA “PARDO”
+Requiere personal de 
+mantenimiento, personal 
+de recepción (turno tarde), 
+personal de archivo y personal 
+de limpieza. Llamar al
+Cel. 989424599 (Srta. Ruby), 
+991266084 (Sr. Renzo)
+RESTAURANTE MERCADO 
+CENTRAL 24
+Requiere:        Cocinero        (turno        
+tarde/noche),    Maestro    pollero,    
+Maestro      parrillero,      Cocineros      
+comida  japonesa  (sushi  y  makis),  
+Pizzero,  Mozo(a),  Señorita  cajera  
+Señorita de limpieza. Enviar C.V. al 
+WhatsApp 901685018.
+EMPRESA AUTOMOTRIZ 
+REQUIERE PERSONAL 
+PARA ALMACÉN
+Con     previo     conocimiento     
+de      Mecánica      Automotriz.      
+Interesados  presentar  CV  en  
+Av.  Manco  Inca  Nro.  220  o  
+enviar al Whatsapp 966411568.
+CLÍNICA “SAN JOSÉ”
+Requiere    3    Licenciadas    en    
+Enfermería     (Colegiadas),     1     
+Técnico   Rayos   X,   1   Biólogo   
+–   Laboratorio   y   1   Técnica   
+en     Enfermería.     Llamar     al     
+Cel.   989424599   (Srta.   Ruby),   
+991266084 (Sr. Renzo).
+¡ÚNETE A NUESTRO EQUIPO!
+Buscamos asesores de ventas para agencia 
+de viajes. Si tienes experiencia en ventas, 
+buen   trato   al   cliente   y   conocimiento   
+de   destinos   turísticos,   ¡te   queremos!   
+Ofrecemos:      sueldo      +      comisiones,      
+capacitación  y  beneficios.  Envía  tu  CV 
+a viajaxmundomanager@gmail.com    o    
+contáctanos  al  Cel.  +51  935117058.  ¡Te  
+esperamos!
+SE NECESITA SEÑORITA 
+CON EXPERIENCIA EN 
+ATENCIÓN AL CLIENTE
+Súper   pilas,   proactiva   y   carismática,   
+para  atención  al  cliente  en  una  tienda  
+de  regalos  y  detalles.  Trabajo  de  lunes  
+a sábado. Horario de 8:00am a 5:00pm. 
+Informes al Cel. 982110683.
+RESTAURANTE PARRILLAS 
+& PASTAS “ASSADOR 
+GAUCHO BEEF”
+Requiere con urgencia: AYUDANTES DE 
+COCINA  C/s  Experiencia  y  MOZAS(OS)  
+C/s    Experiencia.    Presentar    C.V.    en    
+Av.  de  la  Cultura,  Urb.  Santa  Mónica  
+A-8,  Wánchaq  -  Frente  al  Real  Plaza,  
+Cels. 950111201, 983341161.
+SE NECESITA 
+AYUDANTE DE COCINA 
+PARA TIENDA ESCOLAR
+Persona proactiva qué sepa realizar 
+sus  deberes.  Horario  de  7:30am  
+a   3:30pm,   de   lunes   a   viernes.   
+Informes al Cel. 972435962.
+NECESITO 
+URGENTE:
+01    cocinero    con    muy    buena    
+experiencia    y    1    mozo(a)    con    
+experiencia.     Llamar     los     que     
+realmente     sepan     su     trabajo.     
+Informes   al   Cel.   997030279,   a   
+partir de la 5:00pm.
+SE NECESITA PERSONAL 
+CON EXPERIENCIA 
+PARA EL ÁREA DE 
+LIMPIEZA PARA 
+GIMNASIO
+Enviar      currículum      vitae      al      
+WhatsApp 984033644.
+RESTAURANTE NECESITA: 
+AYUDANTES DE COCINA
+Con y sin experiencia, también personal 
+para   atención   al   cliente   Mozos(as).   
+Trabajo a tiempo completo, pago buen 
+sueldo. Presentarse en la Plaza de Armas 
+de San Sebastián # 11, rest “EL JUGLAR” 
+(tocar     timbre).     Cels.     984180646,     
+974927937.
+ENFERMERA TÉCNICO(A) 
+O LICENCIADO
+Para atención y cuidado de adulto mayor 
+convaleciente. Turno día, tiempo parcial o 
+tiempo  completo  experiencia  en  control  
+de  signos  vitales,  deberá  tener  carácter  
+agradable,  extrovertida  y  muy  amorosa.  
+Enviar   CV   o   DNI   al   925302094   para   
+concertar evaluación práctica.
+NUEVA CAFETERÍA
+Necesita    un    cocinero(a)    o    
+ayudante de cocina, entusiasta 
+de    2:00pm    a    10:00pm    y    
+mozo(a)    para    atención    en    
+barra  de  10:00am  a  2:00pm.  
+Enviar CV al Cel. 922134088.
+SUPERMERCADOS 
+LA CANASTA
+NECESITA    3    SEÑORITAS    PARA    
+DIFERENTES   ÁREAS   A   TIEMPO   
+COMPLETO,    SIN    EXPERIENCIA.    
+PRESENTARSE EN Av. de la Cultura 
+N°764, EX CINE AMAUTA.
+CAFÉ - JUGUERÍA
+Necesita    2    señoritas    para    
+preparación   y   atención,   con   
+experiencia a tiempo completo 
+interesadas    presentarse    en    
+Av.   Micaela   bastidas   517   o   
+comunicarse al Cel. 984360087.
+HOTEL BOUTIQUE EN EL 
+CENTRO HISTÓRICO
+REQUIERE: Guest Relations, 
+supervisor de lavandería, 
+lavandero y asistente de reservas
+Enviar CV o comunicarse al 
+Cel. 953138843 o
+Gestionhumana@unionhotelcusco.com
+IMPORTANTE Y RECONOCIDA 
+EMPRESA DEL SECTOR TURISMO 
+REQUIERE 6 COUNTER
+Egresado   o   técnico   de   las   carreras   de   
+administración  hotelera,  administración,  guía  
+oficial de turismo o carreras afines. Experiencia 
+mínima 1 año en atención al cliente con inglés 
+intermedio – avanzado. Cumplimos al 100% tus 
+beneficios. Ingreso a planilla desde el primer 
+día  de  trabajo,  seguro  vida  ley  y  beneficios 
+corporativos. Enviar CV al Cel. 994269589 o al 
+correo seleccionr2024@gmail.com
+EMPRESA DE SEGURIDAD
+Requiere   agentes   de   seguridad   
+con licencia de Arma (L4) y agentes 
+con    curso    SUCAMEC    Vigente.    
+Presentarse en Urb. La Florida, calle 
+Cactus B-18, Wanchaq – Cusco, de 
+9:00 a.m.a 5:00pm. Comunicarse al 
+Cel. 975034695, Telf. 084601707
+CHIFA “EL HANGAR”
+Necesita  un  joven  Chifero  con  
+experiencia    y    una    señorita    
+moza.  Interesados  presentarse  
+en  Av.  Micaela  Bastidas  Nro.  
+517,  costado  de  ESSALUD  o  
+comunicarse al Cel. 984762573.
+SE NECESITA 
+TRABAJADORA DE 
+HOGAR
+Cama    afuera,    con    experiencia    
+en  atención  a  familia,  de  lunes  a  
+sábado de 7:30 a.m. a 4:00 p.m., se 
+paga  buen  sueldo.  Informes  a  los  
+Cels. 984612651, 997930551.
+EMPRESA BUSCA 
+ASESORES PARA 
+VENTA DE CELULARES 
+EN TIENDA
+Con  experiencia,  atención  al  
+cliente,  turno  tarde.  Envíanos  
+tu CV al Cel. 921597771.
+SE NECESITA
+1 SEÑORITA MOZA
+Con experiencia, 1 joven para repostería, 
+1   joven   para   lava   vajilla   y   1   joven   
+ayudante de cocina para turno mañana 
+y    tarde.    disponibilidad    inmediata.    
+comunicarse   y   Enviar   CV   WhatsApp   
+984691900,  954645525  o  presentarse  
+en calle Márquez Nº284.
+SE NECESITA
+CON URGENCIA:
+Señora con experiencia en labores 
+domésticas     y     niñera     tiempo     
+completo,  Se  paga  buen  sueldo.  
+Dirección:       Av.       Huayruropata       
+1036   –   Wanchaq.   Llamar   a   los 
+Cels. 953765175, 943420086.
+IMPORTANTE EMPRESA 
+DE TURISMO REQUIERE:
+3   señoritas   o   señoras   con   buena   
+presencia  y  facilidad  de  palabras  para  
+relaciones    públicas.    Salario    S/1,500    
+soles    más    comisiones.    Presentarse    
+en   Urb.   Magisterial   ll   etapa,   Calle   
+Alfredo  Yépez  Miranda  C-2.  Llamar  al  
+984743802/ 984955912
+NECESITO PERSONAL 
+PARA LAVADO DE AUTOS
+Para     Incamotors     Hyundai,     
+con  conocimiento  de  manejo  
+de  vehículo,  medio  tiempo  o  
+tiempo  completo.  Interesados  
+llamar  a  los  Cels.  992548596,  
+954574303.
+HOTEL EN MACHUPICCHU
+BUSCA      Recepcionista      C/      ingles      
+intermedio y personal de Housekeeping. 
+PARA CUSCO: Srta. Asistente de oficina, 
+con    estudios    en    Contabilidad    y/o    
+Turismo,  tiempo  completo,  ½  tiempo.  
+Salario acorde al mercado + incentivos, 
+alimentación,     vivienda.     Enviar     CV     
+al     Whatsapp     984908338,     correo:     
+culturalguesthouse@gmail.com
+LAVANDERÍA REQUIERE 
+PERSONAL RESPONSABLE 
+Y PROACTIVO PARA 
+OPERARIO DE 
+LAVANDERÍA
+Enviar CV o contactarse al 
+móvil 984768396
+RESTAURANTE 
+GRUTA 27
+Requiere   personal   para   
+ayudante     de     cocina,     
+turno  mañana.  Informes  
+al Cel. 984126490.
+PARA MACHUPICCHU:
+Empresa     importante     requiere     
+el      siguiente      personal:      Una      
+señorita   para   asistente   de   caja,   
+Cocineros  o  cocineras.  Jóvenes  y  
+señoritas  para  mozos.  Todos  con  
+experiencia, pago buen sueldo con 
+alimentación,  vivienda  y  pasajes.  
+Enviar CV al Whatsapp 941260271.
+PARA MACHUPICCHU 
+HOTEL TURÍSTICO
+Necesita Recepcionista, 
+HouseKeeping y Mozo con 
+inglés. Ofrece buen sueldo, 
+alimentación y vivienda. 
+Informes al WhatsApp 
+957345170
+
+IMPORTANTE: Responde SOLO con JSON válido, sin texto adicional.

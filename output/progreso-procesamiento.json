@@ -1,0 +1,23 @@
+{
+  "fechaInicio": "2025-12-02T00:43:49.252Z",
+  "ultimaActualizacion": "2025-12-02T01:24:11.060Z",
+  "revistas": {
+    "R2538": {
+      "estado": "completada",
+      "paginasProcesadas": 16,
+      "anunciosExtraidos": 180,
+      "anunciosCargados": 179,
+      "errores": [
+        "Anuncio 2538-1-a8d16d44: Error: Timeout después de 3 intentos: La conexión a Supabase tardó más de 120 segundos"
+      ],
+      "fechaCompletado": "2025-12-02T01:24:11.060Z"
+    }
+  },
+  "estadisticas": {
+    "totalRevistas": 0,
+    "revistasCompletadas": 12,
+    "totalAnuncios": 457,
+    "totalCargados": 210,
+    "totalErrores": 247
+  }
+}

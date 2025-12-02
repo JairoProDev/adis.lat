@@ -1,0 +1,259 @@
+Eres un experto en extraer información estructurada de anuncios clasificados de la revista peruana "Rueda de Negocios" de Cusco.
+
+CONTEXTO:
+Estoy procesando el texto extraído de una página de la revista. La página contiene múltiples anuncios clasificados de diferentes categorías. Cada anuncio puede tener diferentes tamaños visuales según el precio pagado por el anunciante.
+
+TAREA:
+Extrae TODOS los anuncios presentes en el texto y estructura cada uno en formato JSON estricto. NO omitas ningún anuncio, incluso los más pequeños.
+
+FORMATO DE SALIDA (JSON estricto, sin markdown, sin código, solo JSON puro):
+
+{
+  "edicion": "2538",
+  "pagina": 11,
+  "fecha_publicacion": "2024-06-20",
+  "anuncios": [
+    {
+      "titulo": "Título descriptivo (máx 100 caracteres)",
+      "descripcion": "Descripción completa (máx 2000 caracteres)",
+      "categoria": "empleos|inmuebles|vehiculos|servicios|productos|eventos|negocios|comunidad",
+      "contactos": [
+        {
+          "tipo": "telefono|whatsapp|email",
+          "valor": "número/email normalizado",
+          "principal": true
+        }
+      ],
+      "ubicacion": "Ubicación mencionada",
+      "tamaño_visual": "miniatura|pequeño|mediano|grande|gigante",
+      "precio": "Precio si existe"
+    }
+  ]
+}
+
+REGLAS CRÍTICAS:
+1. Categorías: empleos (trabajo), inmuebles (casas/alquiler), vehiculos (autos/motos), servicios (profesionales), productos (venta), eventos (cursos), negocios (traspasos), comunidad (otros)
+2. Contactos: Normaliza números (sin espacios/guiones). Si dice "WhatsApp", usa tipo "whatsapp"
+3. Tamaño: miniatura (1-3 líneas), pequeño (4-8), mediano (9-15), grande (16-25), gigante (+25)
+4. NO inventes información. Solo extrae lo explícito
+5. Extrae TODOS los anuncios, incluso pequeños
+
+TEXTO DE LA PÁGINA A PROCESAR:
+
+1111
+Estamos trabajando para servirlo mejor
+R
+LA RADIO
+96.1
+FM
+Revista: Publicación Lunes y Jueves, venta diaria
+RN Radio 96.1 FM de 8 a 10 a.m.
+Cusco, del 20 al 26 de Junio del 2024–Edición Nº 2538
+RESTAURANTE
+EN SAN BLAS
+ESTÁ  EN  LA  BÚSQUEDA  DE:  MOZO(a)  
+con  inglés  intermedio  EN  EL  HORARIO  
+DE 7PM A 1AM. PAGO MENSUAL S/900 
+soles, COCINERO CON CONOCIMIENTO 
+EN   PIQUEOS,   tiempo   completo.   Y   
+AYUDANTE  DE  COCINA.  Enviar  C.V.  al  
+Whatsapp 929733034.
+NECESITO URGENTE 
+SEÑORITAS PARA 
+VENTA DE ROPA
+Proactiva,    a    tiempo    completo,    
+con   experiencia   en   ventas   de   
+Ropa,  se  paga  buen  sueldo,  de  
+nacionalidad  Peruana.  Informes  a  
+los Cels. 946304512, 977767323.
+AGENCIA DE VIAJES BUSCA
+Personal   para   el   área   de   ventas   con   
+ingles   avanzado   o   intermedio.   y   un   
+personal  de  preferencia  extranjero.  Otro  
+personal para el área de operaciones con 
+ingles   intermedio,   Asistente   Contable.   
+Disponibilidad         inmediata.         Enviar         
+CV      a:      admi@tierrasvivas.gmail.com. 
+Cel. 972063961, 963712007.
+CAFETERÍA NECESITA 
+CAJERA Y MOZAS
+Para            ambos            turnos.            
+Disponibilidad    inmediata.    Se    
+ofrece  sueldo  básico  +  ingreso  
+a  planilla.  Presentarse  en  Pasaje  
+Constancia  L-10  o  llamar  a  los  
+Cel. 962234579, Telf. 084224657.
+CADENA DE CAFETERÍA
+Y HOTEL
+Requiere:       contadora/administradora       
+para  cadena  de  cafetería,  supervisor  
+operativo con experiencia en servicio de 
+restaurante y/o cafetería, recepcionista, 
+auditor       nocturno,       housekeeping,       
+cocinero, mozo, cafetero/barista, cajera. 
+Interesados  llamar  al  Cel.  952585818  o  
+enviar CV a: info@basilica.com.pe
+HOTEL NAO VICTORIA
+Solicita personal volante para cubrir 
+las áreas de recepción, housekeeping 
+y   cafetería,   tiempo   completo   o   
+medio    tiempo,    con    experiencia.    
+Llamar  al  Cel.  950351776.  Enviar  CV  
+a: naovictoriahostels@gmail.com   o   
+presentarse  en  calle  Procuradores  
+357, Plaza de Armas.
+REQUIERO PERSONAL 
+PARA EL ÁREA DE 
+PASTELERÍA
+Con experiencia turno mañana. 
+Preguntar  en  Av.  de  la  Cultura  
+Nº821,    Wanchaq    –    Cusco.    
+Razón Cel. 974612109
+HOTEL ANTIGUA 
+CASONA SAN BLAS
+Busca persona con estudios en 
+cocina  (indispensable)  para  el  
+puesto de vajillero no requiere 
+experiencia. interesados enviar 
+CV  a:  adm@antiguacusco.com 
+te esperamos!
+HOTEL CASA DE CAMPO
+Necesita         personal         para         
+recepción/reservas con dominio 
+del  idioma  inglés,  enviar  CV  a:  
+luislozadalafaro@gmail.com     y     
+presentarse  previa  cita  en  calle  
+Tandapata    Nº298    San    Blas.    
+Cel. 984652191.
+SOLICITO 
+PERSONAL
+Empresa     de     alimentos     Cárnicos     
+busca    técnicos    de    procesamiento    
+industrial  de  alimentos  o  afines  para 
+Cusco,    disponibilidad    inmediata    se    
+ofrece  sueldo  mas  beneficios  de  ley. 
+Interesados  llamar  al  Cel.  992838534,  
+967194609.
+EMPRESA HOTELERA 
+REQUIERE 
+RECEPCIONISTA
+Con o sin experiencia, 
+requisitos ingles intermedio 
+avanzado. Razón
+Cel. 949082431, 956717121
+SUPERMERCADOS
+LA CANASTA – LARAPA
+Necesita    jóvenes    y    señoritas    para    
+diferentes    áreas,    tiempo    completo    
+y    medio    tiempo,    de    preferencia    
+domiciliados   en   el   distrito   de   San   
+Sebastián  o  San  Jerónimo,  referencia  
+paradero Puente. Presentarse en Av. de 
+la   Cultura   N°   2838,   San   Sebastián   
+(frente al Interbank).
+BUSCAMOS 
+ABOGADO(A) JUNIOR
+Con  perfil  en  desempeño  de  litigios 
+constitucionales           y           procedimientos           
+administrativos,  con  mínimo  de  2  años  de  
+colegiatura,  manejo  de  aplicaciones  digitales,  
+responsabilidad,  compromiso,  capacidad  de  
+trabajar  bajo  presión  y  cumplir  con  plazos  
+estrictos.   Llamar   a   los   Cels.   976352180,   
+974672236, 962235315.
+CLÍNICA 
+OFTALMOLÓGICA
+Requiere personal: Optómetra con o 
+sin experiencia, Secretaria o señorita 
+de  buena  presencia  para  atención  
+al  cliente,  Técnica  en  Enfermería  o  
+bachiller  en  enfermería  y  señorita  
+para  ventas  en  Óptica.  Enviar  CV.  al  
+WhatsApp 949411519.
+¿¿¿ERES TÉCNICO ELECTRICISTA 
+O ELECTRÓNICO Y DESEAS 
+TRABAJAR EN UNA DE LAS 
+MEJORES EMPRESAS DE 
+AUTOMATIZACIÓN???
+Esta  es  tu  oportunidad  de  postular!!!  
+estamos en la búsqueda de 2 técnicos. 
+Comunícate ya al Cel. 930851900 o envía 
+tu CV a consultorakhuyay@gmail.com
+PUNTO MAR 
+REQUIERE:
+Cajera, Asistente 
+Administrativo, Itamae, 
+ayudante de Itamae. Enviar 
+CV a los Cels. 992100780, 
+992038739
+AGENCIA DE VIAJES
+REQUIERE:
+CONDUCTORES CON CATEGORÍA A-2B, SALARIO 
+S/.2,000 MENSUAL FUERA DE COMISIONES.
+INTERESADOS ENVIAR CV AL Cel. 974681666, 984772299 O 
+PRESENTARSE EN CALLE MÁRQUEZ 231 INTERIOR 306, DE 5 A 7 P.M
+Agencia de Viajes “PDS Viajes” está en la 
+búsqueda de profesionales, para las áreas:
+• MARKETING. - Titulados o bachilleres de las carreras de Marketing Digital, 
+Ciencias de la Comunicación o afines.
+• 01 COLABORADOR(A) con experiencia en edición y grabación de videos.
+• 01 COLABORADOR(A) con experiencia en Community manager.
+Los interesados enviar su CV al WhatsApp 910493828, indicando sus pretensiones 
+salariales, disponibilidad inmediata
+SE REQUIERE SEÑORA O SEÑORITA 
+PARA TRABAJAR EN CASA, 
+ATENCIÓN DE FAMILIA CORTA, 
+SUELDO A TRATAR
+LLAMAR DE 2 A 6 p.m. AL Cel. 978320039, 963839600, 965161566
+OPORTUNIDAD DE EMPLEO: ESPECIALISTA EN DISEÑO DE 
+VIAJES Y PUBLICIDAD TURÍSTICA EN REDES SOCIALES
+Descripción del Puesto: Estamos en busca de un/a Especialista en Diseño 
+de Viajes y Publicidad Turística con habilidades creativas y técnicas para 
+unirse  a  nuestro  equipo  dinámico.  El  candidato  ideal  deberá  diseñar  
+campañas publicitarias efectivas y crear itinerarios de viaje atractivos que 
+capten la esencia de nuestra oferta turística, manejo de office, manejo de 
+redes sociales y creativ@, manejo de office!
+Comunicarse al Cel. 921334922
+“CEVICHERÍA VICHAYITO”
+Necesita:
+-01 Mozo con experiencia permanente.
+-01 Ayudante de cocina con experiencia.
+Trabajo formal y en planilla.
+Interesados presentarse en calle Concordia C-9 - Av. Collasuyo o 
+llamar al Cel. 984790182
+AGENCIA DE VIAJES REQUIERE 
+URGENTE:
+01 SEÑORITA EGRESADA DE 
+CIENCIAS DE LA COMUNICACIÓN
+Llamar o enviar CV al Cel/WhatsApp 984987798
+CHEZ MAGGY PIZZERIAS
+Restaurante  en  el  Centro  Histórico  -  plaza  de  Armas,  busca  
+personal  con  experiencia  min  1  año,  tiempo  completo  (8hrs)  
+desde las 4:00 pm hasta las 12:00 am:
+- Ayudante de cocina
+- Steward
+Llamar o escribir al Whatsapp 972726981, enviar CV a 
+chezmaggy@gmail.com
+HOSPEDAJE TURÍSTICO REQUIERE 
+RECEPCIONISTA PARA TURNO NOCHE 
+(10 P.M. A 7 A.M.)
+Requisitos   inglés   avanzado,   responsable,   proactivo   y   
+experiencia en el rubro.
+Presentar CV en Calle Meloc Nº422 (frente a rest. Qapaq)
+O al WhatsApp 962212742
+ABRAZA Restaurante requiere personal para 
+las siguientes áreas:
+• Salón: Mozo con experiencia.
+• Cocina: Cocinero con experiencia en platos 
+criollos.
+Enviar CV al correo restauranteabraza@gmail.com o comunicarse al
+Cel. 907730431
+CEVICHERÍA REQUIERE:
+01 MOZO(A) tiempo completo; carismático, 
+responsable con ganas de trabajar en equipo 
+y disponibilidad inmediata.
+Presentarse en Jr. Espinar I-22 Progreso Wanchaq “Cevicheria Marchelos”, 
+brindamos desayuno y almuerzo. Horario de 8:00am a 5:00pm
+Informes al Cel. 940289284
+
+IMPORTANTE: Responde SOLO con JSON válido, sin texto adicional.

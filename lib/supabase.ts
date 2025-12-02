@@ -90,7 +90,7 @@ export function dbToAdiso(row: any): Adiso {
 }
 
 // Función para convertir de Adiso a la base de datos
-function adisoToDb(adiso: Adiso): any {
+export function adisoToDb(adiso: Adiso): any {
   // Convertir array de imágenes a JSON
   const imagenesUrlsJson = adiso.imagenesUrls && adiso.imagenesUrls.length > 0
     ? JSON.stringify(adiso.imagenesUrls)

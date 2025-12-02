@@ -131,3 +131,5 @@ Para la atención reservar: CUPO al WhatsApp 924349665
 
 Proporciona SOLO el JSON válido, sin texto adicional antes o después.
 
+
+

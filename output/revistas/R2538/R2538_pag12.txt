@@ -1,0 +1,340 @@
+Eres un experto en extraer información estructurada de anuncios clasificados de la revista peruana "Rueda de Negocios" de Cusco.
+
+CONTEXTO:
+Estoy procesando el texto extraído de una página de la revista. La página contiene múltiples anuncios clasificados de diferentes categorías. Cada anuncio puede tener diferentes tamaños visuales según el precio pagado por el anunciante.
+
+TAREA:
+Extrae TODOS los anuncios presentes en el texto y estructura cada uno en formato JSON estricto. NO omitas ningún anuncio, incluso los más pequeños.
+
+FORMATO DE SALIDA (JSON estricto, sin markdown, sin código, solo JSON puro):
+
+{
+  "edicion": "2538",
+  "pagina": 12,
+  "fecha_publicacion": "2024-06-20",
+  "anuncios": [
+    {
+      "titulo": "Título descriptivo (máx 100 caracteres)",
+      "descripcion": "Descripción completa (máx 2000 caracteres)",
+      "categoria": "empleos|inmuebles|vehiculos|servicios|productos|eventos|negocios|comunidad",
+      "contactos": [
+        {
+          "tipo": "telefono|whatsapp|email",
+          "valor": "número/email normalizado",
+          "principal": true
+        }
+      ],
+      "ubicacion": "Ubicación mencionada",
+      "tamaño_visual": "miniatura|pequeño|mediano|grande|gigante",
+      "precio": "Precio si existe"
+    }
+  ]
+}
+
+REGLAS CRÍTICAS:
+1. Categorías: empleos (trabajo), inmuebles (casas/alquiler), vehiculos (autos/motos), servicios (profesionales), productos (venta), eventos (cursos), negocios (traspasos), comunidad (otros)
+2. Contactos: Normaliza números (sin espacios/guiones). Si dice "WhatsApp", usa tipo "whatsapp"
+3. Tamaño: miniatura (1-3 líneas), pequeño (4-8), mediano (9-15), grande (16-25), gigante (+25)
+4. NO inventes información. Solo extrae lo explícito
+5. Extrae TODOS los anuncios, incluso pequeños
+
+TEXTO DE LA PÁGINA A PROCESAR:
+
+1212
+28 años uniendo los Agentes Económicos de la Región
+R
+Revista: Publicación Lunes y Jueves, venta diaria
+RN Radio 96.1 FM de 8 a 10 a.m.
+LA RADIO
+96.1
+FM
+Cusco, del 20 al 26 de Junio del 2024–Edición Nº 2538
+POR APERTURA: CAFETERÍA 
+“SORBO DE VIDA”
+Necesita  Barista  o  practicante  
+y   Mozo(a).   Trabajo   por   las   
+tardes. Interesados presentarse 
+en Av. Infancia C-15, Wanchaq 
+o  llamar  por  las  mañanas  al 
+Cel. 967071171, 984707465.
+¡ATENCIÓN! PARA 
+AREQUIPA:
+Requiero    personal    con    ingles    
+básico,  a  tiempo  completo,  para  
+tienda   de   camping.   Se   ofrece   
+habitación  +  sueldo  s/1,500  soles  
+y  comisiones  por  productividad.  
+Comunicarse al Cel. 983714133.
+HOSPEDAJE REQUIERE 
+RECEPCIONISTA 
+NOCHERO
+De  8pm  a  6am.  presentarse  con  C.V.  
+actual.  En  Tesecocha  536  detrás  de  la  
+excomisaria de SAPHY. de 12am a 5pm o 
+al  correo:  reservas@samanacusco.com. 
+Razón Cel. 915020089, Telf. 084-277008.
+HOTEL
+REQUIERE     LOS     SERVICIOS     
+DE                   HOUSEKEEPING,                   
+COCINEROS     PARA     CUSCO     
+Y   MACHUPICCHU,   JEFE   DE   
+MANTENIMIENTO            PARA            
+MACHUPICCHU.   ENVIAR   CV   
+AL WHATSAPP 915351735
+CAFÉ RESTAURANT 
+UBICADO EN LA PLAZA 
+SAN FRANCISCO
+Requiere:     Cocinero,     Ayudante     
+de  cocina  y  vajillero;  todos  con  
+experiencia y mayores de 25 años. 
+Razón Cels. 984691900, 973247029
+RESTAURANTE DE PARRILLAS 
+- PASTAS - RODIZIO
+Necesita         con         urgencia:         
+Cocineros,  Ayudantes  de  cocina  
+y   Mozas.   Presentarse   con   CV   
+en  Urb.  Magisterio  ll  etapa  E-2  
+costado  del  BCP.  Llamar  a  los  
+Cel. 964569516, 968211266.
+NECESITO UNA SEÑORITA 
+PARA CUIDAR BEBE DE 2 
+AÑOS
+Y  hacer  limpieza  de  lunes  a  
+sábado  de  3pm  a  9:30  pm,  
+sueldo  700  soles.  Interesadas  
+Llamar al Cel. 913255525.
+SE NECESITA UN(A) 
+ASISTENTE DE COCINA
+(picar, cortar, lava platos, limpieza) 
+con    estudios    de    cocina    para    
+cooking   class   para   turistas.   Se   
+ofrece  sueldo  básico  más  planilla.  
+Solo nacionales. Interesados enviar 
+CV al WhatsApp 925633857.
+CADENA HOTELERA
+Requiere personal:
+02 Chefs con 
+experiencia
+Enviar CV a: 
+empresahoteleracusco@hotmail.com 
+Cel. 913387005
+HOTEL TURÍSTICO EN EL CENTRO 
+HISTÓRICO
+Requiere:  Recepcionistas  turno  mañana  (01)  
+y tarde (01), con inglés intermedio, avanzado, 
+experiencia    en    atención    del    huésped    e    
+información   turística,   edad   entre   23   y   37   
+años  y  Auditor  nocturno,  estudiante  de  los  
+últimos  semestres  de  la  carrera  profesional  
+de   Turismo   con   conocimientos   de   inglés   
+básico  y  atención  al  cliente.  Enviar  CV  al  
+hoteldreamshousecusco@gmail.com.     Indicar     
+puesto al que postula y pretensión salarial.
+SE NECESITA:
+1 Cocinero, 2 mozos 
+(Joven o señorita) horario 
+completo o medio 
+tiempo. Comunicarse 
+a los Cels. 912001951, 
+914886108
+ASISTENTE DE GUIA 
+CAMINO INCA
+Tour operador especializado en trekking 
+requiere sumar Asistentes de guías con 
+autorización  para  camino  Inca  vigente,  
+de  preferencia  profesionales  jóvenes,  
+recién   egresados,   muy   responsables,   
+proactivos  con  Ingles  Fluido.  Enviar  CV  
+a rodrigo@view-peru.com
+SE NECESITA JOVEN 
+O SEÑORITA PARA 
+ATENCIÓN EN GRIFO
+EN POROY
+Con o sin experiencia, buen 
+ambiente laboral y buen sueldo. 
+Informes a los Cels. 940418790, 
+994715556
+SE NECESITA
+02 SEÑORITAS DE 
+BUENA PRESENCIA PARA 
+ATENCIÓN EN RESTOBAR
+Se paga buen sueldo y otros 
+beneficios. Comunicarse al 
+Cel. 948345601
+NECESITO 
+MOZAS(OS)
+Con  o  sin  experiencia,  desde  las  12  
+del   mediodía   a   4pm.   Interesados   
+presentarse  en  Urb.  San  Francisco,  
+esquina de Av. Justicia con Jr. Espinar 
+o llamar al Cel. 976481845.
+SE NECESITA SEÑORA O 
+SEÑORITA PARA TRABAJO 
+EN HOGAR A TIEMPO 
+COMPLETO Y CON 
+EXPERIENCIA
+Residir de preferencia en los distritos de 
+San Jerónimo o San Sebastián. Llamar al 
+Cel. 999364747.
+AGENCIA OPERADORA 
+INKA ALTITUDE
+Necesita: Asistentes de guía con 
+o   sin   experiencia,   con   inglés   
+intermedio    o    avanzado    con    
+carnet. Presentar CV en físico en 
+Calle  Garcilaso  265  oficina  04. 
+Informes al Cel. 986232334.
+EMPRESA EN EL SECTOR 
+AUTOMOTRIZ
+Solicita   los   servicios   de   un   
+profesional         administrativo         
+con    experiencia.    Capacidad    
+de  trabajo  en  equipo.  Sueldo  
+a  tratar.  Presentar  su  C.V.  al  
+WhatsApp 973555550
+ACADEMIA
+PRE-UNIVERSITARIA
+Requiere Docentes con experiencia 
+para los grupos A, B, C y D. También 
+Secretaria       con       experiencia,       
+personal para volantear y personal 
+de  limpieza.  Enviar  su  CV  a  los  
+Whatsapp 979721481, 966361806.
+INDUSTRIAS FIRME
+Requiere         personal         ayudantes         
+soldadores para trabajos en fabricación 
+de       carrocería,       semirremolques.       
+Presentar    C.V.    en    Urb.    Naciones    
+Unidas     Lote     F-2,     Av.     Alemania     
+Federal    San    Sebastián    o    enviar    
+al      correo:      indufirme@yahoo.com 
+Telf. 084-271744.
+POLLERÍA SANSAS 
+CHICKEN
+Requiere Administrador y 
+Cajera ambos con experiencia, 
+con disponibilidad inmediata, 
+sueldo a tratar. Informes
+Cel. 930844940
+EMPRESA LÍDER DEL SECTOR DE 
+SEGURIDAD
+Requiere  100  agentes  de  seguridad  simples  y  
+armados,  retirados  de  las  FF.  AA  o  experiencia  
+de  un  año  como  agente  de  seguridad,  con  
+secundaria completa para los lugares de ciudad 
+de  Cusco,  Urcos,  Anta,  Quebrada,  Quillabamba,  
+Urubamba,   Kosñipata,   Paucartambo,   Ciudad   
+de  Arequipa,  Puno,  Juliaca,  Huancane,  Sandia,  
+Macusani,  Puerto  Maldonado,  Mazuco,  Iberia,  
+Iñapari,     Apurímac,     Abancay,     Andahuaylas.     
+Informes al Cel. 908817432.
+RESTAURANTE TURÍSTICO
+Necesita        meseros        con        
+inglés     básico/intermedio     y     
+experiencia,   se   ofrece   buen   
+sueldo  por  encima  del  básico  
+más  propinas  y  alimentación.  
+Llamar al Cel. 928047528.
+SE NECESITA 
+PERSONAL
+Para   trabajar   en   grifo   de   gas   
+natural    vehicular,    con    o    sin    
+experiencia.   De   preferencia   vivir   
+por  San  Jerónimo.  Envía  tu  DNI  
+o  C.V.  al  WhatsApp  956591435  o  
+llamar al Cel. 937260860.
+SE REQUIERE PERSONAL
+Proactivo,     empático,     excelente     
+actitud    positiva,    para    eventos    
+requisitos:    con    experiencia    en    
+marketing,    atención    al    cliente    
+y     redes     sociales,     a     tiempo     
+completo.   Interesados   llamar   al   
+Cel.  938933849  o  enviar  C.V.  al  
+WhatsApp.
+SE REQUIERE PERSONAL 
+PART TIME
+Para  la  atención  en  importante  empresa  
+del rubro de comida saludable: Oakberry. 
+No    se    necesita    experiencia    previa,    
+buscamos  a  una  persona  con  excelente  
+actitud, limpieza y compromiso. Funciones: 
+Atención  al  público,  sencilla  preparación  
+de   alimentos,   limpieza   de   ambientes.   
+Envía tu CV al oakberrycusco@gmail.com
+CENTRO DE RETIRO 
+EN EL VALLE 
+SAGRADO
+REQUIERE UN ASISTENTE CON 
+O    SIN    EXPERIENCIA,    CON    
+INGLES FLUIDO. ENVIAR CV AL 
+WHATSAPP 993662522.
+EMPRESA DEDICADA AL 
+RUBRO DE ESTRUCTURA 
+METÁLICA
+Necesita:    2    ayudantes    de    
+almacén, con o sin experiencia, 
+de  preferencia  mayores  de  22  
+años. Interesados comunicarse 
+al Cels. 961205709, 984545404.
+EMPRESA DE CONSTRUCCIÓN E 
+INGENIERÍA
+Nos   encontramos   en   la   búsqueda   de   un   
+Arquitect@    y/o    Tecnic@    en    diseño    de    
+interiores,    con    conocimientos    en    diseño    
+arquitectónico,    con    manejo    de    software    
+Archi CAD, Lumion, AutoCAD, Revit y office, 
+para   la   elaboración   de   planos,   metrados,   
+en   proyectos   de   educación   y   viviendas   
+multifamiliares. Enviar su C.V. documentado a 
+los  correos:  neyser.caceres@odingenieros.com, 
+Cel. 994743464.
+SE REQUIERE UNA 
+SEÑORITA
+Comprometida   y   empática   para   
+el cuidado de un adulto mayor en 
+el  turno  mañana.  De  preferencia  
+que   este   cursando   estudios   de   
+enfermería    técnica.    Interesados    
+comunicarse al Cel. 971636330.
+SE NECESITA UNA 
+TRABAJADORA DE HOGAR
+Amable,  honrada,  honesta  y  con  buen  
+trato, para la atención de familia corta, de 
+8:00  a.m.a  5:00  p.m.  Trabajo  sencillo.  Y  1  
+Técnica en Enfermería para los domingos. 
+Presentarse  en  pasaje  Los  Geranios  E-1,  
+Urb.  Ttio,  Urb.  La  Florida  –  Wanchaq.  
+Razón Cel. 974332144, 930366003.
+SE NECESITA UNA SRTA 
+PARA APOYO EN VENTAS 
+EN ÓPTICA
+Medio tiempo o tiempo completo 
+los interesados presentase en calle 
+cruz verde # 379
+O llamar a los números 
+975666631 o al 927 158 903
+SOLICITAMOS 2 GESTORES 
+DE CRÉDITOS
+De   preferencia   con   experiencia   
+para   Banco   con   sede   a   nivel   
+Nacional.   Se   Ofrece   Sueldo   +   
+pasajes y comisiones. Enviar CV al 
+Whatsapp  978237028  o  al  correo:  
+hugo.chavez@hatun.com.pe
+HOTEL DE 
+ESTRELLAS
+REQUIERE       PERSONAL       CON       
+EXPERIENCIA       PARA       CUBRIR       
+FRANCOS    Y    OTRAS    LABORES    
+PARA  EL  TURNO  NOCHE  Y  OTRO  
+POR  MEDIO  TIEMPO.  LLAMAR  AL  
+Cel. 984650852.
+CHOCOMUSEO NECESITA:
+• 01 Asistente para el área de Logística, 
+medio tiempo.
+• 01 Asistente de producción.
+• 01 Anfitrión que sepa hablar Inglés.
+Mandar CV: blasco@chocomuseo.com
+
+IMPORTANTE: Responde SOLO con JSON válido, sin texto adicional.

@@ -1,0 +1,175 @@
+Eres un experto en extraer información estructurada de anuncios clasificados de la revista peruana "Rueda de Negocios" de Cusco.
+
+CONTEXTO:
+Estoy procesando el texto extraído de una página de la revista. La página contiene múltiples anuncios clasificados de diferentes categorías. Cada anuncio puede tener diferentes tamaños visuales según el precio pagado por el anunciante.
+
+TAREA:
+Extrae TODOS los anuncios presentes en el texto y estructura cada uno en formato JSON estricto. NO omitas ningún anuncio, incluso los más pequeños.
+
+FORMATO DE SALIDA (JSON estricto, sin markdown, sin código, solo JSON puro):
+
+{
+  "edicion": "2538",
+  "pagina": 8,
+  "fecha_publicacion": "2024-06-20",
+  "anuncios": [
+    {
+      "titulo": "Título descriptivo (máx 100 caracteres)",
+      "descripcion": "Descripción completa (máx 2000 caracteres)",
+      "categoria": "empleos|inmuebles|vehiculos|servicios|productos|eventos|negocios|comunidad",
+      "contactos": [
+        {
+          "tipo": "telefono|whatsapp|email",
+          "valor": "número/email normalizado",
+          "principal": true
+        }
+      ],
+      "ubicacion": "Ubicación mencionada",
+      "tamaño_visual": "miniatura|pequeño|mediano|grande|gigante",
+      "precio": "Precio si existe"
+    }
+  ]
+}
+
+REGLAS CRÍTICAS:
+1. Categorías: empleos (trabajo), inmuebles (casas/alquiler), vehiculos (autos/motos), servicios (profesionales), productos (venta), eventos (cursos), negocios (traspasos), comunidad (otros)
+2. Contactos: Normaliza números (sin espacios/guiones). Si dice "WhatsApp", usa tipo "whatsapp"
+3. Tamaño: miniatura (1-3 líneas), pequeño (4-8), mediano (9-15), grande (16-25), gigante (+25)
+4. NO inventes información. Solo extrae lo explícito
+5. Extrae TODOS los anuncios, incluso pequeños
+
+TEXTO DE LA PÁGINA A PROCESAR:
+
+88
+28 años uniendo los Agentes Económicos de la Región
+R
+Revista: Publicación Lunes y Jueves, venta diaria
+RN Radio 96.1 FM de 8 a 10 a.m.
+LA RADIO
+96.1
+FM
+Cusco, del 20 al 26 de Junio del 2024–Edición Nº 2538
+CEVICHERÍA EN CUSCO SOLICITA:
+• MOZOS O MOZAS para atención con 
+experiencia. Tiempo completo. Turno 9:00am 
+a 6:00pm. Sueldo s/1300.00.
+• COCINERO, CON EXPERIENCIA EN PESCADOS 
+Y MARISCOS. Horario 9:00am a 6:00pm. 
+Sueldo s/1800.
+• AYUDANTE DE COCINA, experiencia en 
+comida Marina. Horario 9:00am a 6:00pm. 
+Sueldo s/1400.
+Interesadas comunicarse por WhatsApp enviando su CV al 
+Cel. 954798631
+PIZZA MOSTRA
+Requiere personal en turno TARDE, siguientes posiciones:
+• AYUDANTES DE COCINA, con aptitudes de trabajo en cocina, 
+trabajo en equipo y responsabilidad, horario de 4:00pm a 11:00pm y 
+de 7:00pm a 11:00pm.
+• MOZOS(AS), buen trato al cliente, carismático y trabajo en equipo 
+horario de 3:30pm a 11:30pm. sueldo por encima del promedio.
+Presentarse en San Judas Chico A-1 Wanchaq costado del parque 
+Pukllaycancha con C.V. en mano. Cel. 983271847
+SEVICHERÍA DE PRESTIGIO REQUIERE PERSONAL 
+CON EXPERIENCIA
+• 02 Cocineros expertos en pescados 
+y mariscos
+• 01 Cocinero experto en makis y 
+sushis
+• 02 Ayudantes se cocina
+• 02 Ayudantes se cocina fin de 
+semana
+• 02 Lavavajillas
+• 02 Mozo(a)s permanentes y 2 fin de 
+semana
+• 01 Cajera – encargada de local
+• Mozos(as) part time
+• Jalador
+Todos los interesados comunicarse al Cel. 958110360
+OPORTUNIDAD LABORAL
+Se  solicita  personal  proactivo  y  responsable  para  trabajo  de  
+oficina, con o sin experiencia para unirse a nuestro equipo. Se 
+ofrece sueldo fijo de S/1025 a S/1200 (Bonificaciones por cumplir 
+metas y objetivos).
+Enviar CV. al WhatsApp 967176859
+EMPRESA IMPORTANTE 
+REQUIERE:
+• CHEF para capacitación de personal por dos 
+meses, horarios partidos y flexibles.
+• PARRILLERO con experiencia en cortes 
+de carnes nacionales e importadas tiempo 
+completo de 12 a 10pm, sueldo de acuerdo a 
+la experiencia.
+• AYUDANTE DE COCINA tiempo completo de 
+12 a 10pm, sueldo a tratar.
+Interesados enviar CV al WhatsApp 936327762
+CUSQUEÑÍSIMA RESTAURANTE
+TURNO MAÑANA:
+De 8:00am a 5:00pm
+• 01 Barman.
+• 02 Cocinera(o).
+• 02 Ayudantes de cocina.
+De 3:00pm a 11:00pm
+• Cocinero.
+• Ayudante de cocina
+Presentar CV en Av. José Gabriel Cossio 401, parque el Trébol, 
+Magisterio 1ra etapa. cusquenisimapicanteria@gmail.com
+O
+ al Cel. 914036087
+SE REQUIERE ASISTENTE 
+ADMINISTRATIVO Y CONTABLE
+Empresa de prestigio busca persona formal y responsable 
+con  estudios  técnicos  o  universitarios,  con  experiencia.  
+Disponibilidad horario completo: lunes a sábado. Horario: 
+9:30am a 1:30pm y de 3:30pm a 7:30pm.
+Informes al Cel. 991690035
+LA REPÚBLICA DEL CEVICHE 
+REQUIERE:
+• 02 Ayudantes de cocina.
+• 02 Personal para limpieza.
+Informes al Cel. 958122410. Presentarse en Av. Collasuyo 3319 una 
+cuadra más abajo de PROMART
+“CAFETERIA” EN MACHUPICCHU
+SOLICITA:
+PANADERO-PASTELERO
+Y MOZO/MOZA
+SE BRINDA HABITACIÓN Y ALIMENTACIÓN.
+COMUNICARSE AL Cel. 982135551
+OPORTUNIDAD INCREÍBLE PARA JÓVENES
+Únete a nuestro equipo del área de cafetería y limpieza, 
+desata  tu  potencial,  requerimos  jóvenes  o  señoritas  con  
+experiencia a tiempo completo, con salarios competitivos 
+y todos los beneficios de ley, ambiente laboral lleno de 
+energía y camaradería.
+Presentarse en Calle Saphy 818 o comunicarse al Cel. 984706011
+SE BUSCA PERSONAL CON EXPERIENCIA 
+PARA VENTAS EN BOUTIQUE DE ROPA DE 
+ALPACA Y JOYERÍA
+Ubicada a una cuadra de la plaza de armas. Requisitos: carisma, 
+puntualidad, gusto por la moda, ingles intermedio/avanzado.
+Comunicarse al Cel. 935759954, 930283627
+OFERTA LABORAL
+SE NECESITA COCINERO/A
+Funciones:
+• Verificar y mantener abastecido su área 
+de los productos que se necesiten para la 
+venta del día (mise-in-place).
+• Elaboración de platos solicitados, efectuar 
+otras funciones que sean asignadas por su 
+jefe inmediato.
+• Mantener el ambiente limpio y ordenado.
+Beneficios:
+• Ingreso a planillas con beneficios de ley.
+• Día de descanso.
+• Sueldo full: (8 horas) s/1,200 + incentivos. 
+Sueldo part: (4 horas) s/600 + incentivos.
+Informes al WhatsApp 974597653 – 966386774
+PIZZERÍA “EXPRESS”
+Necesita personal proactivo para las áreas de:
+MAESTRO PASTELERO Y MOZOS, CON 
+DISPONIBILIDAD INMEDIATA
+Se ofrece buen ambiente laboral.
+Presentarse con C.V. para entrevista en: Avenida los Incas 1420 (altura de la Clínica 
+MAC SALUD), a partir de las 2:00 pm hasta las 5:00 p.m. Cel. 910324152
+
+IMPORTANTE: Responde SOLO con JSON válido, sin texto adicional.

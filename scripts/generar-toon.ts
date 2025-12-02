@@ -17,6 +17,25 @@ interface TokenToon {
   peso?: number;
 }
 
+// Diccionario de sinónimos y variantes por categoría
+const SINONIMOS_CATEGORIA: Record<string, string[]> = {
+  empleos: ['trabajo', 'empleo', 'vacante', 'puesto', 'oportunidad laboral', 'busco trabajo', 'necesito trabajo'],
+  inmuebles: ['casa', 'departamento', 'alquiler', 'venta', 'propiedad', 'terreno', 'lote', 'inmueble'],
+  vehiculos: ['auto', 'carro', 'moto', 'vehículo', 'camioneta', 'bus', 'combis', 'taxi'],
+  servicios: ['servicio', 'reparación', 'instalación', 'mantenimiento', 'limpieza', 'diseño', 'construcción'],
+  productos: ['venta', 'compro', 'vendo', 'producto', 'artículo', 'oferta', 'descuento'],
+  eventos: ['evento', 'fiesta', 'celebración', 'concierto', 'show', 'festival', 'feria'],
+  negocios: ['negocio', 'empresa', 'comercio', 'tienda', 'local', 'franquicia', 'inversión'],
+  comunidad: ['comunidad', 'ayuda', 'donación', 'voluntario', 'asociación', 'club', 'grupo']
+};
+
+// Palabras clave importantes por contexto
+const PALABRAS_CLAVE_IMPORTANTES = [
+  'urgente', 'oferta', 'descuento', 'promoción', 'nuevo', 'usado', 'original', 'garantía',
+  'entrega', 'domicilio', 'instalación', 'reparación', 'mantenimiento', 'servicio', 'profesional',
+  'experiencia', 'certificado', 'licencia', 'disponible', 'inmediato', 'rápido', 'calidad'
+];
+
 function generarTOON(adiso: Adiso): string {
   const tokens: TokenToon[] = [];
   
@@ -27,7 +46,7 @@ function generarTOON(adiso: Adiso): string {
     peso: 10
   });
   
-  // Categoría
+  // Categoría con sinónimos
   tokens.push({
     tipo: 'atributo',
     valor: 'categoria',
@@ -41,78 +60,173 @@ function generarTOON(adiso: Adiso): string {
     peso: 8
   });
   
-  // Título (palabras clave)
+  // Agregar sinónimos de la categoría
+  const sinonimos = SINONIMOS_CATEGORIA[adiso.categoria] || [];
+  sinonimos.forEach(sinonimo => {
+    tokens.push({
+      tipo: 'valor',
+      valor: sinonimo,
+      contexto: 'categoria_sinonimo',
+      peso: 6
+    });
+  });
+  
+  // Título (palabras clave con normalización)
   const palabrasTitulo = adiso.titulo.toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Eliminar tildes para búsquedas
     .split(/\s+/)
-    .filter(p => p.length > 3)
-    .slice(0, 10); // Máximo 10 palabras clave
+    .filter(p => p.length > 2)
+    .filter(p => !['el', 'la', 'los', 'las', 'un', 'una', 'de', 'del', 'en', 'con', 'por', 'para'].includes(p))
+    .slice(0, 15); // Aumentado a 15 palabras clave
   
   palabrasTitulo.forEach(palabra => {
     tokens.push({
       tipo: 'valor',
       valor: palabra,
       contexto: 'titulo',
+      peso: 8
+    });
+    
+    // Agregar variantes sin tildes y con tildes
+    const conTilde = palabra.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (conTilde !== palabra) {
+      tokens.push({
+        tipo: 'valor',
+        valor: conTilde,
+        contexto: 'titulo_variante',
+        peso: 7
+      });
+    }
+  });
+  
+  // Descripción (extraer palabras clave importantes con contexto semántico)
+  const textoDescripcion = adiso.descripcion
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\w\s]/g, ' ');
+  
+  const palabrasDescripcion = textoDescripcion
+    .split(/\s+/)
+    .filter(p => p.length > 3)
+    .filter(p => !['para', 'con', 'del', 'las', 'los', 'una', 'uno', 'este', 'esta', 'que', 'por', 'son', 'son', 'tiene', 'tiene'].includes(p));
+  
+  // Identificar palabras clave importantes
+  const palabrasImportantes = palabrasDescripcion.filter(p => 
+    PALABRAS_CLAVE_IMPORTANTES.some(kw => p.includes(kw) || kw.includes(p))
+  );
+  
+  palabrasImportantes.forEach(palabra => {
+    tokens.push({
+      tipo: 'valor',
+      valor: palabra,
+      contexto: 'descripcion_importante',
       peso: 7
     });
   });
   
-  // Descripción (extraer palabras clave importantes)
-  const palabrasDescripcion = adiso.descripcion
-    .toLowerCase()
-    .replace(/[^\w\s]/g, ' ')
-    .split(/\s+/)
-    .filter(p => p.length > 4)
-    .filter(p => !['para', 'con', 'del', 'las', 'los', 'una', 'uno', 'este', 'esta'].includes(p))
-    .slice(0, 20); // Máximo 20 palabras clave
-  
-  palabrasDescripcion.forEach(palabra => {
-    tokens.push({
-      tipo: 'valor',
-      valor: palabra,
-      contexto: 'descripcion',
-      peso: 5
+  // Agregar otras palabras clave de descripción (máximo 25)
+  palabrasDescripcion
+    .filter(p => !palabrasImportantes.includes(p))
+    .slice(0, 25)
+    .forEach(palabra => {
+      tokens.push({
+        tipo: 'valor',
+        valor: palabra,
+        contexto: 'descripcion',
+        peso: 5
+      });
     });
-  });
   
-  // Ubicación
+  // Ubicación detallada con contexto geográfico
   if (typeof adiso.ubicacion === 'string') {
-    const ubicacionTokens = adiso.ubicacion.toLowerCase().split(/[,\s]+/);
+    const ubicacionTokens = adiso.ubicacion.toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .split(/[,\s]+/)
+      .filter(t => t.length > 2);
+    
     ubicacionTokens.forEach(token => {
-      if (token.length > 2) {
-        tokens.push({
-          tipo: 'valor',
-          valor: token,
-          contexto: 'ubicacion',
-          peso: 6
-        });
-      }
+      tokens.push({
+        tipo: 'valor',
+        valor: token,
+        contexto: 'ubicacion',
+        peso: 6
+      });
     });
   } else if (adiso.ubicacion && typeof adiso.ubicacion === 'object') {
     const ubi = adiso.ubicacion as any;
+    
+    // Distrito (más importante)
     if (ubi.distrito) {
+      const distritoNorm = ubi.distrito.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       tokens.push({
         tipo: 'valor',
-        valor: ubi.distrito.toLowerCase(),
+        valor: distritoNorm,
         contexto: 'distrito',
-        peso: 7
+        peso: 8
       });
+      
+      // Agregar variantes comunes del distrito
+      if (distritoNorm.includes('wanchaq')) {
+        tokens.push({ tipo: 'valor', valor: 'wanchaq', contexto: 'distrito_variante', peso: 7 });
+        tokens.push({ tipo: 'valor', valor: 'wanchaq', contexto: 'distrito_variante', peso: 7 });
+      }
+      if (distritoNorm.includes('san sebastian')) {
+        tokens.push({ tipo: 'valor', valor: 'san sebastian', contexto: 'distrito_variante', peso: 7 });
+      }
+      if (distritoNorm.includes('san jeronimo')) {
+        tokens.push({ tipo: 'valor', valor: 'san jerónimo', contexto: 'distrito_variante', peso: 7 });
+      }
     }
+    
+    // Provincia
     if (ubi.provincia) {
       tokens.push({
         tipo: 'valor',
-        valor: ubi.provincia.toLowerCase(),
+        valor: ubi.provincia.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''),
         contexto: 'provincia',
         peso: 6
       });
     }
+    
+    // Departamento
     if (ubi.departamento) {
       tokens.push({
         tipo: 'valor',
-        valor: ubi.departamento.toLowerCase(),
+        valor: ubi.departamento.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''),
         contexto: 'departamento',
         peso: 6
       });
     }
+    
+    // Dirección específica (si existe)
+    if (ubi.direccion) {
+      const direccionTokens = ubi.direccion.toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .split(/\s+/)
+        .filter(t => t.length > 2 && !['calle', 'av', 'avenida', 'jr', 'jiron'].includes(t))
+        .slice(0, 5);
+      
+      direccionTokens.forEach(token => {
+        tokens.push({
+          tipo: 'valor',
+          valor: token,
+          contexto: 'direccion',
+          peso: 5
+        });
+      });
+    }
+    
+    // Referencias geográficas comunes
+    tokens.push({
+      tipo: 'valor',
+      valor: 'cusco',
+      contexto: 'ciudad',
+      peso: 7
+    });
   }
   
   // Contactos (solo tipo, no valores por privacidad)
@@ -123,10 +237,16 @@ function generarTOON(adiso: Adiso): string {
         valor: `contacto_${contacto.tipo}`,
         peso: 3
       });
+      
+      // Agregar sinónimos de tipo de contacto
+      if (contacto.tipo === 'whatsapp') {
+        tokens.push({ tipo: 'valor', valor: 'wa', contexto: 'contacto_sinonimo', peso: 2 });
+        tokens.push({ tipo: 'valor', valor: 'wapp', contexto: 'contacto_sinonimo', peso: 2 });
+      }
     });
   }
   
-  // Tamaño
+  // Tamaño con sinónimos
   if (adiso.tamaño) {
     tokens.push({
       tipo: 'atributo',
@@ -134,28 +254,109 @@ function generarTOON(adiso: Adiso): string {
       contexto: adiso.tamaño,
       peso: 4
     });
+    
+    // Sinónimos de tamaño
+    const sinonimosTamaño: Record<string, string[]> = {
+      miniatura: ['pequeño', 'compacto', 'básico'],
+      pequeño: ['mediano', 'estándar', 'normal'],
+      mediano: ['grande', 'amplio', 'extendido'],
+      grande: ['extra grande', 'muy grande', 'extenso'],
+      gigante: ['extra grande', 'máximo', 'premium']
+    };
+    
+    const sinonimos = sinonimosTamaño[adiso.tamaño] || [];
+    sinonimos.forEach(sinonimo => {
+      tokens.push({
+        tipo: 'valor',
+        valor: sinonimo,
+        contexto: 'tamaño_sinonimo',
+        peso: 3
+      });
+    });
   }
   
-  // Fecha (solo año y mes para búsquedas temporales)
+  // Fecha con contexto temporal
   if (adiso.fechaPublicacion) {
     const fecha = new Date(adiso.fechaPublicacion);
+    const año = fecha.getFullYear();
+    const mes = fecha.getMonth() + 1;
+    const dia = fecha.getDate();
+    
     tokens.push({
       tipo: 'valor',
-      valor: fecha.getFullYear().toString(),
+      valor: año.toString(),
       contexto: 'año',
+      peso: 4
+    });
+    tokens.push({
+      tipo: 'valor',
+      valor: mes.toString(),
+      contexto: 'mes',
       peso: 3
     });
     tokens.push({
       tipo: 'valor',
-      valor: (fecha.getMonth() + 1).toString(),
-      contexto: 'mes',
+      valor: `${año}-${mes.toString().padStart(2, '0')}`,
+      contexto: 'fecha_periodo',
+      peso: 3
+    });
+    
+    // Contexto temporal (reciente, antiguo, histórico)
+    const ahora = new Date();
+    const diasDiferencia = Math.floor((ahora.getTime() - fecha.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (diasDiferencia < 30) {
+      tokens.push({ tipo: 'valor', valor: 'reciente', contexto: 'temporal', peso: 3 });
+    } else if (diasDiferencia > 365) {
+      tokens.push({ tipo: 'valor', valor: 'histórico', contexto: 'temporal', peso: 3 });
+    } else {
+      tokens.push({ tipo: 'valor', valor: 'antiguo', contexto: 'temporal', peso: 2 });
+    }
+  }
+  
+  // Estado del anuncio
+  if (adiso.esHistorico) {
+    tokens.push({
+      tipo: 'atributo',
+      valor: 'historico',
+      peso: 3
+    });
+  }
+  
+  if (adiso.estaActivo !== undefined) {
+    tokens.push({
+      tipo: 'atributo',
+      valor: adiso.estaActivo ? 'activo' : 'inactivo',
+      peso: 3
+    });
+  }
+  
+  // Fuente original
+  if (adiso.fuenteOriginal) {
+    tokens.push({
+      tipo: 'atributo',
+      valor: 'fuente',
+      contexto: adiso.fuenteOriginal,
       peso: 2
     });
   }
   
-  // Convertir a formato TOON string
+  // Convertir a formato TOON string optimizado
   // Formato: tipo:valor:contexto:peso|tipo:valor:contexto:peso|...
-  const toonString = tokens
+  // Eliminar duplicados y ordenar por peso
+  const tokensUnicos = new Map<string, TokenToon>();
+  
+  tokens.forEach(token => {
+    const clave = `${token.tipo}:${token.valor}:${token.contexto || ''}`;
+    const existente = tokensUnicos.get(clave);
+    
+    if (!existente || (token.peso || 0) > (existente.peso || 0)) {
+      tokensUnicos.set(clave, token);
+    }
+  });
+  
+  const toonString = Array.from(tokensUnicos.values())
+    .sort((a, b) => (b.peso || 0) - (a.peso || 0)) // Ordenar por peso descendente
     .map(t => `${t.tipo}:${t.valor}${t.contexto ? ':' + t.contexto : ''}${t.peso ? ':' + t.peso : ''}`)
     .join('|');
   

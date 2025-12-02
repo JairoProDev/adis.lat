@@ -144,3 +144,5 @@ FROM pg_policies
 WHERE tablename IN ('profiles', 'favoritos')
 ORDER BY tablename, policyname;
 
+
+

@@ -1,0 +1,368 @@
+Eres un experto en extraer información estructurada de anuncios clasificados de la revista peruana "Rueda de Negocios" de Cusco.
+
+CONTEXTO:
+Estoy procesando el texto extraído de una página de la revista. La página contiene múltiples anuncios clasificados de diferentes categorías. Cada anuncio puede tener diferentes tamaños visuales según el precio pagado por el anunciante.
+
+TAREA:
+Extrae TODOS los anuncios presentes en el texto y estructura cada uno en formato JSON estricto. NO omitas ningún anuncio, incluso los más pequeños.
+
+FORMATO DE SALIDA (JSON estricto, sin markdown, sin código, solo JSON puro):
+
+{
+  "edicion": "2538",
+  "pagina": 2,
+  "fecha_publicacion": "2024-06-20",
+  "anuncios": [
+    {
+      "titulo": "Título descriptivo (máx 100 caracteres)",
+      "descripcion": "Descripción completa (máx 2000 caracteres)",
+      "categoria": "empleos|inmuebles|vehiculos|servicios|productos|eventos|negocios|comunidad",
+      "contactos": [
+        {
+          "tipo": "telefono|whatsapp|email",
+          "valor": "número/email normalizado",
+          "principal": true
+        }
+      ],
+      "ubicacion": "Ubicación mencionada",
+      "tamaño_visual": "miniatura|pequeño|mediano|grande|gigante",
+      "precio": "Precio si existe"
+    }
+  ]
+}
+
+REGLAS CRÍTICAS:
+1. Categorías: empleos (trabajo), inmuebles (casas/alquiler), vehiculos (autos/motos), servicios (profesionales), productos (venta), eventos (cursos), negocios (traspasos), comunidad (otros)
+2. Contactos: Normaliza números (sin espacios/guiones). Si dice "WhatsApp", usa tipo "whatsapp"
+3. Tamaño: miniatura (1-3 líneas), pequeño (4-8), mediano (9-15), grande (16-25), gigante (+25)
+4. NO inventes información. Solo extrae lo explícito
+5. Extrae TODOS los anuncios, incluso pequeños
+6. Ignora los datos extra de la portada, como el nombre de la revista, el número de la edición, la fecha de publicación, etc.
+
+TEXTO DE LA PÁGINA A PROCESAR:
+
+22
+28 años uniendo los Agentes Económicos de la Región
+Cusco, del 20 al 26 de Junio del 2024–Edición Nº 2538
+• Alquileres
+Alquilo 2 tiendas con un canchón de 500 m², 
+ideal para taller de mecánica u otros negocios; 
+ubicado  en  Versalles,  Av.  Comercio  Lote  A-4,  
+Larapa  -  San  Jerónimo,  paradero  Teléfono,  
+parte alta. Razón Cels. 986837783, 950339825.
+Alquilo restaurante bar de 150 m² totalmente 
+implementado   listo   para   trabajar,   ubicado   
+en  Pasaje  Grace  Nº614  frente  al  parque  del  
+Koricancha, zona altamente transitable. Razón 
+Cel. 993287303.
+Se alquila área techada  de  100  m²  y  stands;  
+todos ubicados en puente Tupac Amaru – San 
+Sebastián  (frente  al  colegio  de  Ingenieros).  
+Informes a los Cels. 984740928, 993783024
+Se alquila espacio de  tienda  comercial  para  
+venta  de  frutas  verduras  o  carne,  por  calle  
+Ccascaparo chico. Informes al Cel. 953056503.
+Se alquila espacio en  1er.  piso  para  agencia  
+de venta de vuelos aéreos y una oficina en 
+2do. piso, para agencia de viajes, operadores 
+o  similares  en  Av.  Sol  primera  cuadra  cerca  
+de  plaza  de  Armas.  Razón  Cel.  940672380,  
+964959904. (ver previa cita)
+Se  alquila  oficina con   vista   panorámica,   
+ubicada en edificio “El Roble”, en Av. Micaela 
+Bastidas   Nº443,   Of.   802   (en   esquina   de   
+EsSalud). Razón Cel. 984779727
+Se alquila un puesto de venta de frutas en el 
+mercado de Ttio. Llamar a los Cels. 950888103, 
+992879829.
+Alquilo  2  locales comerciales  cuenta  con  
+baño    privado    y    lavador    independiente,    
+ideales  para  todo  tipo  de  negocio;  ubicados  
+en  la  Av.  de  la  Cultura,  paradero  Andina  de  
+bajada  (referencia  frente  a  la  Andina-Larapa).  
+Informes Cels. 949779857, 921132139.
+Alquilo  bonitos  locales para  Oficinas  o 
+Consultorios  con  baño  privado  y  servicios  
+independientes, desde el 1er. piso al 5to. piso; 
+en  la  Av.  de  la  Cultura  Nº  2116,  (frente  a  la  
+Urb.   Magisterio,   local   Tinka),   Urb.   Santa   
+Rosa de la Guardia Civil - Wánchaq. Razón al 
+Cel. 995870971.
+Alquilo  local  comercial (tienda     con     
+trastienda) con servicios independientes, ideal 
+para oficinas, consultorios u otros; excelente 
+ubicación en la Av. Micaela Bastidas (altura del 
+Ministerio  de  Transportes,  frente  a  SENATI).  
+Razón al Cel. 984700400.
+Alquilo  local  comercial con  altillo,  baño  y  
+reposteros  altos  y  bajos  con  barra,  servicios  
+independientes  ubicado  en  paradero  Morro,  
+a una cuadra del C.C. El Molino, precio S/750 
+soles. Razón Cel. 983355263.
+Alquilo
+ local comercial con baño independiente, 
+ideal    para    cualquier    tipo    de    negocio    (no    
+restaurante). Y también vendo colchones de 1 plaza 
+de  espuma,  en  Av.  Pachacutec  cerca  al  estadio  
+Garcilaso. Informes al Cel. 984305065.
+Alquilo local comercial con baño privado; en 
+Av.  Pachacutec  (Frente  a  Perú  Rail).  Llamar  al  
+Cel. 932429892.
+Alquilo  local  comercial con  salón  amplio  
+y  2  baños;  en  la  Av.  de  la  Cultura  (altura  de  
+Marcavalle).  Informes  a  los  Cels.  992723595,  
+974781218.
+Alquilo  local  comercial super  amplio  con  
+SS.HH.   en   zona   estratégica   y   comercial.   
+Av.   Micaela   Batidas   con   Pedro   Vilcapaza,   
+(frente  al  Ministerio  Transportes).  Razón  al  
+Cel. 993539396.
+Alquilo  local  comercial, urb.  Cerveceros  -  
+Marcavalle,  290 m²,  8  oficinas/consultorios, 
+2   ambientes   amplios   multiuso,   3   baños   
+renovados, 1 almacén pequeño, s/6500 soles. 
+Informes  al  Cel.  920450658  o  al  WhatsApp  
+967743033. Abstenerse intermediarios.
+Ocasión:  Local  en alquiler  de  270  m²  en  
+Av.    Manzanapata    -    Santiago.    Ubicación    
+estratégica   en   área   comercial,   ideal   para   
+cooperativas,  farmacias,  mueblería  y  afines. 
+Abstenerse:    bares,    restaurantes,    pollerías.    
+Razón a los Cels. 993484394, 974276766.
+Se  alquila  local comercial   de   30   m²   en   
+esquina de Jr. Acomayo con Av. Tupac Amaru, 
+cuenta   con   servicios   independientes,   ideal   
+para Farmacia, bodega o consultorio. Razón a 
+los Cels. 973373588, 993001251.
+Alquilo local comercial de 70 m², ubicado en 
+la  calle  Santa  Teresa  -  costado  del  Municipio  
+Central. Razón Cel. 948500038.
+Alquilo casa con 5  dormitorios  amoblados,  
+sala-comedor,  cocina  amoblada  y  4  baños;  
+ubicada   en   Urb.   Santa   Eulalia   A-6,   San   
+Sebastián  (altura  del  1er.  paradero).  Razón  
+Cel. 947734290
+Se  alquila  una casa   de   2   pisos   interior   
+consta    de    3    habitaciones,    sala,    cocina,    
+acceso    independiente,    patio    compartido,    
+servicios   independientes,   garaje   opcional,   
+en  Urb.  Covipol  D-1.  Av.  Collasuyo  detrás  de  
+Magisterio. Razón Cel. 982072829.
+A  precio  de ocasión  alquilo  departamento  
+moderno  y  amplio  en  3er.  piso,  con  vista  
+panorámica,  servicios  independientes,  con  2  
+dormitorios, sala-comedor, cocina, lavandería, 
+C/  terraza,  tv-cable,  internet  y  garaje;  en  Urb.  
+COVIPOL B-3, final de Av. Collasuyo, una cuadra 
+más abajo de PROMART. Cel. 983323900.
+Alquiler, anticresis o venta departamento de 
+140  m²,  en  1er.  piso  de  3  dormitorios,  sala-
+comedor   amplio,   cocina,   amplia,   2   baños,   
+UBICADO  Urb.  Los  Andenes  C-1  detrás  de  la  
+UNSAAC. Razón Cel. 984127474.
+Alquilo  1  departamento en   7mo.   piso   
+(amoblado  o  sin  amoblar),  de  2  dormitorios,  
+2   baños,   sala-comedor,   cocina   americana,   
+lavandería,  garaje  opcional;  ubicado  en  Psje.  
+Rayanccata L-5-B, Wanchaq (colindante a Urb. 
+Los Sauces). Razón Cel. 952405000.
+Alquilo  1  departamento en   estreno   semi   
+amoblado  4to.  piso,  de  3  dormitorios,  sala-
+comedor,    cocina,    lavandería,    2    baños    e    
+intercomunicador; con servicios independientes. 
+En San Jerónimo – APROVITE, Santa Marta C-5, a 
+5 min. de “MAESTRO” (tomar E.T. Rápidos). Razón 
+Cels. 950747647, 941991223.
+Alquilo  2  departamentos amplios    con    
+vista  panorámica  en  2do.  y  4to.  piso,  de  3  
+y   2   dormitorios,   sala,   comedor,   cocina,   2   
+baños,   lavandería   y   cochera   (opcional).   Y   
+habitaciones  para  estudiantes;  en  Urb.  Banco  
+de  Crédito,  a  una  cuadra  del  paradero  Tingo,  
+entre  MAESTRO  y  la  “U”  Andina.  Razón 
+Cel. 974746458.
+Alquilo 2 departamentos de 1 y 3 dormitorios, 
+sala,  comedor,  cocina  y  lavandería;  en  Urb.  
+Túpac Amaru B-1-11-A San Sebastián, frente al 
+grifo AVA, un paradero antes de la “U” Andina 
+Larapa  (pasando  el  puente  de  madera  a  la  
+izquierda). Razón Cel. 997491844, 984026557.
+Alquilo de amplio departamento en 1er. piso 
+de  4  habitaciones,  2  baños,  sala,  comedor,  
+cocina,  sala  de  estudio  y  lavandería  en  Urb.  
+Quispicanchis   D-2   (frente   al   jardín   estatal   
+María Montesori). Razón Cel. 951350066.
+Alquilo departamento 3er. piso hacia la calle 
+3  habitaciones,  baño,  cocina  C/  reposteros,  
+sala,   comedor   y   lavandería;   Urb.   Larapa   
+Grande entrar por Av. 5, bajar paradero Rayito, 
+a 2 cuadras “U” Andina, San Jerónimo. Para 
+estudiante o pareja, No aceptamos mascotas. 
+Razón Cels. 987413350, 940839090.
+Alquilo  departamento  amplio de     3     
+dormitorios  con  roperos  empotrados,  sala,  
+cocina,  comedor  y  2  baños;  ubicado  en  la  
+Prolongación Av. Túpac Amaru, Urb. Los Sauces 
+B-1,   Wanchaq   (frente   a   Villa   El   Periodista   
+–  Diario  El  Cusco).  Razón  Telf.  084214679,  
+Cels. 972248776, 974397397, 992287627.
+Alquilo  departamento  de 3   habitaciones   
+sala,  cocina,  lavandería  y  2  baños.  También  
+alquilo  mini  departamento;  en  Sacashuaylla  
+A-4  San  Sebastián  (a  2  cuadras  del  Colegio  
+de Abogados) y una casa en APV Ferroviarios-
+Saylla. Razón Cel. 965737018.
+Alquilo departamento de 3  y  2  dormitorios  
+con   servicios   independientes;   en   Urb.   Los   
+Nogales (Ref. por la cevicheria “Las Agallitas”). 
+Razón Cel. 932398762
+INMUEBLES
+Casas, Terrenos, Departamentos y Locales en General
+TRANSFORMA TU VIVIENDA EN UN ESPACIO 
+DIGNO Y CONFORTABLE
+Elige vivir en un lugar accesible a todo, en el 1er. Paradero 
+de Velazco Astete, con vistas al nuevo Ovalito de Wanchaq 
+y  áreas  verdes.  Departamento  en  alquiler  o  venta  con  
+112  m²,  2  baños,  3  habitaciones,  sala-comedor,  cocina,  
+lavandería, estudio. Cel. 984313163.
+SE ALQUILA 
+DEPARTAMENTO 
+AMOBLADO
+Con  2  dormitorios,  sala,  comedor,  
+cocina  y  2  baños;  en  2do.  nivel,  
+ubicado  en  Larapa,  al  lado  de  la  
+Iglesia “Santa Rita de Casia”. Informes 
+Cel. 910864234, 964184874.
+ALQUILO LOCALES 
+COMERCIALES EN 
+CHINCHERO
+En el paradero principal Entel, Calle Manco 
+II  con  la  Av.  Mateo  Pumacahua  (ingreso  
+al   centro   arqueológico),   en   1er.   nivel   
+con  baño  propio  y  luz  independiente;  
+acondicionados    para    todo    tipo    de    
+negocio. Razón Cel. 952353955.
+ALQUILO HERMOSA 
+CASITA
+De 3 pisos; ubicada en Urb. Larapa, 
+consta de 4 habitaciones, 3 baños, 
+sala comedor, cocina americana C/ 
+reposteros  altos  y  bajos,  estudio,  
+cuarto  de  juegos,  etc.,  pequeño  
+almacén,   con   cochera.   Informes   
+Cels. 973959699, 984665295.
+ALQUILO
+MINI DEPARTAMENTO 
+EN EL 2DO. PISO
+De  un  dormitorio,  cocina,  comedor  
+y baño privado, para persona sola o 
+estudiante;  ubicado  en  calle  Sucre  
+(altura   del   3er.   paradero   de   San   
+Sebastián). Razón al Cel. 919047087.
+ALQUILER DE HABITACIONES 
+AMOBLADAS CON BAÑO 
+PRIVADO
+TV   con   internet,   ducha   con   agua   
+caliente,  pequeña  cocina  para  comidas  
+ligeras,  cámara  de  seguridad.  Incluye  
+internet  Wifi,  ubicado  al  costado 
+del  templo  Recoleta.  Informes  a  los  
+Cels. 944141792, 958682004.
+SE ALQUILA UNA 
+CASA DE CAMPO CON 
+O SIN AMOBLAR
+Ubicada  en  lugar  ecológico,  rodeado  
+de   vegetación   y   área   verde   en   la   
+Asociación “El Huerto” Patapata – San 
+Jerónimo (a 30 minutos de la ciudad del 
+Cusco). Razón Cel. 920132508
+SE ALQUILA 
+DEPARTAMENTO EN 
+EL 1ER. PISO
+Con    2    dormitorios    amplios,    sala-
+comedor,   cocina,   baño   y   lavandería;   
+en   Urb.   José   Carlos   Mariátegui   B-3 
+(calle Uno, frente a PRONAA). Contacto 
+Cels. 974620686, 955147113.
+ALQUILO CASA CONSTA 
+DE 3 HABITACIONES
+Sala,    comedor,    patio    y    baño;    
+ubicado      en      calle      Mariscal      
+Sucre,  paradero  Santa  Rosa  San  
+Sebastián, precio en S/. 1,200 soles 
+(conversable).  Informes  llamar  o  
+escribir  al  WhatsApp  925541072,  
+984505300.
+TIENDAS COMERCIALES EN 
+ESTRENO EN ALQUILER DE 
+16.5 M² Y 9 M²
+Con  licencia  de  construcción  aprobada  
+por   la   municipalidad,   ubicadas   en   
+zona  exclusiva  y  altamente  comercial  
+de   Av.   El   Ejercito.   Precio   a   tratar   
+directamente  con  la  propietaria.  Razón  
+Cels. 950160572, 926073467
+ALQUILO TIENDAS DE 50 Y 
+45 M² EN 1ER. PISO
+Otro de 70 m² en 2do. piso y 
+en sótano de 60 m²; ubicados 
+en  Jr.  Coya  (a  media  cuadra  
+de  Av.  Huayruropata).  Razón  
+Cel. 949703164
+ALQUILO LOCAL AMPLIO DE 
+350 M² EN 1ER. PISO
+Hacia la calle, exclusivo para Clínicas, Centros de Rehabilitación, financieras y otros 
+(excepto Restaurantes), en zona altamente comercial y otra moderna oficina de 
+40 m² en 2do. piso con servicios independientes, apto para agencias de turismo, 
+estudios jurídicos, centros odontológicos y otros; ambos ubicados en Jirón Ricardo 
+Palma A-2, Urb. Santa Mónica – Wanchaq.
+Razón al Cel. 953767493
+ALQUILO
+MINI DEPARTAMENTO
+En el distrito de San Jerónimo. A media 
+cuadra  del  mercado  Vinocanchón  y  a  
+una  cuadra  de  la  prolongación  Av.  de  
+la  Cultura.  Consta  de  2  habitaciones,  
+1  baño  con  terma,  sala-cocineta,  ideal  
+para estudiantes, o pareja. Comunicarse 
+al Cel. 933541843.
+ALQUILO 
+DEPARTAMENTO EN LA 
+U.V. SANTIAGO
+Consta de 3 dormitorios
+1 baño, sala-comedor
+Cocina-lavandería
+Área 120 m² impecable
+Razón Cel. 920610989
+SE ALQUILA AMPLIO 
+LOCAL COMERCIAL 
+DE 160 M²
+En 5to. piso, frente a la 
+UNSAAC. Interesados 
+llamar al Cel. 984919204
+ALQUILO LOCAL 
+COMERCIAL EN 1ER. PISO 
+CON MEZANINE
+Área   total   290   m²   ubicado   en 
+Av. Micaela Bastidas 327 Wanchaq 
+Cusco   (frente   al   Ministerio   de   
+Transporte).     Informes     a     los 
+Cels. 950308964, 974755306.
+SE DA EN CONCESIÓN 
+O ALQUILER 
+HACIENDA-HOTEL
+Con fines turísticos, recreativos 
+y  para  eventos;  ubicado  cerca  
+a  Pisaq  y  al  Señor  de  Huanca.  
+Propuesta al Cel. 979411631.
+ALQUILO LOCAL 
+COMERCIAL EN 1ER. PISO
+Excelente  ubicación  en  Av.  Jorge  
+Chávez  -  4to.  paradero  de  Urb.  
+Ttio, entre los colegios Uriel García 
+y   Sagrado   Corazón   de   Jesús,   
+ideal    para    farmacia,    librerías,    
+ferretería   entre   otros.   Razón   al   
+Cel. 958257846.
+
+IMPORTANTE: Responde SOLO con JSON válido, sin texto adicional.

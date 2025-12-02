@@ -1,0 +1,211 @@
+Eres un experto en extraer información estructurada de anuncios clasificados de la revista peruana "Rueda de Negocios" de Cusco.
+
+CONTEXTO:
+Estoy procesando el texto extraído de una página de la revista. La página contiene múltiples anuncios clasificados de diferentes categorías. Cada anuncio puede tener diferentes tamaños visuales según el precio pagado por el anunciante.
+
+TAREA:
+Extrae TODOS los anuncios presentes en el texto y estructura cada uno en formato JSON estricto. NO omitas ningún anuncio, incluso los más pequeños.
+
+FORMATO DE SALIDA (JSON estricto, sin markdown, sin código, solo JSON puro):
+
+{
+  "edicion": "2538",
+  "pagina": 9,
+  "fecha_publicacion": "2024-06-20",
+  "anuncios": [
+    {
+      "titulo": "Título descriptivo (máx 100 caracteres)",
+      "descripcion": "Descripción completa (máx 2000 caracteres)",
+      "categoria": "empleos|inmuebles|vehiculos|servicios|productos|eventos|negocios|comunidad",
+      "contactos": [
+        {
+          "tipo": "telefono|whatsapp|email",
+          "valor": "número/email normalizado",
+          "principal": true
+        }
+      ],
+      "ubicacion": "Ubicación mencionada",
+      "tamaño_visual": "miniatura|pequeño|mediano|grande|gigante",
+      "precio": "Precio si existe"
+    }
+  ]
+}
+
+REGLAS CRÍTICAS:
+1. Categorías: empleos (trabajo), inmuebles (casas/alquiler), vehiculos (autos/motos), servicios (profesionales), productos (venta), eventos (cursos), negocios (traspasos), comunidad (otros)
+2. Contactos: Normaliza números (sin espacios/guiones). Si dice "WhatsApp", usa tipo "whatsapp"
+3. Tamaño: miniatura (1-3 líneas), pequeño (4-8), mediano (9-15), grande (16-25), gigante (+25)
+4. NO inventes información. Solo extrae lo explícito
+5. Extrae TODOS los anuncios, incluso pequeños
+
+TEXTO DE LA PÁGINA A PROCESAR:
+
+99
+Estamos trabajando para servirlo mejor
+R
+LA RADIO
+96.1
+FM
+Revista: Publicación Lunes y Jueves, venta diaria
+RN Radio 96.1 FM de 8 a 10 a.m.
+Cusco, del 20 al 26 de Junio del 2024–Edición Nº 2538
+COORDINADOR(A) 
+INMOBILIARIO
+Empresa   inmobiliaria   peruana   se   encuentra   en   la   
+búsqueda de talento para ocupar un rol de autonomía y 
+liderazgo en el área comercial y postventa, con experiencia 
+comprobada en el sector.
+REQUISITOS:
+• Profesionales  de  carreras  de  marketing,  administración,  
+ingeniería industrial u otras carreras afines.
+• Experiencia en ventas y dirección de equipos.
+• Experiencia  mínima  de  3  años  liderando  equipos  del  
+sector inmobiliario
+• Manejo  de  Office  a  nivel  intermedio  y  Excel a  nivel 
+intermedio.
+• Deseable, haber trabajado con el uso de CRM
+• Deseable,  conocimiento  de  metodologías  ágiles  que  
+ayuden a mejorar los procesos comerciales.
+BENEFICIOS:
+• Ingreso a planilla de la empresa desde el primer día.
+• Beneficios: Seguro de salud y todos los beneficios de ley.
+• Contratación: 3 meses renovable, según desempeño.
+• Remuneración básica + comisiones, acorde al mercado.
+• Pertenecer a una empresa en constante crecimiento.
+Enviar CV al correo: jmorales@entremuros.pe
+¡OPORTUNIDAD ÚNICA EN MACHUPICCHU!
+RECEPCIÓN:
+• Conocimiento de inglés intermedio.
+• Dominio de ofimática.
+• Ganas de crecer y aprender.
+HOUSEKEEPING:
+• Con/sin experiencia previa en el área.
+• Actitud proactiva y atención al detalle.
+• Pasión por mantener la excelencia en cada 
+detalle.
+COCINA COMEDOR PARA DESAYUNOS:
+• Actitud proactiva y atención al detalle.
+DISPONIBILIDAD INMEDIATA.
+Ofrecemos:
+• Sueldo.
+• Alimentación y vivienda incluidas.
+• Ambiente de trabajo único en un lugar 
+incomparable.
+Envía tu CV al WhatsApp 984636210 o llámanos para más información
+AGENCIA DE VIAJES “MACHUPICCHU PERU TOURS”
+Requiere: AGENTES DE VENTA
+• A tiempo completo
+• Español-ingles de preferencia otro idioma mas
+• 1 año de experiencia en venta de campañas turísticas
+• Estudios en Turismo (estudiantes de últimos ciclos, egresados o 
+bachilleres)
+Enviar CV al WhatsApp 915033941, 971548086 info@machupicchuperutours.com
+MOZO / RESERVISTA
+¡Restaurante 4 tenedores!
+Requisitos
+• Mozo Experiencia mínima de 2 años en 
+el puesto.
+• Reservista 2 años de experiencia mínima, 
+ingles avanzado.
+• Deberá residir en la ciudad de Cusco.
+Horario Mozo:
+6  días  a  la  semana.  Lunes  a  Domingo  
+de  11am  a  3:00  pm  y  de  3:00pm  a  
+6:30Pm, descansa un día de semana.
+Horario Reservista:
+Horario:  6  días  a  la  semana.  3PM:00  a  
+10:00 p.m.
+Enviar CV al WhatsApp 936293622
+Nos encontramos en busca de talentos como tú para los siguientes puestos:
+• Cuarteleros.
+• Lavanderos.
+• Técnico de Mantenimiento de 
+Lavandería.
+• Agente de Seguridad. (Nivel de 
+inglés intermedio)
+• Mozos. (Nivel de inglés intermedio)
+• Barman. (Nivel de inglés intermedio)
+• Maitre. (Nivel de inglés avanzado)
+• Recepcionista. (Nivel de inglés 
+avanzado)
+• Concierge. (Nivel de inglés 
+avanzado)
+• Botones (Nivel de inglés avanzado)
+• Cocineros.
+• Practicante de Housekeeping *
+• Practicante de Seguridad y Salud en 
+el Trabajo *
+• Practicante de Spa * (Nivel de inglés 
+intermedio)
+• Practicante de Restaurante * (Nivel 
+de inglés intermedio)
+Carta de presentación para Prácticas Profesionales Indispensable *
+Según la ley N° 29973 "Ley General de la Persona con Discapacidad" se "tendrán en cuenta para 
+el empleo todos los solicitantes calificados, independientemente de la raza, color, religión, sexo, 
+expresión o identidad sexual, orientación sexual, país de origen, genética, discapacidad o edad”.
+ENVÍA TU CV A: pamela.ruiz@belmond.com | miguel.giraldo@belmond.com
+REQUERIMIENTO DE PERSONAL
+El   SENCICO,   Requiere  PERSONAL  ADMINISTRATIVO  POR  LOCACIÓN  DE 
+SERVICIOS(os) con sede en la ciudad de Cusco, el siguiente personal:
+REQUISITOS MINIMOS:
+1.- SERVICIO DE CONDUCCIÓN DE VEHÍCULO
+• Licencia de Conducir Categoría: A Tres Profesional, o equivalente A-IIb
+• Secundaria Completa
+• Conocimientos de Mecánica básica automotriz
+• Experiencia General de dos (02) años, como conductor y/o chofer de vehículos 
+en el Sector Publico y/o Privado
+• Conocimientos de manejo defensivo y/o seguridad personal.
+2.- SERVICIO DE AUXILIAR ADMINISTRATIVO
+• Título Profesional en Contabilidad o Administración, o Economía
+• Experiencia General de dos (02) años, en actividades técnico administrativas, 
+relacionadas al puesto, en el Sector público y/o privado.
+• Experiencia Especifica de uno (01) años en el Manejo de Sistema Perú Compras, 
+y/o Catalogo Electrónico de Bienes.
+• Acreditar con la Certificación por el OSCE - VIGENTE
+• Capacitación en Contrataciones del Estado
+• Conocimientos en Adquisiciones mediante Perú compras - Acuerdo Marco
+• Conocimientos y manejo de Sistemas de Administrativos, Gestión Pública, SIAF
+• Conocimientos de computación e informática
+Los interesados, presentar CURRICULUM VITAE DOCUMENTADO en mesa de 
+partes del SENCICO, sito en la Av. Tomasa Ttito Condemayta Nº 411 – Wanchaq – 
+Cusco: hasta el DIA MARTES 25 DE JUNIO 2024
+La Gerencia Zonal
+Te  estamos  buscando  para  compartir  la  magia  
+del   Perú   a   través   de   experiencia   únicas   y   
+trascendentes:
+EJECUTIVO DE
+SERVICIO A BORDO
+REQUISITOS:
+ 9Estudios técnicos como Guías oficiales, Turismo, 
+Hotelería y / o Administración.
+ 9Deseable: Conocimientos y/o experiencia en Artes 
+Escénicas (actuación, danzas, teatro, etc.).
+ 9Inglés: Mínimo nivel intermedio.
+ 9Disponibilidad para trabajar en turnos rotativos 
+durante 5 dias a la semana con dos de 
+descanso.
+EXPERIENCIA:
+ 9Experiencia mínima: Seis meses en puestos 
+similares y / o un año en atención al cliente en 
+empresas de prestigio como hoteles, cruceros, 
+aerolíneas y / o restaurantes.
+MISIÓN DEL PUESTO:
+ 9Realizar el servicio de sala de espera, embarque 
+/ desembarque y a bordo del tren, cumpliendo 
+con todos los estándares establecidos. 
+Hacer que el pasajero tenga una experiencia 
+transcendental durante su viaje a través de la 
+buena actitud, brindando información correcta 
+y oportuna, manteniendo la seguridad de las 
+personas y siempre mostrándose atento a sus 
+necesidades.
+BENEFICIOS:
+ 9Ingreso a planilla con beneficios de ley.
+ 9Pago por destajo
+ 9Vivienda en Ollanta
+ 9Almuerzo cubierto en Machupicchu
+Los interesados deberán enviar su CV a 
+rrhh@incarail.com y colocar en el asunto: 
+Ejecutivo de Servicio a Bordo
+
+IMPORTANTE: Responde SOLO con JSON válido, sin texto adicional.

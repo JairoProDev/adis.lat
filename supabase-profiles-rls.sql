@@ -48,3 +48,5 @@ WITH CHECK (auth.uid() = id);
 -- Comentarios
 COMMENT ON TABLE profiles IS 'Perfiles de usuario. RLS habilitado para control de acceso.';
 
+
+

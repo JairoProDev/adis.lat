@@ -610,3 +610,5 @@ Este documento debe actualizarse cuando:
 
 *Este documento sirve como contexto completo para que LLMs entiendan el producto, la tecnología, el modelo de negocio y la visión de Buscadis/ADIS.lat.*
 
+
+

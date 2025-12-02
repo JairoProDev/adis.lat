@@ -1,0 +1,25 @@
+{
+  "fechaExtraccion": "2025-12-01T23:28:40.136Z",
+  "totalEdiciones": 1,
+  "totalPaginas": 0,
+  "totalCaracteres": 0,
+  "ediciones": [
+    {
+      "info": {
+        "numeroEdicion": "2538",
+        "fechaInicio": "20",
+        "fechaFin": "26",
+        "mes": "junio",
+        "año": 2024,
+        "fechaPublicacion": "2024-06-20"
+      },
+      "carpetaOrigen": "/mnt/c/Users/jairo/OneDrive/Desktop/Magazines/R2538-del20al26-Junio.pdf",
+      "archivoOrigen": "",
+      "esPdfCompleto": false,
+      "paginas": [],
+      "totalCaracteres": 0,
+      "totalPaginas": 0,
+      "fechaProcesamiento": "2025-12-01T23:28:40.136Z"
+    }
+  ]
+}

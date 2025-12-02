@@ -24,7 +24,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 // Usaremos pdf-parse que es más ligero y confiable
-// Instalación: npm install pdf-parse
+// Instalación: npm install pdf-parse@1.1.1
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const pdfParse = require('pdf-parse');
 
@@ -156,7 +156,6 @@ function extraerInfoEdicion(nombre: string): InfoEdicion {
  * Extrae texto de un archivo PDF
  */
 async function extraerTextoDePDF(rutaArchivo: string): Promise<{ texto: string; numPaginas: number }> {
-  
   try {
     const dataBuffer = fs.readFileSync(rutaArchivo);
     const data = await pdfParse(dataBuffer);
