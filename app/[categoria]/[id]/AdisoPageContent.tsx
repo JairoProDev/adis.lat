@@ -3,12 +3,25 @@
 import { useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Adiso } from '@/types';
+import { Adiso, UbicacionDetallada } from '@/types';
 import { getWhatsAppUrl } from '@/lib/utils';
 import Header from '@/components/Header';
 
 interface AdisoPageContentProps {
   adiso: Adiso;
+}
+
+// Función helper para formatear ubicación
+function formatearUbicacion(ubicacion: string | UbicacionDetallada | undefined): string {
+  if (typeof ubicacion === 'object' && ubicacion !== null && 'distrito' in ubicacion) {
+    const ubi = ubicacion as UbicacionDetallada;
+    let texto = `${ubi.distrito || ''}, ${ubi.provincia || ''}, ${ubi.departamento || ''}`.replace(/^,\s*|,\s*$/g, '');
+    if (ubi.direccion) {
+      texto += `, ${ubi.direccion}`;
+    }
+    return texto;
+  }
+  return typeof ubicacion === 'string' ? ubicacion : 'Sin ubicación';
 }
 
 export default function AdisoPageContent({ adiso }: AdisoPageContentProps) {
@@ -104,7 +117,7 @@ export default function AdisoPageContent({ adiso }: AdisoPageContentProps) {
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <strong style={{ color: 'var(--text-primary)' }}>Ubicación:</strong>
-              <span style={{ color: 'var(--text-secondary)' }}>{adiso.ubicacion}</span>
+              <span style={{ color: 'var(--text-secondary)' }}>{formatearUbicacion(adiso.ubicacion)}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <strong style={{ color: 'var(--text-primary)' }}>Publicado:</strong>
