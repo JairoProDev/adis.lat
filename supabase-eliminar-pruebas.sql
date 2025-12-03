@@ -37,3 +37,4 @@ WHERE created_at < NOW() - INTERVAL '1 day'
 
 
 
+

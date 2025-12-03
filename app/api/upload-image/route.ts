@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
       if (process.env.NODE_ENV === 'development') {
         console.error('Error al subir imagen a Supabase Storage:', {
           message: error.message,
-          statusCode: error.statusCode,
+          code: (error as any).code,
           error: error
         });
       }

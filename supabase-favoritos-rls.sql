@@ -63,3 +63,4 @@ COMMENT ON TABLE favoritos IS 'Favoritos de usuarios. RLS habilitado para contro
 
 
 
+
