@@ -100,6 +100,12 @@ export async function PUT(
       );
     }
 
+    // Preservar ubicación original del body (puede ser objeto o string)
+    const ubicacionOriginal = body.ubicacion;
+    const tieneUbicacionDetallada = typeof ubicacionOriginal === 'object' && 
+                                     ubicacionOriginal !== null && 
+                                     'departamento' in ubicacionOriginal;
+
     // Sanitizar campos de texto y convertir null a undefined para compatibilidad con el tipo Adiso
     // Convertir explícitamente null a undefined con verificación de tipo estricta
     let imagenesUrlsSanitized: string[] | undefined = undefined;
@@ -122,7 +128,10 @@ export async function PUT(
         ? sanitizeText(validatedData.descripcion) 
         : adisoExistente.descripcion, // Mantener descripción existente si no se proporciona
       contacto: sanitizeText(validatedData.contacto),
-      ubicacion: sanitizeText(validatedData.ubicacion),
+      // Preservar objeto de ubicación si existe, sino sanitizar el string
+      ubicacion: tieneUbicacionDetallada 
+        ? ubicacionOriginal 
+        : (typeof validatedData.ubicacion === 'string' ? sanitizeText(validatedData.ubicacion) : adisoExistente.ubicacion),
       fechaPublicacion: adisoExistente.fechaPublicacion,
       horaPublicacion: adisoExistente.horaPublicacion,
       tamaño: validatedData.tamaño ?? adisoExistente.tamaño,
