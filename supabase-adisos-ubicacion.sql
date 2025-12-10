@@ -97,3 +97,7 @@ COMMENT ON COLUMN adisos.longitud IS 'Coordenada de longitud para ubicación en 
 
 
 
+
+
+
+

@@ -37,9 +37,10 @@ interface GrillaAdisosProps {
   adisoSeleccionadoId?: string | null;
   espacioAdicional?: number; // Espacio adicional disponible (píxeles) cuando el sidebar está minimizado
   cargandoMas?: boolean; // Indica si se están cargando más anuncios
+  sentinelRef?: React.RefObject<HTMLDivElement>; // Ref para infinite scroll
 }
 
-export default function GrillaAdisos({ adisos, onAbrirAdiso, adisoSeleccionadoId, espacioAdicional = 0, cargandoMas = false }: GrillaAdisosProps) {
+export default function GrillaAdisos({ adisos, onAbrirAdiso, adisoSeleccionadoId, espacioAdicional = 0, cargandoMas = false, sentinelRef }: GrillaAdisosProps) {
   const adisoRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const { user } = useAuth();
@@ -91,6 +92,14 @@ export default function GrillaAdisos({ adisos, onAbrirAdiso, adisoSeleccionadoId
           grid-template-columns: repeat(${isDesktop ? columnas : 2}, 1fr);
           gap: 0.5rem;
           grid-auto-rows: minmax(${isDesktop ? '80px' : '80px'}, auto);
+        }
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
         }
       `}</style>
       <div className="grilla-adisos">
@@ -328,22 +337,34 @@ export default function GrillaAdisos({ adisos, onAbrirAdiso, adisoSeleccionadoId
         })}
         {/* Sentinel para scroll infinito */}
         <div 
-          id="sentinel-carga"
+          ref={sentinelRef}
           style={{
             gridColumn: `1 / -1`,
-            height: '20px',
+            minHeight: '20px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '1rem'
+            padding: cargandoMas ? '1rem' : '0.5rem',
+            transition: 'padding 0.2s'
           }}
         >
           {cargandoMas && (
             <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
               fontSize: '0.875rem',
               color: 'var(--text-secondary)'
             }}>
-              Cargando más anuncios...
+              <div style={{
+                width: '16px',
+                height: '16px',
+                border: '2px solid var(--border-color)',
+                borderTopColor: 'var(--accent-color)',
+                borderRadius: '50%',
+                animation: 'spin 0.8s linear infinite'
+              }} />
+              <span>Cargando más anuncios...</span>
             </div>
           )}
         </div>

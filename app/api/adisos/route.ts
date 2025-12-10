@@ -35,10 +35,10 @@ export async function GET(request: NextRequest) {
     );
   }
   try {
-    // Soporte para paginación básica
+    // Soporte para paginación eficiente (paginación en BD, no en memoria)
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get('page') || '1', 10);
-    const limit = parseInt(searchParams.get('limit') || '100', 10);
+    const limit = parseInt(searchParams.get('limit') || '50', 10);
     
     // Validar límites
     if (page < 1 || limit < 1 || limit > 1000) {
@@ -47,21 +47,29 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       );
     }
-    const adisos = await getAdisosFromSupabase();
     
-    // Aplicar paginación
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedAdisos = adisos.slice(startIndex, endIndex);
+    // Calcular offset para paginación eficiente
+    const offset = (page - 1) * limit;
+    
+    // Obtener total de adisos para calcular hasMore (solo si es necesario)
+    // Por ahora, asumimos que si obtenemos 'limit' resultados, hay más
+    const adisos = await getAdisosFromSupabase({
+      limit: limit + 1, // Obtener uno más para saber si hay más páginas
+      offset: offset,
+      soloActivos: false
+    });
+    
+    // Determinar si hay más páginas
+    const hasMore = adisos.length > limit;
+    const paginatedAdisos = hasMore ? adisos.slice(0, limit) : adisos;
     
     return NextResponse.json({
       data: paginatedAdisos,
       pagination: {
         page,
         limit,
-        total: adisos.length,
-        totalPages: Math.ceil(adisos.length / limit),
-        hasMore: endIndex < adisos.length
+        hasMore,
+        nextPage: hasMore ? page + 1 : null
       }
     });
   } catch (error: any) {

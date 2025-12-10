@@ -2,7 +2,17 @@ import { Adiso, AdisoGratuito } from '@/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
-export async function fetchAdisos(page: number = 1, limit: number = 1000): Promise<Adiso[]> {
+export interface FetchAdisosResponse {
+  data: Adiso[];
+  pagination: {
+    page: number;
+    limit: number;
+    hasMore: boolean;
+    nextPage: number | null;
+  };
+}
+
+export async function fetchAdisos(page: number = 1, limit: number = 50): Promise<FetchAdisosResponse> {
   try {
     const response = await fetch(`${API_URL}/adisos?page=${page}&limit=${limit}`, {
       cache: 'no-store', // Siempre obtener datos frescos
@@ -12,14 +22,51 @@ export async function fetchAdisos(page: number = 1, limit: number = 1000): Promi
       throw new Error('Error al obtener adisos');
     }
     const data = await response.json();
-    // Manejar respuesta paginada o lista directa (compatibilidad hacia atrás)
-    return Array.isArray(data) ? data : (data.data || []);
+    
+    // Manejar respuesta paginada (nuevo formato)
+    if (data.data && data.pagination) {
+      return {
+        data: data.data,
+        pagination: data.pagination
+      };
+    }
+    
+    // Compatibilidad hacia atrás: si es array directo
+    if (Array.isArray(data)) {
+      return {
+        data: data,
+        pagination: {
+          page: 1,
+          limit: data.length,
+          hasMore: false,
+          nextPage: null
+        }
+      };
+    }
+    
+    return {
+      data: data.data || [],
+      pagination: {
+        page: page,
+        limit: limit,
+        hasMore: false,
+        nextPage: null
+      }
+    };
   } catch (error) {
     // Solo mostrar errores en desarrollo
     if (process.env.NODE_ENV === 'development') {
       console.error('Error fetching adisos:', error);
     }
-    return [];
+    return {
+      data: [],
+      pagination: {
+        page: page,
+        limit: limit,
+        hasMore: false,
+        nextPage: null
+      }
+    };
   }
 }
 

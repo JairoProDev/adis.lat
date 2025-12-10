@@ -4,7 +4,7 @@
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
 
-import { Suspense, useState, useEffect, useRef } from 'react';
+import { Suspense, useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Adiso, Categoria } from '@/types';
 import { getAdisos, getAdisoById, saveAdiso, getAdisosCache } from '@/lib/storage';
@@ -12,6 +12,7 @@ import { getAdisosFromSupabase } from '@/lib/supabase';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useToast } from '@/hooks/useToast';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { getBusquedaUrl } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useUser } from '@/hooks/useUser';
@@ -39,6 +40,7 @@ import Ordenamiento, { TipoOrdenamiento } from '@/components/Ordenamiento';
 import FiltroUbicacion from '@/components/FiltroUbicacion';
 import GrillaAdisos from '@/components/GrillaAdisos';
 import SkeletonAdisos from '@/components/SkeletonAdisos';
+import { SkeletonAdisosGrid } from '@/components/SkeletonAdiso';
 import { ToastContainer } from '@/components/Toast';
 import FeedbackButton from '@/components/FeedbackButton';
 import NavbarMobile from '@/components/NavbarMobile';
@@ -571,12 +573,16 @@ function HomeContent() {
     }
   };
 
-  // Función para cargar más anuncios (scroll infinito)
-  const cargarMasAdisos = async () => {
+  // Estado para paginación
+  const [paginaActual, setPaginaActual] = useState(1);
+
+  // Función optimizada para cargar más anuncios (scroll infinito)
+  const cargarMasAdisos = useCallback(async () => {
     if (cargandoMas || !hayMasAdisos) return;
     
     setCargandoMas(true);
     try {
+      const siguientePagina = paginaActual + 1;
       const nuevosAdisos = await getAdisosFromSupabase({ 
         limit: ITEMS_POR_PAGINA, 
         offset: adisos.length,
@@ -594,7 +600,11 @@ function HomeContent() {
         });
         
         // Si hay menos de ITEMS_POR_PAGINA, no hay más páginas
-        setHayMasAdisos(nuevosAdisos.length === ITEMS_POR_PAGINA);
+        const tieneMas = nuevosAdisos.length === ITEMS_POR_PAGINA;
+        setHayMasAdisos(tieneMas);
+        if (tieneMas) {
+          setPaginaActual(siguientePagina);
+        }
       } else {
         setHayMasAdisos(false);
       }
@@ -604,25 +614,16 @@ function HomeContent() {
     } finally {
       setCargandoMas(false);
     }
-  };
+  }, [cargandoMas, hayMasAdisos, adisos.length, paginaActual]);
 
-  // Intersection Observer para detectar cuando el usuario llega al final
-  useEffect(() => {
-    const sentinel = document.getElementById('sentinel-carga');
-    if (!sentinel || cargandoMas || !hayMasAdisos) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !cargandoMas && hayMasAdisos) {
-          cargarMasAdisos();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [cargandoMas, hayMasAdisos, adisos.length]);
+  // Usar hook profesional para infinite scroll
+  const { sentinelRef } = useInfiniteScroll({
+    hasMore: hayMasAdisos,
+    isLoading: cargandoMas,
+    onLoadMore: cargarMasAdisos,
+    threshold: 200, // Cargar cuando queden 200px para el final
+    enabled: !cargando && adisosFiltrados.length > 0
+  });
 
   // Prefetch de imágenes de adisos relacionados cuando se abre un adiso
   useEffect(() => {
@@ -847,23 +848,40 @@ function HomeContent() {
                   </div>
                 </div>
               )}
-              <GrillaAdisos
-                adisos={adisosFiltrados}
-                onAbrirAdiso={handleAbrirAdiso}
-                adisoSeleccionadoId={adisoAbierto?.id}
-                espacioAdicional={isSidebarMinimizado ? 360 : 0}
-                cargandoMas={cargandoMas}
-              />
-              {adisosFiltrados.length === 0 && (
-                <div style={{
-                  textAlign: 'center',
-                  padding: '3rem 1rem',
-                  color: 'var(--text-secondary)'
-                }}>
-                  {busqueda || categoriaFiltro !== 'todos'
-                    ? 'No se encontraron adisos con esos filtros'
-                    : 'Aún no hay adisos publicados'}
+              {cargando && adisosFiltrados.length === 0 ? (
+                <div 
+                  className="grilla-adisos"
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: `repeat(${isDesktop ? 4 : 2}, 1fr)`,
+                    gap: '0.5rem',
+                    gridAutoRows: 'minmax(80px, auto)'
+                  }}
+                >
+                  <SkeletonAdisosGrid count={isDesktop ? 8 : 4} />
                 </div>
+              ) : (
+                <>
+                  <GrillaAdisos
+                    adisos={adisosFiltrados}
+                    onAbrirAdiso={handleAbrirAdiso}
+                    adisoSeleccionadoId={adisoAbierto?.id}
+                    espacioAdicional={isSidebarMinimizado ? 360 : 0}
+                    cargandoMas={cargandoMas}
+                    sentinelRef={sentinelRef}
+                  />
+                  {adisosFiltrados.length === 0 && !cargando && (
+                    <div style={{
+                      textAlign: 'center',
+                      padding: '3rem 1rem',
+                      color: 'var(--text-secondary)'
+                    }}>
+                      {busqueda || categoriaFiltro !== 'todos'
+                        ? 'No se encontraron adisos con esos filtros'
+                        : 'Aún no hay adisos publicados'}
+                    </div>
+                  )}
+                </>
               )}
             </>
         )}

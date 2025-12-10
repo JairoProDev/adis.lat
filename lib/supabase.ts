@@ -195,16 +195,17 @@ export async function getAdisosFromSupabase(options?: {
     query = query.order('fecha_publicacion', { ascending: false })
                  .order('hora_publicacion', { ascending: false });
     
-    // Aplicar paginación si se proporciona
+    // Aplicar paginación si se proporciona (optimizado)
     if (options?.limit) {
-      query = query.limit(options.limit);
+      if (options?.offset !== undefined) {
+        // Usar range para paginación eficiente
+        query = query.range(options.offset, options.offset + options.limit - 1);
+      } else {
+        query = query.limit(options.limit);
+      }
     } else {
-      // Por defecto, limitar a 1000 para evitar problemas de memoria
-      query = query.limit(1000);
-    }
-    
-    if (options?.offset) {
-      query = query.range(options.offset, options.offset + (options.limit || 1000) - 1);
+      // Por defecto, limitar a 50 para mejor rendimiento
+      query = query.limit(50);
     }
     
     const { data, error } = await query;

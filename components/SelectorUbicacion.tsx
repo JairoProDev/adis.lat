@@ -297,7 +297,7 @@ export default function SelectorUbicacion({
                 <select
                   value={provincia}
                   onChange={(e) => setProvincia(e.target.value)}
-                  required={incluirUbicacion && departamento}
+                  required={incluirUbicacion && !!departamento}
                   style={{
                     width: '100%',
                     padding: '0.5rem 0.75rem',
@@ -340,7 +340,7 @@ export default function SelectorUbicacion({
                 <select
                   value={distrito}
                   onChange={(e) => setDistrito(e.target.value)}
-                  required={incluirUbicacion && provincia}
+                  required={incluirUbicacion && !!provincia}
                   style={{
                     width: '100%',
                     padding: '0.5rem 0.75rem',

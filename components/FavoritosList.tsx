@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { getFavoritos, eliminarFavorito } from '@/lib/favoritos';
-import { Favorito, Adiso } from '@/types';
+import { Favorito, Adiso, UbicacionDetallada } from '@/types';
 import { getAdisoByIdFromSupabase } from '@/lib/supabase';
 import ModalAdiso from './ModalAdiso';
 import { IconClose } from './Icons';
@@ -11,6 +11,19 @@ import { IconClose } from './Icons';
 interface FavoritosListProps {
   abierto: boolean;
   onCerrar: () => void;
+}
+
+// Función helper para formatear ubicación
+function formatearUbicacion(ubicacion: string | UbicacionDetallada | undefined): string {
+  if (typeof ubicacion === 'object' && ubicacion !== null && 'distrito' in ubicacion) {
+    const ubi = ubicacion as UbicacionDetallada;
+    let texto = `${ubi.distrito || ''}, ${ubi.provincia || ''}, ${ubi.departamento || ''}`.replace(/^,\s*|,\s*$/g, '');
+    if (ubi.direccion) {
+      texto += `, ${ubi.direccion}`;
+    }
+    return texto;
+  }
+  return typeof ubicacion === 'string' ? ubicacion : 'Sin ubicación';
 }
 
 export default function FavoritosList({ abierto, onCerrar }: FavoritosListProps) {
@@ -163,7 +176,7 @@ export default function FavoritosList({ abierto, onCerrar }: FavoritosListProps)
                         {adiso.descripcion.substring(0, 100)}...
                       </p>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '0.5rem' }}>
-                        {adiso.categoria} • {adiso.ubicacion}
+                        {adiso.categoria} • {formatearUbicacion(adiso.ubicacion)}
                       </div>
                     </div>
                     <button

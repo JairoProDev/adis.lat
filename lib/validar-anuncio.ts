@@ -104,10 +104,10 @@ function validarDescripcion(descripcion: string | undefined): string[] {
 /**
  * Valida los contactos de un anuncio
  * 
- * @param contactos - Contactos a validar
+ * @param contactos - Contactos a validar (puede ser string, array de ContactoMultiple, o undefined)
  * @returns Array de errores (vacío si es válido)
  */
-function validarContactos(contactos: ContactoMultiple | undefined): string[] {
+function validarContactos(contactos: ContactoMultiple[] | string | undefined): string[] {
   const errores: string[] = [];
   
   if (!contactos) {
@@ -351,6 +351,8 @@ export function validarYNormalizarAnuncio(adiso: Partial<Adiso>): Adiso | null {
   
   return anuncioNormalizado;
 }
+
+
 
 
 
