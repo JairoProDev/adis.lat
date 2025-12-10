@@ -211,14 +211,15 @@ export default function ModalAdiso({
     const handleContactar = async (contactoEspecifico?: string) => {
       const contactoAUsar = contactoEspecifico || adiso.contacto;
       
-      // Verificar si el anuncio está caducado
+      // Verificar si el anuncio está caducado o es histórico
       const ahora = new Date();
       const estaCaducado = 
         adiso.estaActivo === false || 
         (adiso.fechaExpiracion && new Date(adiso.fechaExpiracion) < ahora);
+      const esHistorico = adiso.esHistorico === true;
       
-      if (estaCaducado) {
-        // Anuncio caducado - registrar interés
+      if (estaCaducado || esHistorico) {
+        // Anuncio caducado o histórico - registrar interés
         try {
           const response = await fetch('/api/intereses-caducados', {
             method: 'POST',
@@ -231,8 +232,14 @@ export default function ModalAdiso({
           });
           
           if (response.ok) {
-            // Mostrar mensaje de éxito
-            const mensaje = 'Hemos registrado tu interés. Notificaremos al anunciante para que pueda renovar su anuncio.';
+            // Mostrar mensaje de éxito según tipo
+            let mensaje: string;
+            if (esHistorico) {
+              mensaje = 'Este es un anuncio histórico. Hemos registrado tu interés y notificaremos al anunciante. Si decide republicar su anuncio oficialmente, podrás contactarlo directamente o le pasaremos tu información de contacto.';
+            } else {
+              mensaje = 'Este anuncio ha caducado. Hemos registrado tu interés y notificaremos al anunciante para que pueda renovar su anuncio.';
+            }
+            
             if (onSuccess) {
               onSuccess(mensaje);
             } else {
@@ -548,10 +555,12 @@ export default function ModalAdiso({
               ? adiso.contactosMultiples
               : null;
             
-            // Verificar si está caducado
+            // Verificar si está caducado o es histórico
             const ahora = new Date();
+            const esHistorico = adiso.esHistorico === true;
             const estaCaducado = 
               adiso.estaActivo === false || 
+              esHistorico ||
               (adiso.fechaExpiracion && new Date(adiso.fechaExpiracion) < ahora);
             
             if (contactosMultiples && contactosMultiples.length > 1) {
@@ -562,13 +571,13 @@ export default function ModalAdiso({
                     <button
                       key={index}
                       onClick={() => handleContactar(contacto.valor)}
-                      aria-label={`Contactar por ${contacto.tipo}`}
+                      aria-label={estaCaducado ? (esHistorico ? 'Registrar interés en anuncio histórico' : 'Registrar interés en anuncio caducado') : `Contactar por ${contacto.tipo}`}
                       style={{
                         width: '100%',
                         padding: '0.875rem',
                         fontSize: '0.9rem',
                         fontWeight: 600,
-                        backgroundColor: contacto.tipo === 'whatsapp' ? '#25D366' : contacto.tipo === 'email' ? '#3b82f6' : '#10b981',
+                        backgroundColor: estaCaducado ? (esHistorico ? '#6b7280' : '#f59e0b') : (contacto.tipo === 'whatsapp' ? '#25D366' : contacto.tipo === 'email' ? '#3b82f6' : '#10b981'),
                         color: 'white',
                         border: 'none',
                         borderRadius: '8px',
@@ -589,7 +598,7 @@ export default function ModalAdiso({
                       {contacto.tipo === 'whatsapp' && <IconWhatsApp aria-hidden="true" />}
                       {contacto.tipo === 'email' && '✉️'}
                       {contacto.tipo === 'telefono' && '📞'}
-                      {contacto.etiqueta || `Contactar por ${contacto.tipo}`}
+                      {estaCaducado ? (esHistorico ? 'Anuncio histórico - Registrar interés' : 'Registrar interés') : (contacto.etiqueta || `Contactar por ${contacto.tipo}`)}
                     </button>
                   ))}
                 </div>
@@ -599,13 +608,13 @@ export default function ModalAdiso({
               return (
                 <button
                   onClick={() => handleContactar()}
-                  aria-label={estaCaducado ? 'Registrar interés en anuncio caducado' : `Contactar al publicador de ${adiso.titulo} por WhatsApp`}
+                  aria-label={estaCaducado ? (esHistorico ? 'Registrar interés en anuncio histórico' : 'Registrar interés en anuncio caducado') : `Contactar al publicador de ${adiso.titulo} por WhatsApp`}
                   style={{
                     width: '100%',
                     padding: '0.875rem',
                     fontSize: '1rem',
                     fontWeight: 600,
-                    backgroundColor: estaCaducado ? '#f59e0b' : '#25D366',
+                    backgroundColor: estaCaducado ? (esHistorico ? '#6b7280' : '#f59e0b') : '#25D366',
                     color: 'white',
                     border: 'none',
                     borderRadius: '8px',
@@ -624,7 +633,7 @@ export default function ModalAdiso({
                   }}
                 >
                   <IconWhatsApp aria-hidden="true" />
-                  {estaCaducado ? 'Registrar interés' : 'Contactar por WhatsApp'}
+                  {estaCaducado ? (esHistorico ? 'Anuncio histórico - Registrar interés' : 'Registrar interés') : 'Contactar por WhatsApp'}
                 </button>
               );
             }
@@ -1064,6 +1073,35 @@ export default function ModalAdiso({
           }}>
             {adiso.titulo}
           </h2>
+          
+          {/* Banner para anuncios históricos */}
+          {adiso.esHistorico && (
+            <div
+              style={{
+                padding: '0.75rem 1rem',
+                backgroundColor: '#f3f4f6',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                marginBottom: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '0.875rem',
+                color: '#374151'
+              }}
+            >
+              <span style={{ fontSize: '1.2rem' }}>📜</span>
+              <div style={{ flex: 1 }}>
+                <strong style={{ display: 'block', marginBottom: '0.25rem' }}>
+                  Anuncio Histórico
+                </strong>
+                <span>
+                  Este anuncio es de una edición antigua. Si te interesa, podemos notificar al anunciante para que pueda republicarlo oficialmente.
+                </span>
+              </div>
+            </div>
+          )}
+          
           {(() => {
             // Mostrar todas las imágenes si hay múltiples, o imagen única
             const imagenes = adiso.imagenesUrls && adiso.imagenesUrls.length > 0
@@ -1220,10 +1258,12 @@ export default function ModalAdiso({
               ? adiso.contactosMultiples
               : null;
             
-            // Verificar si está caducado
+            // Verificar si está caducado o es histórico
             const ahora = new Date();
+            const esHistorico = adiso.esHistorico === true;
             const estaCaducado = 
               adiso.estaActivo === false || 
+              esHistorico ||
               (adiso.fechaExpiracion && new Date(adiso.fechaExpiracion) < ahora);
             
             if (contactosMultiples && contactosMultiples.length > 1) {
@@ -1234,13 +1274,13 @@ export default function ModalAdiso({
                     <button
                       key={index}
                       onClick={() => handleContactar(contacto.valor)}
-                      aria-label={`Contactar por ${contacto.tipo}`}
+                      aria-label={estaCaducado ? (esHistorico ? 'Registrar interés en anuncio histórico' : 'Registrar interés en anuncio caducado') : `Contactar por ${contacto.tipo}`}
                       style={{
                         width: '100%',
                         padding: '0.875rem',
                         fontSize: '0.9rem',
                         fontWeight: 600,
-                        backgroundColor: contacto.tipo === 'whatsapp' ? '#25D366' : contacto.tipo === 'email' ? '#3b82f6' : '#10b981',
+                        backgroundColor: estaCaducado ? (esHistorico ? '#6b7280' : '#f59e0b') : (contacto.tipo === 'whatsapp' ? '#25D366' : contacto.tipo === 'email' ? '#3b82f6' : '#10b981'),
                         color: 'white',
                         border: 'none',
                         borderRadius: '8px',
@@ -1261,7 +1301,7 @@ export default function ModalAdiso({
                       {contacto.tipo === 'whatsapp' && <IconWhatsApp aria-hidden="true" />}
                       {contacto.tipo === 'email' && '✉️'}
                       {contacto.tipo === 'telefono' && '📞'}
-                      {contacto.etiqueta || `Contactar por ${contacto.tipo}`}
+                      {estaCaducado ? (esHistorico ? 'Anuncio histórico - Registrar interés' : 'Registrar interés') : (contacto.etiqueta || `Contactar por ${contacto.tipo}`)}
                     </button>
                   ))}
                 </div>
@@ -1271,13 +1311,13 @@ export default function ModalAdiso({
               return (
                 <button
                   onClick={() => handleContactar()}
-                  aria-label={estaCaducado ? 'Registrar interés en anuncio caducado' : `Contactar al publicador de ${adiso.titulo} por WhatsApp`}
+                  aria-label={estaCaducado ? (esHistorico ? 'Registrar interés en anuncio histórico' : 'Registrar interés en anuncio caducado') : `Contactar al publicador de ${adiso.titulo} por WhatsApp`}
                   style={{
                     width: '100%',
                     padding: '0.875rem',
                     fontSize: '1rem',
                     fontWeight: 600,
-                    backgroundColor: estaCaducado ? '#f59e0b' : '#25D366',
+                    backgroundColor: estaCaducado ? (esHistorico ? '#6b7280' : '#f59e0b') : '#25D366',
                     color: 'white',
                     border: 'none',
                     borderRadius: '8px',
@@ -1296,7 +1336,7 @@ export default function ModalAdiso({
                   }}
                 >
                   <IconWhatsApp aria-hidden="true" />
-                  {estaCaducado ? 'Registrar interés' : 'Contactar por WhatsApp'}
+                  {estaCaducado ? (esHistorico ? 'Anuncio histórico - Registrar interés' : 'Registrar interés') : 'Contactar por WhatsApp'}
                 </button>
               );
             }
