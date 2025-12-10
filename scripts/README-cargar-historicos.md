@@ -40,22 +40,24 @@ Ejemplo:
 
 ## Uso
 
-### Probar con una carpeta específica (recomendado primero)
+### Probar con una carpeta específica
+Es necesario especificar el año (`--anio`) ya que las carpetas no lo incluyen.
+También puedes limitar el número de archivos para probar (`--limit`).
 
 ```bash
-npx tsx scripts/cargar-adisos-historicos.ts --carpeta=R2561-Sep16-18
+npx tsx scripts/cargar-adisos-historicos.ts --carpeta=R2538-Jun20-26 --anio=2024 --limit=3
 ```
 
 ### Probar sin cargar (dry-run)
 
 ```bash
-npx tsx scripts/cargar-adisos-historicos.ts --carpeta=R2561-Sep16-18 --dry-run
+npx tsx scripts/cargar-adisos-historicos.ts --carpeta=R2538-Jun20-26 --anio=2024 --limit=3 --dry-run
 ```
 
-### Cargar todas las carpetas
+### Cargar todas las carpetas (Asume año actual si no se especifica)
 
 ```bash
-npx tsx scripts/cargar-adisos-historicos.ts --todas
+npx tsx scripts/cargar-adisos-historicos.ts --todas --anio=2024
 ```
 
 ## Parámetros
@@ -63,6 +65,8 @@ npx tsx scripts/cargar-adisos-historicos.ts --todas
 - `--carpeta=NOMBRE`: Procesa solo una carpeta específica
 - `--todas`: Procesa todas las carpetas encontradas
 - `--dry-run`: Solo procesa y muestra estadísticas, NO carga a Supabase
+- `--anio=YYYY`: Año origen de los datos (Requerido para la fecha correcta, por defecto año actual)
+- `--limit=N`: Procesa solo los primeros N archivos (Útil para pruebas)
 
 ## Proceso de Carga
 
@@ -121,4 +125,36 @@ Verifica que la ruta en `CARPETAS_BASE` sea correcta.
 
 ### Errores de duplicados
 El script maneja duplicados automáticamente, intentando insertar uno por uno si falla el lote.
+
+---
+
+# Script de Exportación a CSV
+
+Si tienes problemas de conexión o prefieres cargar los datos manualmente a través del dashboard de Supabase, puedes usar el script de exportación a CSV.
+
+Este script realiza **exactamente el mismo procesamiento** (parseo, limpieza, detección de categoría, etc.) pero guarda el resultado en un archivo CSV compatible con la importación de Supabase.
+
+## Uso
+
+```bash
+npx tsx scripts/exportar-adisos-csv.ts --carpeta=R2538-Jun20-26 --anio=2024
+```
+
+O para exportar todo:
+
+```bash
+npx tsx scripts/exportar-adisos-csv.ts --todas --anio=2024
+```
+
+## Importar en Supabase
+
+1. Ve a tu proyecto en Supabase -> **Table Editor**.
+2. Selecciona la tabla `adisos`.
+3. Haz clic en **Insert** -> **Import Data from CSV**.
+4. Sube el archivo `.csv` generado.
+5. Asegúrate de que las columnas coincidan (el script usa los nombres exactos de la base de datos).
+6. Haz clic en **Import data**.
+
+El archivo CSV maneja correctamente los campos complejos como JSON y saltos de línea.
+
 

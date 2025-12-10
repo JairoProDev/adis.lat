@@ -30,13 +30,27 @@ const CHUNK_SIZE = 100; // Adisos por lote para insertar en Supabase
 // Configuración de Supabase
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
+// console.log('DEBUG: Node Version:', process.version);
+// console.log('DEBUG: Has global fetch?', typeof global.fetch !== 'undefined');
+// console.log('DEBUG: Supabase URL:', supabaseUrl);
+// console.log('DEBUG: Service Key present?', !!supabaseServiceKey);
+// console.log('DEBUG: Anon Key present?', !!supabaseAnonKey);
+
+// Usar Service Role Key si está disponible (para bypass RLS), sino Anon Key
+const supabaseKey = supabaseServiceKey || supabaseAnonKey;
+
+if (!supabaseUrl || !supabaseKey) {
   console.error('❌ Error: Faltan variables de entorno de Supabase');
   process.exit(1);
 }
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+if (!supabaseServiceKey) {
+  console.warn('⚠️  Advertencia: Usando Anon Key. Es posible que falles si hay políticas RLS restrictivas.');
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
     persistSession: false,
     autoRefreshToken: false
@@ -64,14 +78,14 @@ function parsearLineaAdiso(linea: string): { titulo: string; descripcion: string
 
   // Remover número inicial si existe (ej: "1. ", "2. ", etc.)
   const sinNumero = linea.replace(/^\d+\.\s*/, '').trim();
-  
+
   if (sinNumero.length === 0) {
     return null;
   }
 
   // Buscar el primer ":" que separa título de descripción
   const indiceSeparador = sinNumero.indexOf(':');
-  
+
   if (indiceSeparador === -1) {
     // Si no hay ":", toda la línea es descripción y el título es una parte
     // Intentar dividir por la primera frase
@@ -100,37 +114,37 @@ function parsearLineaAdiso(linea: string): { titulo: string; descripcion: string
  */
 function detectarCategoria(titulo: string, descripcion: string): Categoria {
   const texto = `${titulo} ${descripcion}`.toLowerCase();
-  
+
   // Empleos
   if (texto.match(/\b(empleo|trabajo|busco|requiero|necesito|personal|asesor|vendedor|operador|mozo|mozo|chef|cocinero|recepcionista|practicante|practicante|auxiliar|administrador|gerente|contador|abogado|médico|enfermera|profesor|maestro|barista|housekeeping|limpieza)\b/)) {
     return 'empleos';
   }
-  
+
   // Inmuebles
   if (texto.match(/\b(casa|departamento|terreno|alquiler|alquilo|alquila|vendo|venta|inmueble|propiedad|local|oficina|tienda|hostal|hotel|habitación|dormitorio|garaje|cochera|sótano)\b/)) {
     return 'inmuebles';
   }
-  
+
   // Vehículos
   if (texto.match(/\b(auto|carro|vehículo|vehiculo|moto|camioneta|vendo|compra|remato|remate)\b/)) {
     return 'vehiculos';
   }
-  
+
   // Eventos
   if (texto.match(/\b(evento|fiesta|celebración|celebracion|concierto|show|espectáculo|espectaculo|festival)\b/)) {
     return 'eventos';
   }
-  
+
   // Negocios
   if (texto.match(/\b(negocio|empresa|franquicia|socio|inversión|inversion|oportunidad)\b/)) {
     return 'negocios';
   }
-  
+
   // Productos
   if (texto.match(/\b(vendo|venta|producto|artículo|articulo|equipo|maquinaria|mueble|electrodoméstico|electrodomestico)\b/)) {
     return 'productos';
   }
-  
+
   // Por defecto: servicios
   return 'servicios';
 }
@@ -138,34 +152,37 @@ function detectarCategoria(titulo: string, descripcion: string): Categoria {
 /**
  * Crea un adiso histórico a partir de título, descripción y contactos
  */
+
 function crearAdisoHistorico(
   titulo: string,
   descripcion: string,
   contactos: ContactoMultiple[],
   carpeta: string,
   archivo: string,
-  numeroLinea: number
+  numeroLinea: number,
+  fechaPublicacion: string,
+  horaPublicacion: string = '09:00'
 ): Adiso {
-  const ahora = new Date();
-  const fecha = ahora.toISOString().split('T')[0];
-  const hora = ahora.toTimeString().split(' ')[0].substring(0, 5);
-  
+  // const ahora = new Date();
+  // const fecha = ahora.toISOString().split('T')[0];
+  // const hora = ahora.toTimeString().split(' ')[0].substring(0, 5);
+
   // Limpiar descripción de contactos
   const descripcionLimpia = limpiarContactosDeDescripcion(descripcion, contactos);
-  
+
   // Contacto principal (primer teléfono o email)
-  const contactoPrincipal = contactos.find(c => c.principal)?.valor || 
-                           contactos.find(c => c.tipo === 'telefono' || c.tipo === 'whatsapp')?.valor ||
-                           contactos.find(c => c.tipo === 'email')?.valor ||
-                           contactos[0]?.valor || 
-                           '';
-  
+  const contactoPrincipal = contactos.find(c => c.principal)?.valor ||
+    contactos.find(c => c.tipo === 'telefono' || c.tipo === 'whatsapp')?.valor ||
+    contactos.find(c => c.tipo === 'email')?.valor ||
+    contactos[0]?.valor ||
+    '';
+
   // Detectar categoría
   const categoria = detectarCategoria(titulo, descripcionLimpia);
-  
+
   // Extraer número de edición del nombre de carpeta (ej: "R2561-Sep16-18" -> "R2561")
   const edicionNumero = carpeta.match(/^R\d+/)?.[0] || carpeta;
-  
+
   return {
     id: generarIdUnico(),
     categoria,
@@ -173,14 +190,14 @@ function crearAdisoHistorico(
     descripcion: descripcionLimpia.substring(0, 2000), // Limitar descripción
     contacto: contactoPrincipal,
     ubicacion: 'Cusco, Perú', // Por defecto, se puede mejorar con geocoding
-    fechaPublicacion: fecha,
-    horaPublicacion: hora,
+    fechaPublicacion: fechaPublicacion,
+    horaPublicacion: horaPublicacion,
     tamaño: 'miniatura',
     esHistorico: true,
     estaActivo: false, // NO contactable directamente
     fuenteOriginal: 'rueda_negocios',
     edicionNumero: edicionNumero,
-    fechaPublicacionOriginal: null, // Se puede extraer del nombre de carpeta si tiene fecha
+    fechaPublicacionOriginal: fechaPublicacion,
     contactosMultiples: contactos.length > 0 ? contactos : undefined
   };
 }
@@ -188,29 +205,68 @@ function crearAdisoHistorico(
 /**
  * Procesa un archivo y retorna los adisos encontrados
  */
-function procesarArchivo(rutaArchivo: string, carpeta: string, archivo: string): Adiso[] {
+/**
+ * Mapeo de meses
+ */
+const MESES: { [key: string]: string } = {
+  'Ene': '01', 'Feb': '02', 'Mar': '03', 'Abr': '04', 'May': '05', 'Jun': '06',
+  'Jul': '07', 'Ago': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dic': '12',
+  'Jan': '01', 'Apr': '04', 'Aug': '08', 'Dec': '12'
+};
+
+/**
+ * Parsea la fecha desde el nombre de la carpeta
+ * Formato esperado: R2538-Jun20-26 (ignora el año, requiere anioDefault)
+ */
+function parsearFechaDesdeCarpeta(carpeta: string, anioDefault: number): string {
+  // Buscar patrón MesDia (ej: Jun20)
+  const match = carpeta.match(/-([A-Za-z]+)(\d+)-/);
+
+  if (match) {
+    const mesStr = match[1]; // Jun
+    const diaStr = match[2]; // 20
+
+    // Convertir mes a número
+    const mesKey = Object.keys(MESES).find(k => k.toLowerCase() === mesStr.toLowerCase());
+
+    if (mesKey && diaStr) {
+      const mes = MESES[mesKey];
+      const dia = diaStr.padStart(2, '0');
+      return `${anioDefault}-${mes}-${dia}`;
+    }
+  }
+
+  // Si falla, usar fecha actual pero con año especificado o advertencia
+  console.warn(`⚠️  No se pudo extraer fecha de carpeta ${carpeta}, usando 01-01-${anioDefault}`);
+  return `${anioDefault}-01-01`;
+}
+
+/**
+ * Procesa un archivo y retorna los adisos encontrados
+ */
+function procesarArchivo(rutaArchivo: string, carpeta: string, archivo: string, fechaPublicacion: string): Adiso[] {
   const adisos: Adiso[] = [];
-  
+
   try {
     const contenido = fs.readFileSync(rutaArchivo, 'utf-8');
     const lineas = contenido.split('\n');
-    
+
     lineas.forEach((linea, indice) => {
       const lineaNumero = indice + 1;
       const parseado = parsearLineaAdiso(linea);
-      
+
       if (!parseado) {
         return; // Saltar líneas inválidas
       }
-      
+
       const { titulo, descripcion } = parseado;
-      
+
       // Extraer contactos
       const numerosTelefono = extraerNumerosTelefono(descripcion);
       const emails = extraerEmails(descripcion);
-      
+
       const contactos: ContactoMultiple[] = [];
-      
+
       // Agregar números de teléfono
       numerosTelefono.forEach((numero, index) => {
         const esWA = esWhatsApp(descripcion, numero);
@@ -220,7 +276,7 @@ function procesarArchivo(rutaArchivo: string, carpeta: string, archivo: string):
           principal: index === 0 // Primer número es principal
         });
       });
-      
+
       // Agregar emails
       emails.forEach((email, index) => {
         contactos.push({
@@ -229,15 +285,15 @@ function procesarArchivo(rutaArchivo: string, carpeta: string, archivo: string):
           principal: contactos.length === 0 && index === 0 // Principal solo si no hay teléfonos
         });
       });
-      
+
       // Crear adiso histórico
-      const adiso = crearAdisoHistorico(titulo, descripcion, contactos, carpeta, archivo, lineaNumero);
+      const adiso = crearAdisoHistorico(titulo, descripcion, contactos, carpeta, archivo, lineaNumero, fechaPublicacion);
       adisos.push(adiso);
     });
   } catch (error: any) {
     console.error(`  ❌ Error al procesar archivo ${archivo}:`, error.message);
   }
-  
+
   return adisos;
 }
 
@@ -248,18 +304,18 @@ async function cargarAdisos(adisos: Adiso[]): Promise<{ exitosos: number; errore
   let exitosos = 0;
   let errores = 0;
   const erroresDetalle: string[] = [];
-  
+
   // Procesar en lotes
   for (let i = 0; i < adisos.length; i += CHUNK_SIZE) {
     const lote = adisos.slice(i, i + CHUNK_SIZE);
     const datosDb = lote.map(adiso => adisoToDb(adiso));
-    
+
     try {
       const { data, error } = await supabase
         .from('adisos')
         .insert(datosDb)
         .select('id');
-      
+
       if (error) {
         // Si hay error de duplicado, intentar insertar uno por uno
         if (error.code === '23505' || error.message?.includes('duplicate')) {
@@ -270,7 +326,7 @@ async function cargarAdisos(adisos: Adiso[]): Promise<{ exitosos: number; errore
                 .from('adisos')
                 .insert(adisoToDb(adiso))
                 .select('id');
-              
+
               if (errorIndividual) {
                 errores++;
                 erroresDetalle.push(`${adiso.titulo.substring(0, 50)}: ${errorIndividual.message}`);
@@ -293,13 +349,13 @@ async function cargarAdisos(adisos: Adiso[]): Promise<{ exitosos: number; errore
       errores += lote.length;
       erroresDetalle.push(`Lote ${i / CHUNK_SIZE + 1}: ${error.message}`);
     }
-    
+
     // Pequeña pausa entre lotes para no sobrecargar
     if (i + CHUNK_SIZE < adisos.length) {
       await new Promise(resolve => setTimeout(resolve, 500));
     }
   }
-  
+
   return { exitosos, errores, erroresDetalle };
 }
 
@@ -310,15 +366,24 @@ async function main() {
   const args = process.argv.slice(2);
   const carpetaArg = args.find(arg => arg.startsWith('--carpeta='));
   const carpetaEspecifica = carpetaArg ? carpetaArg.split('=')[1] : undefined;
+
+  const anioArg = args.find(arg => arg.startsWith('--anio='));
+  const anio = anioArg ? parseInt(anioArg.split('=')[1]) : new Date().getFullYear();
+
+  const limitArg = args.find(arg => arg.startsWith('--limit='));
+  const limit = limitArg ? parseInt(limitArg.split('=')[1]) : 0;
+
   const todas = args.includes('--todas');
   const dryRun = args.includes('--dry-run');
-  
+
   console.log('🚀 Iniciando carga de adisos históricos...\n');
-  
+  console.log(`📅 Año base: ${anio}`);
+  if (limit > 0) console.log(`🔢 Límite de archivos por carpeta: ${limit}`);
+
   if (dryRun) {
     console.log('⚠️  MODO DRY-RUN: No se cargarán datos a Supabase\n');
   }
-  
+
   const estadisticas: Estadisticas = {
     totalCarpetas: 0,
     totalArchivos: 0,
@@ -328,10 +393,10 @@ async function main() {
     errores: 0,
     erroresDetalle: []
   };
-  
+
   // Obtener carpetas
   let carpetas: string[] = [];
-  
+
   if (carpetaEspecifica) {
     carpetas = [carpetaEspecifica];
     console.log(`📁 Procesando carpeta específica: ${carpetaEspecifica}\n`);
@@ -348,41 +413,48 @@ async function main() {
     console.log('   Ejemplo: npx tsx scripts/cargar-adisos-historicos.ts --todas');
     process.exit(1);
   }
-  
+
   estadisticas.totalCarpetas = carpetas.length;
-  
+
   // Procesar cada carpeta
   for (const carpeta of carpetas) {
     const rutaCarpeta = path.join(CARPETAS_BASE, carpeta);
-    
+
     if (!fs.existsSync(rutaCarpeta)) {
       console.log(`⚠️  Carpeta no encontrada: ${carpeta}`);
       continue;
     }
-    
+
     console.log(`\n📂 Procesando carpeta: ${carpeta}`);
-    
+
     // Obtener archivos .txt
     const archivos = fs.readdirSync(rutaCarpeta)
       .filter(archivo => archivo.endsWith('.txt'))
       .sort();
-    
-    estadisticas.totalArchivos += archivos.length;
-    console.log(`   📄 Encontrados ${archivos.length} archivos`);
-    
+
+    // Aplicar límite si existe
+    const archivosProcesar = limit > 0 ? archivos.slice(0, limit) : archivos;
+
+    estadisticas.totalArchivos += archivosProcesar.length;
+    console.log(`   📄 Encontrados ${archivos.length} archivos (Procesando ${archivosProcesar.length})`);
+
     const todosLosAdisos: Adiso[] = [];
-    
+
+    // Calcular fecha para esta carpeta
+    const fechaCarpeta = parsearFechaDesdeCarpeta(carpeta, anio);
+    console.log(`   📅 Fecha detectada: ${fechaCarpeta}`);
+
     // Procesar cada archivo
-    for (const archivo of archivos) {
+    for (const archivo of archivosProcesar) {
       const rutaArchivo = path.join(rutaCarpeta, archivo);
-      const adisos = procesarArchivo(rutaArchivo, carpeta, archivo);
+      const adisos = procesarArchivo(rutaArchivo, carpeta, archivo, fechaCarpeta);
       todosLosAdisos.push(...adisos);
       estadisticas.totalLineas += fs.readFileSync(rutaArchivo, 'utf-8').split('\n').length;
     }
-    
+
     estadisticas.adisosProcesados += todosLosAdisos.length;
     console.log(`   ✅ ${todosLosAdisos.length} adisos procesados de ${carpeta}`);
-    
+
     // Cargar a Supabase
     if (!dryRun && todosLosAdisos.length > 0) {
       console.log(`   📤 Cargando ${todosLosAdisos.length} adisos a Supabase...`);
@@ -393,7 +465,7 @@ async function main() {
       console.log(`   ✅ ${resultado.exitosos} cargados, ${resultado.errores} errores`);
     }
   }
-  
+
   // Resumen final
   console.log('\n' + '='.repeat(60));
   console.log('📊 RESUMEN FINAL');
@@ -406,7 +478,7 @@ async function main() {
     console.log(`Adisos cargados: ${estadisticas.adisosCargados}`);
     console.log(`Errores: ${estadisticas.errores}`);
   }
-  
+
   if (estadisticas.erroresDetalle.length > 0 && !dryRun) {
     console.log('\n❌ Errores detallados:');
     estadisticas.erroresDetalle.slice(0, 10).forEach(error => {
@@ -416,7 +488,7 @@ async function main() {
       console.log(`   ... y ${estadisticas.erroresDetalle.length - 10} errores más`);
     }
   }
-  
+
   console.log('\n✅ Proceso completado');
 }
 
