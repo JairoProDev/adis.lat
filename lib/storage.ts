@@ -43,7 +43,7 @@ const saveAdisoLocal = (adiso: Adiso): void => {
     // LRU Cache: Mantener solo los más recientes y frecuentes
     // Priorizar adisos recientes (fecha de publicación) y mantener un límite inteligente
     const MAX_CACHE_SIZE = 50;
-    
+
     // Ordenar por fecha de publicación (más recientes primero) y limitar
     const adisosOrdenados = adisos
       .sort((a, b) => {
@@ -52,7 +52,7 @@ const saveAdisoLocal = (adiso: Adiso): void => {
         return fechaB - fechaA; // Más recientes primero
       })
       .slice(0, MAX_CACHE_SIZE);
-    
+
     localStorage.setItem(STORAGE_KEY, JSON.stringify(adisosOrdenados));
   } catch (error: any) {
     // Si hay error de cuota, limpiar y guardar solo el nuevo adiso
@@ -86,36 +86,37 @@ export const getAdisos = async (): Promise<Adiso[]> => {
   if (USE_LOCAL_STORAGE) {
     return getAdisosLocal();
   }
-  
+
   // Si no usa localStorage, cargar desde API
   if (typeof window !== 'undefined') {
     try {
       const { fetchAdisos } = await import('./api');
-      const adisosDesdeAPI = await fetchAdisos();
-      
+      const response = await fetchAdisos();
+      const adisosDesdeAPI = response.data;
+
       // Actualizar cache con datos frescos
-      if (adisosDesdeAPI.length > 0) {
+      if (adisosDesdeAPI && adisosDesdeAPI.length > 0) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(adisosDesdeAPI));
       }
-      
+
       return adisosDesdeAPI;
     } catch (error) {
       console.error('Error al cargar desde API, usando localStorage:', error);
       return getAdisosLocal();
     }
   }
-  
+
   return [];
 };
 
 export const saveAdiso = async (adiso: Adiso): Promise<void> => {
   // Guardar en cache inmediatamente (optimistic update)
   saveAdisoLocal(adiso);
-  
+
   if (USE_LOCAL_STORAGE) {
     return;
   }
-  
+
   // IMPORTANTE: Guardar en API INMEDIATAMENTE, incluso con previews locales
   // Esto asegura que el adiso exista en Supabase y no desaparezca al recargar
   // Las imágenes se actualizarán cuando se suban a Supabase Storage
@@ -148,7 +149,7 @@ export const saveAdiso = async (adiso: Adiso): Promise<void> => {
         adisoId: adiso.id,
         adisoTitulo: adiso.titulo
       });
-      
+
       // Lanzar el error para que el componente pueda manejarlo
       // Esto es importante para que el usuario sepa que hubo un problema
       throw new Error(`Error al guardar adiso en Supabase: ${error?.message || 'Error desconocido'}`);
@@ -159,11 +160,11 @@ export const saveAdiso = async (adiso: Adiso): Promise<void> => {
 export const getAdisoById = async (id: string): Promise<Adiso | null> => {
   // Primero buscar en cache (instantáneo)
   const cacheAdiso = getAdisoByIdLocal(id);
-  
+
   if (USE_LOCAL_STORAGE) {
     return cacheAdiso;
   }
-  
+
   // Si no está en cache, cargar desde API
   if (typeof window !== 'undefined') {
     try {
@@ -183,7 +184,7 @@ export const getAdisoById = async (id: string): Promise<Adiso | null> => {
       return cacheAdiso;
     }
   }
-  
+
   return cacheAdiso;
 };
 
