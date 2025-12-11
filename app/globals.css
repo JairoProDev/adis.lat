@@ -5,16 +5,43 @@
 }
 
 :root {
+  /* Brand Colors */
+  --brand-blue: #3c6997;
+  --brand-yellow: #ffdd4a;
+
+  /* Background Colors */
   --bg-primary: #ffffff;
   --bg-secondary: #f7f6f2;
   --bg-tertiary: #e8e8e8;
+
+  /* Text Colors */
   --text-primary: #3c6997;
   --text-secondary: #555555;
   --text-tertiary: #999999;
+
+  /* Accent Colors */
   --color-secondary: #ffdd4a;
-  --border-color: #d0d0d0;
-  --hover-bg: #ffdd4a;
-  --shadow: rgba(0, 0, 0, 0.1);
+  --accent-color: #3c6997;
+
+  /* UI Colors */
+  --border-color: #e0e0e0;
+  --hover-bg: #fff9e6;
+
+  /* Shadows - Professional layered shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-hover: 0 8px 16px -4px rgba(60, 105, 151, 0.15), 0 4px 8px -2px rgba(60, 105, 151, 0.08);
+
+  /* Category Colors */
+  --cat-empleos: #3b82f6;
+  --cat-inmuebles: #10b981;
+  --cat-vehiculos: #8b5cf6;
+  --cat-servicios: #f59e0b;
+  --cat-productos: #ec4899;
+  --cat-eventos: #ef4444;
+  --cat-negocios: #06b6d4;
+  --cat-comunidad: #6366f1;
 }
 
 /* Modo oscuro */
@@ -27,9 +54,13 @@
     --text-secondary: #b0b0b0;
     --text-tertiary: #808080;
     --color-secondary: #ffdd4a;
+    --accent-color: #6ba3d8;
     --border-color: #404040;
-    --hover-bg: #3a3a3a;
-    --shadow: rgba(0, 0, 0, 0.3);
+    --hover-bg: #333333;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
+    --shadow-hover: 0 8px 16px -4px rgba(107, 163, 216, 0.25), 0 4px 8px -2px rgba(107, 163, 216, 0.15);
   }
 }
 
@@ -42,9 +73,13 @@
   --text-secondary: #555555;
   --text-tertiary: #999999;
   --color-secondary: #ffdd4a;
-  --border-color: #d0d0d0;
-  --hover-bg: #ffdd4a;
-  --shadow: rgba(0, 0, 0, 0.1);
+  --accent-color: #3c6997;
+  --border-color: #e0e0e0;
+  --hover-bg: #fff9e6;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-hover: 0 8px 16px -4px rgba(60, 105, 151, 0.15), 0 4px 8px -2px rgba(60, 105, 151, 0.08);
 }
 
 /* Clase para forzar modo oscuro */
@@ -56,9 +91,13 @@
   --text-secondary: #b0b0b0;
   --text-tertiary: #808080;
   --color-secondary: #ffdd4a;
+  --accent-color: #6ba3d8;
   --border-color: #404040;
-  --hover-bg: #3a3a3a;
-  --shadow: rgba(0, 0, 0, 0.3);
+  --hover-bg: #333333;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
+  --shadow-hover: 0 8px 16px -4px rgba(107, 163, 216, 0.25), 0 4px 8px -2px rgba(107, 163, 216, 0.15);
 }
 
 body {

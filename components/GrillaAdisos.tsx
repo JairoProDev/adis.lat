@@ -84,13 +84,27 @@ export default function GrillaAdisos({ adisos, onAbrirAdiso, adisoSeleccionadoId
     }
   }, [adisoSeleccionadoId]);
 
+  const getCategoriaColor = (categoria: Categoria) => {
+    const colorMap: Record<Categoria, string> = {
+      empleos: 'var(--cat-empleos)',
+      inmuebles: 'var(--cat-inmuebles)',
+      vehiculos: 'var(--cat-vehiculos)',
+      servicios: 'var(--cat-servicios)',
+      productos: 'var(--cat-productos)',
+      eventos: 'var(--cat-eventos)',
+      negocios: 'var(--cat-negocios)',
+      comunidad: 'var(--cat-comunidad)',
+    };
+    return colorMap[categoria];
+  };
+
   return (
     <>
       <style jsx>{`
         .grilla-adisos {
           display: grid;
           grid-template-columns: repeat(${isDesktop ? columnas : 2}, 1fr);
-          gap: 0.5rem;
+          gap: ${isDesktop ? '1rem' : '0.75rem'};
           grid-auto-rows: minmax(${isDesktop ? '80px' : '80px'}, auto);
         }
         @keyframes spin {
@@ -129,38 +143,38 @@ export default function GrillaAdisos({ adisos, onAbrirAdiso, adisoSeleccionadoId
               }}
               style={{
                 backgroundColor: estaSeleccionado ? 'var(--hover-bg)' : 'var(--bg-primary)',
-                border: estaSeleccionado 
-                  ? '2px solid var(--text-primary)' 
+                border: estaSeleccionado
+                  ? '2px solid var(--accent-color)'
                   : '1px solid var(--border-color)',
-                borderRadius: '6px',
-                padding: tamaño === 'miniatura' 
-                  ? isDesktop ? '0.6rem' : '0.5rem'
-                  : tamaño === 'pequeño' 
-                  ? isDesktop ? '0.75rem' : '0.65rem'
-                  : tamaño === 'mediano' 
-                  ? '0.875rem' 
-                  : tamaño === 'grande'
+                borderRadius: '8px',
+                padding: tamaño === 'miniatura'
+                  ? isDesktop ? '0.75rem' : '0.625rem'
+                  : tamaño === 'pequeño'
+                  ? isDesktop ? '0.875rem' : '0.75rem'
+                  : tamaño === 'mediano'
                   ? '1rem'
-                  : '1.125rem', // gigante
+                  : tamaño === 'grande'
+                  ? '1.125rem'
+                  : '1.25rem', // gigante
                 textAlign: 'left',
                 cursor: 'pointer',
-                transition: 'all 0.2s',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: tamaño === 'miniatura' 
-                  ? '0.25rem' 
-                  : tamaño === 'pequeño' 
-                  ? '0.35rem' 
-                  : '0.4rem',
+                gap: tamaño === 'miniatura'
+                  ? '0.375rem'
+                  : tamaño === 'pequeño'
+                  ? '0.5rem'
+                  : '0.625rem',
                 position: 'relative',
-                boxShadow: estaSeleccionado ? '0 4px 12px rgba(0, 0, 0, 0.15)' : 'none',
+                boxShadow: estaSeleccionado ? 'var(--shadow-lg)' : 'var(--shadow-sm)',
                 gridColumn: `span ${gridColumnSpan}`,
                 gridRow: `span ${gridRowSpan}`,
                 height: '100%',
                 justifyContent: 'flex-start',
-                overflow: 'hidden', // Asegura que el contenido no se desborde
-                minHeight: 0, // Permite que flexbox funcione correctamente
-                outline: 'none', // Se manejará con focus-visible
+                overflow: 'hidden',
+                minHeight: 0,
+                outline: 'none',
               }}
               onFocus={(e) => {
                 e.currentTarget.style.outline = '2px solid var(--text-primary)';
@@ -174,19 +188,19 @@ export default function GrillaAdisos({ adisos, onAbrirAdiso, adisoSeleccionadoId
               onMouseEnter={(e) => {
                 if (!estaSeleccionado) {
                   e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 4px 8px var(--shadow)';
+                  e.currentTarget.style.transform = 'translateY(-3px)';
+                  e.currentTarget.style.boxShadow = 'var(--shadow-hover)';
                 }
               }}
               onMouseLeave={(e) => {
                 if (!estaSeleccionado) {
                   e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
                   e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
                 } else {
                   e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
                   e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+                  e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
                 }
               }}
             >
@@ -230,34 +244,40 @@ export default function GrillaAdisos({ adisos, onAbrirAdiso, adisoSeleccionadoId
               ) : null;
             })()}
             <div style={{
-              fontSize: tamaño === 'miniatura' 
-                ? isDesktop ? '0.7rem' : '0.65rem'
+              fontSize: tamaño === 'miniatura'
+                ? isDesktop ? '0.6875rem' : '0.625rem'
                 : tamaño === 'pequeño'
-                ? isDesktop ? '0.75rem' : '0.7rem'
+                ? isDesktop ? '0.75rem' : '0.6875rem'
                 : tamaño === 'mediano'
-                ? isDesktop ? '0.8rem' : '0.75rem'
+                ? isDesktop ? '0.8125rem' : '0.75rem'
                 : tamaño === 'grande'
-                ? isDesktop ? '0.875rem' : '0.8rem'
-                : isDesktop ? '0.95rem' : '0.9rem', // gigante
-              color: 'var(--text-tertiary)',
+                ? isDesktop ? '0.875rem' : '0.8125rem'
+                : isDesktop ? '0.9375rem' : '0.875rem', // gigante
+              color: getCategoriaColor(adiso.categoria),
+              backgroundColor: `color-mix(in srgb, ${getCategoriaColor(adiso.categoria)} 10%, transparent)`,
               textTransform: 'capitalize',
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
-              gap: '0.25rem',
-              marginBottom: tamaño === 'miniatura' ? '0.15rem' : '0.2rem',
-              flexShrink: 0 // No permitir que la categoría se reduzca
+              gap: '0.375rem',
+              marginBottom: tamaño === 'miniatura' ? '0.25rem' : '0.375rem',
+              padding: '0.25rem 0.5rem',
+              borderRadius: '6px',
+              fontWeight: 600,
+              flexShrink: 0,
+              alignSelf: 'flex-start',
+              border: `1px solid color-mix(in srgb, ${getCategoriaColor(adiso.categoria)} 20%, transparent)`,
             }}>
               {(() => {
                 const IconComponent = getCategoriaIcon(adiso.categoria);
-                const iconSize = tamaño === 'miniatura' 
-                  ? isDesktop ? 12 : 11
+                const iconSize = tamaño === 'miniatura'
+                  ? isDesktop ? 11 : 10
                   : tamaño === 'pequeño'
-                  ? isDesktop ? 13 : 12
+                  ? isDesktop ? 12 : 11
                   : tamaño === 'mediano'
-                  ? isDesktop ? 14 : 13
+                  ? isDesktop ? 13 : 12
                   : tamaño === 'grande'
-                  ? isDesktop ? 15 : 14
-                  : isDesktop ? 16 : 15; // gigante
+                  ? isDesktop ? 14 : 13
+                  : isDesktop ? 15 : 14; // gigante
                 return <IconComponent size={iconSize} aria-hidden="true" />;
               })()}
               {adiso.categoria}
@@ -271,8 +291,8 @@ export default function GrillaAdisos({ adisos, onAbrirAdiso, adisoSeleccionadoId
               overflow: 'hidden'
             }}>
               <h3 style={{
-                fontSize: tamaño === 'miniatura' 
-                  ? isDesktop ? '0.875rem' : '0.8rem'
+                fontSize: tamaño === 'miniatura'
+                  ? isDesktop ? '0.9375rem' : '0.875rem'
                   : tamaño === 'pequeño'
                   ? isDesktop ? '1.125rem' : '1rem'
                   : tamaño === 'mediano'
@@ -280,28 +300,29 @@ export default function GrillaAdisos({ adisos, onAbrirAdiso, adisoSeleccionadoId
                   : tamaño === 'grande'
                   ? isDesktop ? '1.625rem' : '1.5rem'
                   : isDesktop ? '1.875rem' : '1.75rem', // gigante
-                fontWeight: tamaño === 'miniatura' 
-                  ? 600 
-                  : tamaño === 'pequeño' 
-                  ? 700 
-                  : tamaño === 'mediano' 
-                  ? 700 
-                  : tamaño === 'grande' 
-                  ? 800 
-                  : 900, // gigante más bold
-                color: 'var(--text-primary)',
-                lineHeight: tamaño === 'miniatura' 
-                  ? 1.3 
+                fontWeight: tamaño === 'miniatura'
+                  ? 700
                   : tamaño === 'pequeño'
-                  ? 1.3
+                  ? 700
                   : tamaño === 'mediano'
-                  ? 1.3
+                  ? 700
                   : tamaño === 'grande'
-                  ? 1.25
-                  : 1.25, // gigante
+                  ? 800
+                  : 900, // gigante más bold
+                color: 'var(--text-secondary)',
+                lineHeight: tamaño === 'miniatura'
+                  ? 1.4
+                  : tamaño === 'pequeño'
+                  ? 1.4
+                  : tamaño === 'mediano'
+                  ? 1.35
+                  : tamaño === 'grande'
+                  ? 1.3
+                  : 1.3, // gigante
+                letterSpacing: '-0.01em',
                 display: '-webkit-box',
-                WebkitLineClamp: tamaño === 'miniatura' 
-                  ? isDesktop ? 3 : 2  // 2-3 líneas en miniatura
+                WebkitLineClamp: tamaño === 'miniatura'
+                  ? isDesktop ? 3 : 2
                   : tamaño === 'pequeño'
                   ? isDesktop ? 3 : 2
                   : tamaño === 'mediano'
