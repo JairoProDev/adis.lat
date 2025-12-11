@@ -241,6 +241,8 @@ export async function chat(
 
     // Stream text responses
     let textContent = '';
+    let hadToolCall = false;
+
     for await (const delta of result.fullStream) {
       if (delta.type === 'text-delta') {
         textContent += delta.textDelta;
@@ -257,6 +259,7 @@ export async function chat(
         );
       } else if (delta.type === 'tool-call') {
         // Tool is being called - skeleton already shown in execute()
+        hadToolCall = true;
         console.log(`Tool called: ${delta.toolName}`);
       } else if (delta.type === 'tool-result') {
         // Tool completed - result already rendered in execute()
@@ -264,8 +267,8 @@ export async function chat(
       }
     }
 
-    // If no tools were used and we have text, finalize
-    if (textContent && !result.text.includes('[Tool:')) {
+    // If we have text content and no tool was called, finalize the text response
+    if (textContent && !hadToolCall) {
       uiStream.done(
         <div style={{
           padding: '12px 16px',
