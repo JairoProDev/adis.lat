@@ -4,6 +4,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { AdisosGratuitosCacheProvider } from '@/contexts/AdisosGratuitosCache';
 import { defaultLocale } from '@/i18n';
+import MotionProvider from '@/components/MotionProvider';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://buscadis.com';
 
@@ -96,13 +97,15 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body>
+      <body className="font-sans antialiased">
         <ErrorBoundary>
-          <AuthProvider>
-            <AdisosGratuitosCacheProvider>
-              {children}
-            </AdisosGratuitosCacheProvider>
-          </AuthProvider>
+          <MotionProvider>
+            <AuthProvider>
+              <AdisosGratuitosCacheProvider>
+                {children}
+              </AdisosGratuitosCacheProvider>
+            </AuthProvider>
+          </MotionProvider>
         </ErrorBoundary>
       </body>
     </html>

@@ -1,5 +1,15 @@
 import { nanoid } from 'nanoid';
 import { Categoria } from '@/types';
+import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+/**
+ * Utility function to merge Tailwind CSS classes with proper precedence
+ * Combines clsx for conditional classes and tailwind-merge for deduplication
+ */
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 export const formatFecha = (fecha: string, hora: string): string => {
   const date = new Date(`${fecha}T${hora}`);
