@@ -88,20 +88,19 @@ export default function SidebarDesktop({
 
   return (
     <motion.div
-      className={cn(
-        'glass-card border-l border-border-subtle',
-        'flex flex-col'
-      )}
       style={{
         position: 'fixed',
         top: 0,
         right: 0,
         bottom: 0,
         zIndex: 1500,
+        display: 'flex',
+        flexDirection: 'column',
         backgroundColor: 'var(--glass-bg)',
         backdropFilter: 'blur(40px) saturate(200%)',
         WebkitBackdropFilter: 'blur(40px) saturate(200%)',
         boxShadow: 'var(--shadow-lg)',
+        borderLeft: '1px solid var(--border-subtle)',
       }}
       initial={{ x: anchoSidebar }}
       animate={{
@@ -136,8 +135,10 @@ export default function SidebarDesktop({
               return (
                 <div
                   key={seccion.id}
-                  className="relative"
-                  style={{ flex: esPublicar ? 1.2 : 1 }}
+                  style={{
+                    flex: esPublicar ? 1.2 : 1,
+                    position: 'relative',
+                  }}
                   onMouseEnter={() => setTooltipHovered(seccion.id)}
                   onMouseLeave={() => setTooltipHovered(null)}
                 >
@@ -401,7 +402,9 @@ export default function SidebarDesktop({
               return (
                 <div
                   key={seccion.id}
-                  className="relative"
+                  style={{
+                    position: 'relative',
+                  }}
                   onMouseEnter={() => setTooltipHovered(seccion.id)}
                   onMouseLeave={() => setTooltipHovered(null)}
                 >
