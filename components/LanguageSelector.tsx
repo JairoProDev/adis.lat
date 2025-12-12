@@ -3,11 +3,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { Locale, locales, localeNames, localeFlags } from '@/i18n';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 export default function LanguageSelector() {
   const { locale, changeLocale } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const isMobile = useMediaQuery('(max-width: 767px)');
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -65,7 +67,7 @@ export default function LanguageSelector() {
         }}
       >
         <span>{localeFlags[locale]}</span>
-        <span>{localeNames[locale]}</span>
+        <span>{isMobile ? locale.toUpperCase() : localeNames[locale]}</span>
         <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>▼</span>
       </button>
 
