@@ -3,9 +3,13 @@
 -- ============================================
 -- Issue: fecha_publicacion and hora_publicacion are date/time types
 -- but the function declares them as text in RETURNS TABLE
--- Solution: Cast to text in the SELECT statement
+-- Solution: Cast ALL columns to correct types in the SELECT statement
 -- ============================================
 
+-- First, drop the existing function if it exists
+DROP FUNCTION IF EXISTS match_adisos_hybrid(vector(1536), text, float, int, text, text, boolean);
+
+-- Recreate with proper type casting
 CREATE OR REPLACE FUNCTION match_adisos_hybrid(
   query_embedding vector(1536),
   query_text text,
@@ -85,18 +89,18 @@ BEGIN
     FULL OUTER JOIN keyword_search k ON v.id = k.id
   )
   SELECT
-    c.id,
+    c.id::text,
     c.categoria::text,
-    c.titulo,
-    c.descripcion,
-    c.contacto,
-    c.ubicacion,
-    c.fecha_publicacion,
-    c.hora_publicacion,
-    c.imagenes_urls,
-    c.similarity_score,
-    c.keyword_rank,
-    c.hybrid_score
+    c.titulo::text,
+    c.descripcion::text,
+    c.contacto::text,
+    c.ubicacion::text,
+    c.fecha_publicacion::text,  -- ✅ Cast to text
+    c.hora_publicacion::text,    -- ✅ Cast to text
+    c.imagenes_urls,             -- Already JSONB
+    c.similarity_score::float,
+    c.keyword_rank::float,
+    c.hybrid_score::float
   FROM combined c
   WHERE c.hybrid_score > match_threshold
   ORDER BY c.hybrid_score DESC
