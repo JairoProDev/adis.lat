@@ -71,7 +71,7 @@ export default function ModalNavegacionMobile({
     { id: 'adiso' as SeccionSidebar, icono: IconAdiso, label: 'Adiso' },
     { id: 'mapa' as SeccionSidebar, icono: IconMap, label: 'Mapa' },
     { id: 'publicar' as SeccionSidebar, icono: IconMegaphone, label: 'Publicar' },
-    { id: 'chatbot' as SeccionSidebar, icono: IconChatbot, label: 'Chatbot' },
+
     { id: 'gratuitos' as SeccionSidebar, icono: IconGratuitos, label: 'Gratuitos' }
   ];
 
@@ -208,7 +208,7 @@ export default function ModalNavegacionMobile({
           )}
 
           {seccionActiva === 'mapa' && (
-            <MapaInteractivo adisos={[]} onAbrirAdiso={() => {}} />
+            <MapaInteractivo adisos={[]} onAbrirAdiso={() => { }} />
           )}
 
           {seccionActiva === 'publicar' && (
@@ -228,13 +228,7 @@ export default function ModalNavegacionMobile({
             />
           )}
 
-          {seccionActiva === 'chatbot' && (
-            <ChatbotIA
-              onPublicar={onPublicar}
-              onError={onError}
-              onSuccess={onSuccess}
-            />
-          )}
+
 
           {seccionActiva === 'gratuitos' && (
             <AdisosGratuitos todosLosAdisos={todosLosAdisos} />

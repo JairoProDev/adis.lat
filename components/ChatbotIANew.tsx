@@ -33,20 +33,47 @@ interface ChatbotIAProps {
 }
 
 export default function ChatbotIANew({ onPublicar, onError, onSuccess }: ChatbotIAProps) {
-  const [mensajes, setMensajes] = useState<Mensaje[]>([
-    {
-      id: 'welcome-msg',
-      tipo: 'asistente',
-      contenido: '¡Hola! Soy tu asistente personal de ADIS 🤖\n\nEstoy aquí para ayudarte a encontrar exactamente lo que buscas o a publicar tus anuncios en segundos.\n\nSimplemente dime qué necesitas o sube una foto.',
-      timestamp: new Date()
-    }
-  ]);
+  const [mensajes, setMensajes] = useState<Mensaje[]>([]);
   const [inputMensaje, setInputMensaje] = useState('');
   const [procesando, setProcesando] = useState(false);
   const [imageUrl, setImageUrl] = useState<string>('');
   const mensajesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Load from LocalStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('adis_chat_history');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // Date strings need to be converted back to Date objects
+        const hydrated = parsed.map((m: any) => ({
+          ...m,
+          timestamp: new Date(m.timestamp)
+        }));
+        setMensajes(hydrated);
+      } catch (e) {
+        console.error('Failed to parse chat history', e);
+      }
+    } else {
+      setMensajes([{
+        id: 'welcome-msg',
+        tipo: 'asistente',
+        contenido: '¡Hola! Soy tu asistente personal de ADIS 🤖\n\nEstoy aquí para ayudarte a encontrar exactamente lo que buscas o a publicar tus anuncios en segundos.\n\nSimplemente dime qué necesitas o sube una foto.',
+        timestamp: new Date()
+      }]);
+    }
+    setIsInitialized(true);
+  }, []);
+
+  // Save to LocalStorage
+  useEffect(() => {
+    if (isInitialized && mensajes.length > 0) {
+      localStorage.setItem('adis_chat_history', JSON.stringify(mensajes));
+    }
+  }, [mensajes, isInitialized]);
 
   const scrollToBottom = () => {
     mensajesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -65,7 +92,12 @@ export default function ChatbotIANew({ onPublicar, onError, onSuccess }: Chatbot
       resultados,
       component
     };
-    setMensajes(prev => [...prev, nuevoMensaje]);
+    setMensajes(prev => {
+      const updated = [...prev, nuevoMensaje];
+      // Limit history to 50 messages to prevent localStorage bloat
+      if (updated.length > 50) return updated.slice(updated.length - 50);
+      return updated;
+    });
   };
 
   const procesarBusqueda = async (query: string) => {

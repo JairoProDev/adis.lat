@@ -80,7 +80,7 @@ export default function SidebarDesktop({
     { id: 'adiso' as SeccionSidebar, icono: IconAdiso, label: 'Adiso', descripcion: 'Ver detalles del adiso seleccionado' },
     { id: 'mapa' as SeccionSidebar, icono: IconMap, label: 'Mapa', descripcion: 'Explorar adisos en el mapa interactivo' },
     { id: 'publicar' as SeccionSidebar, icono: IconMegaphone, label: 'Publicar', descripcion: 'Crear y publicar un nuevo adiso' },
-    { id: 'chatbot' as SeccionSidebar, icono: IconChatbot, label: 'Chatbot', descripcion: 'Asistente de búsqueda inteligente (próximamente)' },
+    // { id: 'chatbot' as SeccionSidebar, icono: IconChatbot, label: 'Chatbot', descripcion: 'Asistente (ahora abajo derecha)' },
     { id: 'gratuitos' as SeccionSidebar, icono: IconGratuitos, label: 'Gratuitos', descripcion: 'Ver y publicar adisos gratuitos' }
   ];
 
@@ -161,13 +161,13 @@ export default function SidebarDesktop({
                       backgroundColor: esPublicar
                         ? '#ffdd4a'
                         : estaActiva
-                        ? 'var(--bg-primary)'
-                        : 'transparent',
+                          ? 'var(--bg-primary)'
+                          : 'transparent',
                       color: esPublicar
                         ? 'var(--text-primary)'
                         : estaActiva
-                        ? 'var(--accent-color)'
-                        : 'var(--text-secondary)',
+                          ? 'var(--accent-color)'
+                          : 'var(--text-secondary)',
                       border: 'none',
                       cursor: 'pointer',
                       position: 'relative',
@@ -325,7 +325,7 @@ export default function SidebarDesktop({
             )}
 
             {seccionActiva === 'mapa' && (
-              <MapaInteractivo adisos={[]} onAbrirAdiso={() => {}} />
+              <MapaInteractivo adisos={[]} onAbrirAdiso={() => { }} />
             )}
 
             {seccionActiva === 'publicar' && (
@@ -338,13 +338,7 @@ export default function SidebarDesktop({
               />
             )}
 
-            {seccionActiva === 'chatbot' && (
-              <ChatbotIA
-                onPublicar={onPublicar}
-                onError={onError}
-                onSuccess={onSuccess}
-              />
-            )}
+            {/* Chatbot section removed - moved to floating widget */}
 
             {seccionActiva === 'gratuitos' && (
               <AdisosGratuitos todosLosAdisos={todosLosAdisos} />
