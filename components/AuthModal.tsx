@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { signUp, signIn, signInWithOAuth, signInWithMagicLink } from '@/lib/auth';
 import { useAuth } from '@/hooks/useAuth';
 import { IconClose } from './Icons';
@@ -76,7 +77,7 @@ export default function AuthModal({ abierto, onCerrar, modoInicial = 'login' }: 
         }
       } else if (modo === 'reset') {
         const { error: resetError } = await signInWithMagicLink(email);
-        
+
         if (resetError) {
           setError(resetError.message || 'Error al enviar email');
           return;
@@ -107,169 +108,150 @@ export default function AuthModal({ abierto, onCerrar, modoInicial = 'login' }: 
     }
   };
 
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 3000,
-        padding: '1rem'
-      }}
-      onClick={onCerrar}
-    >
+  // Use portal to escape parent stacking context
+  if (typeof document !== 'undefined') {
+    return createPortal(
       <div
         style={{
-          backgroundColor: 'var(--bg-primary)',
-          borderRadius: '12px',
-          padding: '2rem',
-          maxWidth: '400px',
-          width: '100%',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'center',
+          zIndex: 10001,
+          padding: '1rem',
+          overflowY: 'auto'
         }}
-        onClick={(e) => e.stopPropagation()}
+        onClick={onCerrar}
       >
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
-            {modo === 'login' ? 'Iniciar Sesión' : modo === 'signup' ? 'Registrarse' : 'Recuperar Contraseña'}
-          </h2>
-          <button
-            onClick={onCerrar}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'var(--text-secondary)',
-              padding: '0.5rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-            aria-label="Cerrar"
-          >
-            <IconClose size={20} />
-          </button>
-        </div>
-
-        {/* Mensajes de error/éxito */}
-        {error && (
-          <div
-            style={{
-              padding: '0.75rem',
-              backgroundColor: 'rgba(239, 68, 68, 0.1)',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
-              borderRadius: '6px',
-              color: '#ef4444',
-              fontSize: '0.875rem',
-              marginBottom: '1rem'
-            }}
-          >
-            {error}
+        <div
+          style={{
+            backgroundColor: 'var(--bg-primary)',
+            borderRadius: '12px',
+            padding: '2rem',
+            maxWidth: '400px',
+            width: '100%',
+            maxHeight: 'none',
+            margin: 'auto',
+            position: 'relative',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+              {modo === 'login' ? 'Iniciar Sesión' : modo === 'signup' ? 'Registrarse' : 'Recuperar Contraseña'}
+            </h2>
+            <button
+              onClick={onCerrar}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--text-secondary)',
+                padding: '0.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              aria-label="Cerrar"
+            >
+              <IconClose size={20} />
+            </button>
           </div>
-        )}
 
-        {mensaje && (
-          <div
-            style={{
-              padding: '0.75rem',
-              backgroundColor: 'rgba(34, 197, 94, 0.1)',
-              border: '1px solid rgba(34, 197, 94, 0.3)',
-              borderRadius: '6px',
-              color: '#22c55e',
-              fontSize: '0.875rem',
-              marginBottom: '1rem'
-            }}
-          >
-            {mensaje}
-          </div>
-        )}
-
-        {/* Formulario */}
-        <form onSubmit={handleSubmit}>
-          {modo === 'signup' && (
-            <>
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                  Nombre
-                </label>
-                <input
-                  type="text"
-                  value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '6px',
-                    fontSize: '0.875rem',
-                    backgroundColor: 'var(--bg-primary)',
-                    color: 'var(--text-primary)'
-                  }}
-                />
-              </div>
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                  Apellido (opcional)
-                </label>
-                <input
-                  type="text"
-                  value={apellido}
-                  onChange={(e) => setApellido(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '6px',
-                    fontSize: '0.875rem',
-                    backgroundColor: 'var(--bg-primary)',
-                    color: 'var(--text-primary)'
-                  }}
-                />
-              </div>
-            </>
+          {/* Mensajes de error/éxito */}
+          {error && (
+            <div
+              style={{
+                padding: '0.75rem',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                borderRadius: '6px',
+                color: '#ef4444',
+                fontSize: '0.875rem',
+                marginBottom: '1rem'
+              }}
+            >
+              {error}
+            </div>
           )}
 
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
+          {mensaje && (
+            <div
               style={{
-                width: '100%',
                 padding: '0.75rem',
-                border: '1px solid var(--border-color)',
+                backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                border: '1px solid rgba(34, 197, 94, 0.3)',
                 borderRadius: '6px',
+                color: '#22c55e',
                 fontSize: '0.875rem',
-                backgroundColor: 'var(--bg-primary)',
-                color: 'var(--text-primary)'
+                marginBottom: '1rem'
               }}
-            />
-          </div>
+            >
+              {mensaje}
+            </div>
+          )}
 
-          {modo !== 'reset' && (
-            <div style={{ marginBottom: '1.5rem' }}>
+          {/* Formulario */}
+          <form onSubmit={handleSubmit}>
+            {modo === 'signup' && (
+              <>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                    Nombre
+                  </label>
+                  <input
+                    type="text"
+                    value={nombre}
+                    onChange={(e) => setNombre(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '6px',
+                      fontSize: '0.875rem',
+                      backgroundColor: 'var(--bg-primary)',
+                      color: 'var(--text-primary)'
+                    }}
+                  />
+                </div>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                    Apellido (opcional)
+                  </label>
+                  <input
+                    type="text"
+                    value={apellido}
+                    onChange={(e) => setApellido(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '6px',
+                      fontSize: '0.875rem',
+                      backgroundColor: 'var(--bg-primary)',
+                      color: 'var(--text-primary)'
+                    }}
+                  />
+                </div>
+              </>
+            )}
+
+            <div style={{ marginBottom: '1rem' }}>
               <label style={{ display: 'block', fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                Contraseña
+                Email
               </label>
               <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
-                minLength={6}
                 style={{
                   width: '100%',
                   padding: '0.75rem',
@@ -281,151 +263,178 @@ export default function AuthModal({ abierto, onCerrar, modoInicial = 'login' }: 
                 }}
               />
             </div>
+
+            {modo !== 'reset' && (
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ display: 'block', fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                  Contraseña
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '6px',
+                    fontSize: '0.875rem',
+                    backgroundColor: 'var(--bg-primary)',
+                    color: 'var(--text-primary)'
+                  }}
+                />
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={cargando}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                backgroundColor: cargando ? 'var(--text-tertiary)' : 'var(--text-primary)',
+                color: 'var(--bg-primary)',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                cursor: cargando ? 'not-allowed' : 'pointer',
+                marginBottom: '1rem'
+              }}
+            >
+              {cargando
+                ? 'Cargando...'
+                : modo === 'login'
+                  ? 'Iniciar Sesión'
+                  : modo === 'signup'
+                    ? 'Registrarse'
+                    : 'Enviar Email'}
+            </button>
+          </form>
+
+          {/* OAuth Buttons */}
+          {modo === 'login' && (
+            <div style={{ marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => handleOAuth('google')}
+                  disabled={cargando}
+                  style={{
+                    flex: 1,
+                    padding: '0.75rem',
+                    backgroundColor: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '6px',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    cursor: cargando ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  <span>🔵</span> Google
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleOAuth('facebook')}
+                  disabled={cargando}
+                  style={{
+                    flex: 1,
+                    padding: '0.75rem',
+                    backgroundColor: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '6px',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    cursor: cargando ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  <span>🔵</span> Facebook
+                </button>
+              </div>
+            </div>
           )}
 
-          <button
-            type="submit"
-            disabled={cargando}
-            style={{
-              width: '100%',
-              padding: '0.75rem',
-              backgroundColor: cargando ? 'var(--text-tertiary)' : 'var(--text-primary)',
-              color: 'var(--bg-primary)',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              cursor: cargando ? 'not-allowed' : 'pointer',
-              marginBottom: '1rem'
-            }}
-          >
-            {cargando
-              ? 'Cargando...'
-              : modo === 'login'
-              ? 'Iniciar Sesión'
-              : modo === 'signup'
-              ? 'Registrarse'
-              : 'Enviar Email'}
-          </button>
-        </form>
-
-        {/* OAuth Buttons */}
-        {modo === 'login' && (
-          <div style={{ marginBottom: '1rem' }}>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+          {/* Links de cambio de modo */}
+          <div style={{ textAlign: 'center', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+            {modo === 'login' ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setModo('signup')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text-primary)',
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                    marginRight: '0.5rem'
+                  }}
+                >
+                  ¿No tienes cuenta? Regístrate
+                </button>
+                <br style={{ margin: '0.5rem 0' }} />
+                <button
+                  type="button"
+                  onClick={() => setModo('reset')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    textDecoration: 'underline'
+                  }}
+                >
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </>
+            ) : modo === 'signup' ? (
               <button
                 type="button"
-                onClick={() => handleOAuth('google')}
-                disabled={cargando}
-                style={{
-                  flex: 1,
-                  padding: '0.75rem',
-                  backgroundColor: 'var(--bg-secondary)',
-                  color: 'var(--text-primary)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '6px',
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                  cursor: cargando ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem'
-                }}
-              >
-                <span>🔵</span> Google
-              </button>
-              <button
-                type="button"
-                onClick={() => handleOAuth('facebook')}
-                disabled={cargando}
-                style={{
-                  flex: 1,
-                  padding: '0.75rem',
-                  backgroundColor: 'var(--bg-secondary)',
-                  color: 'var(--text-primary)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '6px',
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                  cursor: cargando ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem'
-                }}
-              >
-                <span>🔵</span> Facebook
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Links de cambio de modo */}
-        <div style={{ textAlign: 'center', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-          {modo === 'login' ? (
-            <>
-              <button
-                type="button"
-                onClick={() => setModo('signup')}
+                onClick={() => setModo('login')}
                 style={{
                   background: 'none',
                   border: 'none',
                   color: 'var(--text-primary)',
-                  cursor: 'pointer',
-                  textDecoration: 'underline',
-                  marginRight: '0.5rem'
-                }}
-              >
-                ¿No tienes cuenta? Regístrate
-              </button>
-              <br style={{ margin: '0.5rem 0' }} />
-              <button
-                type="button"
-                onClick={() => setModo('reset')}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--text-secondary)',
                   cursor: 'pointer',
                   textDecoration: 'underline'
                 }}
               >
-                ¿Olvidaste tu contraseña?
+                ¿Ya tienes cuenta? Inicia sesión
               </button>
-            </>
-          ) : modo === 'signup' ? (
-            <button
-              type="button"
-              onClick={() => setModo('login')}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--text-primary)',
-                cursor: 'pointer',
-                textDecoration: 'underline'
-              }}
-            >
-              ¿Ya tienes cuenta? Inicia sesión
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setModo('login')}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--text-primary)',
-                cursor: 'pointer',
-                textDecoration: 'underline'
-              }}
-            >
-              Volver a iniciar sesión
-            </button>
-          )}
+            ) : (
+              <button
+                type="button"
+                onClick={() => setModo('login')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                  textDecoration: 'underline'
+                }}
+              >
+                Volver a iniciar sesión
+              </button>
+            )}
+          </div>
         </div>
-      </div>
-    </div>
-  );
+      </div>,
+      document.body
+    );
+  } else {
+    return null;
+  }
 }
 
