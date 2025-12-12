@@ -89,11 +89,15 @@ export default function SidebarDesktop({
   return (
     <motion.div
       className={cn(
-        'fixed top-0 right-0 bottom-0 z-[1500]',
         'glass-card border-l border-border-subtle',
         'flex flex-col'
       )}
       style={{
+        position: 'fixed',
+        top: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 1500,
         backgroundColor: 'var(--glass-bg)',
         backdropFilter: 'blur(40px) saturate(200%)',
         WebkitBackdropFilter: 'blur(40px) saturate(200%)',
