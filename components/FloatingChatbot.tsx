@@ -7,13 +7,17 @@ import { AnimatePresence, motion } from 'framer-motion';
 export default function FloatingChatbot() {
     const [isOpen, setIsOpen] = useState(false);
     const [hasUnread, setHasUnread] = useState(false);
+    const [hasHistory, setHasHistory] = useState(false);
 
-    // Load open state preference
+    // Load open state preference and check history
     useEffect(() => {
         const savedState = localStorage.getItem('adis_chat_open');
         if (savedState === 'true') setIsOpen(true);
 
-        // Check if was closed recently but has history (could imply unread in a fuller implementation)
+        const history = localStorage.getItem('adis_chat_history');
+        if (history && history !== '[]') {
+            setHasHistory(true);
+        }
     }, []);
 
     const toggleChat = () => {
@@ -55,7 +59,11 @@ export default function FloatingChatbot() {
                             <button onClick={toggleChat} style={{ background: 'rgba(0,0,0,0.1)', border: 'none', borderRadius: '50%', width: 30, height: 30 }}>✕</button>
                         </div>
 
-                        <ChatbotIANew />
+                        <ChatbotIANew onMinimize={() => {
+                            setIsOpen(false);
+                            localStorage.setItem('adis_chat_open', 'false');
+                            setHasHistory(true); // Ensure history indicator is on
+                        }} />
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -84,7 +92,7 @@ export default function FloatingChatbot() {
                     fontSize: '24px'
                 }}
             >
-                {isOpen ? '✕' : '✨'}
+                {isOpen ? '✕' : (hasHistory ? '💬' : '✨')}
 
                 {/* Unread indicator pulse */}
                 {!isOpen && hasUnread && (

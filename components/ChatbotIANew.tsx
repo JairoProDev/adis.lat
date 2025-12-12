@@ -16,6 +16,7 @@ import { FaPaperPlane, FaSpinner, FaSearch, FaImage, FaMapMarkerAlt, FaTag } fro
 import { hybridSearch } from '@/actions/ai-search';
 import Link from 'next/link';
 import { nanoid } from 'nanoid';
+import { useNavigation } from '@/contexts/NavigationContext';
 
 interface Mensaje {
   id: string;
@@ -30,9 +31,11 @@ interface ChatbotIAProps {
   onPublicar?: (adiso: Adiso) => void;
   onError?: (message: string) => void;
   onSuccess?: (message: string) => void;
+  onMinimize?: () => void;
 }
 
-export default function ChatbotIANew({ onPublicar, onError, onSuccess }: ChatbotIAProps) {
+export default function ChatbotIANew({ onPublicar, onError, onSuccess, onMinimize }: ChatbotIAProps) {
+  const { abrirAdiso } = useNavigation();
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
   const [inputMensaje, setInputMensaje] = useState('');
   const [procesando, setProcesando] = useState(false);
@@ -326,10 +329,22 @@ export default function ChatbotIANew({ onPublicar, onError, onSuccess }: Chatbot
                   gap: '0.75rem'
                 }}>
                   {mensaje.resultados.slice(0, 5).map((adiso) => (
-                    <Link
-                      href={`/${adiso.categoria || 'anuncio'}/${adiso.id}`}
+                    <div
                       key={adiso.id}
-                      style={{ textDecoration: 'none', color: 'inherit' }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (onMinimize) onMinimize();
+
+                        // Try to open seamlessly first
+                        try {
+                          abrirAdiso(adiso.id);
+                        } catch (e) {
+                          // Fallback to standard navigation if context is not available
+                          // or if opener is not registered (e.g. not on home page)
+                          window.location.href = `/${adiso.categoria || 'anuncio'}/${adiso.id}`;
+                        }
+                      }}
+                      style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}
                     >
                       <div className="ad-card-hover" style={{
                         padding: '0.875rem',
@@ -382,7 +397,7 @@ export default function ChatbotIANew({ onPublicar, onError, onSuccess }: Chatbot
                           </div>
                         )}
                       </div>
-                    </Link>
+                    </div>
                   ))}
                 </div>
               )}
