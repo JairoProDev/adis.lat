@@ -124,7 +124,8 @@ export default function SidebarDesktop({
               display: 'flex',
               borderBottom: '1px solid var(--border-subtle)',
               backgroundColor: 'var(--bg-secondary)',
-              overflowX: 'auto',
+              overflow: 'visible',
+              zIndex: 10,
             }}
           >
             {secciones.map((seccion) => {
