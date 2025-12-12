@@ -143,6 +143,18 @@ export default function ModalAdiso({
     return iconMap[categoria];
   };
 
+  // Actualizar URL del navegador al abrir adiso (SEO Friendly)
+  useEffect(() => {
+    // Si estamos en modo visualización dentro de la página (no standalone)
+    if (adiso) {
+      const seoUrl = getAdisoUrl(adiso);
+      // Solo actualizar si es diferente para no llenar el historial
+      if (typeof window !== 'undefined' && window.location.pathname !== seoUrl && !window.location.pathname.includes('/admin')) {
+        window.history.replaceState(null, '', seoUrl);
+      }
+    }
+  }, [adiso]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
