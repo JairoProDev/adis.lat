@@ -28,7 +28,8 @@ import {
   IconNegocios,
   IconComunidad,
   IconEdit,
-  IconTrash
+  IconTrash,
+  IconExternalLink
 } from './Icons';
 import { Categoria, UbicacionDetallada } from '@/types';
 
@@ -372,22 +373,56 @@ export default function ModalAdiso({
           {/* En mobile: ya hay un botón de cerrar en el header del ModalNavegacionMobile */}
 
           <div style={{ marginBottom: '1rem' }}>
-            <div
-              style={{
-                fontSize: '0.75rem',
-                color: 'var(--text-tertiary)',
-                textTransform: 'capitalize',
-                marginBottom: '0.5rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem'
-              }}
-            >
-              {(() => {
-                const IconComponent = getCategoriaIcon(adiso.categoria);
-                return <IconComponent size={14} />;
-              })()}
-              {adiso.categoria}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div
+                style={{
+                  fontSize: '0.75rem',
+                  color: 'var(--text-tertiary)',
+                  textTransform: 'capitalize',
+                  marginBottom: '0.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem'
+                }}
+              >
+                {(() => {
+                  const IconComponent = getCategoriaIcon(adiso.categoria);
+                  return <IconComponent size={14} />;
+                })()}
+                {adiso.categoria}
+              </div>
+
+              {/* Expand Button */}
+              <button
+                onClick={() => {
+                  window.location.href = `/${adiso.categoria}/${adiso.id}`;
+                }}
+                style={{
+                  padding: '0.5rem',
+                  borderRadius: '50%',
+                  border: '1px solid var(--border-color)',
+                  backgroundColor: 'var(--bg-secondary)',
+                  color: 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s',
+                  marginTop: '-0.25rem'
+                }}
+                title="Abrir en página completa"
+                aria-label="Abrir en página completa"
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
+                  e.currentTarget.style.color = 'var(--text-primary)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
+                  e.currentTarget.style.color = 'var(--text-secondary)';
+                }}
+              >
+                <IconExternalLink size={14} />
+              </button>
             </div>
             <h2 style={{
               fontSize: '1.5rem',

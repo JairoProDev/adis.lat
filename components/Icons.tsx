@@ -30,7 +30,8 @@ import {
   FaChevronRight as FaChevronRightIcon,
   FaChevronLeft as FaChevronLeftIcon,
   FaEdit,
-  FaTrash
+  FaTrash,
+  FaExternalLinkAlt
 } from 'react-icons/fa';
 
 interface IconProps {
@@ -169,4 +170,8 @@ export const IconEdit = (props: IconProps) => (
 
 export const IconTrash = (props: IconProps) => (
   <FaTrash size={getSize(props)} color={props.color || 'currentColor'} />
+);
+
+export const IconExternalLink = (props: IconProps) => (
+  <FaExternalLinkAlt size={getSize(props)} color={props.color || 'currentColor'} />
 );

@@ -27,14 +27,7 @@ function formatearUbicacion(ubicacion: string | UbicacionDetallada | undefined):
 export default function AdisoPageContent({ adiso }: AdisoPageContentProps) {
   const router = useRouter();
 
-  // Redirigir a la página principal con el adiso en query param para mantener compatibilidad
-  // Pero mostrar contenido completo para SEO
-  useEffect(() => {
-    // Solo redirigir si estamos en cliente y no es un bot
-    if (typeof window !== 'undefined' && !navigator.userAgent.match(/bot|crawler|spider|crawling/i)) {
-      router.replace(`/?adiso=${adiso.id}`, { scroll: false });
-    }
-  }, [adiso.id, router]);
+  // Redirect eliminated to allow full page navigation for SEO and Discovery
 
   const categoriaLabels: Record<string, string> = {
     empleos: 'Empleos',
@@ -50,117 +43,235 @@ export default function AdisoPageContent({ adiso }: AdisoPageContentProps) {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-secondary)' }}>
       <Header onChangelogClick={() => router.push('/progreso')} />
-      <main style={{ flex: 1, padding: '2rem', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
-        <article itemScope itemType="https://schema.org/Product">
+      <main style={{ flex: 1, padding: '2rem 1rem', width: '100%' }}>
+        <article
+          itemScope
+          itemType="https://schema.org/Product"
+          style={{
+            maxWidth: '1200px',
+            margin: '0 auto',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+            gap: '2.5rem',
+            alignItems: 'start'
+          }}
+        >
           <meta itemProp="name" content={adiso.titulo} />
           <meta itemProp="description" content={adiso.descripcion || ''} />
-          
-          <div style={{ marginBottom: '1rem' }}>
-            <span style={{ 
-              fontSize: '0.875rem', 
-              color: 'var(--text-tertiary)',
-              textTransform: 'capitalize'
-            }}>
-              {categoriaLabels[adiso.categoria] || adiso.categoria}
-            </span>
-          </div>
-          
-          <h1 style={{ 
-            fontSize: '2rem', 
-            fontWeight: 600, 
-            color: 'var(--text-primary)',
-            marginBottom: '1rem',
-            lineHeight: 1.3
-          }}>
-            {adiso.titulo}
-          </h1>
-          
-          {adiso.imagenesUrls && adiso.imagenesUrls.length > 0 && (
-            <div style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {adiso.imagenesUrls.map((url, index) => (
-                <div key={index} style={{ position: 'relative', width: '100%', height: '400px', borderRadius: '8px', overflow: 'hidden' }}>
+
+          {/* Left Column: Visuals & Description */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            {/* Hero Image Section */}
+            {adiso.imagenesUrls && adiso.imagenesUrls.length > 0 ? (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr',
+                gap: '1rem',
+                borderRadius: '16px',
+                overflow: 'hidden'
+              }}>
+                {/* Main Hero Image */}
+                <div style={{
+                  position: 'relative',
+                  width: '100%',
+                  aspectRatio: '4/3',
+                  borderRadius: '16px',
+                  overflow: 'hidden',
+                  boxShadow: 'var(--shadow-lg)'
+                }}>
                   <Image
-                    src={url}
-                    alt={`${adiso.titulo} - Imagen ${index + 1}`}
+                    src={adiso.imagenesUrls[0]}
+                    alt={`${adiso.titulo} - Imagen Principal`}
                     fill
-                    sizes="(max-width: 768px) 100vw, 800px"
                     style={{ objectFit: 'cover' }}
-                    loading={index === 0 ? 'eager' : 'lazy'}
+                    loading="eager"
                     itemProp="image"
                   />
                 </div>
-              ))}
-            </div>
-          )}
-          
-          {adiso.descripcion && (
-            <div style={{ 
-              fontSize: '1rem', 
-              color: 'var(--text-secondary)',
-              lineHeight: 1.6,
-              marginBottom: '1.5rem',
-              whiteSpace: 'pre-wrap'
-            }} itemProp="description">
-              {adiso.descripcion}
-            </div>
-          )}
-          
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.75rem',
-            padding: '1.5rem',
-            backgroundColor: 'var(--bg-primary)',
-            borderRadius: '8px',
-            border: '1px solid var(--border-color)',
-            marginBottom: '1.5rem'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <strong style={{ color: 'var(--text-primary)' }}>Ubicación:</strong>
-              <span style={{ color: 'var(--text-secondary)' }}>{formatearUbicacion(adiso.ubicacion)}</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <strong style={{ color: 'var(--text-primary)' }}>Publicado:</strong>
-              <span style={{ color: 'var(--text-secondary)' }}>
-                {new Date(`${adiso.fechaPublicacion}T${adiso.horaPublicacion}:00`).toLocaleDateString('es-ES', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
-              </span>
+
+                {/* Grid of secondary images if available */}
+                {adiso.imagenesUrls.length > 1 && (
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
+                    gap: '1rem'
+                  }}>
+                    {adiso.imagenesUrls.slice(1).map((url, index) => (
+                      <div key={index} style={{
+                        position: 'relative',
+                        aspectRatio: '1',
+                        borderRadius: '12px',
+                        overflow: 'hidden',
+                        cursor: 'pointer',
+                        boxShadow: 'var(--shadow-sm)'
+                      }}>
+                        <Image
+                          src={url}
+                          alt={`${adiso.titulo} - Imagen ${index + 2}`}
+                          fill
+                          style={{ objectFit: 'cover' }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Placeholder if no image */
+              <div style={{
+                width: '100%',
+                aspectRatio: '16/9',
+                backgroundColor: 'var(--bg-primary)',
+                borderRadius: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '2px dashed var(--border-color)'
+              }}>
+                <span style={{ color: 'var(--text-tertiary)' }}>Sin imagen disponible</span>
+              </div>
+            )}
+
+            {/* Description Section */}
+            <div style={{
+              padding: '2rem',
+              backgroundColor: 'var(--bg-primary)',
+              borderRadius: '16px',
+              boxShadow: 'var(--shadow-md)',
+              border: '1px solid var(--border-color)'
+            }}>
+              <h2 style={{
+                fontSize: '1.5rem',
+                fontWeight: 600,
+                marginBottom: '1rem',
+                color: 'var(--text-primary)'
+              }}>
+                Descripción
+              </h2>
+              {adiso.descripcion ? (
+                <div style={{
+                  fontSize: '1.125rem',
+                  color: 'var(--text-secondary)',
+                  lineHeight: 1.7,
+                  whiteSpace: 'pre-wrap'
+                }} itemProp="description">
+                  {adiso.descripcion}
+                </div>
+              ) : (
+                <p style={{ color: 'var(--text-tertiary)' }}>No hay descripción detallada.</p>
+              )}
             </div>
           </div>
-          
-          <a
-            href={getWhatsAppUrl(adiso.contacto, adiso.titulo, adiso.categoria, adiso.id)}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem',
-              padding: '0.875rem 1.5rem',
-              backgroundColor: '#25D366',
-              color: 'white',
-              borderRadius: '8px',
-              textDecoration: 'none',
-              fontWeight: 600,
-              fontSize: '1rem',
-              transition: 'opacity 0.2s'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.opacity = '0.9';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.opacity = '1';
-            }}
-            aria-label={`Contactar al publicador de ${adiso.titulo} por WhatsApp`}
-          >
-            Contactar por WhatsApp
-          </a>
+
+          {/* Right Column: Sticky Action Bar & Details */}
+          <div style={{
+            position: 'sticky',
+            top: '2rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1.5rem',
+            height: 'fit-content'
+          }}>
+            <div style={{
+              padding: '2rem',
+              backgroundColor: 'var(--glass-bg)',
+              backdropFilter: 'blur(20px)',
+              borderRadius: '16px',
+              boxShadow: 'var(--shadow-lg)',
+              border: '1px solid var(--border-color)'
+            }}>
+              {/* Category Badge */}
+              <span style={{
+                display: 'inline-block',
+                backgroundColor: 'var(--bg-secondary)',
+                padding: '0.5rem 1rem',
+                borderRadius: '100px',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                color: 'var(--text-secondary)',
+                textTransform: 'capitalize',
+                marginBottom: '1rem'
+              }}>
+                {categoriaLabels[adiso.categoria] || adiso.categoria}
+              </span>
+
+              <h1 style={{
+                fontSize: '2.5rem',
+                fontWeight: 700,
+                color: 'var(--text-primary)',
+                marginBottom: '1.5rem',
+                lineHeight: 1.2
+              }}>
+                {adiso.titulo}
+              </h1>
+
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem',
+                marginBottom: '2rem',
+                fontSize: '1rem',
+                color: 'var(--text-secondary)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <span style={{ fontSize: '1.25rem' }}>📍</span>
+                  <span>{formatearUbicacion(adiso.ubicacion)}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <span style={{ fontSize: '1.25rem' }}>📅</span>
+                  <span>
+                    Publicado el {new Date(`${adiso.fechaPublicacion}T${adiso.horaPublicacion}:00`).toLocaleDateString('es-ES', {
+                      day: 'numeric', month: 'long', year: 'numeric'
+                    })}
+                  </span>
+                </div>
+              </div>
+
+              <a
+                href={getWhatsAppUrl(adiso.contacto, adiso.titulo, adiso.categoria, adiso.id)}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.75rem',
+                  width: '100%',
+                  padding: '1rem 1.5rem',
+                  backgroundColor: '#25D366',
+                  color: 'white',
+                  borderRadius: '12px',
+                  textDecoration: 'none',
+                  fontWeight: 700,
+                  fontSize: '1.125rem',
+                  transition: 'all 0.2s',
+                  boxShadow: '0 4px 14px rgba(37, 211, 102, 0.4)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(37, 211, 102, 0.6)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 14px rgba(37, 211, 102, 0.4)';
+                }}
+              >
+                Contactar por WhatsApp
+              </a>
+            </div>
+
+            {/* Safety Tips or Related (Placeholder) */}
+            <div style={{
+              padding: '1.5rem',
+              backgroundColor: 'var(--bg-secondary)',
+              borderRadius: '12px',
+              border: '1px solid var(--border-color)',
+              fontSize: '0.875rem',
+              color: 'var(--text-secondary)'
+            }}>
+              <strong>Consejo de seguridad:</strong> Nunca realices pagos por adelantado sin verificar el producto o servicio en persona.
+            </div>
+          </div>
         </article>
       </main>
     </div>
