@@ -31,7 +31,12 @@ import {
   FaChevronLeft as FaChevronLeftIcon,
   FaEdit,
   FaTrash,
-  FaExternalLinkAlt
+  FaExternalLinkAlt,
+  FaShieldAlt,
+  FaMedal,
+  FaClock,
+  FaUserCheck,
+  FaStar
 } from 'react-icons/fa';
 
 interface IconProps {
@@ -174,4 +179,24 @@ export const IconTrash = (props: IconProps) => (
 
 export const IconExternalLink = (props: IconProps) => (
   <FaExternalLinkAlt size={getSize(props)} color={props.color || 'currentColor'} />
+);
+
+export const IconShield = (props: IconProps) => (
+  <FaShieldAlt size={getSize(props)} color={props.color || 'currentColor'} />
+);
+
+export const IconMedal = (props: IconProps) => (
+  <FaMedal size={getSize(props)} color={props.color || 'currentColor'} />
+);
+
+export const IconClock = (props: IconProps) => (
+  <FaClock size={getSize(props)} color={props.color || 'currentColor'} />
+);
+
+export const IconUserCheck = (props: IconProps) => (
+  <FaUserCheck size={getSize(props)} color={props.color || 'currentColor'} />
+);
+
+export const IconStar = (props: IconProps) => (
+  <FaStar size={getSize(props)} color={props.color || 'currentColor'} />
 );

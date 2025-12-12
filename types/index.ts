@@ -1,4 +1,4 @@
-export type Categoria = 
+export type Categoria =
   | 'empleos'
   | 'inmuebles'
   | 'vehiculos'
@@ -107,6 +107,22 @@ export interface Adiso {
   edicionNumero?: string; // Número de edición de la revista
   fechaPublicacionOriginal?: string; // Fecha original de publicación en formato YYYY-MM-DD
   contactosMultiples?: ContactoMultiple[]; // Array de contactos múltiples
+
+  // Confianza y Reputación (Trust Architecture)
+  vendedor?: {
+    id: string;
+    nombre: string;
+    avatarUrl?: string;
+    esVerificado: boolean;
+    nivelVerificacion?: 'basico' | 'identidad' | 'negocio';
+    badges?: Array<'vendedor_destacado' | 'respuesta_rapida' | 'antiguo'>;
+    stats?: {
+      tiempoRespuesta?: string; // Ej: "< 1h"
+      miembroDesde?: string; // Fecha ISO
+      totalVentas?: number;
+      rating?: number; // 0-5
+    };
+  };
 }
 
 export interface AdisoGratuito {

@@ -6,6 +6,7 @@ import { Adiso, Categoria, PAQUETES } from '@/types';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useAuth } from '@/hooks/useAuth';
 import { registrarClick } from '@/lib/analytics';
+import TrustBadge from './trust/TrustBadge';
 import {
   IconEmpleos,
   IconInmuebles,
@@ -261,6 +262,17 @@ export default function GrillaAdisos({ adisos, onAbrirAdiso, adisoSeleccionadoId
                       color: colorCategoria
                     }}>
                       <IconComponent size={Math.min(imageHeight * 0.4, 64)} />
+                      {/* Visual Trust Indicator for Placeholder */}
+                      {adiso.vendedor?.esVerificado && (
+                        <div style={{
+                          position: 'absolute',
+                          top: '8px',
+                          left: '8px',
+                          zIndex: 2
+                        }}>
+                          <TrustBadge type="verified" size="sm" showLabel={false} />
+                        </div>
+                      )}
                     </div>
                   );
                 }

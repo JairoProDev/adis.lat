@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Adiso, UbicacionDetallada } from '@/types';
 import { getWhatsAppUrl } from '@/lib/utils';
 import Header from '@/components/Header';
+import SellerReputationCard from '@/components/trust/SellerReputationCard';
 
 interface AdisoPageContentProps {
   adiso: Adiso;
@@ -259,6 +260,21 @@ export default function AdisoPageContent({ adiso }: AdisoPageContentProps) {
                 Contactar por WhatsApp
               </a>
             </div>
+
+            {/* Seller / Trust Section */}
+            {adiso.vendedor ? (
+              <SellerReputationCard seller={adiso.vendedor} />
+            ) : ( /* Demo Fallback for non-migrated ads to show the feature */
+              <SellerReputationCard seller={{
+                nombre: 'Usuario de Buscadis',
+                esVerificado: false,
+                stats: {
+                  miembroDesde: adiso.fechaPublicacion,
+                  rating: 0,
+                  totalVentas: 0
+                }
+              }} />
+            )}
 
             {/* Safety Tips or Related (Placeholder) */}
             <div style={{
