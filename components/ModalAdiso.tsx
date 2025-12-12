@@ -32,6 +32,7 @@ import {
   IconExternalLink
 } from './Icons';
 import { Categoria, UbicacionDetallada } from '@/types';
+import { getAdisoUrl } from '@/lib/url';
 
 // Función helper para formatear ubicación
 function formatearUbicacion(ubicacion: any): { texto: string; coordenadas: { lat: number; lng: number } | null } {
@@ -395,7 +396,7 @@ export default function ModalAdiso({
               {/* Expand Button */}
               <button
                 onClick={() => {
-                  window.location.href = `/${adiso.categoria}/${adiso.id}`;
+                  window.location.href = getAdisoUrl(adiso);
                 }}
                 style={{
                   padding: '0.5rem',

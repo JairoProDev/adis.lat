@@ -50,11 +50,12 @@ export default function SidebarDesktop({
   onSuccess,
   seccionInicial,
   onMinimizadoChange,
-  todosLosAdisos = []
-}: SidebarDesktopProps) {
+  todosLosAdisos = [],
+  defaultMinimized = false
+}: SidebarDesktopProps & { defaultMinimized?: boolean }) {
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const [seccionActiva, setSeccionActiva] = useState<SeccionSidebar>(seccionInicial || 'adiso');
-  const [minimizado, setMinimizado] = useState(false);
+  const [minimizado, setMinimizado] = useState(defaultMinimized);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [tooltipHovered, setTooltipHovered] = useState<SeccionSidebar | null>(null);
 
@@ -62,7 +63,8 @@ export default function SidebarDesktop({
   React.useEffect(() => {
     if (adisoAbierto) {
       setSeccionActiva('adiso');
-      if (minimizado) setMinimizado(false);
+      // Only expand if we didn't start minimized by default or if user action requires it
+      if (minimizado && !defaultMinimized) setMinimizado(false);
     }
   }, [adisoAbierto]);
 

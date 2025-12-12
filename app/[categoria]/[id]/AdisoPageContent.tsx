@@ -7,6 +7,8 @@ import { Adiso, UbicacionDetallada } from '@/types';
 import { getWhatsAppUrl } from '@/lib/utils';
 import Header from '@/components/Header';
 import SellerReputationCard from '@/components/trust/SellerReputationCard';
+import SimilarAdisos from '@/components/SimilarAdisos';
+import SidebarDesktop from '@/components/SidebarDesktop';
 
 interface AdisoPageContentProps {
   adiso: Adiso;
@@ -28,7 +30,25 @@ function formatearUbicacion(ubicacion: string | UbicacionDetallada | undefined):
 export default function AdisoPageContent({ adiso }: AdisoPageContentProps) {
   const router = useRouter();
 
-  // Redirect eliminated to allow full page navigation for SEO and Discovery
+  // Helper for safe date formatting
+  const getFormattedDate = () => {
+    try {
+      if (!adiso.fechaPublicacion || !adiso.horaPublicacion) return 'Recientemente';
+      // Check for "Invalid Date" string explicitly just in case
+      if (adiso.fechaPublicacion === 'Invalid Date') return 'Recientemente';
+
+      const date = new Date(`${adiso.fechaPublicacion}T${adiso.horaPublicacion}:00`);
+      if (isNaN(date.getTime())) return 'Recientemente';
+
+      return `Publicado el ${date.toLocaleDateString('es-ES', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      })}`;
+    } catch (e) {
+      return 'Recientemente';
+    }
+  };
 
   const categoriaLabels: Record<string, string> = {
     empleos: 'Empleos',
@@ -42,254 +62,281 @@ export default function AdisoPageContent({ adiso }: AdisoPageContentProps) {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-secondary)' }}>
-      <Header onChangelogClick={() => router.push('/progreso')} />
-      <main style={{ flex: 1, padding: '2rem 1rem', width: '100%' }}>
-        <article
-          itemScope
-          itemType="https://schema.org/Product"
-          style={{
-            maxWidth: '1200px',
-            margin: '0 auto',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
-            gap: '2.5rem',
-            alignItems: 'start'
-          }}
-        >
-          <meta itemProp="name" content={adiso.titulo} />
-          <meta itemProp="description" content={adiso.descripcion || ''} />
+    <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-secondary)' }}>
+      {/* Sidebar Fixed Right (Minimized by default) */}
+      <SidebarDesktop
+        adisoAbierto={null}
+        onCerrarAdiso={() => { }}
+        onAnterior={() => { }}
+        onSiguiente={() => { }}
+        puedeAnterior={false}
+        puedeSiguiente={false}
+        onPublicar={() => router.push('/?action=publicar')}
+        defaultMinimized={true}
+      />
 
-          {/* Left Column: Visuals & Description */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            {/* Hero Image Section */}
-            {adiso.imagenesUrls && adiso.imagenesUrls.length > 0 ? (
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr',
-                gap: '1rem',
-                borderRadius: '16px',
-                overflow: 'hidden'
-              }}>
-                {/* Main Hero Image */}
-                <div style={{
-                  position: 'relative',
-                  width: '100%',
-                  aspectRatio: '4/3',
-                  borderRadius: '16px',
-                  overflow: 'hidden',
-                  boxShadow: 'var(--shadow-lg)'
-                }}>
-                  <Image
-                    src={adiso.imagenesUrls[0]}
-                    alt={`${adiso.titulo} - Imagen Principal`}
-                    fill
-                    style={{ objectFit: 'cover' }}
-                    loading="eager"
-                    itemProp="image"
-                  />
-                </div>
+      {/* Main Content Wrapper - add right padding to account for fixed sidebar */}
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        paddingRight: '60px' // Space for minimized sidebar
+      }}>
+        <Header onChangelogClick={() => router.push('/progreso')} />
 
-                {/* Grid of secondary images if available */}
-                {adiso.imagenesUrls.length > 1 && (
+        <main style={{ flex: 1, padding: '2rem 1rem', width: '100%' }}>
+          <article
+            itemScope
+            itemType="https://schema.org/Product"
+            style={{
+              maxWidth: '1200px',
+              margin: '0 auto'
+            }}
+          >
+            <meta itemProp="name" content={adiso.titulo} />
+            <meta itemProp="description" content={adiso.descripcion || ''} />
+
+            {/* Top Section: Grid for Visuals and Details */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+              gap: '2.5rem',
+              alignItems: 'start',
+              marginBottom: '4rem'
+            }}>
+
+              {/* Left Column: Visuals & Description */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                {/* Hero Image Section */}
+                {adiso.imagenesUrls && adiso.imagenesUrls.length > 0 ? (
                   <div style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
-                    gap: '1rem'
+                    gridTemplateColumns: '1fr',
+                    gap: '1rem',
+                    borderRadius: '16px',
+                    overflow: 'hidden'
                   }}>
-                    {adiso.imagenesUrls.slice(1).map((url, index) => (
-                      <div key={index} style={{
-                        position: 'relative',
-                        aspectRatio: '1',
-                        borderRadius: '12px',
-                        overflow: 'hidden',
-                        cursor: 'pointer',
-                        boxShadow: 'var(--shadow-sm)'
+                    {/* Main Hero Image */}
+                    <div style={{
+                      position: 'relative',
+                      width: '100%',
+                      aspectRatio: '4/3',
+                      borderRadius: '16px',
+                      overflow: 'hidden',
+                      boxShadow: 'var(--shadow-lg)'
+                    }}>
+                      <Image
+                        src={adiso.imagenesUrls[0]}
+                        alt={`${adiso.titulo} - Imagen Principal`}
+                        fill
+                        style={{ objectFit: 'cover' }}
+                        loading="eager"
+                        itemProp="image"
+                      />
+                    </div>
+
+                    {/* Grid of secondary images */}
+                    {adiso.imagenesUrls.length > 1 && (
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
+                        gap: '1rem'
                       }}>
-                        <Image
-                          src={url}
-                          alt={`${adiso.titulo} - Imagen ${index + 2}`}
-                          fill
-                          style={{ objectFit: 'cover' }}
-                        />
+                        {adiso.imagenesUrls.slice(1).map((url, index) => (
+                          <div key={index} style={{
+                            position: 'relative',
+                            aspectRatio: '1',
+                            borderRadius: '12px',
+                            overflow: 'hidden',
+                            cursor: 'pointer',
+                            boxShadow: 'var(--shadow-sm)'
+                          }}>
+                            <Image
+                              src={url}
+                              alt={`${adiso.titulo} - Imagen ${index + 2}`}
+                              fill
+                              style={{ objectFit: 'cover' }}
+                            />
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
+                  </div>
+                ) : (
+                  /* Placeholder */
+                  <div style={{
+                    width: '100%',
+                    aspectRatio: '16/9',
+                    backgroundColor: 'var(--bg-primary)',
+                    borderRadius: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '2px dashed var(--border-color)'
+                  }}>
+                    <span style={{ color: 'var(--text-tertiary)' }}>Sin imagen disponible</span>
                   </div>
                 )}
-              </div>
-            ) : (
-              /* Placeholder if no image */
-              <div style={{
-                width: '100%',
-                aspectRatio: '16/9',
-                backgroundColor: 'var(--bg-primary)',
-                borderRadius: '16px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: '2px dashed var(--border-color)'
-              }}>
-                <span style={{ color: 'var(--text-tertiary)' }}>Sin imagen disponible</span>
-              </div>
-            )}
 
-            {/* Description Section */}
-            <div style={{
-              padding: '2rem',
-              backgroundColor: 'var(--bg-primary)',
-              borderRadius: '16px',
-              boxShadow: 'var(--shadow-md)',
-              border: '1px solid var(--border-color)'
-            }}>
-              <h2 style={{
-                fontSize: '1.5rem',
-                fontWeight: 600,
-                marginBottom: '1rem',
-                color: 'var(--text-primary)'
-              }}>
-                Descripción
-              </h2>
-              {adiso.descripcion ? (
+                {/* Description Section */}
                 <div style={{
-                  fontSize: '1.125rem',
-                  color: 'var(--text-secondary)',
-                  lineHeight: 1.7,
-                  whiteSpace: 'pre-wrap'
-                }} itemProp="description">
-                  {adiso.descripcion}
+                  padding: '2rem',
+                  backgroundColor: 'var(--bg-primary)',
+                  borderRadius: '16px',
+                  boxShadow: 'var(--shadow-md)',
+                  border: '1px solid var(--border-color)'
+                }}>
+                  <h2 style={{
+                    fontSize: '1.5rem',
+                    fontWeight: 600,
+                    marginBottom: '1rem',
+                    color: 'var(--text-primary)'
+                  }}>
+                    Descripción
+                  </h2>
+                  {adiso.descripcion ? (
+                    <div style={{
+                      fontSize: '1.125rem',
+                      color: 'var(--text-secondary)',
+                      lineHeight: 1.7,
+                      whiteSpace: 'pre-wrap'
+                    }} itemProp="description">
+                      {adiso.descripcion}
+                    </div>
+                  ) : (
+                    <p style={{ color: 'var(--text-tertiary)' }}>No hay descripción detallada.</p>
+                  )}
                 </div>
-              ) : (
-                <p style={{ color: 'var(--text-tertiary)' }}>No hay descripción detallada.</p>
-              )}
-            </div>
-          </div>
+              </div>
 
-          {/* Right Column: Sticky Action Bar & Details */}
-          <div style={{
-            position: 'sticky',
-            top: '2rem',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1.5rem',
-            height: 'fit-content'
-          }}>
-            <div style={{
-              padding: '2rem',
-              backgroundColor: 'var(--glass-bg)',
-              backdropFilter: 'blur(20px)',
-              borderRadius: '16px',
-              boxShadow: 'var(--shadow-lg)',
-              border: '1px solid var(--border-color)'
-            }}>
-              {/* Category Badge */}
-              <span style={{
-                display: 'inline-block',
-                backgroundColor: 'var(--bg-secondary)',
-                padding: '0.5rem 1rem',
-                borderRadius: '100px',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                color: 'var(--text-secondary)',
-                textTransform: 'capitalize',
-                marginBottom: '1rem'
-              }}>
-                {categoriaLabels[adiso.categoria] || adiso.categoria}
-              </span>
-
-              <h1 style={{
-                fontSize: '2.5rem',
-                fontWeight: 700,
-                color: 'var(--text-primary)',
-                marginBottom: '1.5rem',
-                lineHeight: 1.2
-              }}>
-                {adiso.titulo}
-              </h1>
-
+              {/* Right Column: Sticky Action Bar & Details */}
               <div style={{
+                position: 'sticky',
+                top: '2rem',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '1rem',
-                marginBottom: '2rem',
-                fontSize: '1rem',
-                color: 'var(--text-secondary)'
+                gap: '1.5rem',
+                height: 'fit-content'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <span style={{ fontSize: '1.25rem' }}>📍</span>
-                  <span>{formatearUbicacion(adiso.ubicacion)}</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <span style={{ fontSize: '1.25rem' }}>📅</span>
-                  <span>
-                    Publicado el {new Date(`${adiso.fechaPublicacion}T${adiso.horaPublicacion}:00`).toLocaleDateString('es-ES', {
-                      day: 'numeric', month: 'long', year: 'numeric'
-                    })}
+                <div style={{
+                  padding: '2rem',
+                  backgroundColor: 'var(--glass-bg)',
+                  backdropFilter: 'blur(20px)',
+                  borderRadius: '16px',
+                  boxShadow: 'var(--shadow-lg)',
+                  border: '1px solid var(--border-color)'
+                }}>
+                  {/* Category Badge */}
+                  <span style={{
+                    display: 'inline-block',
+                    backgroundColor: 'var(--bg-secondary)',
+                    padding: '0.5rem 1rem',
+                    borderRadius: '100px',
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    color: 'var(--text-secondary)',
+                    textTransform: 'capitalize',
+                    marginBottom: '1rem'
+                  }}>
+                    {categoriaLabels[adiso.categoria] || adiso.categoria}
                   </span>
+
+                  <h1 style={{
+                    fontSize: '2.5rem',
+                    fontWeight: 700,
+                    color: 'var(--text-primary)',
+                    marginBottom: '1.5rem',
+                    lineHeight: 1.2
+                  }}>
+                    {adiso.titulo}
+                  </h1>
+
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '1rem',
+                    marginBottom: '2rem',
+                    fontSize: '1rem',
+                    color: 'var(--text-secondary)'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <span style={{ fontSize: '1.25rem' }}>📍</span>
+                      <span>{formatearUbicacion(adiso.ubicacion)}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <span style={{ fontSize: '1.25rem' }}>📅</span>
+                      <span>{getFormattedDate()}</span>
+                    </div>
+                  </div>
+
+                  <a
+                    href={getWhatsAppUrl(adiso.contacto, adiso.titulo, adiso.categoria, adiso.id)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.75rem',
+                      width: '100%',
+                      padding: '1rem 1.5rem',
+                      backgroundColor: '#25D366',
+                      color: 'white',
+                      borderRadius: '12px',
+                      textDecoration: 'none',
+                      fontWeight: 700,
+                      fontSize: '1.125rem',
+                      transition: 'all 0.2s',
+                      boxShadow: '0 4px 14px rgba(37, 211, 102, 0.4)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(37, 211, 102, 0.6)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 14px rgba(37, 211, 102, 0.4)';
+                    }}
+                  >
+                    Contactar por WhatsApp
+                  </a>
+                </div>
+
+                {/* Seller / Trust Section */}
+                {adiso.vendedor ? (
+                  <SellerReputationCard seller={adiso.vendedor} />
+                ) : (
+                  <SellerReputationCard seller={{
+                    nombre: 'Usuario de Buscadis',
+                    esVerificado: false,
+                    stats: {
+                      miembroDesde: adiso.fechaPublicacion,
+                      rating: 0,
+                      totalVentas: 0
+                    }
+                  }} />
+                )}
+
+                {/* Safety Tips */}
+                <div style={{
+                  padding: '1.5rem',
+                  backgroundColor: 'var(--bg-secondary)',
+                  borderRadius: '12px',
+                  border: '1px solid var(--border-color)',
+                  fontSize: '0.875rem',
+                  color: 'var(--text-secondary)'
+                }}>
+                  <strong>Consejo de seguridad:</strong> Nunca realices pagos por adelantado sin verificar el producto o servicio en persona.
                 </div>
               </div>
-
-              <a
-                href={getWhatsAppUrl(adiso.contacto, adiso.titulo, adiso.categoria, adiso.id)}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.75rem',
-                  width: '100%',
-                  padding: '1rem 1.5rem',
-                  backgroundColor: '#25D366',
-                  color: 'white',
-                  borderRadius: '12px',
-                  textDecoration: 'none',
-                  fontWeight: 700,
-                  fontSize: '1.125rem',
-                  transition: 'all 0.2s',
-                  boxShadow: '0 4px 14px rgba(37, 211, 102, 0.4)'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(37, 211, 102, 0.6)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 14px rgba(37, 211, 102, 0.4)';
-                }}
-              >
-                Contactar por WhatsApp
-              </a>
             </div>
 
-            {/* Seller / Trust Section */}
-            {adiso.vendedor ? (
-              <SellerReputationCard seller={adiso.vendedor} />
-            ) : ( /* Demo Fallback for non-migrated ads to show the feature */
-              <SellerReputationCard seller={{
-                nombre: 'Usuario de Buscadis',
-                esVerificado: false,
-                stats: {
-                  miembroDesde: adiso.fechaPublicacion,
-                  rating: 0,
-                  totalVentas: 0
-                }
-              }} />
-            )}
-
-            {/* Safety Tips or Related (Placeholder) */}
-            <div style={{
-              padding: '1.5rem',
-              backgroundColor: 'var(--bg-secondary)',
-              borderRadius: '12px',
-              border: '1px solid var(--border-color)',
-              fontSize: '0.875rem',
-              color: 'var(--text-secondary)'
-            }}>
-              <strong>Consejo de seguridad:</strong> Nunca realices pagos por adelantado sin verificar el producto o servicio en persona.
+            {/* Similar Ads Section - Now Outside Grid Layout */}
+            <div style={{ width: '100%' }}>
+              <SimilarAdisos currentAdiso={adiso} />
             </div>
-          </div>
-        </article>
-      </main>
+          </article>
+        </main>
+      </div>
     </div>
   );
 }
