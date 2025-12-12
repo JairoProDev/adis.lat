@@ -6,7 +6,7 @@
  */
 
 import { openaiClient, AI_MODELS } from './openai-client';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { Adiso } from '@/types';
 
 /**
@@ -107,13 +107,13 @@ export function createSearchableText(adiso: Adiso): string {
 export async function generateAndStoreEmbedding(
   adisoId: string
 ): Promise<boolean> {
-  if (!supabase) {
+  if (!supabaseAdmin) {
     throw new Error('Supabase not configured');
   }
 
   try {
     // Fetch the adiso
-    const { data: adiso, error: fetchError } = await supabase
+    const { data: adiso, error: fetchError } = await supabaseAdmin
       .from('adisos')
       .select('*')
       .eq('id', adisoId)
@@ -130,7 +130,7 @@ export async function generateAndStoreEmbedding(
     const embedding = await generateEmbedding(searchableText);
 
     // Store in database
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseAdmin
       .from('adisos')
       .update({ embedding })
       .eq('id', adisoId);
@@ -156,13 +156,13 @@ export async function generateAndStoreEmbedding(
 export async function batchGenerateEmbeddings(
   limit: number = 100
 ): Promise<number> {
-  if (!supabase) {
+  if (!supabaseAdmin) {
     throw new Error('Supabase not configured');
   }
 
   try {
     // Fetch adisos without embeddings
-    const { data: adisos, error: fetchError } = await supabase
+    const { data: adisos, error: fetchError } = await supabaseAdmin
       .from('adisos')
       .select('*')
       .is('embedding', null)
@@ -189,7 +189,7 @@ export async function batchGenerateEmbeddings(
     let successCount = 0;
     for (let i = 0; i < adisos.length; i++) {
       try {
-        const { error } = await supabase
+        const { error } = await supabaseAdmin
           .from('adisos')
           .update({ embedding: embeddings[i] })
           .eq('id', adisos[i].id);
