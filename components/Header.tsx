@@ -1,107 +1,104 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { FaChartLine } from 'react-icons/fa';
 import ThemeToggle from './ThemeToggle';
 import LanguageSelector from './LanguageSelector';
 import UserMenu from './UserMenu';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
-import { cn } from '@/lib/utils';
 
 interface HeaderProps {
   onChangelogClick?: () => void;
 }
 
-/**
- * Premium Floating Header with Glassmorphism
- * Features:
- * - Floating design (16px from top on desktop)
- * - Glassmorphism with saturated background blur
- * - Smooth scroll behavior with background opacity change
- * - Responsive padding and layout
- */
 export default function Header({ onChangelogClick }: HeaderProps) {
   const { t } = useTranslation();
   const isDesktop = useMediaQuery('(min-width: 768px)');
-
+  
   return (
-    <motion.header
-      initial={{ y: -100, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{
-        type: 'spring',
-        stiffness: 260,
-        damping: 20,
-        delay: 0.1
-      }}
-      className={cn(
-        'sticky z-[1000]',
-        'glass-card',
-        isDesktop ? 'top-4 mx-6' : 'top-0 mx-0',
-        isDesktop ? 'rounded-2xl' : 'rounded-none border-x-0'
-      )}
-      style={{
-        backgroundColor: 'var(--glass-bg)',
-        backdropFilter: 'blur(20px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-      }}
-    >
-      <div
-        className={cn(
-          'flex justify-between items-center',
-          'max-w-[1400px] mx-auto gap-4',
-          isDesktop ? 'px-6 py-4' : 'px-4 py-3'
-        )}
-      >
-        {/* Logo / Title */}
-        <motion.h1
-          className={cn(
-            'font-display font-bold',
-            'bg-gradient-to-br from-electric-600 to-electric-400',
-            'bg-clip-text text-transparent',
-            'flex-shrink-0 select-none',
-            isDesktop ? 'text-2xl tracking-tight' : 'text-xl tracking-tight'
-          )}
-          whileHover={{ scale: 1.02 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-        >
+    <header style={{
+      backgroundColor: 'color-mix(in srgb, var(--bg-primary) 95%, transparent)',
+      borderBottom: '1px solid var(--border-color)',
+      boxShadow: 'var(--shadow-sm)',
+      padding: isDesktop ? '1rem 1.5rem' : '0.875rem 1rem',
+      paddingRight: isDesktop ? 'calc(1.5rem + 80px)' : '1rem',
+      position: 'sticky',
+      top: 0,
+      zIndex: 1000,
+      backdropFilter: 'blur(8px)',
+    }}>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        maxWidth: '1400px',
+        margin: '0 auto',
+        gap: '1rem'
+      }}>
+        <h1 style={{
+          fontSize: isDesktop ? '1.5rem' : '1.375rem',
+          fontWeight: 800,
+          background: 'linear-gradient(135deg, var(--brand-blue) 0%, color-mix(in srgb, var(--brand-blue) 70%, var(--brand-yellow)) 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          letterSpacing: '-0.03em',
+          margin: 0,
+          lineHeight: 1.2,
+          flexShrink: 0
+        }}>
           {t('header.title')}
-        </motion.h1>
-
-        {/* Actions */}
-        <div className="flex items-center gap-2 flex-shrink-0">
+        </h1>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          flexShrink: 0
+        }}>
           <UserMenu onProgressClick={onChangelogClick} />
           <LanguageSelector />
           <ThemeToggle />
-
-          {/* Progress Button - Desktop Only */}
           {onChangelogClick && isDesktop && (
-            <motion.button
+            <button
               onClick={onChangelogClick}
               aria-label={t('header.progress')}
-              className={cn(
-                'flex items-center gap-2',
-                'px-4 py-2.5 rounded-lg',
-                'bg-primary border border-border-subtle',
-                'text-secondary text-sm font-semibold',
-                'transition-all duration-200',
-                'hover:border-border-medium hover:text-primary',
-                'hover:shadow-glow-sm',
-                'active:scale-98'
-              )}
-              whileHover={{ y: -2 }}
-              whileTap={{ scale: 0.98 }}
+              style={{
+                background: 'var(--bg-primary)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '8px',
+                padding: '0.625rem 1rem',
+                color: 'var(--text-secondary)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                whiteSpace: 'nowrap',
+                boxShadow: 'var(--shadow-sm)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
+                e.currentTarget.style.color = 'var(--accent-color)';
+                e.currentTarget.style.borderColor = 'var(--accent-color)';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
+                e.currentTarget.style.color = 'var(--text-secondary)';
+                e.currentTarget.style.borderColor = 'var(--border-color)';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+              }}
             >
               <FaChartLine size={14} aria-hidden="true" />
-              <span className="whitespace-nowrap">{t('header.progress')}</span>
-            </motion.button>
+              {t('header.progress')}
+            </button>
           )}
         </div>
       </div>
-
-      {/* Bottom Glow Line */}
-      <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-border-medium to-transparent" />
-    </motion.header>
+    </header>
   );
 }
