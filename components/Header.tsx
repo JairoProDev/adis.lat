@@ -1,6 +1,7 @@
 'use client';
 
-import { FaChartLine } from 'react-icons/fa';
+import { useState } from 'react';
+import { FaChartLine, FaCog } from 'react-icons/fa';
 import ThemeToggle from './ThemeToggle';
 import LanguageSelector from './LanguageSelector';
 import UserMenu from './UserMenu';
@@ -14,7 +15,8 @@ interface HeaderProps {
 export default function Header({ onChangelogClick }: HeaderProps) {
   const { t } = useTranslation();
   const isDesktop = useMediaQuery('(min-width: 768px)');
-  
+  const [showMobileSettings, setShowMobileSettings] = useState(false);
+
   return (
     <header style={{
       backgroundColor: 'color-mix(in srgb, var(--bg-primary) 95%, transparent)',
@@ -56,8 +58,67 @@ export default function Header({ onChangelogClick }: HeaderProps) {
           flexShrink: 0
         }}>
           <UserMenu onProgressClick={onChangelogClick} />
-          <LanguageSelector />
-          <ThemeToggle />
+
+          {isDesktop ? (
+            <>
+              <LanguageSelector />
+              <ThemeToggle />
+            </>
+          ) : (
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setShowMobileSettings(!showMobileSettings)}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '8px',
+                  width: '36px',
+                  height: '36px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--text-secondary)',
+                  cursor: 'pointer'
+                }}
+              >
+                <FaCog size={18} />
+              </button>
+
+              {showMobileSettings && (
+                <>
+                  <div
+                    style={{ position: 'fixed', inset: 0, zIndex: 998 }}
+                    onClick={() => setShowMobileSettings(false)}
+                  />
+                  <div style={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    marginTop: '0.5rem',
+                    background: 'var(--bg-primary)',
+                    borderRadius: '12px',
+                    boxShadow: 'var(--shadow-lg)',
+                    border: '1px solid var(--border-color)',
+                    padding: '0.75rem',
+                    zIndex: 999,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.75rem',
+                    minWidth: '160px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Idioma</span>
+                      <LanguageSelector />
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Tema</span>
+                      <ThemeToggle />
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
           {onChangelogClick && isDesktop && (
             <button
               onClick={onChangelogClick}

@@ -27,7 +27,7 @@ export default function NavbarMobile({
     { id: 'adiso' as SeccionSidebar, icono: IconAdiso, label: 'Adiso' },
     { id: 'mapa' as SeccionSidebar, icono: IconMap, label: 'Mapa' },
     { id: 'publicar' as SeccionSidebar, icono: IconMegaphone, label: 'Publicar' },
-    { id: 'chatbot' as SeccionSidebar, icono: IconChatbot, label: 'Chatbot' },
+
     { id: 'gratuitos' as SeccionSidebar, icono: IconGratuitos, label: 'Gratuitos' }
   ];
 
@@ -68,7 +68,7 @@ export default function NavbarMobile({
           const estaActiva = seccionActiva !== null && seccionActiva === seccion.id;
           const esPublicar = seccion.id === 'publicar';
           const tieneNotificacion = seccion.id === 'adiso' && tieneAdisoAbierto && !estaActiva;
-          
+
           return (
             <button
               key={seccion.id}
