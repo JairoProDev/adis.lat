@@ -21,21 +21,21 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 async function main() {
   console.log('🔍 Verificando anuncios cargados...\n');
-  
+
   // Anuncios históricos de Rueda de Negocios
   const { data: historicos, error: errorHistoricos } = await supabase
     .from('adisos')
     .select('id, titulo, categoria, es_historico, fuente_original, edicion_numero, distrito')
     .eq('fuente_original', 'rueda_negocios')
     .limit(20);
-  
+
   if (errorHistoricos) {
     console.error('❌ Error:', errorHistoricos.message);
     return;
   }
-  
+
   console.log(`📊 Total anuncios históricos encontrados: ${historicos?.length || 0}\n`);
-  
+
   if (historicos && historicos.length > 0) {
     console.log('📝 Ejemplos de anuncios cargados:\n');
     historicos.slice(0, 5).forEach((adiso, i) => {
@@ -44,13 +44,13 @@ async function main() {
       console.log('');
     });
   }
-  
+
   // Estadísticas
   const { count: total } = await supabase
     .from('adisos')
     .select('*', { count: 'exact', head: true })
     .eq('fuente_original', 'rueda_negocios');
-  
+
   console.log(`📈 Total en BD: ${total || 0} anuncios históricos`);
 }
 

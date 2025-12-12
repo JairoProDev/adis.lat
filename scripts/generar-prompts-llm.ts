@@ -89,7 +89,7 @@ TEXTO DE LA PÁGINA A PROCESAR:
 function dividirEnPartes<T>(array: T[], partes: number): T[][] {
   const resultado: T[][] = [];
   const tamañoParte = Math.ceil(array.length / partes);
-  
+
   for (let i = 0; i < partes; i++) {
     const inicio = i * tamañoParte;
     const fin = Math.min((i + 1) * tamañoParte, array.length);
@@ -97,7 +97,7 @@ function dividirEnPartes<T>(array: T[], partes: number): T[][] {
       resultado.push(array.slice(inicio, fin));
     }
   }
-  
+
   return resultado;
 }
 
@@ -109,10 +109,10 @@ function generarPromptPagina(edicion: EdicionExtraida, pagina: PaginaExtraida): 
     .replace('[EDICION]', edicion.info.numeroEdicion)
     .replace('[PAGINA]', pagina.pagina.toString())
     .replace('[FECHA]', edicion.info.fechaPublicacion);
-  
+
   prompt += pagina.texto;
   prompt += '\n\nIMPORTANTE: Responde SOLO con JSON válido, sin texto adicional.';
-  
+
   return prompt;
 }
 
@@ -120,12 +120,12 @@ function generarPromptPagina(edicion: EdicionExtraida, pagina: PaginaExtraida): 
  * Genera archivos de prompts divididos para 3 LLMs
  */
 function generarPromptsDivididos(
-  resultado: ResultadoExtraccion, 
+  resultado: ResultadoExtraccion,
   directorioSalida: string
 ): void {
   // Crear todas las páginas como lista plana
   const todasLasPaginas: { edicion: EdicionExtraida; pagina: PaginaExtraida }[] = [];
-  
+
   for (const edicion of resultado.ediciones) {
     for (const pagina of edicion.paginas) {
       if (pagina.texto.trim().length > 50) { // Solo páginas con contenido significativo
@@ -133,13 +133,13 @@ function generarPromptsDivididos(
       }
     }
   }
-  
+
   console.log(`📊 Total de páginas con contenido: ${todasLasPaginas.length}`);
-  
+
   // Dividir en 3 partes para ChatGPT, Claude y Gemini
   const partes = dividirEnPartes(todasLasPaginas, 3);
   const llms = ['chatgpt', 'claude', 'gemini'];
-  
+
   // Crear directorios
   for (const llm of llms) {
     const dir = path.join(directorioSalida, llm);
@@ -147,41 +147,41 @@ function generarPromptsDivididos(
       fs.mkdirSync(dir, { recursive: true });
     }
   }
-  
+
   // Generar archivos de prompts
   for (let i = 0; i < partes.length; i++) {
     const llm = llms[i];
     const paginas = partes[i];
     const dirLlm = path.join(directorioSalida, llm);
-    
+
     console.log(`\n📁 Generando prompts para ${llm.toUpperCase()}: ${paginas.length} páginas`);
-    
+
     // Crear archivo índice para este LLM
     let indice = `# Prompts para ${llm.toUpperCase()}\n\n`;
     indice += `Total de páginas a procesar: ${paginas.length}\n\n`;
     indice += `## Lista de archivos:\n\n`;
-    
+
     for (let j = 0; j < paginas.length; j++) {
       const { edicion, pagina } = paginas[j];
       const nombreArchivo = `R${edicion.info.numeroEdicion}_pag${pagina.pagina.toString().padStart(2, '0')}.txt`;
       const rutaArchivo = path.join(dirLlm, nombreArchivo);
-      
+
       // Generar prompt
       const prompt = generarPromptPagina(edicion, pagina);
-      
+
       // Guardar prompt
       fs.writeFileSync(rutaArchivo, prompt, 'utf-8');
-      
+
       indice += `${j + 1}. ${nombreArchivo} (${pagina.caracteres} caracteres)\n`;
-      
+
       process.stdout.write(`\r   ✓ Generados ${j + 1}/${paginas.length} prompts`);
     }
-    
+
     // Guardar índice
     fs.writeFileSync(path.join(dirLlm, 'INDICE.md'), indice, 'utf-8');
     console.log('');
   }
-  
+
   // Crear archivo de instrucciones generales
   const instrucciones = `
 # 📚 INSTRUCCIONES PARA PROCESAR ANUNCIOS
@@ -235,9 +235,9 @@ npx ts-node scripts/consolidar-respuestas.ts ./output/prompts
 
 Esto combinará todas las respuestas en un archivo final listo para cargar a la base de datos.
 `;
-  
+
   fs.writeFileSync(path.join(directorioSalida, 'INSTRUCCIONES.md'), instrucciones, 'utf-8');
-  
+
   // Crear carpetas para respuestas
   for (const llm of llms) {
     const dirRespuestas = path.join(directorioSalida, 'respuestas', llm);
@@ -252,7 +252,7 @@ Esto combinará todas las respuestas en un archivo final listo para cargar a la 
  */
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
-  
+
   if (args.length < 1) {
     console.log(`
 📝 GENERADOR DE PROMPTS PARA LLMs
@@ -271,29 +271,29 @@ Esto generará prompts divididos en 3 carpetas:
     `);
     process.exit(0);
   }
-  
+
   const rutaJson = args[0];
   const directorioSalida = args[1] || './output/prompts';
-  
+
   if (!fs.existsSync(rutaJson)) {
     console.error(`❌ Error: No se encuentra el archivo: ${rutaJson}`);
     process.exit(1);
   }
-  
+
   console.log('🚀 GENERANDO PROMPTS PARA LLMs');
   console.log('='.repeat(50));
   console.log(`   Entrada: ${rutaJson}`);
   console.log(`   Salida: ${directorioSalida}`);
-  
+
   // Leer JSON de texto extraído
   const contenido = fs.readFileSync(rutaJson, 'utf-8');
   const resultado: ResultadoExtraccion = JSON.parse(contenido);
-  
+
   console.log(`\n📚 Ediciones encontradas: ${resultado.ediciones.length}`);
-  
+
   // Generar prompts
   generarPromptsDivididos(resultado, directorioSalida);
-  
+
   console.log('\n' + '='.repeat(50));
   console.log('✅ PROMPTS GENERADOS EXITOSAMENTE');
   console.log('='.repeat(50));

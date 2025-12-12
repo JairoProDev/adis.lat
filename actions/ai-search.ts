@@ -95,7 +95,7 @@ export async function hybridSearch(
         ubicacion: row.ubicacion,
         fechaPublicacion: row.fecha_publicacion,
         horaPublicacion: row.hora_publicacion,
-        imagenesUrls: row.imagenes_urls ? JSON.parse(row.imagenes_urls) : undefined,
+        imagenesUrls: typeof row.imagenes_urls === 'string' ? JSON.parse(row.imagenes_urls) : row.imagenes_urls,
       },
       similarity_score: row.similarity_score || 0,
       keyword_rank: row.keyword_rank || 0,

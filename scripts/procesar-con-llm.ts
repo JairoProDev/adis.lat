@@ -41,13 +41,13 @@ interface ResultadoProcesamiento {
 async function llamarLLM(texto: string, provider: string = 'openai'): Promise<string> {
   const promptPath = path.join(__dirname, 'prompt-extraccion-llm.md');
   let promptBase = fs.readFileSync(promptPath, 'utf-8');
-  
+
   // Reemplazar placeholder con el texto real
   promptBase = promptBase.replace('[TEXTO_DE_LA_PAGINA_AQUI]', texto);
 
-  const apiKey = process.env[`${provider.toUpperCase()}_API_KEY`] || 
-                 process.env[`${provider}_API_KEY`];
-  
+  const apiKey = process.env[`${provider.toUpperCase()}_API_KEY`] ||
+    process.env[`${provider}_API_KEY`];
+
   if (!apiKey) {
     throw new Error(`API Key no encontrada para ${provider}. Configura ${provider.toUpperCase()}_API_KEY`);
   }
@@ -145,11 +145,11 @@ function parsearRespuestaLLM(respuesta: string): AnuncioExtraido[] {
     }
 
     const parsed = JSON.parse(jsonStr);
-    
+
     if (parsed.anuncios && Array.isArray(parsed.anuncios)) {
       return parsed.anuncios;
     }
-    
+
     throw new Error('Formato de respuesta inválido: no se encontró array "anuncios"');
   } catch (error: any) {
     console.error('Error al parsear respuesta:', error.message);
@@ -159,17 +159,17 @@ function parsearRespuestaLLM(respuesta: string): AnuncioExtraido[] {
 }
 
 async function procesarPagina(
-  pagina: PaginaExtraida, 
+  pagina: PaginaExtraida,
   provider: string,
   retries: number = 3
 ): Promise<ResultadoProcesamiento> {
   for (let intento = 1; intento <= retries; intento++) {
     try {
       console.log(`  Procesando con ${provider} (intento ${intento}/${retries})...`);
-      
+
       const respuesta = await llamarLLM(pagina.texto, provider);
       const anuncios = parsearRespuestaLLM(respuesta);
-      
+
       return {
         edicion: pagina.edicion,
         pagina: pagina.pagina,
@@ -178,7 +178,7 @@ async function procesarPagina(
       };
     } catch (error: any) {
       console.error(`  ✗ Error en intento ${intento}:`, error.message);
-      
+
       if (intento === retries) {
         return {
           edicion: pagina.edicion,
@@ -188,12 +188,12 @@ async function procesarPagina(
           error: error.message
         };
       }
-      
+
       // Esperar antes de reintentar
       await new Promise(resolve => setTimeout(resolve, 2000 * intento));
     }
   }
-  
+
   // No debería llegar aquí, pero por seguridad
   return {
     edicion: pagina.edicion,
@@ -206,7 +206,7 @@ async function procesarPagina(
 
 async function main() {
   const args = process.argv.slice(2);
-  
+
   if (args.length < 1) {
     console.error('Uso: npx ts-node scripts/procesar-con-llm.ts <ruta-json-texto> [ruta-salida-json] [--provider openai|anthropic|google]');
     process.exit(1);
@@ -215,8 +215,8 @@ async function main() {
   const rutaEntrada = args[0];
   const rutaSalida = args[1] || path.join(process.cwd(), 'anuncios-procesados.json');
   const providerIndex = args.indexOf('--provider');
-  const provider = providerIndex >= 0 && args[providerIndex + 1] 
-    ? args[providerIndex + 1] 
+  const provider = providerIndex >= 0 && args[providerIndex + 1]
+    ? args[providerIndex + 1]
     : 'openai';
 
   console.log('=== Procesamiento con LLM ===');
@@ -236,14 +236,14 @@ async function main() {
     console.log('');
 
     const resultados: ResultadoProcesamiento[] = [];
-    
+
     for (let i = 0; i < paginas.length; i++) {
       const pagina = paginas[i];
       console.log(`Procesando página ${i + 1}/${paginas.length}: ${pagina.archivo} (Edición ${pagina.edicion}, Página ${pagina.pagina})`);
-      
+
       const resultado = await procesarPagina(pagina, provider);
       resultados.push(resultado);
-      
+
       if (resultado.anuncios.length > 0) {
         console.log(`  ✓ Extraídos ${resultado.anuncios.length} anuncios`);
       } else if (resultado.error) {
@@ -251,7 +251,7 @@ async function main() {
       } else {
         console.log(`  ⚠ No se encontraron anuncios`);
       }
-      
+
       // Pequeña pausa para no saturar la API
       if (i < paginas.length - 1) {
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -263,12 +263,12 @@ async function main() {
     if (!fs.existsSync(directorioSalida)) {
       fs.mkdirSync(directorioSalida, { recursive: true });
     }
-    
+
     fs.writeFileSync(rutaSalida, JSON.stringify(resultados, null, 2), 'utf-8');
-    
+
     const totalAnuncios = resultados.reduce((sum, r) => sum + r.anuncios.length, 0);
     const totalErrores = resultados.filter(r => r.error).length;
-    
+
     console.log('');
     console.log('=== Resumen ===');
     console.log(`✓ Páginas procesadas: ${resultados.length}`);

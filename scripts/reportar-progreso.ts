@@ -38,11 +38,11 @@ interface ProgresoProcesamiento {
  */
 function leerProgreso(): ProgresoProcesamiento | null {
   const rutaProgreso = path.join(process.cwd(), 'output', 'progreso-procesamiento.json');
-  
+
   if (!fs.existsSync(rutaProgreso)) {
     return null;
   }
-  
+
   try {
     const contenido = fs.readFileSync(rutaProgreso, 'utf-8');
     return JSON.parse(contenido);
@@ -60,7 +60,7 @@ function formatearTiempo(ms: number): string {
   const minutos = Math.floor(segundos / 60);
   const horas = Math.floor(minutos / 60);
   const dias = Math.floor(horas / 24);
-  
+
   if (dias > 0) {
     return `${dias}d ${horas % 24}h ${minutos % 60}m`;
   } else if (horas > 0) {
@@ -79,13 +79,13 @@ function calcularTiempoRestante(progreso: ProgresoProcesamiento): string {
   if (progreso.estadisticas.revistasCompletadas === 0) {
     return 'N/A';
   }
-  
-  const tiempoTranscurrido = new Date(progreso.ultimaActualizacion).getTime() - 
-                             new Date(progreso.fechaInicio).getTime();
+
+  const tiempoTranscurrido = new Date(progreso.ultimaActualizacion).getTime() -
+    new Date(progreso.fechaInicio).getTime();
   const revistasPorHora = progreso.estadisticas.revistasCompletadas / (tiempoTranscurrido / (1000 * 60 * 60));
   const revistasRestantes = progreso.estadisticas.totalRevistas - progreso.estadisticas.revistasCompletadas;
   const horasRestantes = revistasRestantes / revistasPorHora;
-  
+
   return formatearTiempo(horasRestantes * 60 * 60 * 1000);
 }
 
@@ -93,14 +93,14 @@ function calcularTiempoRestante(progreso: ProgresoProcesamiento): string {
  * Calcula velocidad de procesamiento
  */
 function calcularVelocidad(progreso: ProgresoProcesamiento): string {
-  const tiempoTranscurrido = new Date(progreso.ultimaActualizacion).getTime() - 
-                             new Date(progreso.fechaInicio).getTime();
+  const tiempoTranscurrido = new Date(progreso.ultimaActualizacion).getTime() -
+    new Date(progreso.fechaInicio).getTime();
   const horas = tiempoTranscurrido / (1000 * 60 * 60);
-  
+
   if (horas === 0) {
     return 'N/A';
   }
-  
+
   const anunciosPorHora = progreso.estadisticas.totalCargados / horas;
   return `${anunciosPorHora.toFixed(1)} anuncios/hora`;
 }
@@ -141,16 +141,16 @@ function mostrarDetallado(progreso: ProgresoProcesamiento, codigoRevista?: strin
   console.log(`\n${'='.repeat(60)}`);
   console.log(`📋 REPORTE DETALLADO`);
   console.log(`${'='.repeat(60)}\n`);
-  
-  const revistas = codigoRevista 
+
+  const revistas = codigoRevista
     ? [codigoRevista].filter(r => progreso.revistas[r])
     : Object.keys(progreso.revistas).sort();
-  
+
   if (revistas.length === 0) {
     console.log('No hay revistas procesadas aún.');
     return;
   }
-  
+
   for (const revista of revistas) {
     const info = progreso.revistas[revista];
     const estadoIcono = {
@@ -159,22 +159,22 @@ function mostrarDetallado(progreso: ProgresoProcesamiento, codigoRevista?: strin
       'completada': '✅',
       'error': '❌'
     }[info.estado] || '❓';
-    
+
     console.log(`${estadoIcono} ${revista}`);
     console.log(`   Estado: ${info.estado}`);
-    
+
     if (info.paginasProcesadas) {
       console.log(`   Páginas: ${info.paginasProcesadas}`);
     }
-    
+
     if (info.anunciosExtraidos !== undefined) {
       console.log(`   Anuncios extraídos: ${info.anunciosExtraidos}`);
     }
-    
+
     if (info.anunciosCargados !== undefined) {
       console.log(`   Anuncios cargados: ${info.anunciosCargados}`);
     }
-    
+
     if (info.errores && info.errores.length > 0) {
       console.log(`   Errores: ${info.errores.length}`);
       if (info.errores.length <= 5) {
@@ -188,14 +188,14 @@ function mostrarDetallado(progreso: ProgresoProcesamiento, codigoRevista?: strin
         console.log(`      ... y ${info.errores.length - 5} errores más`);
       }
     }
-    
+
     if (info.fechaCompletado) {
       console.log(`   Completado: ${new Date(info.fechaCompletado).toLocaleString()}`);
     }
-    
+
     console.log('');
   }
-  
+
   console.log(`${'='.repeat(60)}\n`);
 }
 
@@ -204,7 +204,7 @@ function mostrarDetallado(progreso: ProgresoProcesamiento, codigoRevista?: strin
  */
 function mostrarEstadisticasPeriodicas(progreso: ProgresoProcesamiento): void {
   const revistasCompletadas = progreso.estadisticas.revistasCompletadas;
-  
+
   // Mostrar resumen cada 100 revistas
   if (revistasCompletadas > 0 && revistasCompletadas % 100 === 0) {
     console.log(`\n${'='.repeat(60)}`);
@@ -221,11 +221,11 @@ function generarLog(progreso: ProgresoProcesamiento): void {
   const fecha = new Date().toISOString().split('T')[0];
   const rutaLog = path.join(process.cwd(), 'output', 'logs', `procesamiento-${fecha}.log`);
   const directorio = path.dirname(rutaLog);
-  
+
   if (!fs.existsSync(directorio)) {
     fs.mkdirSync(directorio, { recursive: true });
   }
-  
+
   const contenido = `
 ==========================================
 REPORTE DE PROGRESO - ${new Date().toLocaleString()}
@@ -245,13 +245,13 @@ ESTADÍSTICAS GENERALES:
 
 REVISTAS PROCESADAS:
 ${Object.keys(progreso.revistas).map(revista => {
-  const info = progreso.revistas[revista];
-  return `- ${revista}: ${info.estado} (${info.anunciosCargados || 0} anuncios)`;
-}).join('\n')}
+    const info = progreso.revistas[revista];
+    return `- ${revista}: ${info.estado} (${info.anunciosCargados || 0} anuncios)`;
+  }).join('\n')}
 
 ==========================================
 `;
-  
+
   fs.appendFileSync(rutaLog, contenido, 'utf-8');
   console.log(`📝 Log guardado en: ${rutaLog}`);
 }
@@ -261,7 +261,7 @@ ${Object.keys(progreso.revistas).map(revista => {
  */
 function main(): void {
   const args = process.argv.slice(2);
-  
+
   if (args.includes('--help')) {
     console.log(`
 📊 REPORTE DE PROGRESO
@@ -285,32 +285,32 @@ Ejemplos:
     `);
     process.exit(0);
   }
-  
+
   const progreso = leerProgreso();
-  
+
   if (!progreso) {
     console.error('❌ No se encontró archivo de progreso. Ejecuta primero el procesador.');
     process.exit(1);
   }
-  
+
   const resumen = args.includes('--resumen');
   const detallado = args.includes('--detallado');
   const revistaIndex = args.indexOf('--revista');
   const codigoRevista = revistaIndex >= 0 && args[revistaIndex + 1] ? args[revistaIndex + 1] : undefined;
   const generarLogFile = args.includes('--log');
-  
+
   // Mostrar estadísticas periódicas
   mostrarEstadisticasPeriodicas(progreso);
-  
+
   // Mostrar reportes según opciones
   if (resumen || (!detallado && !codigoRevista)) {
     mostrarResumen(progreso);
   }
-  
+
   if (detallado || codigoRevista) {
     mostrarDetallado(progreso, codigoRevista);
   }
-  
+
   // Generar log si se solicita
   if (generarLogFile) {
     generarLog(progreso);

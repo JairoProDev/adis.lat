@@ -12,8 +12,10 @@
  *   --limit <number>       Process at most this many items (default: all)
  *   --force                Regenerate embeddings even if they exist
  */
+import { config } from 'dotenv';
+config({ path: '.env.local' });
 
-import { batchGenerateEmbeddings } from '../lib/ai/embeddings';
+// import { batchGenerateEmbeddings } from '../lib/ai/embeddings';
 import * as dotenv from 'dotenv';
 
 // Load environment variables
@@ -96,6 +98,7 @@ async function main() {
   console.log('✅ Environment validated\n');
 
   // Start processing
+  const { batchGenerateEmbeddings } = await import('../lib/ai/embeddings');
   try {
     let totalProcessed = 0;
     let batchNumber = 1;
