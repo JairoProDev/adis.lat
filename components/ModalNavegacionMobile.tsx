@@ -7,7 +7,7 @@ import { IconAdiso, IconMap, IconMegaphone, IconChatbot, IconGratuitos, IconClos
 import ModalAdiso from './ModalAdiso';
 import MapaInteractivo from './MapaInteractivo';
 import FormularioPublicar from './FormularioPublicar';
-import ChatbotIA from './ChatbotIA';
+import ChatbotIA from './ChatbotIANew';
 import AdisosGratuitos from './AdisosGratuitos';
 
 export type SeccionSidebar = 'adiso' | 'mapa' | 'publicar' | 'chatbot' | 'gratuitos';
