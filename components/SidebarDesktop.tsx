@@ -270,18 +270,26 @@ export default function SidebarDesktop({
           setMinimizado(nuevoEstado);
           onMinimizadoChange?.(nuevoEstado);
         }}
-        className={cn(
-          'absolute z-10',
-          'w-8 h-8 rounded-full',
-          'glass-card shadow-glow-md',
-          'flex items-center justify-center',
-          'hover:scale-110 active:scale-95',
-          'transition-transform duration-200'
-        )}
         style={{
+          position: 'absolute',
+          zIndex: 10,
+          width: '2rem',
+          height: '2rem',
+          borderRadius: '50%',
+          background: 'var(--glass-bg)',
+          backdropFilter: 'blur(40px) saturate(200%)',
+          WebkitBackdropFilter: 'blur(40px) saturate(200%)',
+          boxShadow: 'var(--shadow-md)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: '1px solid var(--border-subtle)',
+          cursor: 'pointer',
+          transition: 'transform 0.2s',
           top: '0.5rem',
           left: minimizado ? '50%' : '-1rem',
-          transform: minimizado ? 'translateX(-50%)' : 'none'
+          transform: minimizado ? 'translateX(-50%)' : 'none',
+          color: 'var(--text-primary)',
         }}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
@@ -297,7 +305,11 @@ export default function SidebarDesktop({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="flex-1 overflow-y-auto"
+            style={{
+              flex: 1,
+              overflowY: 'auto',
+              overflowX: 'hidden',
+            }}
           >
             {seccionActiva === 'adiso' && adisoAbierto && (
               <ModalAdiso
@@ -339,11 +351,26 @@ export default function SidebarDesktop({
 
             {/* Empty State */}
             {seccionActiva === 'adiso' && !adisoAbierto && (
-              <div className="flex flex-col items-center justify-center h-full px-8 text-center">
-                <div className="text-tertiary mb-4 opacity-50">
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                padding: '0 2rem',
+                textAlign: 'center',
+              }}>
+                <div style={{
+                  color: 'var(--text-tertiary)',
+                  marginBottom: '1rem',
+                  opacity: 0.5,
+                }}>
                   <IconAdiso size={48} />
                 </div>
-                <p className="text-secondary text-sm">
+                <p style={{
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.875rem',
+                }}>
                   Selecciona un adiso para ver los detalles
                 </p>
               </div>
@@ -358,7 +385,14 @@ export default function SidebarDesktop({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="flex flex-col items-center pt-14 pb-4 gap-3"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              paddingTop: '3.5rem',
+              paddingBottom: '1rem',
+              gap: '0.75rem',
+            }}
           >
             {secciones.map((seccion) => {
               const IconComponent = seccion.icono;
@@ -377,15 +411,25 @@ export default function SidebarDesktop({
                       setSeccionActiva(seccion.id);
                       setMostrarFormulario(seccion.id === 'publicar');
                     }}
-                    className={cn(
-                      'w-10 h-10 rounded-xl',
-                      'flex items-center justify-center',
-                      'transition-all duration-200',
-                      estaActiva
-                        ? 'bg-electric-500 text-white shadow-glow-electric'
-                        : 'bg-secondary text-secondary hover:bg-hover-lift'
-                    )}
-                    whileHover={{ scale: 1.1, y: -2 }}
+                    style={{
+                      width: '2.5rem',
+                      height: '2.5rem',
+                      borderRadius: '0.75rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.2s',
+                      backgroundColor: estaActiva
+                        ? 'var(--accent-color)'
+                        : 'var(--bg-secondary)',
+                      color: estaActiva
+                        ? 'white'
+                        : 'var(--text-secondary)',
+                      border: 'none',
+                      cursor: 'pointer',
+                      boxShadow: estaActiva ? 'var(--shadow-md)' : 'none',
+                    }}
+                    whileHover={{ scale: 1.1, y: -2, backgroundColor: estaActiva ? 'var(--accent-color)' : 'var(--hover-bg)' }}
                     whileTap={{ scale: 0.95 }}
                   >
                     <IconComponent size={18} />
@@ -398,21 +442,52 @@ export default function SidebarDesktop({
                         initial={{ opacity: 0, x: 5 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: 5 }}
-                        className={cn(
-                          'absolute right-full mr-3 top-1/2 -translate-y-1/2',
-                          'glass-card px-3.5 py-2.5 rounded-lg',
-                          'min-w-[250px] max-w-[300px]',
-                          'pointer-events-none z-[2000]'
-                        )}
+                        style={{
+                          position: 'absolute',
+                          right: '100%',
+                          marginRight: '0.75rem',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'var(--glass-bg)',
+                          backdropFilter: 'blur(40px) saturate(200%)',
+                          WebkitBackdropFilter: 'blur(40px) saturate(200%)',
+                          padding: '0.625rem 0.875rem',
+                          borderRadius: '0.5rem',
+                          minWidth: '250px',
+                          maxWidth: '300px',
+                          pointerEvents: 'none',
+                          zIndex: 2000,
+                          boxShadow: 'var(--shadow-md)',
+                          border: '1px solid var(--border-subtle)',
+                        }}
                       >
-                        <div className="font-semibold text-sm text-primary mb-1">
+                        <div style={{
+                          fontWeight: 600,
+                          fontSize: '0.875rem',
+                          color: 'var(--text-primary)',
+                          marginBottom: '0.25rem',
+                        }}>
                           {seccion.label}
                         </div>
-                        <div className="text-xs text-secondary leading-relaxed">
+                        <div style={{
+                          fontSize: '0.75rem',
+                          color: 'var(--text-secondary)',
+                          lineHeight: 1.6,
+                        }}>
                           {seccion.descripcion}
                         </div>
                         {/* Arrow */}
-                        <div className="absolute right-[-0.375rem] top-1/2 -translate-y-1/2 w-3 h-3 bg-primary border-r border-b border-border-subtle rotate-45" />
+                        <div style={{
+                          position: 'absolute',
+                          right: '-0.375rem',
+                          top: '50%',
+                          transform: 'translateY(-50%) rotate(45deg)',
+                          width: '0.75rem',
+                          height: '0.75rem',
+                          background: 'var(--bg-primary)',
+                          borderRight: '1px solid var(--border-subtle)',
+                          borderBottom: '1px solid var(--border-subtle)',
+                        }} />
                       </motion.div>
                     )}
                   </AnimatePresence>
