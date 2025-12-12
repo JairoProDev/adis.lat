@@ -12,7 +12,8 @@ export default function FloatingChatbot() {
     // Load open state preference and check history
     useEffect(() => {
         const savedState = localStorage.getItem('adis_chat_open');
-        if (savedState === 'true') setIsOpen(true);
+        // Default to open if no state saved (first visit) or if explicitly true
+        if (savedState === 'true' || savedState === null) setIsOpen(true);
 
         const history = localStorage.getItem('adis_chat_history');
         if (history && history !== '[]') {
