@@ -105,7 +105,7 @@ export default function GrillaAdisos({ adisos, onAbrirAdiso, adisoSeleccionadoId
         .grilla-adisos {
           display: grid;
           grid-template-columns: ${isDesktop
-          ? 'repeat(auto-fit, minmax(180px, 1fr))'
+          ? 'repeat(auto-fit, minmax(220px, 1fr))'
           : 'repeat(2, 1fr)'};
 
           gap: ${isDesktop ? '1.5rem' : '1rem'};

@@ -66,13 +66,25 @@ export default function SidebarDesktop({
   }, [minimizado]);
 
   // Auto-open adiso section and expand sidebar when adiso is opened
+  const userMinimizedRef = React.useRef<boolean>(false);
+  const prevAdisoIdRef = React.useRef<string | null>(null);
+
   React.useEffect(() => {
     if (adisoAbierto) {
+      // If it's a different adiso, reset the user minimized flag
+      if (adisoAbierto.id !== prevAdisoIdRef.current) {
+        userMinimizedRef.current = false;
+        prevAdisoIdRef.current = adisoAbierto.id;
+      }
+
       setSeccionActiva('adiso');
-      // Always expand sidebar when an adiso is opened, even if it's the same adiso
-      if (minimizado) {
+      // Only expand if user didn't manually minimize
+      if (minimizado && !userMinimizedRef.current) {
         setMinimizado(false);
       }
+    } else {
+      prevAdisoIdRef.current = null;
+      userMinimizedRef.current = false;
     }
   }, [adisoAbierto, minimizado]);
 
@@ -280,6 +292,12 @@ export default function SidebarDesktop({
         onClick={() => {
           const nuevoEstado = !minimizado;
           setMinimizado(nuevoEstado);
+          // Track if user manually minimized
+          if (nuevoEstado) {
+            userMinimizedRef.current = true;
+          } else {
+            userMinimizedRef.current = false;
+          }
           onMinimizadoChange?.(nuevoEstado);
         }}
         style={{
@@ -310,7 +328,7 @@ export default function SidebarDesktop({
       </motion.button>
 
       {/* Content Area */}
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         {!minimizado && (
           <motion.div
             key="content"
