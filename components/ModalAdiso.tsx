@@ -646,7 +646,7 @@ export default function ModalAdiso({
                         {contacto.tipo === 'whatsapp' && <IconWhatsApp aria-hidden="true" />}
                         {contacto.tipo === 'email' && '✉️'}
                         {contacto.tipo === 'telefono' && '📞'}
-                        {estaCaducado ? (esHistorico ? 'Anuncio histórico - Registrar interés' : 'Registrar interés') : (contacto.etiqueta || `Contactar por ${contacto.tipo}`)}
+                        {estaCaducado ? (esHistorico ? 'Anuncio caducado - Registrar interés' : 'Registrar interés') : (contacto.etiqueta || `Contactar por ${contacto.tipo}`)}
                       </button>
                     ))}
                   </div>
@@ -681,7 +681,7 @@ export default function ModalAdiso({
                     }}
                   >
                     <IconWhatsApp aria-hidden="true" />
-                    {estaCaducado ? (esHistorico ? 'Anuncio histórico - Registrar interés' : 'Registrar interés') : 'Contactar por WhatsApp'}
+                    {estaCaducado ? (esHistorico ? 'Anuncio caducado - Registrar interés' : 'Registrar interés') : 'Contactar por WhatsApp'}
                   </button>
                 );
               }
@@ -1349,7 +1349,7 @@ export default function ModalAdiso({
                         {contacto.tipo === 'whatsapp' && <IconWhatsApp aria-hidden="true" />}
                         {contacto.tipo === 'email' && '✉️'}
                         {contacto.tipo === 'telefono' && '📞'}
-                        {estaCaducado ? (esHistorico ? 'Anuncio histórico - Registrar interés' : 'Registrar interés') : (contacto.etiqueta || `Contactar por ${contacto.tipo}`)}
+                        {estaCaducado ? (esHistorico ? 'Anuncio caducado - Registrar interés' : 'Registrar interés') : (contacto.etiqueta || `Contactar por ${contacto.tipo}`)}
                       </button>
                     ))}
                   </div>
@@ -1384,7 +1384,7 @@ export default function ModalAdiso({
                     }}
                   >
                     <IconWhatsApp aria-hidden="true" />
-                    {estaCaducado ? (esHistorico ? 'Anuncio histórico - Registrar interés' : 'Registrar interés') : 'Contactar por WhatsApp'}
+                    {estaCaducado ? (esHistorico ? 'Anuncio caducado - Registrar interés' : 'Registrar interés') : 'Contactar por WhatsApp'}
                   </button>
                 );
               }

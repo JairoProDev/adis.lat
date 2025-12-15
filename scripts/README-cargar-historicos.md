@@ -134,16 +134,55 @@ Si tienes problemas de conexión o prefieres cargar los datos manualmente a trav
 
 Este script realiza **exactamente el mismo procesamiento** (parseo, limpieza, detección de categoría, etc.) pero guarda el resultado en un archivo CSV compatible con la importación de Supabase.
 
+## Mejoras del Script v2.0
+
+### ✨ Detección Inteligente de Categorías por Página
+
+El script ahora utiliza la estructura conocida de la revista para mejorar la precisión:
+
+- **Páginas 2-6**: Inmuebles (alquileres, ventas, terrenos, locales)
+- **Páginas 7-14**: Empleos (convocatorias, vacantes, personal)
+- **Página 15**: Mixto (empleos en primera mitad, luego variado)
+- **Páginas 1 y 16**: Detección automática por contenido
+
+### 🛡️ Filtrado de Contenido Editorial
+
+Automáticamente filtra:
+- Recomendaciones de la revista (ej: "COMO EVITAR ESTAFAS INMOBILIARIAS")
+- Avisos institucionales
+- Contenido sin información de contacto
+
+### 📏 Tamaño Automático
+
+- **Pequeño**: Por defecto para históricos (contenido < 250 caracteres)
+- **Mediano**: Para avisos más largos (> 400 caracteres)
+
+### 📊 Estadísticas Detalladas
+
+El script muestra:
+- Total de avisos procesados
+- Avisos filtrados (editorial/spam)
+- Distribución por categoría
+- Errores encontrados
+
 ## Uso
+
+### Exportar una carpeta específica
 
 ```bash
 npx tsx scripts/exportar-adisos-csv.ts --carpeta=R2538-Jun20-26 --anio=2024
 ```
 
-O para exportar todo:
+### Exportar TODAS las carpetas (47 revistas)
 
 ```bash
 npx tsx scripts/exportar-adisos-csv.ts --todas --anio=2024
+```
+
+### Probar con límite de archivos
+
+```bash
+npx tsx scripts/exportar-adisos-csv.ts --carpeta=R2538-Jun20-26 --anio=2024 --limit=3
 ```
 
 ## Importar en Supabase
@@ -151,10 +190,24 @@ npx tsx scripts/exportar-adisos-csv.ts --todas --anio=2024
 1. Ve a tu proyecto en Supabase -> **Table Editor**.
 2. Selecciona la tabla `adisos`.
 3. Haz clic en **Insert** -> **Import Data from CSV**.
-4. Sube el archivo `.csv` generado.
+4. Sube el archivo `.csv` generado (ubicado en la raíz del proyecto).
 5. Asegúrate de que las columnas coincidan (el script usa los nombres exactos de la base de datos).
 6. Haz clic en **Import data**.
 
 El archivo CSV maneja correctamente los campos complejos como JSON y saltos de línea.
+
+## Ejemplo de Resultado
+
+Procesando las 47 carpetas completas:
+- **Total avisos**: ~22,000+
+- **Inmuebles**: ~10,600
+- **Empleos**: ~10,300
+- **Servicios**: ~1,100
+- **Negocios**: ~335
+- **Productos**: ~73
+- **Vehículos**: ~25
+- **Eventos**: ~1
+- **Filtrados**: ~52 (contenido editorial)
+
 
 
