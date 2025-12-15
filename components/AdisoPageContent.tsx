@@ -9,6 +9,17 @@ import Header from '@/components/Header';
 import SellerReputationCard from '@/components/trust/SellerReputationCard';
 import SimilarAdisos from '@/components/SimilarAdisos';
 import SidebarDesktop from '@/components/SidebarDesktop';
+import {
+    IconEmpleos,
+    IconInmuebles,
+    IconVehiculos,
+    IconServicios,
+    IconProductos,
+    IconEventos,
+    IconNegocios,
+    IconComunidad,
+    IconTodos
+} from '@/components/Icons';
 
 interface AdisoPageContentProps {
     adiso: Adiso;
@@ -26,6 +37,20 @@ function formatearUbicacion(ubicacion: string | UbicacionDetallada | undefined):
     }
     return typeof ubicacion === 'string' ? ubicacion : 'Sin ubicación';
 }
+
+const getCategoriaIcon = (categoria: string) => {
+    switch (categoria) {
+        case 'empleos': return IconEmpleos;
+        case 'inmuebles': return IconInmuebles;
+        case 'vehiculos': return IconVehiculos;
+        case 'servicios': return IconServicios;
+        case 'productos': return IconProductos;
+        case 'eventos': return IconEventos;
+        case 'negocios': return IconNegocios;
+        case 'comunidad': return IconComunidad;
+        default: return IconTodos;
+    }
+};
 
 export default function AdisoPageContent({ adiso }: AdisoPageContentProps) {
     const router = useRouter();
@@ -169,10 +194,16 @@ export default function AdisoPageContent({ adiso }: AdisoPageContentProps) {
                                         backgroundColor: 'var(--bg-primary)',
                                         borderRadius: '16px',
                                         display: 'flex',
+                                        flexDirection: 'column',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        border: '2px dashed var(--border-color)'
+                                        border: '2px dashed var(--border-color)',
+                                        gap: '1rem'
                                     }}>
+                                        {(() => {
+                                            const Icon = getCategoriaIcon(adiso.categoria);
+                                            return <Icon size={64} color="var(--text-tertiary)" />;
+                                        })()}
                                         <span style={{ color: 'var(--text-tertiary)' }}>Sin imagen disponible</span>
                                     </div>
                                 )}
