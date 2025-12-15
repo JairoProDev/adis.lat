@@ -23,7 +23,7 @@ export default function Header({ onChangelogClick }: HeaderProps) {
       borderBottom: '1px solid var(--border-color)',
       boxShadow: 'var(--shadow-sm)',
       padding: isDesktop ? '1rem 1.5rem' : '0.875rem 1rem',
-      paddingRight: isDesktop ? 'calc(1.5rem + 80px)' : '1rem',
+      paddingRight: isDesktop ? 'calc(var(--sidebar-width, 60px) + 1.5rem)' : '1rem',
       position: 'sticky',
       top: 0,
       zIndex: 1000,
@@ -37,20 +37,32 @@ export default function Header({ onChangelogClick }: HeaderProps) {
         margin: '0 auto',
         gap: '1rem'
       }}>
-        <h1 style={{
-          fontSize: isDesktop ? '1.5rem' : '1.375rem',
-          fontWeight: 800,
-          background: 'linear-gradient(135deg, var(--brand-blue) 0%, color-mix(in srgb, var(--brand-blue) 70%, var(--brand-yellow)) 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-          letterSpacing: '-0.03em',
-          margin: 0,
-          lineHeight: 1.2,
-          flexShrink: 0
-        }}>
-          {t('header.title')}
-        </h1>
+        <a
+          href="/"
+          style={{
+            textDecoration: 'none',
+            cursor: 'pointer',
+            flexShrink: 0
+          }}
+        >
+          <h1 style={{
+            fontSize: isDesktop ? '1.5rem' : '1.375rem',
+            fontWeight: 800,
+            background: 'linear-gradient(135deg, var(--brand-blue) 0%, color-mix(in srgb, var(--brand-blue) 70%, var(--brand-yellow)) 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            letterSpacing: '-0.03em',
+            margin: 0,
+            lineHeight: 1.2,
+            transition: 'opacity 0.2s'
+          }}
+            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+          >
+            {t('header.title')}
+          </h1>
+        </a>
         <div style={{
           display: 'flex',
           alignItems: 'center',

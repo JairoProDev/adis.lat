@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { Adiso } from '@/types';
@@ -59,14 +59,22 @@ export default function SidebarDesktop({
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [tooltipHovered, setTooltipHovered] = useState<SeccionSidebar | null>(null);
 
+  // Update CSS variable for sidebar width to allow page layout to adapt
+  useEffect(() => {
+    const width = minimizado ? 60 : 420;
+    document.documentElement.style.setProperty('--sidebar-width', `${width}px`);
+  }, [minimizado]);
+
   // Auto-open adiso section and expand sidebar when adiso is opened
   React.useEffect(() => {
     if (adisoAbierto) {
       setSeccionActiva('adiso');
-      // Only expand if we didn't start minimized by default or if user action requires it
-      if (minimizado && !defaultMinimized) setMinimizado(false);
+      // Always expand sidebar when an adiso is opened, even if it's the same adiso
+      if (minimizado) {
+        setMinimizado(false);
+      }
     }
-  }, [adisoAbierto]);
+  }, [adisoAbierto, minimizado]);
 
   // Update section from external prop
   React.useEffect(() => {

@@ -104,7 +104,7 @@ export default function AdisoPageContent({ adiso }: AdisoPageContentProps) {
             <div style={{
                 display: 'flex',
                 flexDirection: 'column',
-                paddingRight: '60px' // Space for minimized sidebar
+                paddingRight: 'var(--sidebar-width, 60px)' // Space for sidebar
             }}>
                 <Header onChangelogClick={() => router.push('/progreso')} />
 

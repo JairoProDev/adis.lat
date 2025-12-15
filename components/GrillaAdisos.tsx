@@ -104,7 +104,10 @@ export default function GrillaAdisos({ adisos, onAbrirAdiso, adisoSeleccionadoId
       <style jsx>{`
         .grilla-adisos {
           display: grid;
-          grid-template-columns: repeat(${isDesktop ? columnas : 2}, 1fr);
+          grid-template-columns: ${isDesktop
+          ? 'repeat(auto-fit, minmax(180px, 1fr))'
+          : 'repeat(2, 1fr)'};
+
           gap: ${isDesktop ? '1.5rem' : '1rem'};
           grid-auto-rows: minmax(${isDesktop ? '80px' : '80px'}, auto);
         }

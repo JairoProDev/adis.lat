@@ -753,12 +753,12 @@ function HomeContent() {
         padding: '1rem',
         paddingBottom: isDesktop ? '1rem' : '5rem', // Espacio para navbar mobile permanente
         maxWidth: isDesktop
-          ? `calc(100% - ${isSidebarMinimizado ? 60 : 420}px)`
+          ? 'calc(100% - var(--sidebar-width, 60px))'
           : '1400px',
         margin: '0 auto',
         width: '100%',
         transition: 'max-width 0.3s ease, margin-right 0.3s ease, padding-bottom 0.3s ease',
-        ...(isDesktop && { marginRight: `${isSidebarMinimizado ? 60 : 420}px` })
+        ...(isDesktop && { marginRight: 'var(--sidebar-width, 60px)' })
       }}>
         <div style={{ marginBottom: '1.5rem' }}>
           <Buscador
