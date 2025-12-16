@@ -145,15 +145,17 @@ export default function ModalAdiso({
 
   // Actualizar URL del navegador al abrir adiso (SEO Friendly)
   useEffect(() => {
-    // Si estamos en modo visualización dentro de la página (no standalone)
-    if (adiso) {
+    // Solo actualizar URL si NO estamos en el sidebar (para evitar conflictos con el estado de la home)
+    // O si estamos en modo standalone/mobile específico
+    if (adiso && !dentroSidebar) {
       const seoUrl = getAdisoUrl(adiso);
       // Solo actualizar si es diferente para no llenar el historial
       if (typeof window !== 'undefined' && window.location.pathname !== seoUrl && !window.location.pathname.includes('/admin')) {
         window.history.replaceState(null, '', seoUrl);
       }
     }
-  }, [adiso]);
+  }, [adiso, dentroSidebar]);
+
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -244,9 +246,9 @@ export default function ModalAdiso({
       // Crear mensaje que parezca natural del usuario pero con info necesaria
       // Incluye el link para que puedas acceder rápidamente a la info del anunciante
       const mensaje = `Hola! Me interesa este anuncio: ${adiso.categoria === 'inmuebles' ? '¿Sigue disponible?' :
-          adiso.categoria === 'empleos' ? '¿Aún están contratando?' :
-            adiso.categoria === 'vehiculos' ? '¿Aún está en venta?' :
-              '¿Sigue disponible?'
+        adiso.categoria === 'empleos' ? '¿Aún están contratando?' :
+          adiso.categoria === 'vehiculos' ? '¿Aún está en venta?' :
+            '¿Sigue disponible?'
         }
 
 ${adisoUrl}

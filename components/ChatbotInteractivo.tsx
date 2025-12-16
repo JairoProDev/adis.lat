@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Adiso, Categoria } from '@/types';
-import { FaSpinner, FaTimes, FaRedo } from 'react-icons/fa';
-import ModalAdiso from './ModalAdiso';
+import { FaSpinner } from 'react-icons/fa';
 import { supabase } from '@/lib/supabase';
+import { getAdisoUrl } from '@/lib/url';
+import { useNavigation } from '@/contexts/NavigationContext';
 
 interface Mensaje {
     id: string;
@@ -34,6 +36,7 @@ interface ChatbotIAProps {
     onPublicar?: (adiso: Adiso) => void;
     onError?: (message: string) => void;
     onSuccess?: (message: string) => void;
+    onMinimize?: () => void;
 }
 
 // Opciones de categorías
@@ -100,7 +103,10 @@ const UBICACIONES: BotonOpcion[] = [
     { label: 'Todas', emoji: '🌍', valor: 'todas' }
 ];
 
-export default function ChatbotInteractivo({ onPublicar, onError, onSuccess }: ChatbotIAProps) {
+export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onMinimize }: ChatbotIAProps) {
+    const router = useRouter();
+    const { abrirAdiso } = useNavigation();
+
     const [mensajes, setMensajes] = useState<Mensaje[]>([
         {
             id: '1',
@@ -118,7 +124,6 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess }: C
     ]);
 
     const [procesando, setProcesando] = useState(false);
-    const [adisoAbierto, setAdisoAbierto] = useState<Adiso | null>(null);
     const [estadoBusqueda, setEstadoBusqueda] = useState<EstadoBusqueda>({});
     const [inputTexto, setInputTexto] = useState('');
     const mensajesEndRef = useRef<HTMLDivElement>(null);
@@ -328,7 +333,12 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess }: C
     };
 
     const handleClickAdiso = (adiso: Adiso) => {
-        setAdisoAbierto(adiso);
+        // Navegar al aviso EN EL SIDEBAR (sin cambiar de página completa)
+        if (onMinimize) onMinimize();
+
+        // Usar NavigationContext para abrir el adiso en el sidebar
+        // Esto mantiene la lógica de la SPA sin recargar
+        abrirAdiso(adiso.id);
     };
 
     const buscarPorTexto = async (texto: string) => {
@@ -454,6 +464,7 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess }: C
                     gap: '1rem'
                 }}
             >
+                {/* ... (código existente del render de mensajes) ... */}
                 {mensajes.map((mensaje) => (
                     <div key={mensaje.id}>
                         {/* Mensaje de texto */}
@@ -632,19 +643,6 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess }: C
 
                 <div ref={mensajesEndRef} />
             </div>
-
-            {/* Modal de adiso */}
-            {adisoAbierto && (
-                <ModalAdiso
-                    adiso={adisoAbierto}
-                    onCerrar={() => setAdisoAbierto(null)}
-                    onAnterior={() => { }}
-                    onSiguiente={() => { }}
-                    puedeAnterior={false}
-                    puedeSiguiente={false}
-                    dentroSidebar={true}
-                />
-            )}
 
             {/* Input de texto libre */}
             <div

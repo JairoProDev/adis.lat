@@ -60,7 +60,7 @@ export default function FloatingChatbot() {
                             <button onClick={toggleChat} style={{ background: 'rgba(0,0,0,0.1)', border: 'none', borderRadius: '50%', width: 30, height: 30 }}>✕</button>
                         </div>
 
-                        <ChatbotInteractivo />
+                        <ChatbotInteractivo onMinimize={() => setIsOpen(false)} />
                     </motion.div>
                 )}
             </AnimatePresence>
