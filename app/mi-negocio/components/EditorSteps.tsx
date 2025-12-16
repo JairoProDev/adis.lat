@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
-import { BusinessProfile, uploadBusinessImage } from '@/lib/business';
+import { BusinessProfile, SocialLink } from '@/types/business';
+import { uploadBusinessImage } from '@/lib/business';
 import {
     IconStore, IconPhone, IconClock, IconShare, IconArrowRight, IconCheck,
     IconStar, IconMegaphone, IconEdit, IconMapMarkerAlt, IconEnvelope,
@@ -27,6 +28,7 @@ interface EditorStepsProps {
 
 export function EditorSteps({ profile, setProfile, saving }: EditorStepsProps) {
     const [activeStep, setActiveStep] = useState(0);
+    const [uploadingImage, setUploadingImage] = useState<string | null>(null);
 
     const handleNext = () => {
         if (activeStep < STEPS.length - 1) setActiveStep(prev => prev + 1);
@@ -34,6 +36,36 @@ export function EditorSteps({ profile, setProfile, saving }: EditorStepsProps) {
 
     const handlePrev = () => {
         if (activeStep > 0) setActiveStep(prev => prev - 1);
+    };
+
+    const handleImageUpload = async (file: File, type: 'logo' | 'banner') => {
+        if (!file) return;
+
+        // Optimistic preview
+        const objectUrl = URL.createObjectURL(file);
+        if (type === 'logo') setProfile({ ...profile, logo_url: objectUrl });
+        if (type === 'banner') setProfile({ ...profile, banner_url: objectUrl });
+
+        if (!profile.user_id) {
+            // If we don't have user_id (e.g. creating new), we can't upload yet or need a temp bucket.
+            // For now, let's just warn and rely on the blob URL until profile is saved.
+            // Ideally the parent page should ensure profile.user_id is set before passing it.
+            console.warn("No user_id found in profile, skipping upload.");
+            return;
+        }
+
+        setUploadingImage(type);
+        try {
+            const publicUrl = await uploadBusinessImage(file, profile.user_id, type);
+            if (publicUrl) {
+                if (type === 'logo') setProfile({ ...profile, logo_url: publicUrl });
+                if (type === 'banner') setProfile({ ...profile, banner_url: publicUrl });
+            }
+        } catch (e) {
+            console.error("Upload failed", e);
+        } finally {
+            setUploadingImage(null);
+        }
     };
 
     const progress = Math.round(((activeStep + 1) / STEPS.length) * 100);
@@ -132,6 +164,7 @@ export function EditorSteps({ profile, setProfile, saving }: EditorStepsProps) {
                                 <label className="block group cursor-pointer">
                                     <span className="text-xs font-bold text-slate-700 mb-2 block flex items-center gap-2">
                                         Logo del Negocio <IconEdit size={14} className="text-blue-500" />
+                                        {uploadingImage === 'logo' && <span className="text-[10px] text-slate-400 animate-pulse ml-auto">Subiendo...</span>}
                                     </span>
                                     <div className="relative aspect-square rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-white hover:border-blue-500 transition-all flex flex-col items-center justify-center overflow-hidden group-hover:shadow-md">
                                         {profile.logo_url ? (
@@ -155,10 +188,7 @@ export function EditorSteps({ profile, setProfile, saving }: EditorStepsProps) {
                                             className="hidden"
                                             onChange={(e) => {
                                                 const file = e.target.files?.[0];
-                                                if (file) {
-                                                    const objectUrl = URL.createObjectURL(file);
-                                                    setProfile({ ...profile, logo_url: objectUrl });
-                                                }
+                                                if (file) handleImageUpload(file, 'logo');
                                             }}
                                         />
                                     </div>
@@ -168,6 +198,7 @@ export function EditorSteps({ profile, setProfile, saving }: EditorStepsProps) {
                                 <label className="block group cursor-pointer">
                                     <span className="text-xs font-bold text-slate-700 mb-2 block flex items-center gap-2">
                                         Banner de Portada <IconStore size={14} className="text-purple-500" />
+                                        {uploadingImage === 'banner' && <span className="text-[10px] text-slate-400 animate-pulse ml-auto">Subiendo...</span>}
                                     </span>
                                     <div className="relative aspect-square rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-white hover:border-purple-500 transition-all flex flex-col items-center justify-center overflow-hidden group-hover:shadow-md">
                                         {profile.banner_url ? (
@@ -191,10 +222,7 @@ export function EditorSteps({ profile, setProfile, saving }: EditorStepsProps) {
                                             className="hidden"
                                             onChange={(e) => {
                                                 const file = e.target.files?.[0];
-                                                if (file) {
-                                                    const objectUrl = URL.createObjectURL(file);
-                                                    setProfile({ ...profile, banner_url: objectUrl });
-                                                }
+                                                if (file) handleImageUpload(file, 'banner');
                                             }}
                                         />
                                     </div>
@@ -305,7 +333,7 @@ export function EditorSteps({ profile, setProfile, saving }: EditorStepsProps) {
                                     { network: 'tiktok', placeholder: '@tiktoker', color: 'bg-slate-50 text-slate-900 border-slate-200' },
                                     { network: 'website', placeholder: 'https://miweb.com', color: 'bg-emerald-50 text-emerald-600 border-emerald-100' }
                                 ].map((social) => {
-                                    const link = profile.social_links?.find(l => l.network === social.network);
+                                    const link = profile.social_links?.find((l: SocialLink) => l.network === social.network);
                                     return (
                                         <div key={social.network} className="flex items-center gap-3 group">
                                             <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center border transition-transform group-hover:scale-110 shadow-sm", social.color)}>
@@ -328,7 +356,7 @@ export function EditorSteps({ profile, setProfile, saving }: EditorStepsProps) {
                                                             if (social.network === 'tiktok') url = `https://tiktok.com/@${clean}`;
                                                         }
                                                         const currentLinks = profile.social_links || [];
-                                                        const otherLinks = currentLinks.filter(l => l.network !== social.network);
+                                                        const otherLinks = currentLinks.filter((l: SocialLink) => l.network !== social.network);
 
                                                         if (e.target.value.trim().length > 0) {
                                                             setProfile({ ...profile, social_links: [...otherLinks, { network: social.network as any, url: e.target.value }] });

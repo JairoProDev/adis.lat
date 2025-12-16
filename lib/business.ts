@@ -91,3 +91,39 @@ export async function checkSlugAvailability(slug: string): Promise<boolean> {
 
     return count === 0;
 }
+
+export async function uploadBusinessImage(file: File, userId: string, type: 'logo' | 'banner'): Promise<string | null> {
+    if (!supabase) return null;
+
+    try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${userId}/${type}-${Date.now()}.${fileExt}`;
+
+        // Use 'public-assets' bucket or 'business-media' or create one. 
+        // Let's assume 'business-media' exists or we'll error out.
+        // Actually, typically 'public' or 'images' is used.
+        // Let's use 'business-images'.
+        const bucketName = 'business-images';
+
+        const { error: uploadError } = await supabase.storage
+            .from(bucketName)
+            .upload(fileName, file, {
+                cacheControl: '3600',
+                upsert: false
+            });
+
+        if (uploadError) {
+            console.error('Error uploading image to storage:', uploadError);
+            return null;
+        }
+
+        const { data } = supabase.storage
+            .from(bucketName)
+            .getPublicUrl(fileName);
+
+        return data.publicUrl;
+    } catch (e) {
+        console.error("Exception uploading image:", e);
+        return null;
+    }
+}
