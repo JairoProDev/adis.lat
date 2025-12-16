@@ -3,7 +3,7 @@
 import React from 'react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { SeccionSidebar } from './SidebarDesktop';
-import { IconAdiso, IconMap, IconMegaphone, IconChatbot, IconGratuitos } from './Icons';
+import { IconAdiso, IconMap, IconMegaphone, IconChatbot, IconGratuitos, IconStore } from './Icons';
 
 interface NavbarMobileProps {
   seccionActiva: SeccionSidebar | null;
@@ -27,7 +27,7 @@ export default function NavbarMobile({
     { id: 'adiso' as SeccionSidebar, icono: IconAdiso, label: 'Adiso' },
     { id: 'mapa' as SeccionSidebar, icono: IconMap, label: 'Mapa' },
     { id: 'publicar' as SeccionSidebar, icono: IconMegaphone, label: 'Publicar' },
-
+    { id: 'negocio' as SeccionSidebar, icono: IconStore, label: 'Negocio' },
     { id: 'gratuitos' as SeccionSidebar, icono: IconGratuitos, label: 'Gratuitos' }
   ];
 
@@ -72,7 +72,13 @@ export default function NavbarMobile({
           return (
             <button
               key={seccion.id}
-              onClick={() => onCambiarSeccion(seccion.id)}
+              onClick={() => {
+                if (seccion.id === 'negocio') {
+                  window.location.href = '/mi-negocio';
+                  return;
+                }
+                onCambiarSeccion(seccion.id);
+              }}
               style={{
                 flex: 1,
                 display: 'flex',

@@ -5,14 +5,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { Adiso } from '@/types';
 import { cn } from '@/lib/utils';
-import { IconAdiso, IconMap, IconMegaphone, IconChatbot, IconGratuitos, IconMinimize, IconExpand } from './Icons';
+import { IconAdiso, IconMap, IconMegaphone, IconChatbot, IconGratuitos, IconMinimize, IconExpand, IconStore } from './Icons';
 import ModalAdiso from './ModalAdiso';
 import MapaInteractivo from './MapaInteractivo';
 import FormularioPublicar from './FormularioPublicar';
 import ChatbotIA from './ChatbotIANew';
 import AdisosGratuitos from './AdisosGratuitos';
 
-export type SeccionSidebar = 'adiso' | 'mapa' | 'publicar' | 'chatbot' | 'gratuitos';
+export type SeccionSidebar = 'adiso' | 'mapa' | 'publicar' | 'chatbot' | 'gratuitos' | 'negocio';
 
 interface SidebarDesktopProps {
   adisoAbierto: Adiso | null;
@@ -102,6 +102,7 @@ export default function SidebarDesktop({
     { id: 'adiso' as SeccionSidebar, icono: IconAdiso, label: 'Adiso', descripcion: 'Ver detalles del adiso seleccionado' },
     { id: 'mapa' as SeccionSidebar, icono: IconMap, label: 'Mapa', descripcion: 'Explorar adisos en el mapa interactivo' },
     { id: 'publicar' as SeccionSidebar, icono: IconMegaphone, label: 'Publicar', descripcion: 'Crear y publicar un nuevo adiso' },
+    { id: 'negocio' as SeccionSidebar, icono: IconStore, label: 'Mi Negocio', descripcion: 'Gestionar mi tienda y perfil comercial' },
     // { id: 'chatbot' as SeccionSidebar, icono: IconChatbot, label: 'Chatbot', descripcion: 'Asistente (ahora abajo derecha)' },
     { id: 'gratuitos' as SeccionSidebar, icono: IconGratuitos, label: 'Gratuitos', descripcion: 'Ver y publicar adisos gratuitos' }
   ];
@@ -167,6 +168,10 @@ export default function SidebarDesktop({
                 >
                   <motion.button
                     onClick={() => {
+                      if (seccion.id === 'negocio') {
+                        window.location.href = '/mi-negocio';
+                        return;
+                      }
                       setSeccionActiva(seccion.id);
                       setMostrarFormulario(seccion.id === 'publicar');
                     }}
@@ -433,6 +438,10 @@ export default function SidebarDesktop({
                 >
                   <motion.button
                     onClick={() => {
+                      if (seccion.id === 'negocio') {
+                        window.location.href = '/mi-negocio';
+                        return;
+                      }
                       setMinimizado(false);
                       setSeccionActiva(seccion.id);
                       setMostrarFormulario(seccion.id === 'publicar');

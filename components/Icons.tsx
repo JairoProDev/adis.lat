@@ -36,7 +36,34 @@ import {
   FaMedal,
   FaClock,
   FaUserCheck,
-  FaStar
+  FaStar,
+  FaStore,
+  FaInstagram,
+  FaFacebook,
+  FaTiktok,
+  FaGlobe,
+  FaPhoneAlt,
+  FaEnvelope,
+  FaShareAlt,
+  FaCheckCircle,
+  FaChevronDown,
+  FaMapMarkedAlt,
+  FaFilter,
+  FaSortAmountDown,
+  FaExpand,
+  FaCompress,
+  FaCamera,
+  FaHeart,
+  FaArrowLeft,
+  FaRobot,
+  FaHandHoldingHeart,
+  FaPlus,
+  FaImage,
+  FaSpinner,
+  FaEye,
+  FaTags,
+  FaExclamationTriangle,
+  FaInfoCircle
 } from 'react-icons/fa';
 
 interface IconProps {
@@ -127,6 +154,39 @@ export const IconTodos = (props: IconProps) => (
   <FaTh size={getSize(props)} color={props.color || 'currentColor'} />
 );
 
+export const IconStore = (props: IconProps) => (
+  <FaStore size={getSize(props)} color={props.color || 'currentColor'} />
+);
+
+// Iconos de Negocio y Social
+export const IconInstagram = (props: IconProps) => (
+  <FaInstagram size={getSize(props)} color={props.color || 'currentColor'} />
+);
+export const IconFacebook = (props: IconProps) => (
+  <FaFacebook size={getSize(props)} color={props.color || 'currentColor'} />
+);
+export const IconTiktok = (props: IconProps) => (
+  <FaTiktok size={getSize(props)} color={props.color || 'currentColor'} />
+);
+export const IconGlobe = (props: IconProps) => (
+  <FaGlobe size={getSize(props)} color={props.color || 'currentColor'} />
+);
+export const IconPhone = (props: IconProps) => (
+  <FaPhoneAlt size={getSize(props)} color={props.color || 'currentColor'} />
+);
+export const IconEnvelope = (props: IconProps) => (
+  <FaEnvelope size={getSize(props)} color={props.color || 'currentColor'} />
+);
+export const IconChevronDown = (props: IconProps) => (
+  <FaChevronDown size={getSize(props)} color={props.color || 'currentColor'} />
+);
+export const IconShareAlt = (props: IconProps) => (
+  <FaShareAlt size={getSize(props)} color={props.color || 'currentColor'} />
+);
+export const IconVerified = (props: IconProps) => (
+  <FaCheckCircle size={getSize(props)} color={props.color || 'currentColor'} />
+);
+
 // Iconos del formulario
 export const IconTitle = (props: IconProps) => (
   <FaHeading size={getSize(props)} color={props.color || 'currentColor'} />
@@ -136,9 +196,7 @@ export const IconDescription = (props: IconProps) => (
   <FaAlignLeft size={getSize(props)} color={props.color || 'currentColor'} />
 );
 
-export const IconPhone = (props: IconProps) => (
-  <FaPhone size={getSize(props)} color={props.color || 'currentColor'} />
-);
+
 
 export const IconMegaphone = (props: IconProps) => (
   <FaBullhorn size={getSize(props)} color={props.color || 'currentColor'} />
