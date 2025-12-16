@@ -59,17 +59,17 @@ export default function ThemeToggle() {
 
   const applyTheme = (newTheme: 'light' | 'dark' | 'auto') => {
     const root = document.documentElement;
-    root.classList.remove('light-mode', 'dark-mode');
+    root.classList.remove('light-mode', 'dark-mode', 'dark');
 
     if (newTheme === 'auto') {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       if (prefersDark) {
-        root.classList.add('dark-mode');
+        root.classList.add('dark-mode', 'dark');
       } else {
         root.classList.add('light-mode');
       }
     } else if (newTheme === 'dark') {
-      root.classList.add('dark-mode');
+      root.classList.add('dark-mode', 'dark');
     } else {
       root.classList.add('light-mode');
     }

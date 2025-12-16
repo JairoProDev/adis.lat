@@ -19,11 +19,11 @@ export default function Header({ onChangelogClick }: HeaderProps) {
 
   return (
     <header style={{
-      backgroundColor: 'color-mix(in srgb, var(--bg-primary) 95%, transparent)',
+      backgroundColor: 'var(--bg-primary)', // Solid background for better contrast
       borderBottom: '1px solid var(--border-color)',
-      boxShadow: 'var(--shadow-sm)',
-      padding: isDesktop ? '1rem 1.5rem' : '0.875rem 1rem',
-      paddingRight: isDesktop ? 'calc(var(--sidebar-width, 60px) + 1.5rem)' : '1rem',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.06)', // Sutil separación suggested by user
+      padding: isDesktop ? '1rem 1.5rem' : '1rem 1.25rem', // increased padding
+      paddingRight: isDesktop ? 'calc(var(--sidebar-width, 60px) + 1.5rem)' : '1.25rem',
       position: 'sticky',
       top: 0,
       zIndex: 1000,
@@ -45,18 +45,16 @@ export default function Header({ onChangelogClick }: HeaderProps) {
             flexShrink: 0
           }}
         >
-          <h1 style={{
-            fontSize: isDesktop ? '1.5rem' : '1.375rem',
-            fontWeight: 800,
-            background: 'linear-gradient(135deg, var(--brand-blue) 0%, color-mix(in srgb, var(--brand-blue) 70%, var(--brand-yellow)) 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            letterSpacing: '-0.03em',
-            margin: 0,
-            lineHeight: 1.2,
-            transition: 'opacity 0.2s'
-          }}
+          <h1
+            className="text-[#1e40af] dark:text-blue-400"
+            style={{
+              fontSize: isDesktop ? '1.75rem' : '1.5rem',
+              fontWeight: 800,
+              letterSpacing: '-0.02em',
+              margin: 0,
+              lineHeight: 1.2,
+              transition: 'opacity 0.2s',
+            }}
             onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
             onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
           >
@@ -66,7 +64,7 @@ export default function Header({ onChangelogClick }: HeaderProps) {
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '0.5rem',
+          gap: '0.75rem',
           flexShrink: 0
         }}>
           <UserMenu onProgressClick={onChangelogClick} />
@@ -80,17 +78,16 @@ export default function Header({ onChangelogClick }: HeaderProps) {
             <div style={{ position: 'relative' }}>
               <button
                 onClick={() => setShowMobileSettings(!showMobileSettings)}
+                className="bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                 style={{
-                  background: 'transparent',
-                  border: '1px solid var(--border-color)',
+                  border: 'none',
                   borderRadius: '8px',
                   width: '36px',
                   height: '36px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: 'var(--text-secondary)',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
                 }}
               >
                 <FaCog size={18} />
@@ -104,7 +101,7 @@ export default function Header({ onChangelogClick }: HeaderProps) {
                   />
                   <div style={{
                     position: 'absolute',
-                    top: '100%',
+                    top: '120%',
                     right: 0,
                     marginTop: '0.5rem',
                     background: 'var(--bg-primary)',

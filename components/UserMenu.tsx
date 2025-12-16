@@ -66,18 +66,9 @@ export default function UserMenu({ onProgressClick }: UserMenuProps) {
       <>
         <button
           onClick={() => setMostrarAuthModal(true)}
-          style={{
-            padding: '0.5rem 1rem',
-            backgroundColor: 'var(--text-primary)',
-            color: 'var(--bg-primary)',
-            border: 'none',
-            borderRadius: '6px',
-            fontSize: '0.875rem',
-            fontWeight: 600,
-            cursor: 'pointer'
-          }}
+          className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold shadow-sm transition-colors text-sm"
         >
-          Ingresar / Registrarse
+          Ingresar
         </button>
         <AuthModal abierto={mostrarAuthModal} onCerrar={() => setMostrarAuthModal(false)} />
       </>
