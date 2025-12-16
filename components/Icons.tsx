@@ -71,6 +71,8 @@ interface IconProps {
   height?: number;
   size?: number;
   color?: string;
+  className?: string;
+  onClick?: () => void;
 }
 
 const getSize = (props: IconProps): number => {
@@ -185,6 +187,12 @@ export const IconShareAlt = (props: IconProps) => (
 );
 export const IconVerified = (props: IconProps) => (
   <FaCheckCircle size={getSize(props)} color={props.color || 'currentColor'} />
+);
+export const IconWhatsapp = (props: IconProps) => (
+  <FaWhatsapp size={getSize(props)} color={props.color || 'currentColor'} />
+);
+export const IconMapMarkerAlt = (props: IconProps) => (
+  <FaMapMarkerAlt size={getSize(props)} color={props.color || 'currentColor'} />
 );
 
 // Iconos del formulario
