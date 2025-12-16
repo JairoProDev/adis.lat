@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import ChatbotIANew from './ChatbotIANew';
+import ChatbotInteractivo from './ChatbotInteractivo';
 import { AnimatePresence, motion } from 'framer-motion';
 
 export default function FloatingChatbot() {
@@ -60,11 +60,7 @@ export default function FloatingChatbot() {
                             <button onClick={toggleChat} style={{ background: 'rgba(0,0,0,0.1)', border: 'none', borderRadius: '50%', width: 30, height: 30 }}>✕</button>
                         </div>
 
-                        <ChatbotIANew onMinimize={() => {
-                            setIsOpen(false);
-                            localStorage.setItem('adis_chat_open', 'false');
-                            setHasHistory(true); // Ensure history indicator is on
-                        }} />
+                        <ChatbotInteractivo />
                     </motion.div>
                 )}
             </AnimatePresence>
