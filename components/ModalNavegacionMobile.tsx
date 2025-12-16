@@ -3,14 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { Adiso } from '@/types';
-import { IconAdiso, IconMap, IconMegaphone, IconChatbot, IconGratuitos, IconClose } from './Icons';
+import { IconAdiso, IconMap, IconMegaphone, IconChatbot, IconGratuitos, IconClose, IconStore } from './Icons';
 import ModalAdiso from './ModalAdiso';
 import MapaInteractivo from './MapaInteractivo';
 import FormularioPublicar from './FormularioPublicar';
 import ChatbotIA from './ChatbotIANew';
 import AdisosGratuitos from './AdisosGratuitos';
-
-export type SeccionSidebar = 'adiso' | 'mapa' | 'publicar' | 'chatbot' | 'gratuitos';
+import type { SeccionSidebar } from './SidebarDesktop';
 
 interface ModalNavegacionMobileProps {
   abierto: boolean;
@@ -72,7 +71,8 @@ export default function ModalNavegacionMobile({
     { id: 'mapa' as SeccionSidebar, icono: IconMap, label: 'Mapa' },
     { id: 'publicar' as SeccionSidebar, icono: IconMegaphone, label: 'Publicar' },
 
-    { id: 'gratuitos' as SeccionSidebar, icono: IconGratuitos, label: 'Gratuitos' }
+    { id: 'gratuitos' as SeccionSidebar, icono: IconGratuitos, label: 'Gratuitos' },
+    { id: 'negocio' as SeccionSidebar, icono: IconStore, label: 'Negocio' }
   ];
 
   const handleCambiarSeccion = (seccion: SeccionSidebar) => {

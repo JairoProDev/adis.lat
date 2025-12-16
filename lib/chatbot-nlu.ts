@@ -121,7 +121,7 @@ const PALABRAS_CATEGORIA: Record<string, CategoriaPeso> = {
     'plomero': { cat: 'servicios', peso: 2 },
     'electricista': { cat: 'servicios', peso: 2 },
     'gasfitero': { cat: 'servicios', peso: 2 },
-    'técnico': { cat: 'servicios', peso: 1 }, // Ambiguo
+
     'instalación': { cat: 'servicios', peso: 1.5 },
 
     // Productos

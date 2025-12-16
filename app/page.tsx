@@ -944,7 +944,7 @@ function HomeContent() {
         <ModalNavegacionMobile
           abierto={!!seccionMobileActiva}
           onCerrar={handleCerrarSeccionMobile}
-          seccionInicial={seccionMobileActiva}
+          seccionInicial={seccionMobileActiva || undefined}
           adisoAbierto={adisoAbierto}
           onCerrarAdiso={handleCerrarAdiso}
           onAnterior={handleAnterior}
