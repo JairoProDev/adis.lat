@@ -20,7 +20,7 @@ export default function UserProfile({ abierto, onCerrar }: UserProfileProps) {
   const [editando, setEditando] = useState(false);
   const [cargando, setCargando] = useState(false);
   const [mostrarLocationPrompt, setMostrarLocationPrompt] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     nombre: '',
     apellido: '',
@@ -217,6 +217,38 @@ export default function UserProfile({ abierto, onCerrar }: UserProfileProps) {
                     📍 Agregar Ubicación
                   </button>
                 )}
+              </div>
+
+              <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '1rem' }}>
+                  Negocio & Tienda
+                </h3>
+                <button
+                  onClick={() => {
+                    window.location.href = '/mi-negocio';
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    background: 'linear-gradient(to right, #2563eb, #7c3aed)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)'
+                  }}
+                >
+                  <span>🛍️</span> Crear / Gestionar Mi Negocio Digital
+                </button>
+                <p style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+                  Tu propia página web con catálogo, linktree y más.
+                </p>
               </div>
             </div>
           ) : (
