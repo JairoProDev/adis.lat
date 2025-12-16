@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Adiso, Categoria } from '@/types';
-import { FaSpinner } from 'react-icons/fa';
+import { FaSpinner, FaTrash } from 'react-icons/fa';
 import { supabase } from '@/lib/supabase';
 import { getAdisoUrl } from '@/lib/url';
 import { useNavigation } from '@/contexts/NavigationContext';
@@ -107,7 +107,8 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
     const router = useRouter();
     const { abrirAdiso } = useNavigation();
 
-    const [mensajes, setMensajes] = useState<Mensaje[]>([
+    // Mensaje inicial por defecto
+    const MENSAJE_INICIAL: Mensaje[] = [
         {
             id: '1',
             tipo: 'asistente',
@@ -121,7 +122,48 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
             timestamp: new Date(),
             botones: CATEGORIAS
         }
-    ]);
+    ];
+
+    const [mensajes, setMensajes] = useState<Mensaje[]>(MENSAJE_INICIAL);
+    const [isLoaded, setIsLoaded] = useState(false);
+
+    // Cargar historial al montar
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('adis_chat_mensajes');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    // Restaurar fechas
+                    const restored = parsed.map((m: any) => ({
+                        ...m,
+                        timestamp: new Date(m.timestamp)
+                    }));
+                    if (restored.length > 0) {
+                        setMensajes(restored);
+                    }
+                } catch (e) {
+                    console.error('Error restaurando chat', e);
+                }
+            }
+            setIsLoaded(true);
+        }
+    }, []);
+
+    // Guardar historial al actualizar
+    useEffect(() => {
+        if (isLoaded && typeof window !== 'undefined') {
+            localStorage.setItem('adis_chat_mensajes', JSON.stringify(mensajes));
+        }
+    }, [mensajes, isLoaded]);
+
+    const limpiarHistorial = () => {
+        if (window.confirm('¿Borrar toda la conversación?')) {
+            setMensajes(MENSAJE_INICIAL);
+            setEstadoBusqueda({});
+            localStorage.removeItem('adis_chat_mensajes');
+        }
+    };
 
     const [procesando, setProcesando] = useState(false);
     const [estadoBusqueda, setEstadoBusqueda] = useState<EstadoBusqueda>({});
@@ -134,8 +176,11 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
     };
 
     useEffect(() => {
-        scrollToBottom();
-    }, [mensajes]);
+        // Solo hacer scroll automático si ya cargó el historial o se añade un mensaje nuevo
+        if (isLoaded) {
+            scrollToBottom();
+        }
+    }, [mensajes, isLoaded]);
 
     const agregarMensaje = (tipo: 'usuario' | 'asistente' | 'botones', contenido: string, opciones?: { resultados?: Adiso[]; botones?: BotonOpcion[] }) => {
         const nuevoMensaje: Mensaje = {
@@ -416,6 +461,7 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
             <div
                 style={{
                     padding: '1rem',
+                    paddingRight: '3.5rem', // Espacio reservado para el botón de cerrar (X) del padre
                     borderBottom: '1px solid var(--border-color)',
                     backgroundColor: 'var(--bg-secondary)',
                     display: 'flex',
@@ -426,6 +472,7 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
                     zIndex: 10
                 }}
             >
+
                 <div
                     style={{
                         width: '40px',
@@ -451,6 +498,33 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
                         Encuentra lo que buscas en segundos
                     </div>
                 </div>
+
+                <button
+                    onClick={limpiarHistorial}
+                    title="Limpiar historial"
+                    style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'var(--text-tertiary)',
+                        cursor: 'pointer',
+                        padding: '8px',
+                        borderRadius: '50%',
+                        transition: 'all 0.2s',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                        e.currentTarget.style.color = '#ef4444';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.color = 'var(--text-tertiary)';
+                    }}
+                >
+                    <FaTrash size={14} />
+                </button>
             </div>
 
             {/* Mensajes */}
