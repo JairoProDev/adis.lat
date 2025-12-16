@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { signUp, signIn, signInWithOAuth, signInWithMagicLink } from '@/lib/auth';
 import { useAuth } from '@/hooks/useAuth';
-import { IconClose } from './Icons';
+import { IconClose, IconGoogle, IconFacebook } from './Icons';
 
 interface AuthModalProps {
   abierto: boolean;
@@ -325,20 +325,25 @@ export default function AuthModal({ abierto, onCerrar, modoInicial = 'signup' }:
                   style={{
                     flex: 1,
                     padding: '0.75rem',
-                    backgroundColor: 'var(--bg-secondary)',
-                    color: 'var(--text-primary)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '6px',
-                    fontSize: '0.875rem',
+                    backgroundColor: '#fff',
+                    color: '#333',
+                    border: '1px solid #ddd',
+                    borderRadius: '8px',
+                    fontSize: '0.95rem',
                     fontWeight: 500,
                     cursor: cargando ? 'not-allowed' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '0.5rem'
+                    gap: '0.75rem',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
                   }}
+                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f8f9fa'}
+                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#fff'}
                 >
-                  <span>🔵</span> Google
+                  <IconGoogle size={20} />
+                  <span>Google</span>
                 </button>
                 <button
                   type="button"
@@ -347,20 +352,25 @@ export default function AuthModal({ abierto, onCerrar, modoInicial = 'signup' }:
                   style={{
                     flex: 1,
                     padding: '0.75rem',
-                    backgroundColor: 'var(--bg-secondary)',
-                    color: 'var(--text-primary)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '6px',
-                    fontSize: '0.875rem',
+                    backgroundColor: '#1877F2',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '0.95rem',
                     fontWeight: 500,
                     cursor: cargando ? 'not-allowed' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '0.5rem'
+                    gap: '0.75rem',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 2px 4px rgba(24, 119, 242, 0.3)'
                   }}
+                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#166fe5'}
+                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#1877F2'}
                 >
-                  <span>🔵</span> Facebook
+                  <IconFacebook size={20} color="#fff" />
+                  <span>Facebook</span>
                 </button>
               </div>
             </div>

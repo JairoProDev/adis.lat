@@ -66,6 +66,7 @@ import {
   FaInfoCircle,
   FaQrcode
 } from 'react-icons/fa';
+import { FcGoogle } from 'react-icons/fc';
 
 interface IconProps {
   width?: number;
@@ -280,4 +281,8 @@ export const IconStar = (props: IconProps) => (
 
 export const IconQrcode = (props: IconProps) => (
   <FaQrcode size={getSize(props)} color={props.color || 'currentColor'} />
+);
+
+export const IconGoogle = (props: IconProps) => (
+  <FcGoogle size={getSize(props)} color={props.color || 'currentColor'} />
 );
