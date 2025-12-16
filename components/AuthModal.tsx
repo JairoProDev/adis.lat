@@ -315,7 +315,8 @@ export default function AuthModal({ abierto, onCerrar, modoInicial = 'signup' }:
           </form>
 
           {/* OAuth Buttons */}
-          {modo === 'login' && (
+          {/* OAuth Buttons */}
+          {(modo === 'login' || modo === 'signup') && (
             <div style={{ marginBottom: '1rem' }}>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <button
@@ -343,34 +344,7 @@ export default function AuthModal({ abierto, onCerrar, modoInicial = 'signup' }:
                   onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#fff'}
                 >
                   <IconGoogle size={20} />
-                  <span>Google</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleOAuth('facebook')}
-                  disabled={cargando}
-                  style={{
-                    flex: 1,
-                    padding: '0.75rem',
-                    backgroundColor: '#1877F2',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '0.95rem',
-                    fontWeight: 500,
-                    cursor: cargando ? 'not-allowed' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.75rem',
-                    transition: 'all 0.2s ease',
-                    boxShadow: '0 2px 4px rgba(24, 119, 242, 0.3)'
-                  }}
-                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#166fe5'}
-                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#1877F2'}
-                >
-                  <IconFacebook size={20} color="#fff" />
-                  <span>Facebook</span>
+                  <span>{modo === 'login' ? 'Continuar con Google' : 'Registrarse con Google'}</span>
                 </button>
               </div>
             </div>
