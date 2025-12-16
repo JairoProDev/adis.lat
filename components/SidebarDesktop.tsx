@@ -11,6 +11,7 @@ import MapaInteractivo from './MapaInteractivo';
 import FormularioPublicar from './FormularioPublicar';
 import ChatbotIA from './ChatbotIANew';
 import AdisosGratuitos from './AdisosGratuitos';
+import { useNavigation } from '@/contexts/NavigationContext';
 
 export type SeccionSidebar = 'adiso' | 'mapa' | 'publicar' | 'chatbot' | 'gratuitos' | 'negocio';
 
@@ -58,12 +59,14 @@ export default function SidebarDesktop({
   const [minimizado, setMinimizado] = useState(defaultMinimized);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [tooltipHovered, setTooltipHovered] = useState<SeccionSidebar | null>(null);
+  const { setSidebarExpanded } = useNavigation();
 
   // Update CSS variable for sidebar width to allow page layout to adapt
   useEffect(() => {
     const width = minimizado ? 60 : 420;
     document.documentElement.style.setProperty('--sidebar-width', `${width}px`);
-  }, [minimizado]);
+    setSidebarExpanded(!minimizado);
+  }, [minimizado, setSidebarExpanded]);
 
   // Auto-open adiso section and expand sidebar when adiso is opened
   const userMinimizedRef = React.useRef<boolean>(false);

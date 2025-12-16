@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Adiso, Categoria } from '@/types';
-import { FaSpinner, FaTrash } from 'react-icons/fa';
+import { FaSpinner, FaTrash, FaTimes } from 'react-icons/fa';
 import { supabase } from '@/lib/supabase';
 import { getAdisoUrl } from '@/lib/url';
 import { useNavigation } from '@/contexts/NavigationContext';
@@ -458,10 +458,10 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
             }}
         >
             {/* Header */}
+            {/* Header */}
             <div
                 style={{
                     padding: '1rem',
-                    paddingRight: '3.5rem', // Espacio reservado para el botón de cerrar (X) del padre
                     borderBottom: '1px solid var(--border-color)',
                     backgroundColor: 'var(--bg-secondary)',
                     display: 'flex',
@@ -499,32 +499,63 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
                     </div>
                 </div>
 
-                <button
-                    onClick={limpiarHistorial}
-                    title="Limpiar historial"
-                    style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: 'var(--text-tertiary)',
-                        cursor: 'pointer',
-                        padding: '8px',
-                        borderRadius: '50%',
-                        transition: 'all 0.2s',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                    }}
-                    onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
-                        e.currentTarget.style.color = '#ef4444';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent';
-                        e.currentTarget.style.color = 'var(--text-tertiary)';
-                    }}
-                >
-                    <FaTrash size={14} />
-                </button>
+                <div style={{ display: 'flex', gap: '0.25rem' }}>
+                    <button
+                        onClick={limpiarHistorial}
+                        title="Limpiar historial"
+                        style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: 'var(--text-tertiary)',
+                            cursor: 'pointer',
+                            padding: '8px',
+                            borderRadius: '50%',
+                            transition: 'all 0.2s',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                            e.currentTarget.style.color = '#ef4444';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                            e.currentTarget.style.color = 'var(--text-tertiary)';
+                        }}
+                    >
+                        <FaTrash size={14} />
+                    </button>
+
+                    {onMinimize && (
+                        <button
+                            onClick={onMinimize}
+                            title="Cerrar chat"
+                            style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: 'var(--text-tertiary)',
+                                cursor: 'pointer',
+                                padding: '8px',
+                                borderRadius: '50%',
+                                transition: 'all 0.2s',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
+                                e.currentTarget.style.color = 'var(--text-primary)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = 'transparent';
+                                e.currentTarget.style.color = 'var(--text-tertiary)';
+                            }}
+                        >
+                            <FaTimes size={16} />
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Mensajes */}

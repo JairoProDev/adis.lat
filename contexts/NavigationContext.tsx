@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useRef, useCallback } from 'react';
+import React, { createContext, useContext, useRef, useCallback, useState } from 'react';
 
 type OpenAdisoFn = (id: string) => void;
 
@@ -8,12 +8,15 @@ interface NavigationContextType {
     abrirAdiso: (id: string) => void;
     registrarOpener: (fn: OpenAdisoFn) => void;
     desregistrarOpener: () => void;
+    isSidebarExpanded: boolean;
+    setSidebarExpanded: (expanded: boolean) => void;
 }
 
 const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
 
 export function NavigationProvider({ children }: { children: React.ReactNode }) {
     const openerRef = useRef<OpenAdisoFn | null>(null);
+    const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
 
     const registrarOpener = useCallback((fn: OpenAdisoFn) => {
         openerRef.current = fn;
@@ -34,7 +37,13 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
     }, []);
 
     return (
-        <NavigationContext.Provider value={{ abrirAdiso, registrarOpener, desregistrarOpener }}>
+        <NavigationContext.Provider value={{
+            abrirAdiso,
+            registrarOpener,
+            desregistrarOpener,
+            isSidebarExpanded, // Expose state
+            setSidebarExpanded: setIsSidebarExpanded // Expose setter
+        }}>
             {children}
         </NavigationContext.Provider>
     );
