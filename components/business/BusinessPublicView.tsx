@@ -78,19 +78,19 @@ export default function BusinessPublicView({ profile, adisos, isPreview = false 
             )}
 
             {/* --- HERO SECTION --- */}
-            <div className="relative w-full h-[60vh] max-h-[500px] min-h-[350px] overflow-hidden">
+            <div className="relative w-full h-[60vh] max-h-[500px] min-h-[350px] overflow-hidden group">
                 {/* Banner Image */}
                 <div className="absolute inset-0 bg-gray-900">
                     {profile.banner_url ? (
                         <img
                             src={profile.banner_url}
                             alt="Banner"
-                            className="w-full h-full object-cover opacity-80"
+                            className="w-full h-full object-cover object-center opacity-80 transition-transform duration-1000 group-hover:scale-105"
                         />
                     ) : (
                         <div className="w-full h-full bg-gradient-to-br from-[var(--brand-color)] to-purple-900 opacity-80" />
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
                 </div>
 
                 {/* Main Content Overlay */}

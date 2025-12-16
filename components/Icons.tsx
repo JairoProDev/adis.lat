@@ -63,7 +63,8 @@ import {
   FaEye,
   FaTags,
   FaExclamationTriangle,
-  FaInfoCircle
+  FaInfoCircle,
+  FaQrcode
 } from 'react-icons/fa';
 
 interface IconProps {
@@ -275,4 +276,8 @@ export const IconUserCheck = (props: IconProps) => (
 
 export const IconStar = (props: IconProps) => (
   <FaStar size={getSize(props)} color={props.color || 'currentColor'} />
+);
+
+export const IconQrcode = (props: IconProps) => (
+  <FaQrcode size={getSize(props)} color={props.color || 'currentColor'} />
 );

@@ -10,7 +10,7 @@ import {
     IconCopy, IconEye, IconEdit, IconExternalLink,
     IconWhatsapp, IconMapMarkerAlt, IconEnvelope,
     IconStore, IconCheck, IconClose, IconRobot,
-    IconInstagram, IconFacebook, IconTiktok
+    IconInstagram, IconFacebook, IconTiktok, IconQrcode
 } from '@/components/Icons';
 import AuthModal from '@/components/AuthModal';
 import BusinessPublicView from '@/components/business/BusinessPublicView';
@@ -18,6 +18,7 @@ import { supabase, dbToAdiso } from '@/lib/supabase';
 import { Adiso } from '@/types';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/hooks/useToast';
+import { EditorSteps } from './components/EditorSteps';
 
 export default function BusinessBuilderPage() {
     const { user, loading: authLoading } = useAuth();
@@ -376,24 +377,40 @@ export default function BusinessBuilderPage() {
                         {profile.slug && (
                             <div className="flex items-center gap-2">
                                 <button
-                                    onClick={handleDownloadQR}
-                                    className="hidden md:flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
-                                    title="Descargar QR para imprimir"
+                                    onClick={() => {
+                                        // TODO: Open a nice modal with the downloadable QR
+                                        const url = `${window.location.origin}/negocio/${profile.slug}`;
+                                        window.open(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`, '_blank');
+                                    }}
+                                    className="hidden md:flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 rounded-lg transition-all"
+                                    title="Ver código QR"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><rect x="7" y="7" width="3" height="3" /><rect x="14" y="7" width="3" height="3" /><rect x="7" y="14" width="3" height="3" /><rect x="14" y="14" width="3" height="3" /></svg>
+                                    <IconQrcode size={16} />
                                     <span className="hidden lg:inline">QR</span>
                                 </button>
                                 <button
-                                    onClick={handleCopyLink}
-                                    className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                                    onClick={() => {
+                                        const url = `${window.location.origin}/negocio/${profile.slug}`;
+                                        navigator.clipboard.writeText(url);
+                                        showToast('Link copiado al portapapeles', 'success');
+                                    }}
+                                    className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 rounded-lg transition-all"
                                 >
-                                    <IconCopy size={18} />
+                                    <IconCopy size={16} />
                                     <span className="hidden lg:inline">Copiar Link</span>
                                 </button>
+                                <a
+                                    href={`/negocio/${profile.slug}`}
+                                    target="_blank"
+                                    className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 rounded-lg transition-all"
+                                >
+                                    <IconExternalLink size={16} />
+                                    <span className="hidden lg:inline">Ver</span>
+                                </a>
                             </div>
                         )}
 
-                        <div className="h-6 w-px bg-slate-300 mx-1 hidden sm:block"></div>
+                        <div className="h-6 w-px bg-slate-200 mx-2 hidden sm:block"></div>
 
                         <button
                             onClick={handleTogglePublish}
@@ -422,448 +439,20 @@ export default function BusinessBuilderPage() {
             <div className="flex-1 flex overflow-hidden h-[calc(100vh-64px)] relative">
 
                 {/* LEFT: Editor Panel */}
+                {/* LEFT: Editor Panel */}
                 <div className={cn(
-                    "bg-white border-r border-slate-200 h-full overflow-y-auto custom-scrollbar transition-transform duration-300 z-20",
+                    "bg-white border-r border-slate-200 h-full transition-transform duration-300 z-20",
                     // Mobile: Absolute positioning, toggles via translate
                     "absolute inset-0 w-full",
                     activeTab === 'editor' ? "translate-x-0" : "-translate-x-full",
                     // Desktop: Relative positioning, fixed width, always visible
                     "md:relative md:w-[450px] lg:w-[500px] md:translate-x-0 md:inset-auto md:flex-shrink-0"
                 )}>
-                    <div className="p-6 space-y-8 pb-32">
-
-                        {/* Section: Basic Info */}
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Identidad</h3>
-                            </div>
-
-                            <div className="space-y-3">
-                                <label className="block">
-                                    <span className="text-sm font-semibold text-slate-700 mb-1 block">Nombre del Negocio</span>
-                                    <input
-                                        type="text"
-                                        value={profile.name}
-                                        onChange={e => handleNameChange(e.target.value)}
-                                        className="w-full px-4 py-2.5 rounded-lg bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 transition-all outline-none font-medium"
-                                        placeholder="Ej. Mi Tienda Genial"
-                                    />
-                                </label>
-
-                                <label className="block">
-                                    <span className="text-sm font-semibold text-slate-700 mb-1 block">URL (Slug)</span>
-                                    <div className="flex items-center rounded-lg bg-slate-50 border border-slate-200 focus-within:border-blue-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
-                                        <span className="pl-3 text-slate-400 text-sm select-none">/negocio/</span>
-                                        <input
-                                            type="text"
-                                            value={profile.slug}
-                                            onChange={e => {
-                                                setSlugManuallyEdited(true);
-                                                handleSlugCheck(e.target.value);
-                                            }}
-                                            className="flex-1 px-2 py-2.5 bg-transparent outline-none text-sm font-medium text-slate-700"
-                                            placeholder="mi-tienda"
-                                        />
-                                        {profile.slug && (
-                                            <div className="pr-3">
-                                                {slugAvailable === true && <IconCheck size={16} className="text-green-500" />}
-                                                {slugAvailable === false && <IconClose size={16} className="text-red-500" />}
-                                            </div>
-                                        )}
-                                    </div>
-                                </label>
-
-                                <label className="block">
-                                    <div className="flex justify-between items-center mb-1">
-                                        <span className="text-sm font-semibold text-slate-700">Descripción</span>
-                                        <button
-                                            onClick={() => {
-                                                if (!profile.name || profile.name.length < 3) {
-                                                    showToast('Primero escribe el nombre del negocio', 'error');
-                                                    return;
-                                                }
-                                                // Simulación de IA
-                                                setSaving(true);
-                                                setTimeout(() => {
-                                                    setProfile({
-                                                        ...profile,
-                                                        description: `¡Bienvenidos a ${profile.name}! Somos líderes en nuestra industria, comprometidos con la calidad y la satisfacción del cliente. Ofrecemos los mejores productos y servicios personalizados para ti. ¡Visítanos y descubre la diferencia!`
-                                                    });
-                                                    setSaving(false);
-                                                    showToast('¡Descripción mejorada con IA!', 'success');
-                                                }, 1500);
-                                            }}
-                                            className="text-xs flex items-center gap-1 text-purple-600 font-medium hover:bg-purple-50 px-2 py-1 rounded-full transition-colors"
-                                        >
-                                            <IconRobot size={12} />
-                                            Mejorar con IA
-                                        </button>
-                                    </div>
-                                    <textarea
-                                        value={profile.description}
-                                        onChange={e => setProfile({ ...profile, description: e.target.value })}
-                                        className="w-full px-4 py-2.5 rounded-lg bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 transition-all outline-none text-sm min-h-[100px] resize-y"
-                                        placeholder="Describe tu negocio en pocas palabras..."
-                                    />
-                                </label>
-                            </div>
-                        </div>
-
-                        <div className="h-px bg-slate-100" />
-
-                        {/* Section: Branding */}
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Marca</h3>
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <label className="block">
-                                    <span className="text-xs font-semibold text-slate-600 mb-1 block">Logo URL</span>
-                                    <div className="relative">
-                                        <input
-                                            type="text"
-                                            value={profile.logo_url || ''}
-                                            onChange={e => setProfile({ ...profile, logo_url: e.target.value })}
-                                            className="w-full pl-8 pr-3 py-2 rounded-lg bg-slate-50 border border-slate-200 focus:border-blue-500 outline-none text-xs"
-                                            placeholder="https://..."
-                                        />
-                                        <div className="absolute left-2.5 top-2.5 w-3 h-3 rounded-full overflow-hidden bg-slate-200">
-                                            {profile.logo_url && <img src={profile.logo_url} className="w-full h-full object-cover" />}
-                                        </div>
-                                    </div>
-                                </label>
-                                <label className="block">
-                                    <span className="text-xs font-semibold text-slate-600 mb-1 block">Banner URL</span>
-                                    <div className="relative">
-                                        <input
-                                            type="text"
-                                            value={profile.banner_url || ''}
-                                            onChange={e => setProfile({ ...profile, banner_url: e.target.value })}
-                                            className="w-full pl-8 pr-3 py-2 rounded-lg bg-slate-50 border border-slate-200 focus:border-blue-500 outline-none text-xs"
-                                            placeholder="https://..."
-                                        />
-                                        <div className="absolute left-2.5 top-2.5 w-4 h-2 rounded-sm overflow-hidden bg-slate-200">
-                                            {profile.banner_url && <img src={profile.banner_url} className="w-full h-full object-cover" />}
-                                        </div>
-                                    </div>
-                                </label>
-                            </div>
-
-                            <label className="block mb-3">
-                                <span className="text-xs font-semibold text-slate-600 mb-1 block">Estilo de Diseño</span>
-                                <div className="flex bg-slate-50 p-1 rounded-lg border border-slate-200">
-                                    {['standard', 'bento', 'minimal'].map(style => (
-                                        <button
-                                            key={style}
-                                            onClick={() => setProfile({ ...profile, layout_style: style as any })}
-                                            className={cn(
-                                                "flex-1 py-1.5 text-xs font-medium rounded-md transition-all capitalize",
-                                                (profile.layout_style || 'standard') === style ? "bg-white shadow text-blue-600" : "text-slate-500 hover:text-slate-700"
-                                            )}
-                                        >
-                                            {style === 'standard' ? 'Estándar' : style === 'bento' ? 'Grid (Bento)' : 'Minimal'}
-                                        </button>
-                                    ))}
-                                </div>
-                            </label>
-
-                            <label className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-200">
-                                <div>
-                                    <span className="text-sm font-semibold text-slate-700 block">Color de Marca</span>
-                                    <span className="text-xs text-slate-400">Define el estilo de tu página</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="flex gap-1 mr-2">
-                                        {['#3c6997', '#0f172a', '#16a34a', '#dc2626', '#e11d48', '#7c3aed'].map(c => (
-                                            <button
-                                                key={c}
-                                                onClick={() => setProfile({ ...profile, theme_color: c })}
-                                                className={cn("w-5 h-5 rounded-full border border-slate-200", profile.theme_color === c ? "ring-2 ring-offset-1 ring-slate-400" : "")}
-                                                style={{ backgroundColor: c }}
-                                            />
-                                        ))}
-                                    </div>
-                                    <div className="h-6 w-px bg-slate-300 mx-1"></div>
-                                    <input
-                                        type="color"
-                                        value={profile.theme_color || '#3c6997'}
-                                        onChange={e => setProfile({ ...profile, theme_color: e.target.value })}
-                                        className="w-8 h-8 rounded-full border-0 p-0 cursor-pointer overflow-hidden shadow-sm"
-                                    />
-                                </div>
-                            </label>
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <label className="block">
-                                    <span className="text-xs font-semibold text-slate-600 mb-1 block">Favicon URL</span>
-                                    <input
-                                        type="text"
-                                        value={profile.favicon_url || ''}
-                                        onChange={e => setProfile({ ...profile, favicon_url: e.target.value })}
-                                        className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 focus:border-blue-500 outline-none text-xs"
-                                        placeholder="https://..."
-                                    />
-                                </label>
-                                <label className="block">
-                                    <span className="text-xs font-semibold text-slate-600 mb-1 block">Fuente (Tipografía)</span>
-                                    <select
-                                        value={profile.font_family || 'sans'}
-                                        onChange={e => setProfile({ ...profile, font_family: e.target.value })}
-                                        className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 focus:border-blue-500 outline-none text-xs"
-                                    >
-                                        <option value="sans">Moderna (Sans)</option>
-                                        <option value="serif">Elegante (Serif)</option>
-                                        <option value="mono">Técnica (Mono)</option>
-                                    </select>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div className="h-px bg-slate-100" />
-
-                        {/* Section: Contact */}
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Contacto</h3>
-
-                            <div className="space-y-3">
-                                <label className="flex items-center gap-3">
-                                    <IconWhatsapp className="text-green-600 flex-shrink-0" size={20} />
-                                    <input
-                                        type="text"
-                                        value={profile.contact_whatsapp || ''}
-                                        onChange={e => setProfile({ ...profile, contact_whatsapp: e.target.value })}
-                                        className="flex-1 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 focus:border-green-500 outline-none text-sm"
-                                        placeholder="WhatsApp (Ej. 51999...)"
-                                    />
-                                </label>
-                                <label className="flex items-center gap-3">
-                                    <IconMapMarkerAlt className="text-red-500 flex-shrink-0" size={20} />
-                                    <input
-                                        type="text"
-                                        value={profile.contact_address || ''}
-                                        onChange={e => setProfile({ ...profile, contact_address: e.target.value })}
-                                        className="flex-1 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 focus:border-red-500 outline-none text-sm"
-                                        placeholder="Dirección Física"
-                                    />
-                                </label>
-                                <label className="flex items-center gap-3">
-                                    <IconEnvelope className="text-blue-500 flex-shrink-0" size={20} />
-                                    <input
-                                        type="email"
-                                        value={profile.contact_email || ''}
-                                        onChange={e => setProfile({ ...profile, contact_email: e.target.value })}
-                                        className="flex-1 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 focus:border-blue-500 outline-none text-sm"
-                                        placeholder="Email Público"
-                                    />
-                                </label>
-                            </div>
-                        </div>
-
-                        <div className="h-px bg-slate-100" />
-
-                        {/* Section: Social Media */}
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Redes Sociales</h3>
-                            <div className="space-y-3">
-                                {[
-                                    { network: 'instagram', color: 'bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500', placeholder: 'instagram.com/tu_negocio' },
-                                    { network: 'facebook', color: 'bg-blue-600', placeholder: 'facebook.com/tu_negocio' },
-                                    { network: 'tiktok', color: 'bg-black', placeholder: 'tiktok.com/@tu_negocio' }
-                                ].map((social) => {
-                                    const link = (profile.social_links || []).find(l => l.network === social.network);
-                                    return (
-                                        <label key={social.network} className="flex items-center gap-3">
-                                            <div className={`w-8 h-8 rounded-full ${social.color} flex items-center justify-center text-white shrink-0 shadow-sm`}>
-                                                {social.network === 'instagram' && <IconInstagram size={16} />}
-                                                {social.network === 'facebook' && <IconFacebook size={16} />}
-                                                {social.network === 'tiktok' && <IconTiktok size={14} />}
-                                            </div>
-                                            <input
-                                                type="text"
-                                                value={link?.url || ''}
-                                                onChange={(e) => {
-                                                    const url = e.target.value;
-                                                    const currentLinks = profile.social_links || [];
-                                                    const otherLinks = currentLinks.filter(l => l.network !== social.network);
-                                                    if (url) {
-                                                        setProfile({ ...profile, social_links: [...otherLinks, { network: social.network as any, url }] });
-                                                    } else {
-                                                        setProfile({ ...profile, social_links: otherLinks });
-                                                    }
-                                                }}
-                                                className="flex-1 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 focus:border-blue-500 outline-none text-sm transition-all focus:bg-white"
-                                                placeholder={social.placeholder}
-                                            />
-                                        </label>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-
-                        <div className="h-px bg-slate-100" />
-
-                        {/* Section: Business Hours */}
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Horarios de Atención</h3>
-                            <div className="space-y-2 bg-slate-50/50 p-4 rounded-xl border border-slate-200">
-                                {['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'].map((day) => {
-                                    const hours = (profile.business_hours as any)?.[day] || { open: '09:00', close: '18:00', closed: false };
-                                    return (
-                                        <div key={day} className="flex items-center justify-between text-sm py-1">
-                                            <span className="capitalize w-24 text-slate-700 font-medium">{day}</span>
-                                            <div className="flex items-center gap-2">
-                                                <label className="cursor-pointer flex items-center">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={!hours.closed}
-                                                        onChange={(e) => {
-                                                            const newHours = { ...profile.business_hours, [day]: { ...hours, closed: !e.target.checked } };
-                                                            setProfile({ ...profile, business_hours: newHours });
-                                                        }}
-                                                        className="text-blue-600 rounded focus:ring-blue-500 mr-2"
-                                                    />
-                                                    <span className="sr-only">Abierto</span>
-                                                </label>
-                                                {!hours.closed ? (
-                                                    <>
-                                                        <input
-                                                            type="time"
-                                                            value={hours.open}
-                                                            onChange={(e) => {
-                                                                const newHours = { ...profile.business_hours, [day]: { ...hours, open: e.target.value } };
-                                                                setProfile({ ...profile, business_hours: newHours });
-                                                            }}
-                                                            className="bg-white border border-slate-200 rounded px-2 py-1 text-xs outline-none focus:border-blue-500 w-20 text-center"
-                                                        />
-                                                        <span className="text-slate-400">-</span>
-                                                        <input
-                                                            type="time"
-                                                            value={hours.close}
-                                                            onChange={(e) => {
-                                                                const newHours = { ...profile.business_hours, [day]: { ...hours, close: e.target.value } };
-                                                                setProfile({ ...profile, business_hours: newHours });
-                                                            }}
-                                                            className="bg-white border border-slate-200 rounded px-2 py-1 text-xs outline-none focus:border-blue-500 w-20 text-center"
-                                                        />
-                                                    </>
-                                                ) : (
-                                                    <span className="text-slate-400 text-xs italic px-10">Cerrado</span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        <div className="h-px bg-slate-100" />
-
-                        {/* Section: Additional Settings */}
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Marketing & Configuración</h3>
-
-                            <label className="block p-4 rounded-xl border border-slate-200 bg-slate-50/50">
-                                <span className="text-sm font-semibold text-slate-700 mb-2 block flex items-center gap-2">
-                                    📣 Barra de Anuncios (Sticky Bar)
-                                    <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full uppercase font-bold">Nuevo</span>
-                                </span>
-                                <input
-                                    type="text"
-                                    value={profile.announcement_text || ''}
-                                    onChange={e => setProfile({ ...profile, announcement_text: e.target.value })}
-                                    className="w-full px-4 py-2.5 rounded-lg bg-white border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none text-sm mb-2"
-                                    placeholder="Ej. ¡Envío gratis por compras mayores a S/100!"
-                                />
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        type="checkbox"
-                                        checked={profile.announcement_active !== false} // Default active if text exists
-                                        onChange={e => setProfile({ ...profile, announcement_active: e.target.checked })}
-                                        className="rounded text-blue-600 focus:ring-blue-500"
-                                    />
-                                    <span className="text-xs text-slate-600">Mostrar barra en la parte superior</span>
-                                </div>
-                            </label>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <label className="block">
-                                    <span className="text-xs font-semibold text-slate-600 mb-1 block">Pixel de Facebook</span>
-                                    <input
-                                        type="text"
-                                        value={profile.pixel_facebook || ''}
-                                        onChange={e => setProfile({ ...profile, pixel_facebook: e.target.value })}
-                                        className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 focus:border-blue-500 outline-none text-xs"
-                                        placeholder="ID (Ej. 123456...)"
-                                    />
-                                </label>
-                                <label className="block">
-                                    <span className="text-xs font-semibold text-slate-600 mb-1 block">Tiktok Pixel</span>
-                                    <input
-                                        type="text"
-                                        value={profile.pixel_tiktok || ''}
-                                        onChange={e => setProfile({ ...profile, pixel_tiktok: e.target.value })}
-                                        className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 focus:border-blue-500 outline-none text-xs"
-                                        placeholder="ID (Ej. C123...)"
-                                    />
-                                </label>
-                            </div>
-
-                            <label className="block">
-                                <span className="text-xs font-semibold text-slate-600 mb-1 block">Dominio Personalizado</span>
-                                <div className="flex items-center rounded-lg bg-slate-50 border border-slate-200">
-                                    <span className="pl-3 text-slate-400 text-xs">https://</span>
-                                    <input
-                                        type="text"
-                                        value={profile.custom_domain || ''}
-                                        onChange={e => setProfile({ ...profile, custom_domain: e.target.value })}
-                                        className="flex-1 px-2 py-2 bg-transparent outline-none text-xs"
-                                        placeholder="midominio.com"
-                                    />
-                                    <div className="pr-2">
-                                        <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded uppercase font-bold tracking-wide border border-amber-200">Pro</span>
-                                    </div>
-                                </div>
-                            </label>
-
-                            <label className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 bg-white hover:border-slate-300 transition-colors cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={profile.is_vacation_mode || false}
-                                    onChange={e => setProfile({ ...profile, is_vacation_mode: e.target.checked })}
-                                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                                />
-                                <div>
-                                    <span className="text-sm text-slate-700 font-medium block">Activar Modo Vacaciones</span>
-                                    <span className="text-xs text-slate-500">Oculta botones de compra y muestra aviso</span>
-                                </div>
-                            </label>
-
-                            <label className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 bg-white hover:border-slate-300 transition-colors cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={profile.show_contact_form !== false}
-                                    onChange={e => setProfile({ ...profile, show_contact_form: e.target.checked })}
-                                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                                />
-                                <div>
-                                    <span className="text-sm text-slate-700 font-medium block">Mostrar Formulario de Contacto</span>
-                                    <span className="text-xs text-slate-500">Permite que tus clientes te envíen mensajes directamente</span>
-                                </div>
-                            </label>
-                        </div>
-
-                        {/* Extra Guidance Card */}
-                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-100 text-sm text-blue-800">
-                            <p className="font-medium mb-1">💡 ¿Listo para vender?</p>
-                            <p className="text-blue-600/80 text-xs">Asegúrate de tener adisos publicados. Aparecerán automáticamente en la pestaña "Catálogo".</p>
-                            <button
-                                onClick={() => router.push('/?action=publicar')}
-                                className="mt-2 text-xs font-bold underline hover:text-blue-900"
-                            >
-                                Publicar nuevo adiso
-                            </button>
-                        </div>
-                    </div>
+                    <EditorSteps
+                        profile={profile as any}
+                        setProfile={setProfile as any}
+                        saving={saving}
+                    />
                 </div>
 
                 {/* RIGHT: Live Preview */}
@@ -880,14 +469,25 @@ export default function BusinessBuilderPage() {
                     <div className="w-full h-full p-0 md:p-8 flex items-center justify-center overflow-hidden relative">
                         <div className="w-full h-full md:max-w-[1400px] bg-white md:rounded-2xl md:shadow-2xl overflow-y-auto custom-scrollbar relative border border-slate-200 block">
                             {/* Browser Mockup Header */}
-                            <div className="sticky top-0 z-50 bg-slate-800 text-slate-400 p-2 flex items-center gap-2 text-xs border-b border-slate-700 hidden md:flex">
-                                <div className="flex gap-1.5 ml-1">
-                                    <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
-                                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
-                                    <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
+                            <div className="sticky top-0 z-50 bg-[#f8f9fa] border-b border-slate-200 p-2 flex items-center justify-between gap-4 hidden md:flex h-12 shadow-sm">
+                                {/* Navigation Controls */}
+                                <div className="flex gap-2 ml-2 text-slate-400">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-50"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M3 21v-5h5" /></svg>
                                 </div>
-                                <div className="flex-1 text-center font-mono opacity-50 text-[10px] truncate px-4">
-                                    adis.lat/negocio/{profile.slug || '...'}
+
+                                {/* Address Bar */}
+                                <div className="flex-1 max-w-2xl bg-white border border-slate-300 rounded-md px-3 py-1.5 flex items-center gap-2 shadow-sm text-xs text-slate-600 font-medium mx-auto">
+                                    <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" className="text-green-500"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                    <span className="opacity-50">https://</span>
+                                    <span>adis.lat/negocio/{profile.slug || 'tu-negocio'}</span>
+                                </div>
+
+                                {/* Window Controls (Subtle) */}
+                                <div className="flex gap-1.5 mr-2 opacity-0">
+                                    <div className="w-3 h-3 rounded-full bg-slate-300" />
+                                    <div className="w-3 h-3 rounded-full bg-slate-300" />
                                 </div>
                             </div>
 
