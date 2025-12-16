@@ -6,9 +6,9 @@ import { BusinessProfile } from '@/types/business';
 import { Adiso } from '@/types';
 import { cn } from '@/lib/utils';
 import {
-    IconStore, IconMapMarkerAlt, IconPhone, IconWhatsapp, IconEnvelope,
-    IconGlobe, IconInstagram, IconFacebook, IconTiktok, IconShareAlt,
-    IconVerified, IconClock, IconChevronDown
+    IconStore, IconMapMarkerAlt, IconWhatsapp, IconEnvelope,
+    IconInstagram, IconFacebook, IconTiktok,
+    IconVerified, IconShareAlt, IconGlobe, IconPhone, IconClock, IconChevronDown
 } from '@/components/Icons';
 import BentoCard from '@/components/BentoCard';
 import { useRouter } from 'next/navigation';
@@ -53,11 +53,30 @@ export default function BusinessPublicView({ profile, adisos, isPreview = false 
 
     return (
         <div
-            className="min-h-screen bg-[var(--bg-secondary)] font-sans text-[var(--text-primary)]"
+            className={cn(
+                "min-h-screen bg-[var(--bg-secondary)] text-[var(--text-primary)]",
+                profile.font_family === 'serif' ? 'font-serif' :
+                    profile.font_family === 'mono' ? 'font-mono' : 'font-sans'
+            )}
             style={{
-                '--brand-color': profile.theme_color || '#3c6997'
+                '--brand-color': profile.theme_color || '#3c6997',
+                '--bg-primary': '#ffffff',
+                '--bg-secondary': '#f8fafc',
+                '--bg-tertiary': '#e2e8f0',
+                '--text-primary': '#0f172a',
+                '--text-secondary': '#475569',
+                '--text-tertiary': '#94a3b8',
+                '--border-color': '#e2e8f0',
+                '--border-subtle': '#f1f5f9',
             } as React.CSSProperties}
         >
+            {/* --- Sticky Announcement Bar --- */}
+            {profile.announcement_active !== false && profile.announcement_text && (
+                <div className="bg-yellow-300 text-yellow-900 text-center text-xs md:text-sm font-bold py-2 px-4 sticky top-0 z-50 animate-fade-in-down shadow-sm">
+                    📢 {profile.announcement_text}
+                </div>
+            )}
+
             {/* --- HERO SECTION --- */}
             <div className="relative w-full h-[60vh] max-h-[500px] min-h-[350px] overflow-hidden">
                 {/* Banner Image */}
@@ -252,9 +271,17 @@ export default function BusinessPublicView({ profile, adisos, isPreview = false 
                             <div className="lg:col-span-2">
                                 <h3 className="font-bold text-xl mb-6">Destacados</h3>
                                 {adisos.length > 0 ? (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        {adisos.slice(0, 4).map((adiso) => (
-                                            <div key={adiso.id} className="transform hover:scale-[1.02] transition-transform">
+                                    <div className={cn(
+                                        "grid gap-4",
+                                        profile.layout_style === 'minimal' ? "grid-cols-1" :
+                                            profile.layout_style === 'bento' ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3" : // Bento-ish via columns
+                                                "grid-cols-1 sm:grid-cols-2" // Standard
+                                    )}>
+                                        {adisos.slice(0, 4).map((adiso, idx) => (
+                                            <div key={adiso.id} className={cn(
+                                                "transform hover:scale-[1.02] transition-transform",
+                                                profile.layout_style === 'bento' && idx === 0 ? "md:col-span-2 md:row-span-2" : ""
+                                            )}>
                                                 <BentoCard
                                                     adiso={adiso}
                                                     icon={<IconStore size={12} />}
@@ -326,9 +353,17 @@ export default function BusinessPublicView({ profile, adisos, isPreview = false 
                                     <IconMapMarkerAlt className="text-[var(--brand-color)]" /> Ubicación
                                 </h3>
                                 <p className="text-[var(--text-secondary)] mb-4">{profile.contact_address || 'Dirección no especificada'}</p>
-                                {/* Mock Map */}
-                                <div className="w-full h-48 bg-[var(--bg-secondary)] rounded-xl flex items-center justify-center text-[var(--text-tertiary)] text-sm font-medium border border-[var(--border-color)]">
-                                    Google Maps Placeholder
+                                {/* Mock Map -> Real Map */}
+                                <div className="w-full h-48 bg-[var(--bg-secondary)] rounded-xl overflow-hidden border border-[var(--border-color)]">
+                                    <iframe
+                                        width="100%"
+                                        height="100%"
+                                        frameBorder="0"
+                                        scrolling="no"
+                                        marginHeight={0}
+                                        marginWidth={0}
+                                        src={`https://maps.google.com/maps?q=${encodeURIComponent(profile.contact_address || 'peru')}&t=&z=13&ie=UTF8&iwloc=&output=embed`}
+                                    ></iframe>
                                 </div>
                             </div>
 
@@ -338,19 +373,44 @@ export default function BusinessPublicView({ profile, adisos, isPreview = false 
                                     <IconClock className="text-[var(--brand-color)]" /> Horarios de Atención
                                 </h3>
                                 <div className="space-y-3">
-                                    {/* Mock hours */}
-                                    {['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'].map(day => (
-                                        <div key={day} className="flex justify-between text-sm py-2 border-b border-[var(--border-subtle)] last:border-0">
-                                            <span className="font-medium">{day}</span>
-                                            <span className="text-[var(--text-secondary)]">9:00 AM - 6:00 PM</span>
-                                        </div>
-                                    ))}
-                                    <div className="flex justify-between text-sm py-2 text-red-500 font-medium">
-                                        <span>Domingo</span>
-                                        <span>Cerrado</span>
-                                    </div>
+                                    {Object.entries(profile.business_hours || {}).length > 0 ? (
+                                        Object.entries(profile.business_hours).map(([day, hours]) => (
+                                            <div key={day} className="flex justify-between text-sm py-2 border-b border-[var(--border-subtle)] last:border-0">
+                                                <span className="font-medium capitalize">{day}</span>
+                                                <span className={hours.closed ? "text-red-500 font-medium" : "text-[var(--text-secondary)]"}>
+                                                    {hours.closed ? 'Cerrado' : `${hours.open} - ${hours.close}`}
+                                                </span>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'].map(day => (
+                                            <div key={day} className="flex justify-between text-sm py-2 border-b border-[var(--border-subtle)] last:border-0">
+                                                <span className="font-medium">{day}</span>
+                                                <span className="text-[var(--text-secondary)]">9:00 AM - 6:00 PM (Ejemplo)</span>
+                                            </div>
+                                        ))
+                                    )}
                                 </div>
                             </div>
+
+                            {/* Contact Form */}
+                            {profile.show_contact_form !== false && (
+                                <div className="bg-[var(--bg-primary)] p-6 rounded-3xl shadow-sm border border-[var(--border-subtle)]">
+                                    <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                                        <IconEnvelope className="text-[var(--brand-color)]" /> Contáctanos
+                                    </h3>
+                                    <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); alert('¡Mensaje enviado! Nos pondremos en contacto pronto.'); }}>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <input type="text" placeholder="Tu Nombre" className="px-4 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] outline-none focus:border-[var(--brand-color)] w-full text-sm" required />
+                                            <input type="email" placeholder="Tu Email" className="px-4 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] outline-none focus:border-[var(--brand-color)] w-full text-sm" required />
+                                        </div>
+                                        <textarea placeholder="¿En qué podemos ayudarte?" className="px-4 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] outline-none focus:border-[var(--brand-color)] w-full min-h-[100px] text-sm" required></textarea>
+                                        <button type="submit" className="w-full bg-[var(--brand-color)] text-white font-bold py-3 rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-[var(--brand-color)]/20">
+                                            Enviar Mensaje
+                                        </button>
+                                    </form>
+                                </div>
+                            )}
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -372,6 +432,6 @@ export default function BusinessPublicView({ profile, adisos, isPreview = false 
             <div className="py-8 text-center text-xs text-[var(--text-tertiary)]">
                 <p>Powered by <span className="font-bold text-[var(--brand-blue)]">Buscadis Store</span></p>
             </div>
-        </div>
+        </div >
     );
 }

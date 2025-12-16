@@ -79,6 +79,10 @@ const getSize = (props: IconProps): number => {
   return props.size || props.width || 18;
 };
 
+export const IconEye = (props: IconProps) => (
+  <FaEye size={getSize(props)} color={props.color || 'currentColor'} />
+);
+
 export const IconClose = (props: IconProps) => (
   <FaTimes size={getSize(props)} color={props.color || 'currentColor'} />
 );
@@ -206,9 +210,15 @@ export const IconDescription = (props: IconProps) => (
 
 
 
+export const IconRobot = (props: IconProps) => (
+  <FaRobot size={getSize(props)} color={props.color || 'currentColor'} />
+);
+
 export const IconMegaphone = (props: IconProps) => (
   <FaBullhorn size={getSize(props)} color={props.color || 'currentColor'} />
 );
+
+
 
 // Iconos para el sidebar
 export const IconMap = (props: IconProps) => (

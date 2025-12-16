@@ -46,6 +46,18 @@ export interface BusinessProfile {
     social_links: SocialLink[];
     custom_blocks: CustomBlock[];
 
+    // New features fields
+    announcement_text?: string;
+    announcement_active?: boolean;
+    is_verified?: boolean;
+    pixel_facebook?: string;
+    pixel_tiktok?: string;
+    is_vacation_mode?: boolean;
+    custom_domain?: string;
+    show_contact_form?: boolean;
+    favicon_url?: string;
+    font_family?: string;
+
     is_published: boolean;
     view_count: number;
 
