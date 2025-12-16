@@ -99,7 +99,7 @@ function HomeContent() {
   // Estados para scroll infinito
   const [cargandoMas, setCargandoMas] = useState(false);
   const [hayMasAdisos, setHayMasAdisos] = useState(true);
-  const ITEMS_POR_PAGINA = 50;
+  const ITEMS_POR_PAGINA = 100;
   const [modalMobileAbierto, setModalMobileAbierto] = useState(false);
   const [seccionMobileInicial, setSeccionMobileInicial] = useState<SeccionMobile>('gratuitos');
   const [seccionMobileActiva, setSeccionMobileActiva] = useState<SeccionSidebar | null>(null);

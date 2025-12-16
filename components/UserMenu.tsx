@@ -77,7 +77,7 @@ export default function UserMenu({ onProgressClick }: UserMenuProps) {
             cursor: 'pointer'
           }}
         >
-          Iniciar Sesión
+          Ingresar / Registrarse
         </button>
         <AuthModal abierto={mostrarAuthModal} onCerrar={() => setMostrarAuthModal(false)} />
       </>
@@ -320,23 +320,23 @@ export default function UserMenu({ onProgressClick }: UserMenuProps) {
         </div>
       )}
       <FavoritosList abierto={mostrarFavoritos} onCerrar={() => setMostrarFavoritos(false)} />
-      <LocationPrompt 
-        abierto={mostrarLocationPrompt} 
+      <LocationPrompt
+        abierto={mostrarLocationPrompt}
         onCerrar={() => setMostrarLocationPrompt(false)}
         onAceptar={() => {
           // Refrescar perfil después de guardar ubicación
           refreshProfile();
         }}
       />
-      <ConvertirAnunciante 
-        abierto={mostrarConvertirAnunciante} 
+      <ConvertirAnunciante
+        abierto={mostrarConvertirAnunciante}
         onCerrar={() => setMostrarConvertirAnunciante(false)}
         onExito={() => {
           // Mostrar mensaje de éxito o actualizar UI
         }}
       />
-      <UserProfile 
-        abierto={mostrarPerfil} 
+      <UserProfile
+        abierto={mostrarPerfil}
         onCerrar={() => setMostrarPerfil(false)}
       />
     </div>

@@ -12,7 +12,7 @@ interface AuthModalProps {
   modoInicial?: 'login' | 'signup';
 }
 
-export default function AuthModal({ abierto, onCerrar, modoInicial = 'login' }: AuthModalProps) {
+export default function AuthModal({ abierto, onCerrar, modoInicial = 'signup' }: AuthModalProps) {
   const [modo, setModo] = useState<'login' | 'signup' | 'reset'>(modoInicial);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

@@ -7,12 +7,14 @@ import { createBusinessProfile, getBusinessProfile, updateBusinessProfile, check
 import { BusinessProfile } from '@/types/business';
 import { cn } from '@/lib/utils';
 import { IconStore, IconCheck, IconClose } from '@/components/Icons';
+import AuthModal from '@/components/AuthModal';
 
 export default function BusinessBuilderPage() {
     const { user, loading: authLoading } = useAuth();
     const router = useRouter();
     const [profileLoading, setProfileLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [showAuthModal, setShowAuthModal] = useState(false);
 
     const [profile, setProfile] = useState<Partial<BusinessProfile>>({
         name: '',
@@ -152,6 +154,8 @@ export default function BusinessBuilderPage() {
         );
     }
 
+
+
     if (!user) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--bg-secondary)] p-4">
@@ -159,17 +163,28 @@ export default function BusinessBuilderPage() {
                     <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
                         <IconStore size={32} />
                     </div>
-                    <h1 className="text-2xl font-bold mb-3 text-[var(--text-primary)]">Inicia Sesión</h1>
+                    <h1 className="text-2xl font-bold mb-3 text-[var(--text-primary)]">Comienza tu Negocio Digital</h1>
                     <p className="mb-8 text-[var(--text-secondary)]">
-                        Para crear y gestionar tu negocio digital en Buscadis, necesitas acceder a tu cuenta.
+                        Estás a un paso de tener tu propia página web profesional. Crea tu cuenta gratis o inicia sesión para continuar.
                     </p>
                     <button
+                        onClick={() => setShowAuthModal(true)}
+                        className="w-full py-3 px-6 bg-[var(--text-primary)] text-[var(--bg-primary)] rounded-xl font-bold hover:opacity-90 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1 mb-4"
+                    >
+                        Crear Cuenta / Iniciar Sesión
+                    </button>
+                    <button
                         onClick={() => router.push('/')}
-                        className="w-full py-3 px-6 bg-[var(--text-primary)] text-[var(--bg-primary)] rounded-xl font-bold hover:opacity-90 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                        className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors underline"
                     >
                         Volver al Inicio
                     </button>
                 </div>
+                <AuthModal
+                    abierto={showAuthModal}
+                    onCerrar={() => setShowAuthModal(false)}
+                    modoInicial="signup"
+                />
             </div>
         );
     }
