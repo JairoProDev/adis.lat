@@ -14,24 +14,24 @@ interface DatosPublicacion {
 // Detectar intención del mensaje
 function detectarIntencion(mensaje: string): 'buscar' | 'publicar' | 'cancelar' | 'otro' {
   const texto = mensaje.toLowerCase().trim();
-
+  
   // Palabras clave para cancelar
   if (texto.includes('cancelar') || texto.includes('cancel') || texto.includes('no quiero') || texto.includes('olvídalo')) {
     return 'cancelar';
   }
-
+  
   // Palabras clave para publicar
   const palabrasPublicar = ['publicar', 'publica', 'crear', 'nuevo adiso', 'nuevo anuncio', 'quiero publicar', 'necesito publicar', 'agregar'];
   if (palabrasPublicar.some(palabra => texto.includes(palabra))) {
     return 'publicar';
   }
-
+  
   // Palabras clave para buscar
   const palabrasBuscar = ['buscar', 'busca', 'encontrar', 'necesito', 'quiero', 'tengo', 'hay', 'muéstrame', 'dame', 'ver'];
   if (palabrasBuscar.some(palabra => texto.includes(palabra)) || texto.includes('?')) {
     return 'buscar';
   }
-
+  
   return 'otro';
 }
 
@@ -58,13 +58,13 @@ function extraerCategoria(mensaje: string): Categoria | null {
     'negocio': 'negocios',
     'comunidad': 'comunidad'
   };
-
+  
   for (const [palabra, categoria] of Object.entries(categorias)) {
     if (texto.includes(palabra)) {
       return categoria;
     }
   }
-
+  
   return null;
 }
 
@@ -72,7 +72,7 @@ function extraerCategoria(mensaje: string): Categoria | null {
 function extraerDatosPublicacion(mensaje: string, datosActuales: DatosPublicacion, pasoActual?: string): DatosPublicacion {
   const texto = mensaje.toLowerCase();
   const nuevosDatos: DatosPublicacion = { ...datosActuales };
-
+  
   // Si hay un paso actual, procesar según ese paso
   if (pasoActual === 'categoria') {
     const categoria = extraerCategoria(mensaje);
@@ -104,7 +104,7 @@ function extraerDatosPublicacion(mensaje: string, datosActuales: DatosPublicacio
         nuevosDatos.categoria = categoria;
       }
     }
-
+    
     // Extraer título (si el mensaje parece un título)
     if (!nuevosDatos.titulo && mensaje.length > 5 && mensaje.length < 100) {
       // Si no tiene signos de interrogación y parece descriptivo
@@ -112,7 +112,7 @@ function extraerDatosPublicacion(mensaje: string, datosActuales: DatosPublicacio
         nuevosDatos.titulo = mensaje.substring(0, 50).trim();
       }
     }
-
+    
     // Extraer contacto (números de teléfono)
     if (!nuevosDatos.contacto) {
       const telefonoRegex = /(\+?51)?[\s-]?9\d{8}|\d{9}/;
@@ -121,7 +121,7 @@ function extraerDatosPublicacion(mensaje: string, datosActuales: DatosPublicacio
         nuevosDatos.contacto = telefonoMatch[0].replace(/\s/g, '');
       }
     }
-
+    
     // Extraer ubicación
     if (!nuevosDatos.ubicacion) {
       const ubicaciones = ['cusco', 'lima', 'arequipa', 'trujillo', 'chiclayo', 'iquitos', 'piura', 'cajamarca', 'cusco', 'cusco'];
@@ -133,7 +133,7 @@ function extraerDatosPublicacion(mensaje: string, datosActuales: DatosPublicacio
       }
     }
   }
-
+  
   return nuevosDatos;
 }
 
@@ -145,7 +145,7 @@ function generarRespuestaPublicacion(datos: DatosPublicacion, paso: number): { r
       siguientePaso: 'categoria'
     };
   }
-
+  
   if (!datos.titulo) {
     const categoriaNombre: Record<Categoria, string> = {
       empleos: 'empleo',
@@ -162,21 +162,21 @@ function generarRespuestaPublicacion(datos: DatosPublicacion, paso: number): { r
       siguientePaso: 'titulo'
     };
   }
-
+  
   if (!datos.descripcion) {
     return {
       respuesta: `Título guardado: "${datos.titulo}" ✅\n\nAhora, ¿puedes darme una descripción más detallada? Cuéntame más sobre tu adiso.`,
       siguientePaso: 'descripcion'
     };
   }
-
+  
   if (!datos.contacto) {
     return {
       respuesta: `Descripción guardada. 📝\n\nPor último, ¿cuál es tu número de contacto? (puede ser teléfono o WhatsApp)\n\nEjemplo: 987654321`,
       siguientePaso: 'contacto'
     };
   }
-
+  
   // Si tiene lo básico, está completo
   return {
     respuesta: '¡Perfecto! ✅ Tengo toda la información:\n\n' +
@@ -193,40 +193,28 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { mensaje, datosPublicacion = {}, modoPublicacion = false } = body;
-
+    
     if (!mensaje || typeof mensaje !== 'string') {
       return NextResponse.json(
         { error: 'Se requiere un mensaje válido' },
         { status: 400 }
       );
     }
-
+    
     const intencion = detectarIntencion(mensaje);
-
+    
     if (intencion === 'buscar' || (intencion === 'otro' && !modoPublicacion)) {
-      // Procesar búsqueda con análisis mejorado
+      // Procesar búsqueda
       try {
-        // Importar funciones de búsqueda mejorada
-        const { analizarBusqueda, describirAnalisis } = await import('@/lib/chatbot-nlu');
-        const { buscarMejorada, generarRespuestaBusqueda } = await import('@/lib/busqueda-mejorada');
-
-        // Analizar el mensaje para extraer términos, categoría, ubicación, etc.
-        const analisis = analizarBusqueda(mensaje);
-
-        console.log('📊 Análisis de búsqueda:', {
-          mensaje,
-          terminos: analisis.terminos,
-          categoria: analisis.categoria,
-          ubicacion: analisis.ubicacion,
-          confianza: analisis.confianza
-        });
-
-        // Buscar con el análisis mejorado
-        const resultados = await buscarMejorada(analisis, 10);
-
-        // Generar respuesta descriptiva
-        const respuesta = generarRespuestaBusqueda(resultados, analisis);
-
+        const resultados = await buscarEnTOON(mensaje, 10);
+        
+        let respuesta = '';
+        if (resultados.length > 0) {
+          respuesta = `Encontré ${resultados.length} resultado${resultados.length !== 1 ? 's' : ''} relacionado${resultados.length !== 1 ? 's' : ''} con "${mensaje}". Aquí están:`;
+        } else {
+          respuesta = `No encontré resultados exactos para "${mensaje}". ¿Puedes ser más específico o intentar con otras palabras clave?`;
+        }
+        
         return NextResponse.json({
           intencion: 'buscar',
           respuesta,
@@ -235,56 +223,25 @@ export async function POST(request: NextRequest) {
             titulo: adiso.titulo,
             categoria: adiso.categoria,
             descripcion: adiso.descripcion?.substring(0, 200),
-            ubicacion: typeof adiso.ubicacion === 'string'
-              ? adiso.ubicacion
+            ubicacion: typeof adiso.ubicacion === 'string' 
+              ? adiso.ubicacion 
               : `${adiso.ubicacion.distrito || ''}, ${adiso.ubicacion.provincia || ''}`,
             fechaPublicacion: adiso.fechaPublicacion,
             estaActivo: adiso.estaActivo
           })),
-          total: resultados.length,
-          analisis: {
-            terminos: analisis.terminos,
-            categoria: analisis.categoria,
-            ubicacion: analisis.ubicacion,
-            descripcion: describirAnalisis(analisis)
-          }
+          total: resultados.length
         });
       } catch (error: any) {
-        console.error('Error en búsqueda mejorada:', error);
-
-        // Fallback a búsqueda básica si falla la mejorada
-        try {
-          const resultados = await buscarEnTOON(mensaje, 10);
-
-          return NextResponse.json({
-            intencion: 'buscar',
-            respuesta: resultados.length > 0
-              ? `Encontré ${resultados.length} resultado${resultados.length !== 1 ? 's' : ''} (búsqueda básica)`
-              : 'No encontré resultados. Intenta con otros términos.',
-            resultados: resultados.map(adiso => ({
-              id: adiso.id,
-              titulo: adiso.titulo,
-              categoria: adiso.categoria,
-              descripcion: adiso.descripcion?.substring(0, 200),
-              ubicacion: typeof adiso.ubicacion === 'string'
-                ? adiso.ubicacion
-                : `${adiso.ubicacion.distrito || ''}, ${adiso.ubicacion.provincia || ''}`,
-              fechaPublicacion: adiso.fechaPublicacion,
-              estaActivo: adiso.estaActivo
-            })),
-            total: resultados.length
-          });
-        } catch (fallbackError) {
-          return NextResponse.json({
-            intencion: 'buscar',
-            respuesta: 'Lo siento, hubo un error al buscar. Por favor intenta nuevamente con otras palabras.',
-            resultados: [],
-            total: 0
-          });
-        }
+        console.error('Error en búsqueda:', error);
+        return NextResponse.json({
+          intencion: 'buscar',
+          respuesta: 'Lo siento, hubo un error al buscar. Por favor intenta nuevamente con otras palabras.',
+          resultados: [],
+          total: 0
+        });
       }
     }
-
+    
     if (intencion === 'publicar' || modoPublicacion) {
       // Procesar publicación
       // Determinar el paso actual basado en qué datos faltan
@@ -298,11 +255,11 @@ export async function POST(request: NextRequest) {
       } else if (!datosPublicacion.contacto) {
         pasoActual = 'contacto';
       }
-
+      
       const datosExtraidos = extraerDatosPublicacion(mensaje, datosPublicacion, pasoActual);
       const pasoActualizado = Object.keys(datosExtraidos).filter(k => datosExtraidos[k as keyof DatosPublicacion]).length;
       const respuestaPublicacion = generarRespuestaPublicacion(datosExtraidos, pasoActualizado);
-
+      
       return NextResponse.json({
         intencion: 'publicar',
         respuesta: respuestaPublicacion.respuesta,
@@ -311,20 +268,20 @@ export async function POST(request: NextRequest) {
         completo: respuestaPublicacion.completo
       });
     }
-
+    
     if (intencion === 'cancelar') {
       return NextResponse.json({
         intencion: 'cancelar',
         respuesta: 'Publicación cancelada. ¿En qué más puedo ayudarte?'
       });
     }
-
+    
     // Respuesta genérica
     return NextResponse.json({
       intencion: 'otro',
       respuesta: 'No estoy seguro de cómo ayudarte con eso. Puedo ayudarte a:\n\n• Buscar adisos: "Buscar departamentos en Cusco"\n• Publicar un adiso: "Quiero publicar un adiso"\n\n¿Qué te gustaría hacer?'
     });
-
+    
   } catch (error: any) {
     console.error('Error en chatbot/procesar:', error);
     return NextResponse.json(
@@ -333,3 +290,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
