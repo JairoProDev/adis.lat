@@ -108,6 +108,13 @@ export interface Adiso {
   fechaPublicacionOriginal?: string; // Fecha original de publicación en formato YYYY-MM-DD
   contactosMultiples?: ContactoMultiple[]; // Array de contactos múltiples
 
+  // Propiedades visuales y de negocio
+  precio?: number;
+  moneda?: 'PEN' | 'USD';
+  tipoPrecio?: 'fijo' | 'a_convenir' | 'gratis';
+  esDestacado?: boolean;
+  vistas?: number;
+
   // Confianza y Reputación (Trust Architecture)
   vendedor?: {
     id: string;
