@@ -1,19 +1,19 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { IconSearch } from './Icons';
+import { FaSearch, FaMagic } from 'react-icons/fa';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Categoria } from '@/types';
-import { 
-  IconTodos, 
-  IconEmpleos, 
-  IconInmuebles, 
-  IconVehiculos, 
-  IconServicios, 
-  IconProductos, 
-  IconEventos, 
-  IconNegocios, 
-  IconComunidad 
+import {
+  IconTodos,
+  IconEmpleos,
+  IconInmuebles,
+  IconVehiculos,
+  IconServicios,
+  IconProductos,
+  IconEventos,
+  IconNegocios,
+  IconComunidad
 } from './Icons';
 
 interface BuscadorProps {
@@ -26,7 +26,7 @@ interface BuscadorProps {
 export default function Buscador({ value, onChange, categoriaSeleccionada = 'todos', onCategoriaChange }: BuscadorProps) {
   const { t } = useTranslation();
   const [mostrarCategorias, setMostrarCategorias] = useState(false);
-  const contenedorRef = useRef<HTMLDivElement>(null);
+  const contenedorRef = useRef<HTMLButtonElement>(null);
   const categoriasRef = useRef<HTMLDivElement>(null);
 
   const CATEGORIAS: Array<{ value: Categoria | 'todos'; labelKey: string; icon: React.ComponentType<{ size?: number; color?: string }> }> = [
@@ -47,7 +47,7 @@ export default function Buscador({ value, onChange, categoriaSeleccionada = 'tod
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        contenedorRef.current && 
+        contenedorRef.current &&
         categoriasRef.current &&
         !contenedorRef.current.contains(event.target as Node) &&
         !categoriasRef.current.contains(event.target as Node)
@@ -71,184 +71,95 @@ export default function Buscador({ value, onChange, categoriaSeleccionada = 'tod
   };
 
   return (
-    <div style={{ width: '100%' }}>
-      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        {/* Botón de categoría */}
-        <div ref={contenedorRef} style={{ position: 'relative', flexShrink: 0 }}>
+    <div className={`-mx-4 px-5 py-4 bg-[#fafbfc] border-b border-gray-200 md:mx-0 md:px-0 md:bg-transparent md:border-none transition-all duration-300`}>
+      <div className="relative group z-30">
+        <div
+          className={`
+            relative flex items-center bg-white border-2 rounded-xl px-4 py-3 
+            shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all duration-200
+            ${mostrarCategorias ? 'border-blue-500 ring-4 ring-blue-500/10' : 'border-gray-200 hover:border-gray-300'}
+            focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10
+          `}
+        >
+          {/* Category Trigger */}
           <button
+            ref={contenedorRef}
             onClick={() => setMostrarCategorias(!mostrarCategorias)}
-            aria-label="Seleccionar categoría"
-            aria-expanded={mostrarCategorias}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.75rem 1rem',
-              border: '1px solid var(--border-color)',
-              borderRadius: '8px',
-              backgroundColor: categoriaSeleccionada !== 'todos' ? 'var(--text-primary)' : 'var(--bg-primary)',
-              color: categoriaSeleccionada !== 'todos' ? 'var(--bg-primary)' : 'var(--text-primary)',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              whiteSpace: 'nowrap',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = 'var(--text-secondary)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'var(--border-color)';
-            }}
+            className={`flex items-center gap-2 pr-3 mr-3 border-r border-gray-200 hover:text-blue-600 transition-colors ${categoriaSeleccionada !== 'todos' ? 'text-blue-600' : 'text-gray-500'}`}
+            aria-label="Categoría"
           >
-            {(() => {
-              const iconColor = categoriaSeleccionada !== 'todos' ? 'var(--bg-primary)' : 'var(--text-primary)';
-              return <CategoriaIcon size={18} color={iconColor} />;
-            })()}
-            <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>
-              {t(categoriaActual.labelKey)}
-            </span>
-            <span style={{ fontSize: '0.75rem', color: categoriaSeleccionada !== 'todos' ? 'var(--bg-primary)' : 'var(--text-tertiary)' }}>▼</span>
+            <CategoriaIcon size={20} />
+            <span className="sr-only">{t(categoriaActual.labelKey)}</span>
+            <span className="text-[10px] text-gray-400">▼</span>
+          </button>
+
+          {/* Search Input */}
+          <div className="flex-1 flex items-center min-w-0">
+            <FaSearch className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0" />
+            <input
+              type="search"
+              placeholder={t('search.placeholder') || "¿Qué estás buscando? Ej: 'depa 2 cuartos'"}
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              className="w-full border-none outline-none text-[15px] text-gray-700 placeholder-gray-400 bg-transparent truncate"
+            />
+          </div>
+
+          {/* AI Hint */}
+          <button className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-br from-[#667eea] to-[#764ba2] text-white border-none rounded-lg text-xs font-bold tracking-wide shadow-sm hover:shadow-md transition-shadow ml-2 shrink-0">
+            <FaMagic className="text-yellow-300" />
+            <span>AI</span>
           </button>
         </div>
 
-        {/* Input de búsqueda */}
-        <div style={{ position: 'relative', flex: 1 }}>
+        {/* Dropdown de categorías */}
+        {mostrarCategorias && (
           <div
-            aria-hidden="true"
-            style={{
-              position: 'absolute',
-              left: '0.75rem',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: 'var(--text-tertiary)',
-              pointerEvents: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
+            ref={categoriasRef}
+            className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-xl shadow-xl p-4 z-50 animate-in fade-in slide-in-from-top-2"
           >
-            <IconSearch />
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 max-h-[60vh] overflow-y-auto custom-scrollbar">
+              {CATEGORIAS.map((cat) => {
+                const CatIcon = cat.icon;
+                const estaSeleccionada = categoriaSeleccionada === cat.value;
+
+                return (
+                  <button
+                    key={cat.value}
+                    onClick={() => handleCategoriaSelect(cat.value)}
+                    className={`
+                      flex flex-col items-center gap-2 p-3 rounded-xl transition-all
+                      ${estaSeleccionada
+                        ? 'bg-blue-50 border-2 border-blue-500 text-blue-700 shadow-sm'
+                        : 'bg-gray-50 border border-transparent text-gray-600 hover:bg-gray-100 hover:scale-105'
+                      }
+                    `}
+                  >
+                    <div className={`
+                      p-2 rounded-full 
+                      ${estaSeleccionada ? 'bg-white' : 'bg-gray-200/50'}
+                    `}>
+                      <CatIcon size={20} />
+                    </div>
+                    <span className="text-xs font-medium text-center leading-tight">
+                      {t(cat.labelKey)}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-          <input
-            type="search"
-            placeholder={t('search.placeholder')}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            aria-label={t('search.label')}
-            style={{
-              width: '100%',
-              padding: '0.75rem 1rem 0.75rem 2.5rem',
-              fontSize: '1rem',
-              border: '1px solid var(--border-color)',
-              borderRadius: '8px',
-              backgroundColor: 'var(--bg-primary)',
-              color: 'var(--text-primary)',
-              outline: 'none',
-              transition: 'border-color 0.2s'
-            }}
-            onFocus={(e) => {
-              e.target.style.borderColor = 'var(--text-secondary)';
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = 'var(--border-color)';
-            }}
-          />
-        </div>
+        )}
       </div>
 
-      {/* Dropdown de categorías horizontal - desplaza contenido */}
-      {mostrarCategorias && (
-        <div
-          ref={categoriasRef}
-          style={{
-            marginTop: '0.75rem',
-            backgroundColor: 'var(--bg-primary)',
-            border: '1px solid var(--border-color)',
-            borderRadius: '12px',
-            boxShadow: '0 4px 16px var(--shadow)',
-            padding: '1rem',
-            transition: 'all 0.3s ease',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              gap: '0.75rem',
-              overflowX: 'auto',
-              overflowY: 'hidden',
-              paddingBottom: '0.5rem',
-              WebkitOverflowScrolling: 'touch',
-              scrollbarWidth: 'thin',
-            }}
-          >
-            {CATEGORIAS.map((cat) => {
-              const CatIcon = cat.icon;
-              const estaSeleccionada = categoriaSeleccionada === cat.value;
-              
-              return (
-                <button
-                  key={cat.value}
-                  onClick={() => handleCategoriaSelect(cat.value)}
-                  aria-label={t(cat.labelKey)}
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.75rem',
-                    minWidth: '80px',
-                    border: `2px solid ${estaSeleccionada ? 'var(--text-primary)' : 'var(--border-color)'}`,
-                    borderRadius: '8px',
-                    backgroundColor: estaSeleccionada ? 'var(--text-primary)' : 'var(--bg-secondary)',
-                    color: estaSeleccionada ? 'var(--bg-primary)' : 'var(--text-primary)',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    flexShrink: 0,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!estaSeleccionada) {
-                      e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-                      e.currentTarget.style.borderColor = 'var(--text-secondary)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!estaSeleccionada) {
-                      e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
-                      e.currentTarget.style.borderColor = 'var(--border-color)';
-                    }
-                  }}
-                >
-                  <div
-                    style={{
-                      width: '48px',
-                      height: '48px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: estaSeleccionada ? 'var(--bg-primary)' : 'var(--bg-primary)',
-                      borderRadius: '8px',
-                    }}
-                  >
-                    <CatIcon 
-                      size={24} 
-                      color={estaSeleccionada ? 'var(--text-primary)' : 'var(--text-primary)'} 
-                    />
-                  </div>
-                  <span
-                    style={{
-                      fontSize: '0.75rem',
-                      fontWeight: estaSeleccionada ? 600 : 500,
-                      textAlign: 'center',
-                      lineHeight: 1.2,
-                    }}
-                  >
-                    {t(cat.labelKey)}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      {/* Suggestion Text */}
+      <div className="mt-3 flex items-start gap-2 px-1 opacity-80">
+        <span className="text-sm">💡</span>
+        <p className="text-[13px] text-gray-500 leading-snug">
+          <span className="hidden sm:inline">Prueba buscar: </span>
+          <span className="font-medium text-gray-600">"trabajo remoto diseño"</span> o <span className="font-medium text-gray-600">"auto usado 2020"</span>
+        </p>
+      </div>
     </div>
   );
 }
