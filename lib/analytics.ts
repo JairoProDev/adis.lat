@@ -61,9 +61,13 @@ export function registrarFavorito(userId: string | undefined, adisoId: string) {
 }
 
 /**
- * Registra un contacto (click en WhatsApp)
+ * Registra un contacto (click en WhatsApp) e incrementa el contador
  */
-export function registrarContacto(userId: string | undefined, adisoId: string, categoria: string) {
+export async function registrarContacto(userId: string | undefined, adisoId: string, categoria: string) {
+  if (supabase) {
+    // Increment counter
+    await supabase.rpc('increment_contact', { ad_id: adisoId });
+  }
   return registrarEvento(userId, 'contacto', 'contacto_whatsapp', {
     adiso_id: adisoId,
     categoria
@@ -71,14 +75,19 @@ export function registrarContacto(userId: string | undefined, adisoId: string, c
 }
 
 /**
- * Registra una visualización de adiso
+ * Registra una visualización de adiso e incrementa el contador
  */
-export function registrarVisualizacion(userId: string | undefined, adisoId: string, duracionSegundos?: number) {
+export async function registrarVisualizacion(userId: string | undefined, adisoId: string, duracionSegundos?: number) {
+  if (supabase) {
+    // Increment counter
+    await supabase.rpc('increment_view', { ad_id: adisoId });
+  }
   return registrarEvento(userId, 'visualizacion', 'adiso_visto', {
     adiso_id: adisoId,
     duracion_segundos: duracionSegundos
   });
 }
+
 
 
 

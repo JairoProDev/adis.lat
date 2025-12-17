@@ -114,6 +114,7 @@ export interface Adiso {
   tipoPrecio?: 'fijo' | 'a_convenir' | 'gratis';
   esDestacado?: boolean;
   vistas?: number;
+  contactos?: number;
 
   // Confianza y Reputación (Trust Architecture)
   vendedor?: {

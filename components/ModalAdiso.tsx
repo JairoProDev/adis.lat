@@ -102,9 +102,7 @@ export default function ModalAdiso({
 
   // Registrar visualización del adiso
   useEffect(() => {
-    if (user?.id) {
-      registrarVisualizacion(user.id, adiso.id);
-    }
+    registrarVisualizacion(user?.id, adiso.id);
   }, [user?.id, adiso.id]);
 
   const handleToggleFavorito = async () => {
@@ -583,6 +581,26 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
                   {formatFecha(adiso.fechaPublicacion, adiso.horaPublicacion)}
                 </span>
               </div>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '1.5rem',
+                  marginTop: '0.5rem'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-secondary)' }}>
+                  <span style={{ fontSize: '1.1rem' }}>👁️</span>
+                  <span style={{ fontWeight: 600 }}>{adiso.vistas || 0}</span>
+                  <span style={{ fontSize: '0.75rem' }}>Vistas</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-secondary)' }}>
+                  <span style={{ fontSize: '1.1rem' }}>💬</span>
+                  <span style={{ fontWeight: 600 }}>{adiso.contactos || 0}</span>
+                  <span style={{ fontSize: '0.75rem' }}>Interesados</span>
+                </div>
+              </div>
+
             </div>
           </div>
 
