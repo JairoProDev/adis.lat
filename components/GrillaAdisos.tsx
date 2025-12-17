@@ -24,7 +24,7 @@ export default function GrillaAdisos({
   cargandoMas = false,
   sentinelRef
 }: GrillaAdisosProps) {
-  const adisoRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
+  const adisoRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const { user } = useAuth();
 
