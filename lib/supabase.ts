@@ -12,12 +12,12 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // Habilitar persistencia de sesión para autenticación
 export const supabase = supabaseUrl && supabaseAnonKey
   ? createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true
-      }
-    })
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true
+    }
+  })
   : null;
 
 // Función para convertir de la base de datos a Adiso
@@ -27,8 +27,8 @@ export function dbToAdiso(row: any): Adiso {
   if (row.imagenes_urls) {
     // Si es un array JSON
     try {
-      imagenesUrls = typeof row.imagenes_urls === 'string' 
-        ? JSON.parse(row.imagenes_urls) 
+      imagenesUrls = typeof row.imagenes_urls === 'string'
+        ? JSON.parse(row.imagenes_urls)
         : row.imagenes_urls;
     } catch {
       imagenesUrls = undefined;
@@ -57,8 +57,8 @@ export function dbToAdiso(row: any): Adiso {
   let contactosMultiples: any[] | undefined;
   if (row.contactos_multiples) {
     try {
-      contactosMultiples = typeof row.contactos_multiples === 'string' 
-        ? JSON.parse(row.contactos_multiples) 
+      contactosMultiples = typeof row.contactos_multiples === 'string'
+        ? JSON.parse(row.contactos_multiples)
         : row.contactos_multiples;
     } catch {
       contactosMultiples = undefined;
@@ -85,7 +85,9 @@ export function dbToAdiso(row: any): Adiso {
     fuenteOriginal: row.fuente_original || undefined,
     edicionNumero: row.edicion_numero || undefined,
     fechaPublicacionOriginal: row.fecha_publicacion_original || undefined,
-    contactosMultiples: contactosMultiples || undefined
+    contactosMultiples: contactosMultiples || undefined,
+    vistas: row.vistas || 0,
+    contactos: row.contactos || 0
   };
 }
 
@@ -170,9 +172,9 @@ export function adisoToDb(adiso: Adiso): any {
   return dbData;
 }
 
-export async function getAdisosFromSupabase(options?: { 
-  limit?: number; 
-  offset?: number; 
+export async function getAdisosFromSupabase(options?: {
+  limit?: number;
+  offset?: number;
   soloActivos?: boolean;
 }): Promise<Adiso[]> {
   if (!supabase) {
@@ -183,18 +185,18 @@ export async function getAdisosFromSupabase(options?: {
     let query = supabase
       .from('adisos')
       .select('*');
-    
+
     // Filtrar por activos si se solicita
     if (options?.soloActivos === true) {
       query = query.eq('esta_activo', true);
       // También filtrar por fecha de expiración si existe
       query = query.or('fecha_expiracion.is.null,fecha_expiracion.gt.' + new Date().toISOString());
     }
-    
+
     // Ordenar por fecha de publicación (más recientes primero)
     query = query.order('fecha_publicacion', { ascending: false })
-                 .order('hora_publicacion', { ascending: false });
-    
+      .order('hora_publicacion', { ascending: false });
+
     // Aplicar paginación si se proporciona (optimizado)
     if (options?.limit) {
       if (options?.offset !== undefined) {
@@ -207,7 +209,7 @@ export async function getAdisosFromSupabase(options?: {
       // Por defecto, limitar a 50 para mejor rendimiento
       query = query.limit(50);
     }
-    
+
     const { data, error } = await query;
 
     if (error) {
@@ -281,17 +283,17 @@ export async function createAdisoInSupabase(adiso: Adiso): Promise<Adiso> {
 
     if (error) {
       console.error('Error al crear adiso:', error);
-      
+
       // Errores comunes con mensajes más claros
       if (error.code === 'PGRST301' || error.message?.includes('permission denied')) {
         throw new Error('No tienes permiso para crear adisos. Verifica las políticas de seguridad en Supabase.');
       }
-      
+
       if (error.code === '23505') {
         // Si es duplicado, intentar actualizar
         return await updateAdisoInSupabase(adiso);
       }
-      
+
       throw error;
     }
 
@@ -320,16 +322,16 @@ export async function updateAdisoInSupabase(adiso: Adiso): Promise<Adiso> {
 
     if (error) {
       console.error('Error al actualizar adiso:', error);
-      
+
       // Errores comunes con mensajes más claros
       if (error.code === 'PGRST301' || error.message?.includes('permission denied')) {
         throw new Error('No tienes permiso para actualizar adisos. Verifica las políticas de seguridad en Supabase.');
       }
-      
+
       if (error.code === 'PGRST116') {
         throw new Error('Adiso no encontrado.');
       }
-      
+
       throw error;
     }
 
@@ -356,16 +358,16 @@ export async function deleteAdisoInSupabase(id: string): Promise<void> {
 
     if (error) {
       console.error('Error al eliminar adiso:', error);
-      
+
       // Errores comunes con mensajes más claros
       if (error.code === 'PGRST301' || error.message?.includes('permission denied')) {
         throw new Error('No tienes permiso para eliminar adisos. Verifica las políticas de seguridad en Supabase.');
       }
-      
+
       if (error.code === 'PGRST116') {
         throw new Error('Adiso no encontrado.');
       }
-      
+
       throw error;
     }
   } catch (error: any) {
@@ -416,25 +418,25 @@ export async function getAdisosGratuitosFromSupabase(): Promise<AdisoGratuito[]>
 
     if (error) {
       // Si la tabla no existe, retornar array vacío en lugar de lanzar error
-      if (error.code === 'PGRST204' || error.code === '42P01' || 
-          error.message?.includes('relation') && error.message?.includes('does not exist') ||
-          error.message?.includes('tabla') || error.message?.includes('table')) {
+      if (error.code === 'PGRST204' || error.code === '42P01' ||
+        error.message?.includes('relation') && error.message?.includes('does not exist') ||
+        error.message?.includes('tabla') || error.message?.includes('table')) {
         if (process.env.NODE_ENV === 'development') {
           console.warn('Tabla adisos_gratuitos no existe aún, retornando array vacío');
         }
         return [];
       }
-      
+
       // Error 406 (Not Acceptable) - posible problema de RLS
-      if (error.code === 'PGRST301' || error.message?.includes('permission denied') || 
-          error.message?.includes('406') || (error as any).status === 406) {
+      if (error.code === 'PGRST301' || error.message?.includes('permission denied') ||
+        error.message?.includes('406') || (error as any).status === 406) {
         if (process.env.NODE_ENV === 'development') {
           console.warn('Error 406 al obtener adisos gratuitos (posible problema de RLS):', error);
         }
         // Retornar array vacío en lugar de lanzar error
         return [];
       }
-      
+
       console.error('Error al obtener adisos gratuitos:', error);
       throw error;
     }
@@ -442,11 +444,11 @@ export async function getAdisosGratuitosFromSupabase(): Promise<AdisoGratuito[]>
     return data ? data.map(dbToAdisoGratuito) : [];
   } catch (error: any) {
     // Si es un error de conexión o timeout, lanzar error específico
-    if (error?.message?.includes('timeout') || error?.message?.includes('fetch failed') || 
-        error?.message?.includes('network') || error?.code === 'ECONNREFUSED') {
+    if (error?.message?.includes('timeout') || error?.message?.includes('fetch failed') ||
+      error?.message?.includes('network') || error?.code === 'ECONNREFUSED') {
       throw new Error('Error de conexión con Supabase. Verifica tu conexión y las credenciales.');
     }
-    
+
     // Para otros errores, retornar array vacío en lugar de lanzar
     if (process.env.NODE_ENV === 'development') {
       console.warn('Error al obtener adisos gratuitos, retornando array vacío:', error);
@@ -469,11 +471,11 @@ export async function createAdisoGratuitoInSupabase(adiso: AdisoGratuito): Promi
 
     if (error) {
       console.error('Error al crear adiso gratuito:', error);
-      
+
       if (error.code === 'PGRST301' || error.message?.includes('permission denied')) {
         throw new Error('No tienes permiso para crear adisos gratuitos. Verifica las políticas de seguridad en Supabase.');
       }
-      
+
       throw error;
     }
 

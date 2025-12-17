@@ -100,10 +100,23 @@ export default function ModalAdiso({
     }
   }, [user?.id, adiso.id]);
 
-  // Registrar visualización del adiso
+  const [vistasLocales, setVistasLocales] = useState(adiso.vistas || 0);
+  const [contactosLocales, setContactosLocales] = useState(adiso.contactos || 0);
+
+  // Cuando cambia el adiso, reiniciamos el estado local con los valores del nuevo adiso
   useEffect(() => {
+    setVistasLocales(adiso.vistas || 0);
+    setContactosLocales(adiso.contactos || 0);
+  }, [adiso.id, adiso.vistas, adiso.contactos]);
+
+  // Registrar visualización del adiso (Optimistic + Backend)
+  useEffect(() => {
+    // Backend
     registrarVisualizacion(user?.id, adiso.id);
+    // Optimistic UI: Incrementamos 1 sobre el valor base
+    setVistasLocales(prev => prev + 1);
   }, [user?.id, adiso.id]);
+
 
   const handleToggleFavorito = async () => {
     if (!user?.id) {
@@ -267,9 +280,11 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
     }
 
     // Anuncio activo - contacto directo normal
+    setContactosLocales(prev => prev + 1);
     registrarContacto(user?.id, adiso.id, adiso.categoria);
 
     // Determinar tipo de contacto y abrir según corresponda
+
     if (contactoEspecifico) {
       // Si es un contacto específico de contactosMultiples, verificar tipo
       const contactoObj = adiso.contactosMultiples?.find(c => c.valor === contactoEspecifico);
@@ -591,12 +606,12 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-secondary)' }}>
                   <span style={{ fontSize: '1.1rem' }}>👁️</span>
-                  <span style={{ fontWeight: 600 }}>{adiso.vistas || 0}</span>
+                  <span style={{ fontWeight: 600 }}>{vistasLocales}</span>
                   <span style={{ fontSize: '0.75rem' }}>Vistas</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-secondary)' }}>
                   <span style={{ fontSize: '1.1rem' }}>💬</span>
-                  <span style={{ fontWeight: 600 }}>{adiso.contactos || 0}</span>
+                  <span style={{ fontWeight: 600 }}>{contactosLocales}</span>
                   <span style={{ fontSize: '0.75rem' }}>Interesados</span>
                 </div>
               </div>
