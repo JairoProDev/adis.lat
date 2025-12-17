@@ -351,7 +351,7 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
                     <div className="flex items-center gap-1.5">
                         <IconEye size={10} className="text-gray-300" />
                         <span>
-                            {(adiso.vistas || 0) + 125}
+                            {(adiso.vistas || 0) + Math.floor(Math.random() * 401) + 100}
                             {isDesktop ? ' vistas' : ''}
                         </span>
                     </div>
