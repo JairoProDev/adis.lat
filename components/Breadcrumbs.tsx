@@ -40,10 +40,14 @@ export default function Breadcrumbs({ items }: BreadcrumbsProps) {
           listStyle: 'none',
           padding: 0,
           margin: 0,
-          flexWrap: 'wrap',
+          flexWrap: 'nowrap',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
           fontSize: '0.8125rem',
           color: 'var(--text-secondary)',
           lineHeight: 1.2,
+          maxWidth: '100%',
         }}
       >
         {items.map((item, index) => {
@@ -56,7 +60,13 @@ export default function Breadcrumbs({ items }: BreadcrumbsProps) {
               itemProp="itemListElement"
               itemScope
               itemType="https://schema.org/ListItem"
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                minWidth: 0,
+                flex: isLast ? '1 1 auto' : '0 0 auto'
+              }}
             >
               {isLast ? (
                 <span
@@ -64,7 +74,12 @@ export default function Breadcrumbs({ items }: BreadcrumbsProps) {
                   style={{
                     color: 'var(--text-primary)',
                     fontWeight: 500,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    display: 'block',
                   }}
+                  title={item.label} // Show full tool tip
                   aria-current="page"
                 >
                   {item.label}

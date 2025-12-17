@@ -71,7 +71,7 @@ export default function Buscador({ value, onChange, categoriaSeleccionada = 'tod
   };
 
   return (
-    <div className={`-mx-4 px-5 py-4 bg-[#fafbfc] border-b border-gray-200 md:mx-0 md:px-0 md:bg-transparent md:border-none transition-all duration-300`}>
+    <div className={`-mx-4 px-4 py-2 md:mx-0 md:px-0 transition-all duration-300`}>
       <div className="relative group z-30">
         <div
           className={`

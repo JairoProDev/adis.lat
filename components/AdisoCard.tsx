@@ -225,7 +225,7 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
             {/* --- Card Media Section --- */}
             {tamaño !== 'miniatura' && (
                 <div className={`
-            relative w-full aspect-video flex items-center justify-center overflow-hidden flex-shrink-0
+            relative w-full aspect-[4/3] md:aspect-video flex items-center justify-center overflow-hidden flex-shrink-0
             bg-gradient-to-br ${theme.gradient} group
         `}>
                     {imagenUrl ? (
@@ -265,28 +265,26 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
                     </div>
 
                     {/* NEW: Location & Price Overlay at Bottom of Image */}
-                    <div className="absolute bottom-0 left-0 right-0 p-3 flex justify-between items-end z-20">
-                        <div className="flex items-center gap-1.5 text-xs font-semibold text-white/90 truncate max-w-[55%] drop-shadow-md pb-1">
-                            <IconLocation size={12} className="text-white flex-shrink-0" />
+                    <div className="absolute bottom-0 left-0 right-0 p-2 flex justify-between items-end z-20">
+                        <div className="flex items-center gap-1 text-[10px] font-medium text-white/90 truncate max-w-[70%] drop-shadow-md pb-0.5">
+                            <IconLocation size={10} className="text-white flex-shrink-0" />
                             <span className="truncate">{locationString}</span>
                         </div>
 
-                        {/* CTA BUTTON */}
-                        <button
-                            onClick={handleCta}
-                            className={`
-                                font-bold text-xs uppercase tracking-wide px-3 py-1.5 rounded-lg shadow-lg backdrop-blur-sm transition-transform hover:scale-105 active:scale-95
-                                bg-white text-gray-900 border-2 border-white/50 hover:bg-gray-50
-                            `}
-                            title="Ver contacto"
-                        >
-                            {displayPrice}
-                        </button>
+                        {/* Price Badge (Only if numeric, simple badge, no button) */}
+                        {(adiso.precio && adiso.precio > 0) && (
+                            <div className={`
+                                font-bold text-[10px] px-2 py-1 rounded shadow-sm backdrop-blur-md
+                                bg-white/90 text-gray-900 border border-white/50
+                             `}>
+                                {displayPrice}
+                            </div>
+                        )}
                     </div>
 
                     {/* Verified Badge Overlay */}
                     {adiso.vendedor?.esVerificado && (
-                        <div className="absolute top-3 right-3 backdrop-blur-md bg-white/90 rounded-full p-1 shadow-sm border border-gray-100 z-10">
+                        <div className="absolute top-2 right-2 backdrop-blur-md bg-white/90 rounded-full p-0.5 shadow-sm border border-gray-100 z-10">
                             <TrustBadge type="verified" size="sm" showLabel={false} />
                         </div>
                     )}
@@ -294,12 +292,12 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
             )}
 
             {/* --- Card Content --- */}
-            <div className={`flex flex-col flex-1 w-full ${tamaño === 'miniatura' ? 'p-3' : 'p-3'}`}>
+            <div className={`flex flex-col flex-1 w-full ${tamaño === 'miniatura' ? 'p-2' : 'p-3'}`}>
 
-                {/* Title - UPPERCASE & BOLD */}
+                {/* Title - UPPERCASE & BOLD & ADJUSTED SIZE */}
                 <h3 className={`
-            font-bold text-gray-900 leading-none tracking-tight mb-1 transition-colors line-clamp-2 uppercase
-            ${tamaño === 'miniatura' ? 'text-sm' : 'text-base'}
+            font-bold text-gray-900 leading-tight tracking-tight mb-1 transition-colors line-clamp-2 uppercase
+            ${tamaño === 'miniatura' ? 'text-[11px]' : 'text-[13px] md:text-base'}
             group-hover:${theme.text}
         `}>
                     {adiso.titulo}

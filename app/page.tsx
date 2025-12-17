@@ -744,7 +744,11 @@ function HomeContent() {
             <Breadcrumbs items={[
               { label: 'Inicio', href: '/' },
               ...(categoriaFiltro !== 'todos' ? [{ label: categoriaFiltro, href: `/?categoria=${categoriaFiltro}` }] : []),
-              ...(adisoAbierto ? [{ label: adisoAbierto.titulo }] : []),
+              ...(adisoAbierto ? [{
+                label: adisoAbierto.titulo.length > (isDesktop ? 50 : 25)
+                  ? adisoAbierto.titulo.substring(0, (isDesktop ? 50 : 25)) + '...'
+                  : adisoAbierto.titulo
+              }] : []),
             ]} />
           </div>
         )}
