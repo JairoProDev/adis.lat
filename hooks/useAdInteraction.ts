@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toggleFavorito, esFavorito } from '@/lib/favoritos';
 import { registrarInteraccion } from '@/lib/interactions';
 import { useToast } from '@/hooks/useToast';
+import { useUI } from '@/contexts/UIContext';
 
 const GUEST_FAVORITES_KEY = 'guest_favorites';
 const GUEST_HIDDEN_KEY = 'guest_hidden';
@@ -13,6 +14,7 @@ export function useAdInteraction(adisoId: string, initialIsFavorite: boolean = f
     const [isHidden, setIsHidden] = useState(false);
     const [loading, setLoading] = useState(false);
     const { success, error: toastError } = useToast();
+    const { openAuthModal } = useUI();
 
     // Load initial state
     useEffect(() => {
@@ -24,8 +26,6 @@ export function useAdInteraction(adisoId: string, initialIsFavorite: boolean = f
                 try {
                     const fav = await esFavorito(user.id, adisoId);
                     setIsFavorite(fav);
-                    // For hidden, we assume the parent filters them out, 
-                    // or we could check here but usually not efficient for lists
                 } catch (e) {
                     console.error(e);
                 }
@@ -56,7 +56,6 @@ export function useAdInteraction(adisoId: string, initialIsFavorite: boolean = f
             // Authenticated
             try {
                 await toggleFavorito(user.id, adisoId);
-                // Also log interaction for profile building if adding
                 if (newState) {
                     registrarInteraccion(user.id, adisoId, 'favorite');
                 }
@@ -72,7 +71,8 @@ export function useAdInteraction(adisoId: string, initialIsFavorite: boolean = f
             if (newState) {
                 newFavs = [...localFavs, adisoId];
                 // Show nudge to login
-                success('Guardado en favoritos. Inicia sesión para guardar permanentemente.');
+                success('Guardado. Inicia sesión para sincronizar.');
+                openAuthModal();
             } else {
                 newFavs = localFavs.filter((id: string) => id !== adisoId);
                 success('Eliminado de favoritos');
@@ -90,11 +90,9 @@ export function useAdInteraction(adisoId: string, initialIsFavorite: boolean = f
         if (user?.id) {
             try {
                 await registrarInteraccion(user.id, adisoId, 'not_interested');
-                success('Anuncio ocultado. No te mostraremos esto nuevamente.');
+                success('Anuncio ocultado.');
             } catch (err) {
                 setIsHidden(false);
-                console.error(err);
-                toastError('No se pudo ocultar el anuncio');
             }
         } else {
             // Guest
@@ -103,7 +101,8 @@ export function useAdInteraction(adisoId: string, initialIsFavorite: boolean = f
                 localHidden.push(adisoId);
                 localStorage.setItem(GUEST_HIDDEN_KEY, JSON.stringify(localHidden));
             }
-            success('Anuncio ocultado temporalmente.');
+            success('Anuncio ocultado.');
+            openAuthModal();
         }
     };
 

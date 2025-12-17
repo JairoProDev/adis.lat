@@ -7,6 +7,7 @@ import { defaultLocale } from '@/i18n';
 import MotionProvider from '@/components/MotionProvider';
 import FloatingChatbot from '@/components/FloatingChatbot';
 import { NavigationProvider } from '@/contexts/NavigationContext';
+import { UIProvider } from '@/contexts/UIContext';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://buscadis.com';
 
@@ -103,12 +104,14 @@ export default function RootLayout({
         <ErrorBoundary>
           <MotionProvider>
             <AuthProvider>
-              <AdisosGratuitosCacheProvider>
-                <NavigationProvider>
-                  {children}
-                  <FloatingChatbot />
-                </NavigationProvider>
-              </AdisosGratuitosCacheProvider>
+              <UIProvider>
+                <AdisosGratuitosCacheProvider>
+                  <NavigationProvider>
+                    {children}
+                    <FloatingChatbot />
+                  </NavigationProvider>
+                </AdisosGratuitosCacheProvider>
+              </UIProvider>
             </AuthProvider>
           </MotionProvider>
         </ErrorBoundary>
@@ -116,4 +119,3 @@ export default function RootLayout({
     </html>
   );
 }
-

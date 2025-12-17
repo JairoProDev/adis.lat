@@ -1,9 +1,51 @@
-import { supabase } from './supabase';
-import { UserAdInteraction, AdInteractionType } from '@/types';
+import { supabase, dbToAdiso } from './supabase';
+import { UserAdInteraction, AdInteractionType, Adiso } from '@/types';
+
+
 
 /**
- * Registra una interacción (not_interested, etc)
+ * Obtiene los adisos ocultos (not_interested)
  */
+export async function getAdisosOcultos(userId: string): Promise<Adiso[]> {
+    if (!supabase) return [];
+
+    const { data, error } = await supabase
+        .from('user_ad_interactions')
+        .select('adiso_id')
+        .eq('user_id', userId)
+        .eq('interaction_type', 'not_interested');
+
+    if (error || !data || data.length === 0) return [];
+
+    const adisoIds = data.map((d: any) => d.adiso_id);
+
+    // Fetch adisos
+    const { data: adisos, error: adisosError } = await supabase
+        .from('adisos')
+        .select('*')
+        .in('id', adisoIds);
+
+    if (adisosError) return [];
+
+    return (adisos || []).map((row: any) => dbToAdiso(row));
+}
+
+/**
+ * Restaura un adiso oculto (elimina la interacción not_interested)
+ */
+export async function restaurarAdisoOculto(userId: string, adisoId: string): Promise<void> {
+    if (!supabase) return;
+
+    const { error } = await supabase
+        .from('user_ad_interactions')
+        .delete()
+        .eq('user_id', userId)
+        .eq('adiso_id', adisoId)
+        .eq('interaction_type', 'not_interested');
+
+    if (error) throw error;
+}
+
 export async function registrarInteraccion(
     userId: string,
     adisoId: string,

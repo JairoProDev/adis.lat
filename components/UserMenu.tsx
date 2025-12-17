@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUser } from '@/hooks/useUser';
 import AuthModal from './AuthModal';
 import FavoritosList from './FavoritosList';
+import HiddenAdsList from './HiddenAdsList';
 import LocationPrompt from './LocationPrompt';
 import ConvertirAnunciante from './ConvertirAnunciante';
 import UserProfile from './UserProfile';
@@ -23,6 +24,7 @@ export default function UserMenu({ onProgressClick }: UserMenuProps) {
   const [mostrarMenu, setMostrarMenu] = useState(false);
   const [mostrarAuthModal, setMostrarAuthModal] = useState(false);
   const [mostrarFavoritos, setMostrarFavoritos] = useState(false);
+  const [mostrarOcultos, setMostrarOcultos] = useState(false);
   const [mostrarLocationPrompt, setMostrarLocationPrompt] = useState(false);
   const [mostrarConvertirAnunciante, setMostrarConvertirAnunciante] = useState(false);
   const [mostrarPerfil, setMostrarPerfil] = useState(false);
@@ -200,6 +202,31 @@ export default function UserMenu({ onProgressClick }: UserMenuProps) {
             >
               ⭐ Favoritos
             </button>
+            <button
+              onClick={() => {
+                setMostrarMenu(false);
+                setMostrarOcultos(true);
+              }}
+              style={{
+                width: '100%',
+                padding: '0.5rem 0.75rem',
+                textAlign: 'left',
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-primary)',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+                borderRadius: '4px'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+            >
+              🚫 Anuncios Ocultos
+            </button>
             {onProgressClick && (
               <button
                 onClick={() => {
@@ -311,6 +338,7 @@ export default function UserMenu({ onProgressClick }: UserMenuProps) {
         </div>
       )}
       <FavoritosList abierto={mostrarFavoritos} onCerrar={() => setMostrarFavoritos(false)} />
+      <HiddenAdsList abierto={mostrarOcultos} onCerrar={() => setMostrarOcultos(false)} />
       <LocationPrompt
         abierto={mostrarLocationPrompt}
         onCerrar={() => setMostrarLocationPrompt(false)}
@@ -333,4 +361,3 @@ export default function UserMenu({ onProgressClick }: UserMenuProps) {
     </div>
   );
 }
-
