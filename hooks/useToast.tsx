@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -11,20 +11,40 @@ export interface Toast {
   duration?: number;
 }
 
+// Global Store
+let listeners: Array<(toasts: Toast[]) => void> = [];
+let memoryToasts: Toast[] = [];
+
+function notifyListeners() {
+  listeners.forEach(l => l([...memoryToasts]));
+}
+
 export function useToast() {
-  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [toasts, setToasts] = useState<Toast[]>(memoryToasts);
+
+  useEffect(() => {
+    const handler = (newToasts: Toast[]) => {
+      setToasts(newToasts);
+    };
+    listeners.push(handler);
+    return () => {
+      listeners = listeners.filter(l => l !== handler);
+    };
+  }, []);
 
   const showToast = useCallback((message: string, type: ToastType = 'info', duration: number = 3000) => {
     const id = Math.random().toString(36).substr(2, 9);
     const newToast: Toast = { id, message, type, duration };
-    
-    setToasts(prev => [...prev, newToast]);
-    
+
+    memoryToasts = [...memoryToasts, newToast];
+    notifyListeners();
+
     return id;
   }, []);
 
   const removeToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
+    memoryToasts = memoryToasts.filter(t => t.id !== id);
+    notifyListeners();
   }, []);
 
   const success = useCallback((message: string, duration?: number) => {
@@ -53,4 +73,3 @@ export function useToast() {
     warning,
   };
 }
-

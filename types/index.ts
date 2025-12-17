@@ -354,3 +354,13 @@ export interface ApiKey {
   lastUsedAt?: string;
   expiresAt?: string;
 }
+
+export type AdInteractionType = 'favorite' | 'not_interested' | 'view';
+
+export interface UserAdInteraction {
+  id: string;
+  user_id: string;
+  adiso_id: string;
+  interaction_type: AdInteractionType;
+  created_at: string;
+}

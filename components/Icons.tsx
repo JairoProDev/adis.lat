@@ -64,7 +64,8 @@ import {
   FaTags,
   FaExclamationTriangle,
   FaInfoCircle,
-  FaQrcode
+  FaQrcode,
+  FaRegHeart
 } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
 
@@ -285,4 +286,12 @@ export const IconQrcode = (props: IconProps) => (
 
 export const IconGoogle = (props: IconProps) => (
   <FcGoogle size={getSize(props)} color={props.color || 'currentColor'} />
+);
+
+export const IconHeart = (props: IconProps) => (
+  <FaHeart size={getSize(props)} color={props.color || 'currentColor'} />
+);
+
+export const IconHeartOutline = (props: IconProps) => (
+  <FaRegHeart size={getSize(props)} color={props.color || 'currentColor'} />
 );

@@ -14,8 +14,12 @@ import {
     IconProductos,
     IconEventos,
     IconNegocios,
-    IconComunidad
+    IconComunidad,
+    IconHeart,
+    IconHeartOutline,
+    IconClose
 } from '@/components/Icons';
+import { useAdInteraction } from '@/hooks/useAdInteraction';
 import TrustBadge from '@/components/trust/TrustBadge';
 
 // --- DATE FORMATTER (RELATIVE) ---
@@ -155,8 +159,11 @@ interface AdisoCardProps {
 }
 
 const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, estaSeleccionado, isDesktop = true }, ref) => {
+    const { isFavorite, isHidden, toggleFav, markNotInterested } = useAdInteraction(adiso.id);
     const IconComponent = getCategoriaIcon(adiso.categoria);
     const theme = getCategoriaTheme(adiso.categoria);
+
+    if (isHidden) return null;
 
     const imagenUrl = adiso.imagenesUrls?.[0] || adiso.imagenUrl;
     const tamaño = adiso.tamaño || 'miniatura';
@@ -222,6 +229,31 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
             }}
             aria-label={`Ver detalles: ${adiso.titulo}`}
         >
+            {/* --- INTERACTION BUTTONS (Top Right) --- */}
+            <div className="absolute top-2 right-2 flex gap-1.5 z-30">
+                {/* Favorite Button */}
+                <button
+                    onClick={toggleFav}
+                    className="p-1.5 rounded-full bg-white/90 shadow-sm border border-gray-100 hover:bg-white hover:scale-110 active:scale-95 transition-all group/btn"
+                    title={isFavorite ? "Quitar de favoritos" : "Guardar para más tarde"}
+                >
+                    {isFavorite ? (
+                        <IconHeart size={14} className="text-red-500" />
+                    ) : (
+                        <IconHeartOutline size={14} className="text-gray-400 group-hover/btn:text-red-500" />
+                    )}
+                </button>
+
+                {/* Not Interested Button */}
+                <button
+                    onClick={markNotInterested}
+                    className="p-1.5 rounded-full bg-white/90 shadow-sm border border-gray-100 hover:bg-white hover:scale-110 active:scale-95 transition-all group/btn"
+                    title="No me interesa (Ocultar)"
+                >
+                    <IconClose size={14} className="text-gray-400 group-hover/btn:text-gray-700" />
+                </button>
+            </div>
+
             {/* --- Card Media Section --- */}
             {tamaño !== 'miniatura' && (
                 <div className={`
