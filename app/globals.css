@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+
+  html,
+  body,
+  :root {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+  }
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -185,4 +194,3 @@ a {
 .border-border-subtle {
   border-color: var(--border-subtle);
 }
-

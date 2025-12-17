@@ -54,26 +54,18 @@ export default function GrillaAdisos({
       <style jsx>{`
         .grilla-adisos {
           display: grid;
-          grid-template-columns: ${isDesktop
-          ? 'repeat(auto-fit, minmax(280px, 1fr))'
-          : 'repeat(1, 1fr)'};
-          
-          /* En mobile, 1 columna para que las cards se vean bien (son detalladas ahora) */
-          /* O 2 columnas si son muy compactas, pero "Cards con alma" suelen requerir espacio. */
-          /* user requested "tarjetas sin alma" fix, implying better design. standard is full width on mobile or 2 cols depending on content. 
-             If I use 280px minmax, it will fit 1 col on mobile (< 560px). 
-             Let's tweak mobile to allows 2 cols if screen is explicitly wide but mobile, or just 1 col stack for better "Soul". 
-             Actually, let's try minmax(220px, 1fr) for desktop to fit more? 280px is better for detail.
-          */
-          
-          gap: ${isDesktop ? '1.5rem' : '1rem'};
-          grid-auto-rows: auto; 
-          /* Removing fixed height rows logic, letting content dictate height or standard card height */
+          /* Mobile: 2 columns fixed */
+          grid-template-columns: repeat(2, 1fr);
+          gap: 0.75rem;
+          grid-auto-rows: auto;
+          grid-auto-flow: dense;
         }
         
-        @media (max-width: 640px) {
+        @media (min-width: 768px) {
              .grilla-adisos {
-                grid-template-columns: 1fr; /* Full width cards on mobile for quality */
+                /* Desktop: Adaptive columns */
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 1.5rem;
              }
         }
 
