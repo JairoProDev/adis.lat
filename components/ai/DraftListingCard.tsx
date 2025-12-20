@@ -40,14 +40,14 @@ export function DraftListingCard({
 }: DraftListingCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedData, setEditedData] = useState(data);
+  const [isPublished, setIsPublished] = useState(false);
 
   const handlePublish = () => {
     if (onPublish) {
       onPublish(editedData);
     } else {
-      // Fallback for when run from server action where functions can't be passed
-      // In a real app, this would redirect to the publication flow with the data
-      alert('¡Listo! En la versión completa, esto te llevará directo al formulario de publicación con los datos pre-llenados.');
+      // Simulate publication for demo
+      setIsPublished(true);
       console.log('Publish data:', editedData);
     }
   };
@@ -77,6 +77,61 @@ export function DraftListingCard({
         return '';
     }
   };
+
+  if (isPublished) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        style={{
+          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+          borderRadius: '16px',
+          padding: '2px',
+          marginTop: '12px',
+          marginBottom: '12px',
+        }}
+      >
+        <div style={{
+          background: 'var(--bg-secondary)',
+          borderRadius: '14px',
+          padding: '24px',
+          textAlign: 'center',
+        }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🎉</div>
+          <h3 style={{
+            fontSize: '20px',
+            fontWeight: 700,
+            color: 'var(--text-primary)',
+            marginBottom: '8px'
+          }}>
+            ¡Aviso Publicado!
+          </h3>
+          <p style={{
+            fontSize: '14px',
+            color: 'var(--text-secondary)',
+            marginBottom: '20px'
+          }}>
+            Tu aviso "{editedData.titulo}" ya está visible para miles de usuarios.
+          </p>
+          <button
+            onClick={() => window.open('/mis-avisos', '_blank')}
+            style={{
+              padding: '10px 20px',
+              borderRadius: '8px',
+              border: 'none',
+              background: 'var(--accent-color)',
+              color: 'white',
+              fontWeight: 600,
+              cursor: 'pointer',
+              width: '100%',
+            }}
+          >
+            Ver mi aviso
+          </button>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div

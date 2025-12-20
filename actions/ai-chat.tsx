@@ -35,8 +35,8 @@ PERSONALITY:
 
 CAPABILITIES:
 1. SEARCH: Help users find listings using semantic search
-2. PUBLISH: Guide users through creating listings (especially "Snap & Sell" with images)
-3. RECOMMEND: Suggest relevant listings based on user preferences
+3. PUBLISH: Guide users through creating listings (can start with "Quiero vender X" or by uploading a photo)
+4. RECOMMEND: Suggest relevant listings based on user preferences
 
 GUIDELINES:
 - Always ask clarifying questions if the user's request is ambiguous
@@ -269,6 +269,58 @@ export async function chat(
                 message: `Error al analizar la imagen: ${error.message}`,
               };
             }
+          },
+        },
+        /**
+         * Tool: Start Publication (Text-based Wizard)
+         */
+        start_publication: {
+          description: 'Start the publication flow when the user wants to sell something but has not uploaded an image',
+          parameters: z.object({
+            titulo: z.string().describe('Title of the item to sell, if mentioned'),
+            categoria: z.enum([
+              'empleos',
+              'inmuebles',
+              'vehiculos',
+              'servicios',
+              'productos',
+              'eventos',
+              'negocios',
+              'comunidad',
+            ]).optional().describe('Category of the item, if mentioned'),
+          }),
+          execute: async ({ titulo, categoria }) => {
+            console.log(`🔧 Tool: start_publication("${titulo}")`);
+
+            // Show thinking skeleton
+            uiStream.update(<ThinkingSkeleton />);
+
+            // Create a draft with the provided info or defaults
+            const draftData = {
+              imageUrl: '', // No image yet
+              categoria: categoria || 'productos',
+              titulo: titulo || 'Nuevo Aviso',
+              descripcion: 'Escribe aquí los detalles de tu aviso...',
+              precio: 0,
+              condicion: 'usado',
+              confidence: 'media' as const,
+            };
+
+            const draftComponent = (
+              <DraftListingCard
+                data={draftData}
+                onPublish={(data) => {
+                  console.log('Publishing:', data);
+                }}
+              />
+            );
+
+            uiStream.done(draftComponent);
+
+            return {
+              success: true,
+              message: `He creado un borrador para tu aviso de "${titulo}". Rellena los detalles y publícalo.`,
+            };
           },
         },
       },
