@@ -42,7 +42,14 @@ export function DraftListingCard({
   const [editedData, setEditedData] = useState(data);
 
   const handlePublish = () => {
-    onPublish?.(editedData);
+    if (onPublish) {
+      onPublish(editedData);
+    } else {
+      // Fallback for when run from server action where functions can't be passed
+      // In a real app, this would redirect to the publication flow with the data
+      alert('¡Listo! En la versión completa, esto te llevará directo al formulario de publicación con los datos pre-llenados.');
+      console.log('Publish data:', editedData);
+    }
   };
 
   const getConfidenceColor = (confidence?: string) => {

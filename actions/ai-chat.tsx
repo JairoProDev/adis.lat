@@ -19,11 +19,13 @@ import { z } from 'zod';
 import { ListingGrid } from '@/components/ai/ListingCard';
 import { SearchingSkeleton, ThinkingSkeleton, AnalyzingImageSkeleton } from '@/components/ai/SkeletonComponents';
 import { DraftListingCard } from '@/components/ai/DraftListingCard';
+import { ErrorCard } from '@/components/ai/ErrorCard';
 
 /**
  * System Prompt - Defines ADIS AI's personality and behavior
  */
 const SYSTEM_PROMPT = `You are ADIS AI, an expert assistant for Buscadis, a classifieds marketplace in Peru.
+Current Date: ${new Date().toLocaleDateString('es-PE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.
 
 PERSONALITY:
 - Friendly, helpful, and proactive
@@ -42,6 +44,7 @@ GUIDELINES:
 - For image-based listings, use the analyze_image tool
 - When showing results, PREFER COMPONENTS over text lists
 - Be honest about limitations (e.g., "No encontré resultados exactos, pero aquí hay opciones similares")
+- If no results are found, suggest broadening the search (e.g., "Tal vez busca en otra categoría o ubicación").
 
 EXAMPLE INTERACTIONS:
 User: "Busco trabajo de cocinero"
@@ -49,6 +52,9 @@ You: [Use search_marketplace tool, show results in ListingGrid component]
 
 User: "Quiero vender esto" [uploads image]
 You: [Use analyze_image tool, show DraftListingCard component]
+
+User: "Hola"
+You: "¡Hola! ¿En qué puedo ayudarte hoy? ¿Buscas algo o quieres vender?"
 
 Remember: Your goal is to make buying and selling EFFORTLESS.`;
 
@@ -103,8 +109,29 @@ export async function chat(
   // Start with thinking skeleton
   uiStream.update(<ThinkingSkeleton />);
 
-  // Classify intent for routing (optional optimization)
-  // const intent = await classifyIntent(userMessage);
+  // Classify intent for routing (optimization)
+  const intent = await classifyIntent(userMessage);
+
+  // Optimization: If intent is simple help/greeting, use faster model
+  if ((intent.intent === 'help' || intent.intent === 'other') && intent.confidence > 0.8) {
+    const reply = await quickReply(userMessage);
+    uiStream.done(
+      <div style={{
+        padding: '12px 16px',
+        borderRadius: '12px',
+        background: 'var(--bg-secondary)',
+        color: 'var(--text-primary)',
+        lineHeight: 1.6,
+      }}>
+        {reply}
+      </div>
+    );
+    return {
+      id: Date.now().toString(),
+      role: 'assistant',
+      display: uiStream.value,
+    };
+  }
 
   // Stream the AI response with tools
   (async () => {
@@ -155,12 +182,6 @@ export async function chat(
               const resultComponent = (
                 <ListingGrid
                   items={results.map((r) => r.adiso)}
-                  onContact={(adiso) => {
-                    console.log('Contact clicked:', adiso.id);
-                  }}
-                  onView={(adiso) => {
-                    console.log('View clicked:', adiso.id);
-                  }}
                 />
               );
 
@@ -171,7 +192,7 @@ export async function chat(
                 message: `Encontré ${results.length} resultados. Los he mostrado arriba.`,
               };
             } catch (error: any) {
-              uiStream.done(<div style={{ color: 'red' }}>Error: {error.message}</div>);
+              uiStream.done(<ErrorCard message={error.message || "Error al buscar anuncios"} />);
               return {
                 found: 0,
                 message: `Error al buscar: ${error.message}`,
@@ -227,7 +248,7 @@ export async function chat(
                 message: `Analicé tu imagen. He creado un borrador de aviso arriba. ¡Puedes publicarlo con un clic o editarlo primero!`,
               };
             } catch (error: any) {
-              uiStream.done(<div style={{ color: 'red' }}>Error: {error.message}</div>);
+              uiStream.done(<ErrorCard message={error.message || "Error al analizar imagen"} />);
               return {
                 success: false,
                 message: `Error al analizar la imagen: ${error.message}`,

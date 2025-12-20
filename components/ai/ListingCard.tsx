@@ -24,6 +24,16 @@ export function ListingCard({
   onView,
   showActions = true,
 }: ListingCardProps) {
+  // Use navigation context for robust handling, but fail gracefully if not inside provider
+  let abrirAdiso: ((id: string) => void) | undefined;
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const nav = require('@/contexts/NavigationContext').useNavigation();
+    abrirAdiso = nav.abrirAdiso;
+  } catch (e) {
+    // Ignore if outside provider
+  }
+
   const getCategoriaNombre = (categoria: string): string => {
     const nombres: Record<string, string> = {
       empleos: 'Empleos',
@@ -48,8 +58,28 @@ export function ListingCard({
       eventos: '#ec4899',
       negocios: '#6366f1',
       comunidad: '#14b8a6',
+
     };
     return colors[categoria] || '#6b7280';
+  };
+
+  const handleView = () => {
+    if (onView) {
+      onView(adiso);
+    } else if (abrirAdiso) {
+      abrirAdiso(adiso.id);
+    } else {
+      console.log('No navigation handler available for', adiso.id);
+    }
+  };
+
+  const handleContact = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onContact) {
+      onContact(adiso);
+    } else if (abrirAdiso) {
+      abrirAdiso(adiso.id); // Default to opening ad for contact details
+    }
   };
 
   return (
@@ -71,7 +101,7 @@ export function ListingCard({
         y: -2,
         boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
       }}
-      onClick={() => onView?.(adiso)}
+      onClick={handleView}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
         <h3 style={{
@@ -138,10 +168,7 @@ export function ListingCard({
 
         {showActions && (
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onContact?.(adiso);
-            }}
+            onClick={handleContact}
             style={{
               padding: '6px 16px',
               borderRadius: '8px',
