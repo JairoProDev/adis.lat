@@ -62,7 +62,7 @@ export async function hybridSearch(
     const queryEmbedding = await generateEmbedding(query);
 
     // Step 2: Call the Supabase hybrid search RPC function
-    const { data, error } = await supabase.rpc('match_adisos_hybrid', {
+    let { data, error } = await supabase.rpc('match_adisos_hybrid', {
       query_embedding: queryEmbedding,
       query_text: query,
       match_threshold: threshold,
@@ -77,30 +77,67 @@ export async function hybridSearch(
       throw new Error(`Search failed: ${error.message}`);
     }
 
+    // FALLBACK: If no results, try a "relaxed" search with lower threshold
     if (!data || data.length === 0) {
-      console.log('📭 No results found');
+      console.log('⚠️ No exact matches. Attempting relaxed search (lower threshold)...');
+
+      const relaxedResult = await supabase.rpc('match_adisos_hybrid', {
+        query_embedding: queryEmbedding,
+        query_text: query,
+        match_threshold: 0.01, // Significantly lower threshold to find broad matches
+        match_count: maxResults,
+        filter_category: category || null,
+        filter_location: location || null,
+        only_active: onlyActive,
+      });
+
+      if (!relaxedResult.error && relaxedResult.data) {
+        data = relaxedResult.data;
+        console.log(`✅ Relaxed search found ${data.length} results`);
+      }
+    }
+
+    if (!data || data.length === 0) {
+      console.log('📭 No results found even after relaxation');
       return [];
     }
 
     console.log(`✅ Found ${data.length} results`);
 
-    // Step 3: Transform results
-    const results: HybridSearchResult[] = data.map((row: any) => ({
-      adiso: {
-        id: row.id,
-        categoria: row.categoria as Categoria,
-        titulo: row.titulo,
-        descripcion: row.descripcion,
-        contacto: row.contacto,
-        ubicacion: row.ubicacion,
-        fechaPublicacion: row.fecha_publicacion,
-        horaPublicacion: row.hora_publicacion,
-        imagenesUrls: typeof row.imagenes_urls === 'string' ? JSON.parse(row.imagenes_urls) : row.imagenes_urls,
-      },
-      similarity_score: row.similarity_score || 0,
-      keyword_rank: row.keyword_rank || 0,
-      hybrid_score: row.hybrid_score || 0,
-    }));
+    // Step 3: Deduplicate and Transform results
+    const uniqueIds = new Set();
+    const uniqueTitles = new Set();
+    const results: HybridSearchResult[] = [];
+
+    for (const row of data) {
+      // Deduplicate by ID
+      if (uniqueIds.has(row.id)) continue;
+
+      // Deduplicate by Title (simple fuzzy check for identical titles in same search)
+      // This prevents "spam" or double posting from looking bad
+      const normalizedTitle = row.titulo?.toLowerCase().trim();
+      if (uniqueTitles.has(normalizedTitle)) continue;
+
+      uniqueIds.add(row.id);
+      uniqueTitles.add(normalizedTitle);
+
+      results.push({
+        adiso: {
+          id: row.id,
+          categoria: row.categoria as Categoria,
+          titulo: row.titulo,
+          descripcion: row.descripcion,
+          contacto: row.contacto,
+          ubicacion: row.ubicacion,
+          fechaPublicacion: row.fecha_publicacion,
+          horaPublicacion: row.hora_publicacion,
+          imagenesUrls: typeof row.imagenes_urls === 'string' ? JSON.parse(row.imagenes_urls) : row.imagenes_urls,
+        },
+        similarity_score: row.similarity_score || 0,
+        keyword_rank: row.keyword_rank || 0,
+        hybrid_score: row.hybrid_score || 0,
+      });
+    }
 
     return results;
   } catch (error: any) {

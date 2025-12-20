@@ -42,9 +42,11 @@ GUIDELINES:
 - Always ask clarifying questions if the user's request is ambiguous
 - For searches, use the search_marketplace tool
 - For image-based listings, use the analyze_image tool
-- When showing results, PREFER COMPONENTS over text lists
+- For image-based listings, use the analyze_image tool
+- When showing results, PREFER COMPONENTS over text lists, but ALWAYS add a brief, helpful comment about the results found (e.g., "These seem to match what you need, especially the first one in [Location]").
 - Be honest about limitations (e.g., "No encontré resultados exactos, pero aquí hay opciones similares")
 - If no results are found, suggest broadening the search (e.g., "Tal vez busca en otra categoría o ubicación").
+- BE CONSULTATIVE: If the results are mixed, ask: "Are you looking for something specific, like [X] or [Y]?"
 
 EXAMPLE INTERACTIONS:
 User: "Busco trabajo de cocinero"
@@ -187,9 +189,22 @@ export async function chat(
 
               uiStream.done(resultComponent);
 
+              // Generate a summary for the LLM so it knows what it found
+              const topResults = results.slice(0, 3).map(r =>
+                `- ${r.adiso.titulo} (${r.adiso.categoria})`
+              ).join('\n');
+
+              const tips = [
+                "💡 Tip: Puedes filtrar por ubicación diciendo 'en San Sebastián'.",
+                "💡 Tip: Intenta buscar por el nombre de la empresa si lo conoces.",
+                "💡 Tip: ¿Buscas algo específico? Sube una foto y lo buscaré por ti.",
+                "💡 Tip: Los resultados incluyen búsquedas semánticas (conceptuales) y exactas."
+              ];
+              const randomTip = tips[Math.floor(Math.random() * tips.length)];
+
               return {
                 found: results.length,
-                message: `Encontré ${results.length} resultados. Los he mostrado arriba.`,
+                message: `Encontré ${results.length} resultados. Aquí están los primeros:\n${topResults}\n\n${randomTip}\n\nLos he mostrado visualmente arriba.`,
               };
             } catch (error: any) {
               uiStream.done(<ErrorCard message={error.message || "Error al buscar anuncios"} />);
