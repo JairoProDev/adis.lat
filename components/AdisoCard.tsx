@@ -25,11 +25,15 @@ import TrustBadge from '@/components/trust/TrustBadge';
 // --- DATE FORMATTER (RELATIVE) ---
 function getTimeAgo(dateString: string | undefined): string {
     if (!dateString) return '';
+
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+
     const now = new Date();
     const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-    if (seconds < 60) return 'Ahora';
+    // Evitar "Ahora" y manejar tiempos negativos (futuro) o muy cortos
+    if (seconds < 60) return 'Hace instantes';
     if (seconds < 3600) return `Hace ${Math.floor(seconds / 60)} min`;
     if (seconds < 86400) return `Hace ${Math.floor(seconds / 3600)} h`;
     if (seconds < 604800) return `Hace ${Math.floor(seconds / 86400)} d`;
@@ -173,7 +177,16 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
     const gridRowSpan = paquete.filas;
 
     // Fecha relativa short
-    const timeAgo = getTimeAgo(adiso.fechaPublicacion || (adiso as any).created_at);
+    // Intentar obtener fecha y hora real (soportando snake_case de DB directa)
+    let fechaRaw = adiso.fechaPublicacion || (adiso as any).fecha_publicacion;
+    const horaRaw = (adiso as any).hora_publicacion || (adiso as any).horaPublicacion;
+
+    if (fechaRaw && horaRaw && !fechaRaw.includes('T')) {
+        // Combinar fecha y hora ISO para evitarUTC offset incorrecto al parsear solo fecha
+        fechaRaw = `${fechaRaw}T${horaRaw}`;
+    }
+
+    const timeAgo = getTimeAgo(fechaRaw || (adiso as any).created_at);
 
     // Precio Logic
     let displayPrice = 'Contactar';
