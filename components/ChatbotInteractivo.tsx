@@ -446,7 +446,7 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
 
             // Función auxiliar para construir y ejecutar query
             const ejecutarQuery = async (filtros: EstadoBusqueda) => {
-                let query = supabase
+                let query = supabase!
                     .from('adisos')
                     .select('*')
                     .eq('esta_activo', true);
@@ -506,7 +506,7 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
 
             // 4. Intento Final: Recientes (Global fallback)
             if (resultados.length === 0) {
-                const { data: recientes } = await supabase
+                const { data: recientes } = await supabase!
                     .from('adisos')
                     .select('*')
                     .eq('esta_activo', true)
