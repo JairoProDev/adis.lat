@@ -105,6 +105,237 @@ const UBICACIONES: BotonOpcion[] = [
     { label: 'Todas', emoji: '🌍', valor: 'todas' }
 ];
 
+
+const getCategoriaNombre = (categoria: Categoria): string => {
+    const nombres: Record<Categoria, string> = {
+        empleos: 'Empleos',
+        inmuebles: 'Inmuebles',
+        vehiculos: 'Vehículos',
+        servicios: 'Servicios',
+        productos: 'Productos',
+        eventos: 'Eventos',
+        negocios: 'Negocios',
+        comunidad: 'Comunidad'
+    };
+    return nombres[categoria] || categoria;
+};
+
+const ChatMessage = ({
+    mensaje,
+    handleSeleccion,
+    handleClickAdiso,
+    procesando
+}: {
+    mensaje: Mensaje;
+    handleSeleccion: (valor: string) => void;
+    handleClickAdiso: (adiso: Adiso) => void;
+    procesando: boolean;
+}) => {
+    const [mostrarTodos, setMostrarTodos] = useState(false);
+
+    // Mostramos 5 o todos
+    const resultadosVisibles = mostrarTodos
+        ? mensaje.resultados
+        : mensaje.resultados?.slice(0, 5);
+
+    const restantes = (mensaje.resultados?.length || 0) - (resultadosVisibles?.length || 0);
+
+    return (
+        <div key={mensaje.id}>
+            {mensaje.contenido && (
+                <div
+                    style={{
+                        display: 'flex',
+                        justifyContent: mensaje.tipo === 'usuario' ? 'flex-end' : 'flex-start',
+                        animation: 'fadeIn 0.4s ease-out'
+                    }}
+                >
+                    {mensaje.tipo === 'asistente' && (
+                        <div
+                            style={{
+                                width: '32px',
+                                height: '32px',
+                                borderRadius: '50%',
+                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'white',
+                                fontSize: '0.9rem',
+                                fontWeight: 'bold',
+                                marginRight: '0.5rem',
+                                flexShrink: 0,
+                                boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)'
+                            }}
+                        >
+                            AI
+                        </div>
+                    )}
+                    <div
+                        style={{
+                            maxWidth: '85%',
+                            padding: '0.75rem 1rem',
+                            borderRadius: mensaje.tipo === 'usuario' ? '1rem 1rem 0.25rem 1rem' : '1rem 1rem 1rem 0.25rem',
+                            backgroundColor: mensaje.tipo === 'usuario'
+                                ? 'var(--accent-color)'
+                                : 'var(--bg-secondary)',
+                            color: mensaje.tipo === 'usuario'
+                                ? 'white'
+                                : 'var(--text-primary)',
+                            boxShadow: mensaje.tipo === 'usuario'
+                                ? '0 2px 8px rgba(0,0,0,0.15)'
+                                : '0 2px 6px rgba(0,0,0,0.08)',
+                            whiteSpace: 'pre-wrap',
+                            wordBreak: 'break-word',
+                            lineHeight: 1.6
+                        }}
+                    >
+                        {mensaje.contenido}
+                    </div>
+                </div>
+            )}
+
+            {mensaje.component && (
+                <div style={{ marginTop: '0.5rem', width: '100%', paddingLeft: mensaje.tipo === 'asistente' ? '3rem' : 0 }}>
+                    {mensaje.component}
+                </div>
+            )}
+
+            {mensaje.botones && mensaje.botones.length > 0 && (
+                <div
+                    style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(2, 1fr)',
+                        gap: '0.5rem',
+                        marginTop: '0.5rem',
+                        paddingLeft: '3rem',
+                        animation: 'slideUp 0.3s ease-out'
+                    }}
+                >
+                    {mensaje.botones.map((boton, index) => (
+                        <button
+                            key={index}
+                            onClick={() => handleSeleccion(boton.valor)}
+                            disabled={procesando}
+                            style={{
+                                padding: '0.6rem 0.5rem',
+                                borderRadius: '8px',
+                                border: '1px solid var(--border-color)',
+                                backgroundColor: 'var(--bg-secondary)',
+                                color: 'var(--text-primary)',
+                                cursor: procesando ? 'not-allowed' : 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '0.3rem',
+                                transition: 'all 0.2s',
+                                fontSize: '0.85rem',
+                                fontWeight: 500,
+                                opacity: procesando ? 0.5 : 1,
+                                minHeight: '3.5rem',
+                                lineHeight: '1.2'
+                            }}
+                        >
+                            {boton.emoji && <span style={{ fontSize: '1.1rem' }}>{boton.emoji}</span>}
+                            <span>{boton.label}</span>
+                        </button>
+                    ))}
+                </div>
+            )}
+
+            {mensaje.resultados && mensaje.resultados.length > 0 && (
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.75rem',
+                        marginTop: '0.5rem',
+                        paddingLeft: '3rem'
+                    }}
+                >
+                    {resultadosVisibles?.map((adiso) => (
+                        <div
+                            key={adiso.id}
+                            onClick={() => handleClickAdiso(adiso)}
+                            style={{
+                                padding: '1rem',
+                                backgroundColor: 'var(--bg-secondary)',
+                                borderRadius: '0.75rem',
+                                border: '1px solid var(--border-color)',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                            }}
+                        >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '0.5rem' }}>
+                                <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.95rem', flex: 1 }}>
+                                    {adiso.titulo}
+                                </div>
+                                <span
+                                    style={{
+                                        padding: '0.25rem 0.5rem',
+                                        borderRadius: '0.5rem',
+                                        fontSize: '0.75rem',
+                                        backgroundColor: 'var(--accent-color)',
+                                        color: 'white',
+                                        marginLeft: '0.5rem',
+                                        flexShrink: 0
+                                    }}
+                                >
+                                    {getCategoriaNombre(adiso.categoria)}
+                                </span>
+                            </div>
+                            {adiso.descripcion && (
+                                <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                                    {adiso.descripcion.substring(0, 100)}
+                                    {adiso.descripcion.length > 100 ? '...' : ''}
+                                </div>
+                            )}
+                            {adiso.ubicacion && (
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+                                    📍 {typeof adiso.ubicacion === 'string' ? adiso.ubicacion : `${adiso.ubicacion.distrito || ''}, ${adiso.ubicacion.provincia || ''}`}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+
+                    {!mostrarTodos && restantes > 0 && (
+                        <button
+                            onClick={() => setMostrarTodos(true)}
+                            style={{
+                                width: '100%',
+                                padding: '0.75rem',
+                                marginTop: '0.5rem',
+                                background: 'transparent',
+                                border: '1px dashed var(--border-color)',
+                                borderRadius: '8px',
+                                color: 'var(--text-secondary)',
+                                cursor: 'pointer',
+                                fontSize: '0.9rem',
+                                transition: 'all 0.2s',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '8px'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
+                                e.currentTarget.style.color = 'var(--accent-color)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = 'transparent';
+                                e.currentTarget.style.color = 'var(--text-secondary)';
+                            }}
+                        >
+                            <span>⬇️</span> Ver {restantes} resultados más
+                        </button>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+};
+
 export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onMinimize }: ChatbotIAProps) {
     const router = useRouter();
     const { abrirAdiso } = useNavigation();
@@ -189,7 +420,8 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
         if (isLoaded) {
             scrollToBottom();
         }
-    }, [mensajes, isLoaded]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isLoaded]);
 
     const agregarMensaje = (tipo: 'usuario' | 'asistente' | 'botones', contenido: string, opciones?: { resultados?: Adiso[]; botones?: BotonOpcion[]; component?: React.ReactNode }) => {
         const nuevoMensaje: Mensaje = {
@@ -319,6 +551,9 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
     };
 
     const handleSeleccion = async (valor: string) => {
+        // Autoscroll al seleccionar una opción
+        setTimeout(() => scrollToBottom(), 100);
+
         const nuevoEstado = { ...estadoBusqueda };
 
         if (valor === 'nueva_busqueda') {
@@ -456,19 +691,7 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
         }
     };
 
-    const getCategoriaNombre = (categoria: Categoria): string => {
-        const nombres: Record<Categoria, string> = {
-            empleos: 'Empleos',
-            inmuebles: 'Inmuebles',
-            vehiculos: 'Vehículos',
-            servicios: 'Servicios',
-            productos: 'Productos',
-            eventos: 'Eventos',
-            negocios: 'Negocios',
-            comunidad: 'Comunidad'
-        };
-        return nombres[categoria] || categoria;
-    };
+
 
     return (
         <div
@@ -575,164 +798,13 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
                 }}
             >
                 {mensajes.map((mensaje) => (
-                    <div key={mensaje.id}>
-                        {mensaje.contenido && (
-                            <div
-                                style={{
-                                    display: 'flex',
-                                    justifyContent: mensaje.tipo === 'usuario' ? 'flex-end' : 'flex-start',
-                                    animation: 'fadeIn 0.4s ease-out'
-                                }}
-                            >
-                                {mensaje.tipo === 'asistente' && (
-                                    <div
-                                        style={{
-                                            width: '32px',
-                                            height: '32px',
-                                            borderRadius: '50%',
-                                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            color: 'white',
-                                            fontSize: '0.9rem',
-                                            fontWeight: 'bold',
-                                            marginRight: '0.5rem',
-                                            flexShrink: 0,
-                                            boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)'
-                                        }}
-                                    >
-                                        AI
-                                    </div>
-                                )}
-                                <div
-                                    style={{
-                                        maxWidth: '85%',
-                                        padding: '0.75rem 1rem',
-                                        borderRadius: mensaje.tipo === 'usuario' ? '1rem 1rem 0.25rem 1rem' : '1rem 1rem 1rem 0.25rem',
-                                        backgroundColor: mensaje.tipo === 'usuario'
-                                            ? 'var(--accent-color)'
-                                            : 'var(--bg-secondary)',
-                                        color: mensaje.tipo === 'usuario'
-                                            ? 'white'
-                                            : 'var(--text-primary)',
-                                        boxShadow: mensaje.tipo === 'usuario'
-                                            ? '0 2px 8px rgba(0,0,0,0.15)'
-                                            : '0 2px 6px rgba(0,0,0,0.08)',
-                                        whiteSpace: 'pre-wrap',
-                                        wordBreak: 'break-word',
-                                        lineHeight: 1.6
-                                    }}
-                                >
-                                    {mensaje.contenido}
-                                </div>
-                            </div>
-                        )}
-
-                        {mensaje.component && (
-                            <div style={{ marginTop: '0.5rem', width: '100%', paddingLeft: mensaje.tipo === 'asistente' ? '3rem' : 0 }}>
-                                {mensaje.component}
-                            </div>
-                        )}
-
-                        {mensaje.botones && mensaje.botones.length > 0 && (
-                            <div
-                                style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-                                    gap: '0.5rem',
-                                    marginTop: '0.5rem',
-                                    paddingLeft: '3rem',
-                                    animation: 'slideUp 0.3s ease-out'
-                                }}
-                            >
-                                {mensaje.botones.map((boton, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => handleSeleccion(boton.valor)}
-                                        disabled={procesando}
-                                        style={{
-                                            padding: '0.75rem',
-                                            borderRadius: '8px',
-                                            border: '1px solid var(--border-color)',
-                                            backgroundColor: 'var(--bg-secondary)',
-                                            color: 'var(--text-primary)',
-                                            cursor: procesando ? 'not-allowed' : 'pointer',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            gap: '0.5rem',
-                                            transition: 'all 0.2s',
-                                            fontSize: '0.9rem',
-                                            fontWeight: 500,
-                                            opacity: procesando ? 0.5 : 1
-                                        }}
-                                    >
-                                        {boton.emoji && <span style={{ fontSize: '1.2rem' }}>{boton.emoji}</span>}
-                                        <span>{boton.label}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-
-                        {mensaje.resultados && mensaje.resultados.length > 0 && (
-                            <div
-                                style={{
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: '0.75rem',
-                                    marginTop: '0.5rem',
-                                    paddingLeft: '3rem'
-                                }}
-                            >
-                                {mensaje.resultados.slice(0, 10).map((adiso) => (
-                                    <div
-                                        key={adiso.id}
-                                        onClick={() => handleClickAdiso(adiso)}
-                                        style={{
-                                            padding: '1rem',
-                                            backgroundColor: 'var(--bg-secondary)',
-                                            borderRadius: '0.75rem',
-                                            border: '1px solid var(--border-color)',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.2s',
-                                            boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-                                        }}
-                                    >
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '0.5rem' }}>
-                                            <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.95rem', flex: 1 }}>
-                                                {adiso.titulo}
-                                            </div>
-                                            <span
-                                                style={{
-                                                    padding: '0.25rem 0.5rem',
-                                                    borderRadius: '0.5rem',
-                                                    fontSize: '0.75rem',
-                                                    backgroundColor: 'var(--accent-color)',
-                                                    color: 'white',
-                                                    marginLeft: '0.5rem',
-                                                    flexShrink: 0
-                                                }}
-                                            >
-                                                {getCategoriaNombre(adiso.categoria)}
-                                            </span>
-                                        </div>
-                                        {adiso.descripcion && (
-                                            <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                                                {adiso.descripcion.substring(0, 100)}
-                                                {adiso.descripcion.length > 100 ? '...' : ''}
-                                            </div>
-                                        )}
-                                        {adiso.ubicacion && (
-                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                                                📍 {typeof adiso.ubicacion === 'string' ? adiso.ubicacion : `${adiso.ubicacion.distrito || ''}, ${adiso.ubicacion.provincia || ''}`}
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                    <ChatMessage
+                        key={mensaje.id}
+                        mensaje={mensaje}
+                        handleSeleccion={handleSeleccion}
+                        handleClickAdiso={handleClickAdiso}
+                        procesando={procesando}
+                    />
                 ))}
 
                 <div ref={mensajesEndRef} />
