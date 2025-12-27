@@ -59,7 +59,7 @@ export default function SidebarDesktop({
   const [minimizado, setMinimizado] = useState(defaultMinimized);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [tooltipHovered, setTooltipHovered] = useState<SeccionSidebar | null>(null);
-  const { setSidebarExpanded } = useNavigation();
+  const { setSidebarExpanded, abrirAdiso } = useNavigation();
 
   // Update CSS variable for sidebar width to allow page layout to adapt
   useEffect(() => {
@@ -362,7 +362,12 @@ export default function SidebarDesktop({
             )}
 
             {seccionActiva === 'mapa' && (
-              <MapaInteractivo adisos={[]} onAbrirAdiso={() => { }} />
+              <MapaInteractivo
+                adisos={todosLosAdisos}
+                onAbrirAdiso={(adiso) => {
+                  abrirAdiso(adiso.id);
+                }}
+              />
             )}
 
             {seccionActiva === 'publicar' && (
