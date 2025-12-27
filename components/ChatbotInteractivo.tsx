@@ -442,63 +442,89 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
                 throw new Error('Supabase no configurado');
             }
 
-            let query = supabase
-                .from('adisos')
-                .select('*')
-                .eq('esta_activo', true);
-
-            if (estado.categoria) {
-                query = query.eq('categoria', estado.categoria);
-            }
-
-            if (estado.ubicacion && estado.ubicacion !== 'todas') {
-                query = query.ilike('ubicacion', `%${estado.ubicacion}%`);
-            }
-
-            const terminos: string[] = [];
-
-            if (estado.subcategoria && estado.subcategoria !== 'todos') {
-                terminos.push(estado.subcategoria);
-            }
-
-            if (estado.tipo && estado.tipo !== 'todos') {
-                terminos.push(estado.tipo);
-            }
-
-            if (estado.accion && estado.accion !== 'todos') {
-                terminos.push(estado.accion);
-            }
-
-            if (terminos.length > 0) {
-                const condiciones = terminos.map(termino =>
-                    `titulo.ilike.%${termino}%,descripcion.ilike.%${termino}%`
-                ).join(',');
-                query = query.or(condiciones);
-            }
-
-            const { data, error } = await query.limit(20);
-
-            if (error) throw error;
-
             const { dbToAdiso } = await import('@/lib/supabase');
-            const resultados = (data || []).map(dbToAdiso);
 
-            if (resultados.length > 0) {
-                agregarMensaje('asistente', `✨ Encontré ${resultados.length} aviso${resultados.length !== 1 ? 's' : ''} que te pueden interesar:`, { resultados });
+            // Función auxiliar para construir y ejecutar query
+            const ejecutarQuery = async (filtros: EstadoBusqueda) => {
+                let query = supabase
+                    .from('adisos')
+                    .select('*')
+                    .eq('esta_activo', true);
 
-                agregarMensaje('botones', '', {
-                    botones: [
-                        { label: 'Nueva Búsqueda', emoji: '🔄', valor: 'nueva_busqueda' }
-                    ]
-                });
-            } else {
-                agregarMensaje('asistente', '😕 No encontré avisos con esos filtros. Intenta con otros criterios.');
-                agregarMensaje('botones', '', {
-                    botones: [
-                        { label: 'Intentar de Nuevo', emoji: '🔄', valor: 'nueva_busqueda' }
-                    ]
-                });
+                if (filtros.categoria) {
+                    query = query.eq('categoria', filtros.categoria);
+                }
+
+                if (filtros.ubicacion && filtros.ubicacion !== 'todas') {
+                    query = query.ilike('ubicacion', `%${filtros.ubicacion}%`);
+                }
+
+                const terminos: string[] = [];
+                if (filtros.subcategoria && filtros.subcategoria !== 'todos') {
+                    terminos.push(filtros.subcategoria);
+                }
+                if (filtros.tipo && filtros.tipo !== 'todos') {
+                    terminos.push(filtros.tipo);
+                }
+                if (filtros.accion && filtros.accion !== 'todos') {
+                    terminos.push(filtros.accion);
+                }
+
+                if (terminos.length > 0) {
+                    const condiciones = terminos.map(termino =>
+                        `titulo.ilike.%${termino}%,descripcion.ilike.%${termino}%`
+                    ).join(',');
+                    query = query.or(condiciones);
+                }
+
+                const { data, error } = await query.limit(20);
+                if (error) throw error;
+                return (data || []).map(dbToAdiso);
+            };
+
+            // 1. Intento Exacto
+            let resultados = await ejecutarQuery(estado);
+            let mensajeTitulo = `✨ Encontré ${resultados.length} aviso${resultados.length !== 1 ? 's' : ''} que te pueden interesar:`;
+
+            // 2. Intento Relax: Sin Ubicación (si se pidió ubicación y no hubo resultados)
+            if (resultados.length === 0 && estado.ubicacion && estado.ubicacion !== 'todas') {
+                const estadoSinUbicacion = { ...estado, ubicacion: undefined };
+                resultados = await ejecutarQuery(estadoSinUbicacion);
+                if (resultados.length > 0) {
+                    mensajeTitulo = `😕 No encontré nada en ${estado.ubicacion}, pero aquí hay opciones en otras zonas:`;
+                }
             }
+
+            // 3. Intento Relax: Solo Categoría (si había subfiltros y aún no hay resultados)
+            if (resultados.length === 0 && (estado.subcategoria || estado.tipo || estado.accion)) {
+                const estadoSoloCategoria = { categoria: estado.categoria };
+                resultados = await ejecutarQuery(estadoSoloCategoria);
+                if (resultados.length > 0) {
+                    mensajeTitulo = `🔍 Revisé todo pero no vi exactamente eso. Aquí tienes lo último en ${getCategoriaNombre(estado.categoria || 'empleos')}:`;
+                }
+            }
+
+            // 4. Intento Final: Recientes (Global fallback)
+            if (resultados.length === 0) {
+                const { data: recientes } = await supabase
+                    .from('adisos')
+                    .select('*')
+                    .eq('esta_activo', true)
+                    .order('created_at', { ascending: false })
+                    .limit(10);
+
+                resultados = (recientes || []).map(dbToAdiso);
+                mensajeTitulo = `😅 Vaya, esa búsqueda específica no arrojó resultados hoy. ¡Pero mira las últimas novedades en Cusco!`;
+            }
+
+            agregarMensaje('asistente', mensajeTitulo, { resultados });
+
+            // Siempre mostrar opción de nueva búsqueda al final
+            agregarMensaje('botones', '', {
+                botones: [
+                    { label: 'Nueva Búsqueda', emoji: '🔄', valor: 'nueva_busqueda' }
+                ]
+            });
 
         } catch (error) {
             console.error('Error en búsqueda:', error);
