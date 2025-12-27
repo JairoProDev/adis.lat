@@ -3,10 +3,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Adiso, Categoria } from '@/types';
-import { FaSpinner, FaTrash, FaTimes } from 'react-icons/fa';
+import { FaSpinner, FaTrash, FaTimes, FaBullhorn, FaSearch } from 'react-icons/fa';
 import { supabase } from '@/lib/supabase';
 import { getAdisoUrl } from '@/lib/url';
 import { useNavigation } from '@/contexts/NavigationContext';
+import { DraftListingCard } from '@/components/ai/DraftListingCard';
 
 interface Mensaje {
     id: string;
@@ -15,6 +16,7 @@ interface Mensaje {
     timestamp: Date;
     resultados?: Adiso[];
     botones?: BotonOpcion[];
+    component?: React.ReactNode;
 }
 
 interface BotonOpcion {
@@ -106,6 +108,7 @@ const UBICACIONES: BotonOpcion[] = [
 export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onMinimize }: ChatbotIAProps) {
     const router = useRouter();
     const { abrirAdiso } = useNavigation();
+    const [modo, setModo] = useState<'buscar' | 'publicar'>('buscar');
 
     // Mensaje inicial por defecto
     const MENSAJE_INICIAL: Mensaje[] = [
@@ -153,7 +156,14 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
     // Guardar historial al actualizar
     useEffect(() => {
         if (isLoaded && typeof window !== 'undefined') {
-            localStorage.setItem('adis_chat_mensajes', JSON.stringify(mensajes));
+            // Remove sensitive or too large objects before saving if needed, but for now it's fine
+            // We should filter out components as they can't be serialized
+            const saveableMensajes = mensajes.map(m => {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { component, ...rest } = m;
+                return rest;
+            });
+            localStorage.setItem('adis_chat_mensajes', JSON.stringify(saveableMensajes));
         }
     }, [mensajes, isLoaded]);
 
@@ -176,13 +186,12 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
     };
 
     useEffect(() => {
-        // Solo hacer scroll automático si ya cargó el historial o se añade un mensaje nuevo
         if (isLoaded) {
             scrollToBottom();
         }
     }, [mensajes, isLoaded]);
 
-    const agregarMensaje = (tipo: 'usuario' | 'asistente' | 'botones', contenido: string, opciones?: { resultados?: Adiso[]; botones?: BotonOpcion[] }) => {
+    const agregarMensaje = (tipo: 'usuario' | 'asistente' | 'botones', contenido: string, opciones?: { resultados?: Adiso[]; botones?: BotonOpcion[]; component?: React.ReactNode }) => {
         const nuevoMensaje: Mensaje = {
             id: Date.now().toString(),
             tipo,
@@ -206,17 +215,14 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
                 .select('*')
                 .eq('esta_activo', true);
 
-            // Filtrar por categoría
             if (estado.categoria) {
                 query = query.eq('categoria', estado.categoria);
             }
 
-            // Filtrar por ubicación
             if (estado.ubicacion && estado.ubicacion !== 'todas') {
                 query = query.ilike('ubicacion', `%${estado.ubicacion}%`);
             }
 
-            // Construir términos de búsqueda
             const terminos: string[] = [];
 
             if (estado.subcategoria && estado.subcategoria !== 'todos') {
@@ -231,7 +237,6 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
                 terminos.push(estado.accion);
             }
 
-            // Buscar términos en título o descripción
             if (terminos.length > 0) {
                 const condiciones = terminos.map(termino =>
                     `titulo.ilike.%${termino}%,descripcion.ilike.%${termino}%`
@@ -246,11 +251,9 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
             const { dbToAdiso } = await import('@/lib/supabase');
             const resultados = (data || []).map(dbToAdiso);
 
-            // Mostrar resultados
             if (resultados.length > 0) {
                 agregarMensaje('asistente', `✨ Encontré ${resultados.length} aviso${resultados.length !== 1 ? 's' : ''} que te pueden interesar:`, { resultados });
 
-                // Botón de nueva búsqueda
                 agregarMensaje('botones', '', {
                     botones: [
                         { label: 'Nueva Búsqueda', emoji: '🔄', valor: 'nueva_busqueda' }
@@ -273,10 +276,51 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
         }
     };
 
+    const handleModoChange = (nuevoModo: 'buscar' | 'publicar') => {
+        setModo(nuevoModo);
+        setProcesando(false);
+        if (nuevoModo === 'publicar') {
+            agregarMensaje('asistente', '📢 Modo Publicación Activado.\n\n¿Qué te gustaría publicar hoy? Puedo ayudarte a crear un aviso para empleos, inmuebles o productos.\n\n📸 Sube una foto o simplemente dime "Vendo mi bicicleta".');
+        } else {
+            agregarMensaje('asistente', '🔍 Modo Búsqueda Activado.\n\n¿Qué estás buscando hoy?');
+            agregarMensaje('botones', '', { botones: CATEGORIAS });
+        }
+    };
+
+    const procesarPublicacion = async (texto: string) => {
+        setProcesando(true);
+        agregarMensaje('usuario', texto);
+
+        // Simular "pensando"
+        setTimeout(() => {
+            const draftData = {
+                imageUrl: '', // No image yet
+                categoria: 'productos' as const,
+                titulo: texto.length > 4 ? texto : `Aviso de ${texto}`,
+                descripcion: `Vendo ${texto}. Contactar para más detalles.`,
+                precio: 0,
+                condicion: 'usado',
+                confidence: 'media' as const,
+            };
+
+            agregarMensaje('asistente', 'He preparado un borrador provisional. Edítalo y publícalo:', {
+                component: (
+                    <DraftListingCard
+                        data={draftData}
+                        onPublish={(data) => {
+                            console.log('Publicado simulado:', data);
+                        }}
+                    />
+                )
+            });
+            setProcesando(false);
+            setInputTexto('');
+        }, 1000);
+    };
+
     const handleSeleccion = async (valor: string) => {
         const nuevoEstado = { ...estadoBusqueda };
 
-        // Nueva búsqueda
         if (valor === 'nueva_busqueda') {
             setEstadoBusqueda({});
             agregarMensaje('asistente', '¿Qué tipo de aviso te interesa?');
@@ -284,7 +328,6 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
             return;
         }
 
-        // Selección de categoría
         if (CATEGORIAS.find(c => c.valor === valor)) {
             nuevoEstado.categoria = valor as Categoria;
             setEstadoBusqueda(nuevoEstado);
@@ -292,7 +335,6 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
             const categoriaSeleccionada = CATEGORIAS.find(c => c.valor === valor);
             agregarMensaje('usuario', `${categoriaSeleccionada?.emoji} ${categoriaSeleccionada?.label}`);
 
-            // Siguiente paso según categoría
             if (valor === 'empleos') {
                 agregarMensaje('asistente', '¿Qué tipo de empleo buscas?');
                 agregarMensaje('botones', '', { botones: EMPLEOS_TIPOS });
@@ -303,86 +345,64 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
                 agregarMensaje('asistente', '¿Qué tipo de vehículo?');
                 agregarMensaje('botones', '', { botones: VEHICULOS_TIPOS });
             } else {
-                // Para otras categorías, ir directo a ubicación
                 agregarMensaje('asistente', '¿En qué zona?');
                 agregarMensaje('botones', '', { botones: UBICACIONES });
             }
             return;
         }
 
-        // Selección de tipo de empleo
         if (nuevoEstado.categoria === 'empleos' && EMPLEOS_TIPOS.find(t => t.valor === valor)) {
             nuevoEstado.subcategoria = valor;
             setEstadoBusqueda(nuevoEstado);
-
             const tipoSeleccionado = EMPLEOS_TIPOS.find(t => t.valor === valor);
             agregarMensaje('usuario', `${tipoSeleccionado?.emoji} ${tipoSeleccionado?.label}`);
-
             agregarMensaje('asistente', '¿En qué zona?');
             agregarMensaje('botones', '', { botones: UBICACIONES });
             return;
         }
 
-        // Selección de tipo de inmueble
         if (nuevoEstado.categoria === 'inmuebles' && INMUEBLES_TIPOS.find(t => t.valor === valor)) {
             nuevoEstado.tipo = valor;
             setEstadoBusqueda(nuevoEstado);
-
             const tipoSeleccionado = INMUEBLES_TIPOS.find(t => t.valor === valor);
             agregarMensaje('usuario', `${tipoSeleccionado?.emoji} ${tipoSeleccionado?.label}`);
-
             agregarMensaje('asistente', '¿Qué buscas hacer?');
             agregarMensaje('botones', '', { botones: INMUEBLES_ACCIONES });
             return;
         }
 
-        // Selección de acción de inmueble
         if (nuevoEstado.categoria === 'inmuebles' && INMUEBLES_ACCIONES.find(a => a.valor === valor)) {
             nuevoEstado.accion = valor;
             setEstadoBusqueda(nuevoEstado);
-
             const accionSeleccionada = INMUEBLES_ACCIONES.find(a => a.valor === valor);
             agregarMensaje('usuario', `${accionSeleccionada?.emoji} ${accionSeleccionada?.label}`);
-
             agregarMensaje('asistente', '¿En qué zona?');
             agregarMensaje('botones', '', { botones: UBICACIONES });
             return;
         }
 
-        // Selección de tipo de vehículo
         if (nuevoEstado.categoria === 'vehiculos' && VEHICULOS_TIPOS.find(t => t.valor === valor)) {
             nuevoEstado.subcategoria = valor;
             setEstadoBusqueda(nuevoEstado);
-
             const tipoSeleccionado = VEHICULOS_TIPOS.find(t => t.valor === valor);
             agregarMensaje('usuario', `${tipoSeleccionado?.emoji} ${tipoSeleccionado?.label}`);
-
             agregarMensaje('asistente', '¿En qué zona?');
             agregarMensaje('botones', '', { botones: UBICACIONES });
             return;
         }
 
-        // Selección de ubicación (último paso)
         if (UBICACIONES.find(u => u.valor === valor)) {
             nuevoEstado.ubicacion = valor;
             setEstadoBusqueda(nuevoEstado);
-
             const ubicacionSeleccionada = UBICACIONES.find(u => u.valor === valor);
             agregarMensaje('usuario', `${ubicacionSeleccionada?.emoji} ${ubicacionSeleccionada?.label}`);
-
             agregarMensaje('asistente', '🔍 Buscando las mejores opciones para ti...');
-
-            // Buscar
             await buscarAvisos(nuevoEstado);
         }
     };
 
     const handleClickAdiso = (adiso: Adiso) => {
-        // Navegar al aviso EN EL SIDEBAR (sin cambiar de página completa)
         if (onMinimize) onMinimize();
-
-        // Usar NavigationContext para abrir el adiso en el sidebar
-        // Esto mantiene la lógica de la SPA sin recargar
         abrirAdiso(adiso.id);
     };
 
@@ -394,7 +414,6 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
         agregarMensaje('asistente', '🔍 Buscando...');
 
         try {
-            // Usar la búsqueda mejorada
             const { analizarBusqueda } = await import('@/lib/chatbot-nlu');
             const { buscarMejorada } = await import('@/lib/busqueda-mejorada');
 
@@ -429,7 +448,11 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
     const handleSubmitTexto = (e: React.FormEvent) => {
         e.preventDefault();
         if (inputTexto.trim() && !procesando) {
-            buscarPorTexto(inputTexto);
+            if (modo === 'publicar') {
+                procesarPublicacion(inputTexto);
+            } else {
+                buscarPorTexto(inputTexto);
+            }
         }
     };
 
@@ -458,7 +481,6 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
             }}
         >
             {/* Header */}
-            {/* Header */}
             <div
                 style={{
                     padding: '1rem',
@@ -472,7 +494,6 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
                     zIndex: 10
                 }}
             >
-
                 <div
                     style={{
                         width: '40px',
@@ -495,7 +516,7 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
                         Asistente Interactivo
                     </div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                        Encuentra lo que buscas en segundos
+                        {modo === 'publicar' ? 'Asistente de Publicación' : 'Encuentra lo que buscas'}
                     </div>
                 </div>
 
@@ -514,14 +535,6 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center'
-                        }}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
-                            e.currentTarget.style.color = '#ef4444';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'transparent';
-                            e.currentTarget.style.color = 'var(--text-tertiary)';
                         }}
                     >
                         <FaTrash size={14} />
@@ -543,14 +556,6 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
                                 alignItems: 'center',
                                 justifyContent: 'center'
                             }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-                                e.currentTarget.style.color = 'var(--text-primary)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = 'transparent';
-                                e.currentTarget.style.color = 'var(--text-tertiary)';
-                            }}
                         >
                             <FaTimes size={16} />
                         </button>
@@ -569,10 +574,8 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
                     gap: '1rem'
                 }}
             >
-                {/* ... (código existente del render de mensajes) ... */}
                 {mensajes.map((mensaje) => (
                     <div key={mensaje.id}>
-                        {/* Mensaje de texto */}
                         {mensaje.contenido && (
                             <div
                                 style={{
@@ -626,14 +629,20 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
                             </div>
                         )}
 
-                        {/* Botones */}
+                        {mensaje.component && (
+                            <div style={{ marginTop: '0.5rem', width: '100%', paddingLeft: mensaje.tipo === 'asistente' ? '3rem' : 0 }}>
+                                {mensaje.component}
+                            </div>
+                        )}
+
                         {mensaje.botones && mensaje.botones.length > 0 && (
                             <div
                                 style={{
                                     display: 'grid',
                                     gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
                                     gap: '0.5rem',
-                                    marginTop: mensaje.contenido ? '0.5rem' : '0',
+                                    marginTop: '0.5rem',
+                                    paddingLeft: '3rem',
                                     animation: 'slideUp 0.3s ease-out'
                                 }}
                             >
@@ -658,18 +667,6 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
                                             fontWeight: 500,
                                             opacity: procesando ? 0.5 : 1
                                         }}
-                                        onMouseEnter={(e) => {
-                                            if (!procesando) {
-                                                e.currentTarget.style.transform = 'translateY(-2px)';
-                                                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-                                                e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-                                            }
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.currentTarget.style.transform = 'translateY(0)';
-                                            e.currentTarget.style.boxShadow = 'none';
-                                            e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
-                                        }}
                                     >
                                         {boton.emoji && <span style={{ fontSize: '1.2rem' }}>{boton.emoji}</span>}
                                         <span>{boton.label}</span>
@@ -678,14 +675,14 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
                             </div>
                         )}
 
-                        {/* Resultados */}
                         {mensaje.resultados && mensaje.resultados.length > 0 && (
                             <div
                                 style={{
                                     display: 'flex',
                                     flexDirection: 'column',
                                     gap: '0.75rem',
-                                    marginTop: '0.5rem'
+                                    marginTop: '0.5rem',
+                                    paddingLeft: '3rem'
                                 }}
                             >
                                 {mensaje.resultados.slice(0, 10).map((adiso) => (
@@ -700,14 +697,6 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
                                             cursor: 'pointer',
                                             transition: 'all 0.2s',
                                             boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            e.currentTarget.style.transform = 'translateY(-2px)';
-                                            e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.currentTarget.style.transform = 'translateY(0)';
-                                            e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
                                         }}
                                     >
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '0.5rem' }}>
@@ -757,13 +746,63 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
                     backgroundColor: 'var(--bg-secondary)'
                 }}
             >
+                {/* Mode Toggles */}
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                    <button
+                        type="button"
+                        onClick={() => handleModoChange('buscar')}
+                        style={{
+                            flex: 1,
+                            padding: '8px',
+                            borderRadius: '12px',
+                            border: '1px solid',
+                            borderColor: modo === 'buscar' ? 'var(--accent-color)' : 'transparent',
+                            background: modo === 'buscar' ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+                            color: modo === 'buscar' ? 'var(--accent-color)' : 'var(--text-secondary)',
+                            fontSize: '0.85rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        <FaSearch /> Buscar
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => handleModoChange('publicar')}
+                        style={{
+                            flex: 1,
+                            padding: '8px',
+                            borderRadius: '12px',
+                            border: '1px solid',
+                            borderColor: modo === 'publicar' ? 'var(--accent-color)' : 'transparent',
+                            background: modo === 'publicar' ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+                            color: modo === 'publicar' ? 'var(--accent-color)' : 'var(--text-secondary)',
+                            fontSize: '0.85rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        <FaBullhorn /> Publicar
+                    </button>
+                </div>
+
                 <form onSubmit={handleSubmitTexto} style={{ display: 'flex', gap: '0.5rem' }}>
                     <input
                         ref={inputRef}
                         type="text"
                         value={inputTexto}
                         onChange={(e) => setInputTexto(e.target.value)}
-                        placeholder="O escribe tu búsqueda aquí..."
+                        placeholder={modo === 'publicar' ? "Ej: Vendo consola de juegos..." : "O escribe tu búsqueda aquí..."}
                         disabled={procesando}
                         style={{
                             flex: 1,
@@ -801,12 +840,12 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
                             fontSize: '0.9rem'
                         }}
                     >
-                        {procesando ? <FaSpinner style={{ animation: 'spin 1s linear infinite' }} /> : '🔍'}
-                        {procesando ? 'Buscando...' : 'Buscar'}
+                        {procesando ? <FaSpinner style={{ animation: 'spin 1s linear infinite' }} /> : (modo === 'publicar' ? <FaBullhorn /> : '🔍')}
+                        {procesando ? '...' : (modo === 'publicar' ? 'Crear' : 'Buscar')}
                     </button>
                 </form>
                 <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--text-tertiary)', textAlign: 'center' }}>
-                    💡 Usa los botones para búsqueda rápida o escribe tu consulta
+                    💡 {modo === 'publicar' ? 'Describe tu artículo y crearé un borrador gratis.' : 'Usa los botones para búsqueda rápida o escribe tu consulta'}
                 </div>
             </div>
 
