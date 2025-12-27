@@ -39,6 +39,14 @@ const nextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return [
+      {
+        source: '/publicar',
+        destination: '/?seccion=publicar',
+      },
+    ];
+  },
 }
 
 module.exports = nextConfig

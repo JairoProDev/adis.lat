@@ -79,6 +79,7 @@ function HomeContent() {
   const adisoId = searchParams.get('adiso');
   const categoriaUrl = searchParams.get('categoria') as Categoria | null;
   const buscarUrl = searchParams.get('buscar') || '';
+  const seccionUrl = searchParams.get('seccion') as SeccionSidebar | null;
   const cargadoInicialmente = useRef(false);
 
   const [adisos, setAdisos] = useState<Adiso[]>([]);
@@ -102,8 +103,8 @@ function HomeContent() {
   const ITEMS_POR_PAGINA = 100;
   const [modalMobileAbierto, setModalMobileAbierto] = useState(false);
   const [seccionMobileInicial, setSeccionMobileInicial] = useState<SeccionMobile>('gratuitos');
-  const [seccionMobileActiva, setSeccionMobileActiva] = useState<SeccionSidebar | null>(null);
-  const [seccionSidebarInicial, setSeccionSidebarInicial] = useState<SeccionSidebar | undefined>('gratuitos');
+  const [seccionMobileActiva, setSeccionMobileActiva] = useState<SeccionSidebar | null>(seccionUrl === 'publicar' ? 'publicar' : null);
+  const [seccionSidebarInicial, setSeccionSidebarInicial] = useState<SeccionSidebar | undefined>(seccionUrl === 'publicar' ? 'publicar' : 'gratuitos');
   const [isSidebarMinimizado, setIsSidebarMinimizado] = useState(false);
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const { toasts, removeToast, success, error } = useToast();
