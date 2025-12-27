@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Adiso, UbicacionDetallada } from '@/types';
+import { Adiso, UbicacionDetallada, Categoria } from '@/types';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FaMapMarkerAlt, FaPlus, FaMinus, FaLocationArrow, FaHome, FaBriefcase, FaCar, FaShoppingBag } from 'react-icons/fa';
 
 interface MapaInteractivoProps {
   adisos: Adiso[];
@@ -28,15 +30,29 @@ function getTextoUbicacion(adiso: Adiso): string {
   return typeof adiso.ubicacion === 'string' ? adiso.ubicacion : 'Sin ubicación';
 }
 
-import { motion, AnimatePresence } from 'framer-motion';
-import { FaMapMarkerAlt, FaPlus, FaMinus, FaLocationArrow } from 'react-icons/fa';
+function getPinIcon(categoria: Categoria) {
+  switch (categoria) {
+    case 'inmuebles': return '🏠';
+    case 'empleos': return '💼';
+    case 'vehiculos': return '🚗';
+    case 'servicios': return '🔧';
+    case 'productos': return '🛍️';
+    case 'eventos': return '🎉';
+    case 'negocios': return '🏪';
+    default: return '📍';
+  }
+}
 
 export default function MapaInteractivo({ adisos, onAbrirAdiso }: MapaInteractivoProps) {
   const [scale, setScale] = useState(1);
   const [adisoHovered, setAdisoHovered] = useState<string | null>(null);
+  const [filter, setFilter] = useState<Categoria | 'todos'>('todos');
 
   // Filtrar adisos que tienen coordenadas
-  const adisosConCoordenadas = adisos.filter(adiso => getCoordenadas(adiso) !== null);
+  const adisosConCoordenadas = adisos.filter(adiso =>
+    getCoordenadas(adiso) !== null &&
+    (filter === 'todos' || adiso.categoria === filter)
+  );
 
   // Centro aproximado de Cusco para el prototipo
   const CENTER_LAT = -13.5319;
@@ -56,6 +72,49 @@ export default function MapaInteractivo({ adisos, onAbrirAdiso }: MapaInteractiv
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
+
+      {/* Filtros Superiores */}
+      <div style={{
+        position: 'absolute',
+        top: '1rem',
+        left: '1rem',
+        zIndex: 30,
+        display: 'flex',
+        gap: '0.5rem',
+        overflowX: 'auto',
+        maxWidth: 'calc(100% - 60px)',
+        paddingBottom: '0.5rem',
+        scrollbarWidth: 'none'
+      }}>
+        {[
+          { id: 'todos', label: 'Todos' },
+          { id: 'inmuebles', label: '🏠 Casas' },
+          { id: 'empleos', label: '💼 Empleos' },
+          { id: 'vehiculos', label: '🚗 Autos' },
+        ].map((f) => (
+          <button
+            key={f.id}
+            onClick={() => setFilter(f.id as any)}
+            style={{
+              padding: '0.35rem 0.75rem',
+              borderRadius: '20px',
+              border: '1px solid',
+              borderColor: filter === f.id ? 'var(--accent-color)' : 'var(--border-color)',
+              backgroundColor: filter === f.id ? 'var(--accent-color)' : 'var(--bg-primary)',
+              color: filter === f.id ? 'white' : 'var(--text-primary)',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              whiteSpace: 'nowrap',
+              cursor: 'pointer',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              transition: 'all 0.2s'
+            }}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
       {/* Controles de Mapa */}
       <div style={{
         position: 'absolute',
@@ -66,6 +125,29 @@ export default function MapaInteractivo({ adisos, onAbrirAdiso }: MapaInteractiv
         flexDirection: 'column',
         gap: '0.5rem'
       }}>
+        <button
+          onClick={() => {
+            // Simulate "locate me"
+            setScale(2);
+          }}
+          title="Mi ubicación"
+          style={{
+            width: '36px',
+            height: '36px',
+            borderRadius: '8px',
+            backgroundColor: 'var(--bg-primary)',
+            border: '1px solid var(--border-color)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            color: 'var(--accent-color)'
+          }}
+        >
+          <FaLocationArrow />
+        </button>
+        <div style={{ height: '0.5rem' }} />
         <button
           onClick={() => setScale(s => Math.min(s + 0.5, 4))}
           style={{
@@ -105,7 +187,7 @@ export default function MapaInteractivo({ adisos, onAbrirAdiso }: MapaInteractiv
       </div>
 
       {/* Área del Mapa */}
-      <div style={{ flex: 1, position: 'relative', overflow: 'hidden', backgroundColor: '#e5e7eb' }}>
+      <div style={{ flex: 1, position: 'relative', overflow: 'hidden', backgroundColor: '#f3f4f6' }}>
         <motion.div
           drag
           dragConstraints={{ left: -1000 * scale, right: 0, top: -1000 * scale, bottom: 0 }}
@@ -115,23 +197,25 @@ export default function MapaInteractivo({ adisos, onAbrirAdiso }: MapaInteractiv
             height: '200%',
             x: -250, // Centrar inicial
             y: -250,
-            backgroundImage: 'url("https://res.cloudinary.com/djv4wd0sh/image/upload/v1735331458/map_background_cusco_1766870981356_cx8y8z.png")', // Using the generated image (uploaded/hosted would be better, but local ref for now)
-            // NOTE: Since I cannot host the image I just generated publicly instantly, 
-            // for the USER's preview I will use a generic placeholder or the local path if next/image allowed.
-            // But actually I can't access local filesystem from browser. 
-            // I will use a reliable public map tile fallback for the prototype or a color pattern.
-            // BETTER: Use a gradient that looks like a map or a generic city map URL.
-            // I'll use a reliable placeholder map image from a placeholder service or just a nice CSS pattern.
-            // Actually, the user WANTS it to look real. 
-            // Let's use a generic map-like image from Cloudinary or similar if I had one. 
-            // I will use a specific high-quality map placeholder URL.
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
+            // CSS Pattern to look like a map
+            backgroundColor: '#f8fafc',
+            backgroundImage: `
+                linear-gradient(rgba(200, 200, 200, 0.3) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(200, 200, 200, 0.3) 1px, transparent 1px),
+                linear-gradient(rgba(0, 0, 0, 0.05) 2px, transparent 2px),
+                linear-gradient(90deg, rgba(0, 0, 0, 0.05) 2px, transparent 2px)
+             `,
+            backgroundSize: '100px 100px, 100px 100px, 20px 20px, 20px 20px',
             position: 'relative',
             cursor: 'grab'
           }}
           whileTap={{ cursor: 'grabbing' }}
         >
+          {/* Bloques "Parques" simulados con CSS */}
+          <div style={{ position: 'absolute', top: '40%', left: '45%', width: '10%', height: '8%', backgroundColor: '#dcfce7', borderRadius: '20px', opacity: 0.6 }}></div>
+          <div style={{ position: 'absolute', top: '60%', left: '60%', width: '15%', height: '12%', backgroundColor: '#dcfce7', borderRadius: '30px', opacity: 0.6 }}></div>
+          <div style={{ position: 'absolute', top: '20%', left: '30%', width: '8%', height: '15%', backgroundColor: '#e0f2fe', borderRadius: '50px', transform: 'rotate(45deg)', opacity: 0.6 }}></div>
+
           {/* Marcadores */}
           {adisosConCoordenadas.map((adiso, i) => {
             const coords = getCoordenadas(adiso);
@@ -145,6 +229,7 @@ export default function MapaInteractivo({ adisos, onAbrirAdiso }: MapaInteractiv
 
             const pos = getPosition(finalLat, finalLng);
             const isHovered = adisoHovered === adiso.id;
+            const emoji = getPinIcon(adiso.categoria);
 
             return (
               <motion.div
@@ -165,16 +250,31 @@ export default function MapaInteractivo({ adisos, onAbrirAdiso }: MapaInteractiv
                   onMouseLeave={() => setAdisoHovered(null)}
                   onClick={() => onAbrirAdiso(adiso)}
                 >
-                  <FaMapMarkerAlt
-                    size={32}
-                    color={isHovered ? 'var(--accent-color)' : '#ef4444'}
+                  <motion.div
+                    animate={isHovered ? { scale: 1.2, y: -5 } : { scale: 1, y: 0 }}
                     style={{
-                      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
-                      transform: isHovered ? 'scale(1.2)' : 'scale(1)',
-                      transition: 'all 0.2s',
-                      cursor: 'pointer'
+                      fontSize: '1.5rem',
+                      cursor: 'pointer',
+                      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))',
+                      position: 'relative'
                     }}
-                  />
+                  >
+                    {emoji}
+                    {/* Pulse effect if hovered */}
+                    {isHovered && (
+                      <motion.div
+                        initial={{ scale: 1, opacity: 0.5 }}
+                        animate={{ scale: 1.5, opacity: 0 }}
+                        transition={{ repeat: Infinity, duration: 1 }}
+                        style={{
+                          position: 'absolute',
+                          top: 0, left: 0, right: 0, bottom: 0,
+                          borderRadius: '50%',
+                          border: '2px solid var(--accent-color)',
+                        }}
+                      />
+                    )}
+                  </motion.div>
 
                   {/* Tooltip del Marcador */}
                   <AnimatePresence>
@@ -189,13 +289,14 @@ export default function MapaInteractivo({ adisos, onAbrirAdiso }: MapaInteractiv
                           left: '50%',
                           transform: 'translateX(-50%)',
                           marginBottom: '8px',
-                          backgroundColor: 'white',
+                          backgroundColor: 'var(--bg-primary)',
                           padding: '0.5rem',
                           borderRadius: '8px',
                           boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                           width: '200px',
                           pointerEvents: 'none',
-                          zIndex: 200
+                          zIndex: 200,
+                          border: '1px solid var(--border-color)'
                         }}
                       >
                         {adiso.imagenUrl && (
@@ -204,7 +305,7 @@ export default function MapaInteractivo({ adisos, onAbrirAdiso }: MapaInteractiv
                             <img src={adiso.imagenUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           </div>
                         )}
-                        <div style={{ fontWeight: 600, fontSize: '0.8rem', color: '#1f2937', lineHeight: '1.2' }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.8rem', color: 'var(--text-primary)', lineHeight: '1.2' }}>
                           {adiso.titulo}
                         </div>
                         <div style={{ fontSize: '0.7rem', color: '#6b7280', marginTop: '2px' }}>
@@ -218,8 +319,10 @@ export default function MapaInteractivo({ adisos, onAbrirAdiso }: MapaInteractiv
                           marginLeft: '-6px',
                           width: '12px',
                           height: '12px',
-                          backgroundColor: 'white',
+                          backgroundColor: 'var(--bg-primary)',
                           transform: 'rotate(45deg)',
+                          borderRight: '1px solid var(--border-color)',
+                          borderBottom: '1px solid var(--border-color)',
                           zIndex: -1
                         }} />
                       </motion.div>
@@ -315,8 +418,8 @@ export default function MapaInteractivo({ adisos, onAbrirAdiso }: MapaInteractiv
                   }}
                 />
               ) : (
-                <div style={{ width: '60px', height: '60px', borderRadius: '8px', backgroundColor: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ fontSize: '1.5rem' }}>📢</span>
+                <div style={{ width: '60px', height: '60px', borderRadius: '8px', backgroundColor: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>
+                  {getPinIcon(adiso.categoria)}
                 </div>
               )}
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -337,4 +440,3 @@ export default function MapaInteractivo({ adisos, onAbrirAdiso }: MapaInteractiv
     </div>
   );
 }
-
