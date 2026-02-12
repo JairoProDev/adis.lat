@@ -68,7 +68,18 @@ export default function UserMenu({ onProgressClick }: UserMenuProps) {
       <>
         <button
           onClick={() => setMostrarAuthModal(true)}
-          className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold shadow-sm transition-colors text-sm"
+          style={{
+            backgroundColor: 'var(--brand-blue)',
+            color: '#fff',
+            padding: '0.5rem 1.25rem',
+            borderRadius: '0.5rem',
+            fontWeight: 600,
+            boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: '0.875rem'
+          }}
+          className="hover:opacity-90 transition-opacity"
         >
           Ingresar
         </button>

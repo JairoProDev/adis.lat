@@ -19,27 +19,28 @@
 
 :root {
   /* Brand Colors */
-  --brand-blue: #3c6997;
-  --brand-yellow: #ffdd4a;
+  --brand-blue: #53acc5;
+  --brand-yellow: #ffc24a;
 
   /* Background Colors */
   --bg-primary: #ffffff;
-  --bg-secondary: #fafafa;
-  --bg-tertiary: #f3f4f6;
+  --bg-secondary: #f0f2f5;
+  /* Facebook-like light gray */
+  --bg-tertiary: #e4e6eb;
 
-  /* Text Colors */
-  --text-primary: #3c6997;
-  --text-secondary: #555555;
-  --text-tertiary: #999999;
+  /* Text Colors - Neutral for "Big Tech" feel */
+  --text-primary: #050505;
+  --text-secondary: #65676b;
+  --text-tertiary: #b0b3b8;
 
   /* Accent Colors */
-  --color-secondary: #ffdd4a;
-  --accent-color: #3c6997;
+  --color-secondary: #ffc24a;
+  --accent-color: #53acc5;
 
   /* UI Colors */
-  --border-color: #e0e0e0;
-  --border-subtle: rgba(0, 0, 0, 0.08);
-  --hover-bg: #fff9e6;
+  --border-color: #ced0d4;
+  --border-subtle: rgba(0, 0, 0, 0.1);
+  --hover-bg: #f2f2f2;
 
   /* Glassmorphism */
   --glass-bg: rgba(255, 255, 255, 0.85);
@@ -64,15 +65,16 @@
 /* Modo oscuro */
 @media (prefers-color-scheme: dark) {
   :root:not(.light-mode) {
-    --bg-primary: #1a1a1a;
-    --bg-secondary: #2d2d2d;
-    --bg-tertiary: #3a3a3a;
-    --text-primary: #6ba3d8;
-    --text-secondary: #b0b0b0;
-    --text-tertiary: #808080;
-    --color-secondary: #ffdd4a;
-    --accent-color: #6ba3d8;
-    --border-color: #404040;
+    --bg-primary: #18191a;
+    /* Facebook Dark key */
+    --bg-secondary: #242526;
+    --bg-tertiary: #3a3b3c;
+    --text-primary: #e4e6eb;
+    --text-secondary: #b0b3b8;
+    --text-tertiary: #e4e6eb;
+    --color-secondary: #ffc24a;
+    --accent-color: #53acc5;
+    --border-color: #3e4042;
     --border-subtle: rgba(255, 255, 255, 0.1);
     --hover-bg: #333333;
     --glass-bg: rgba(26, 26, 26, 0.85);
@@ -86,16 +88,16 @@
 /* Clase para forzar modo claro */
 .light-mode {
   --bg-primary: #ffffff;
-  --bg-secondary: #f7f6f2;
-  --bg-tertiary: #e8e8e8;
-  --text-primary: #3c6997;
-  --text-secondary: #555555;
-  --text-tertiary: #999999;
-  --color-secondary: #ffdd4a;
-  --accent-color: #3c6997;
-  --border-color: #e0e0e0;
-  --border-subtle: rgba(0, 0, 0, 0.08);
-  --hover-bg: #fff9e6;
+  --bg-secondary: #f0f2f5;
+  --bg-tertiary: #e4e6eb;
+  --text-primary: #050505;
+  --text-secondary: #65676b;
+  --text-tertiary: #b0b3b8;
+  --color-secondary: #ffc24a;
+  --accent-color: #53acc5;
+  --border-color: #ced0d4;
+  --border-subtle: rgba(0, 0, 0, 0.1);
+  --hover-bg: #f2f2f2;
   --glass-bg: rgba(255, 255, 255, 0.85);
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
@@ -105,15 +107,15 @@
 
 /* Clase para forzar modo oscuro */
 .dark-mode {
-  --bg-primary: #1a1a1a;
-  --bg-secondary: #2d2d2d;
-  --bg-tertiary: #3a3a3a;
-  --text-primary: #6ba3d8;
-  --text-secondary: #b0b0b0;
-  --text-tertiary: #808080;
-  --color-secondary: #ffdd4a;
-  --accent-color: #6ba3d8;
-  --border-color: #404040;
+  --bg-primary: #18191a;
+  --bg-secondary: #242526;
+  --bg-tertiary: #3a3b3c;
+  --text-primary: #e4e6eb;
+  --text-secondary: #b0b3b8;
+  --text-tertiary: #e4e6eb;
+  --color-secondary: #ffc24a;
+  --accent-color: #53acc5;
+  --border-color: #3e4042;
   --border-subtle: rgba(255, 255, 255, 0.1);
   --hover-bg: #333333;
   --glass-bg: rgba(26, 26, 26, 0.85);

@@ -35,7 +35,16 @@ import { registrarBusqueda } from '@/lib/analytics';
 import { onOnlineStatusChange, getOfflineMessage } from '@/lib/offline';
 import dynamicImport from 'next/dynamic';
 import Header from '@/components/Header';
-import Breadcrumbs from '@/components/Breadcrumbs';
+import {
+  IconEmpleos,
+  IconInmuebles,
+  IconVehiculos,
+  IconServicios,
+  IconProductos,
+  IconEventos,
+  IconNegocios,
+  IconComunidad
+} from '@/components/Icons';
 import Buscador from '@/components/Buscador';
 import Ordenamiento, { TipoOrdenamiento } from '@/components/Ordenamiento';
 import FiltroUbicacion from '@/components/FiltroUbicacion';
@@ -45,6 +54,7 @@ import { SkeletonAdisosGrid } from '@/components/SkeletonAdiso';
 import { ToastContainer } from '@/components/Toast';
 import FeedbackButton from '@/components/FeedbackButton';
 import NavbarMobile from '@/components/NavbarMobile';
+import LeftSidebar from '@/components/LeftSidebar';
 
 // Lazy load componentes pesados
 const ModalAdiso = dynamicImport(() => import('@/components/ModalAdiso'), {
@@ -104,7 +114,8 @@ function HomeContent() {
   const [modalMobileAbierto, setModalMobileAbierto] = useState(false);
   const [seccionMobileInicial, setSeccionMobileInicial] = useState<SeccionMobile>('gratuitos');
   const [seccionMobileActiva, setSeccionMobileActiva] = useState<SeccionSidebar | null>(seccionUrl === 'publicar' ? 'publicar' : null);
-  const [seccionSidebarInicial, setSeccionSidebarInicial] = useState<SeccionSidebar | undefined>(seccionUrl === 'publicar' ? 'publicar' : 'gratuitos');
+  const [seccionDesktopActiva, setSeccionDesktopActiva] = useState<SeccionSidebar>(seccionUrl === 'publicar' ? 'publicar' : 'adiso');
+  const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(false);
   const [isSidebarMinimizado, setIsSidebarMinimizado] = useState(false);
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const { toasts, removeToast, success, error } = useToast();
@@ -730,29 +741,108 @@ function HomeContent() {
       </a>
       <Header
         onChangelogClick={() => router.push('/progreso')}
+        seccionActiva={seccionDesktopActiva}
+        onSeccionChange={(seccion) => {
+          setSeccionDesktopActiva(seccion);
+          setIsSidebarMinimizado(false); // Expand sidebar when changing section via header
+        }}
+        onToggleLeftSidebar={() => setIsLeftSidebarOpen(!isLeftSidebarOpen)}
       />
-      {([
-        { label: 'Inicio', href: '/' },
-        ...(categoriaFiltro !== 'todos' ? [{ label: categoriaFiltro, href: `/?categoria=${categoriaFiltro}` }] : []),
-        ...(adisoAbierto ? [{ label: adisoAbierto.titulo }] : []),
-      ].length > 1 || adisoAbierto) && (
-          <div style={{
-            padding: isDesktop ? '0.5rem 1.5rem' : '0.5rem 1rem',
-            paddingRight: isDesktop ? 'calc(1.5rem + 80px)' : '1rem',
-            maxWidth: '1400px',
-            margin: '0 auto',
-          }}>
-            <Breadcrumbs items={[
-              { label: 'Inicio', href: '/' },
-              ...(categoriaFiltro !== 'todos' ? [{ label: categoriaFiltro, href: `/?categoria=${categoriaFiltro}` }] : []),
-              ...(adisoAbierto ? [{
-                label: adisoAbierto.titulo.length > (isDesktop ? 50 : 25)
-                  ? adisoAbierto.titulo.substring(0, (isDesktop ? 50 : 25)) + '...'
-                  : adisoAbierto.titulo
-              }] : []),
-            ]} />
-          </div>
-        )}
+      {/* Category Bar - Horizontal Scroll */}
+      <div
+        className="no-scrollbar"
+        style={{
+          display: 'flex',
+          justifyContent: isDesktop ? 'center' : 'flex-start',
+          overflowX: 'auto',
+          gap: '1rem',
+          padding: '1rem',
+          paddingBottom: '0.5rem',
+          backgroundColor: 'var(--bg-primary)',
+          borderBottom: '1px solid var(--border-color)',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+          WebkitOverflowScrolling: 'touch',
+          alignItems: 'center',
+          maxWidth: '100%',
+        }}
+      >
+        {[
+          { id: 'empleos', label: 'Empleos', Icon: IconEmpleos },
+          { id: 'inmuebles', label: 'Inmuebles', Icon: IconInmuebles },
+          { id: 'vehiculos', label: 'Vehículos', Icon: IconVehiculos },
+          { id: 'servicios', label: 'Servicios', Icon: IconServicios },
+          { id: 'productos', label: 'Productos', Icon: IconProductos },
+          { id: 'eventos', label: 'Eventos', Icon: IconEventos },
+          { id: 'negocios', label: 'Negocios', Icon: IconNegocios },
+          { id: 'comunidad', label: 'Comunidad', Icon: IconComunidad },
+        ].map(({ id, label, Icon }) => (
+          <button
+            key={id}
+            onClick={() => {
+              const nuevaCategoria = categoriaFiltro === id ? 'todos' : (id as Categoria);
+              setCategoriaFiltro(nuevaCategoria);
+
+              // Actualizar URL sin recargar
+              const params = new URLSearchParams(searchParams.toString());
+              if (nuevaCategoria === 'todos') {
+                params.delete('categoria');
+              } else {
+                params.set('categoria', nuevaCategoria);
+              }
+              // Mantener búsqueda si existe
+              if (busqueda.trim()) {
+                params.set('buscar', busqueda.trim());
+              } else {
+                params.delete('buscar');
+              }
+              router.push(`/?${params.toString()}`, { scroll: false });
+            }}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '0.25rem',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              minWidth: '72px',
+              flexShrink: 0,
+              opacity: categoriaFiltro === id ? 1 : 0.7,
+              color: categoriaFiltro === id ? 'var(--brand-blue)' : 'var(--text-secondary)',
+              transition: 'transform 0.2s, color 0.2s',
+            }}
+            className="hover:opacity-100 hover:scale-105"
+          >
+            <div style={{
+              padding: '0.75rem',
+              borderRadius: '50%',
+              backgroundColor: categoriaFiltro === id ? 'var(--brand-yellow)' : 'var(--bg-secondary)',
+              color: categoriaFiltro === id ? 'var(--brand-blue)' : 'var(--text-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: categoriaFiltro === id ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
+              transition: 'all 0.2s',
+              width: '48px',
+              height: '48px',
+            }}
+              className={categoriaFiltro !== id ? 'group-hover:bg-gray-200 dark:group-hover:bg-zinc-700' : ''}
+            >
+              <Icon size={22} color={categoriaFiltro === id ? 'var(--brand-blue)' : undefined} />
+            </div>
+            <span style={{
+              fontSize: '0.75rem',
+              fontWeight: categoriaFiltro === id ? 700 : 500,
+              textAlign: 'center',
+              whiteSpace: 'nowrap',
+              color: categoriaFiltro === id ? 'var(--brand-blue)' : 'var(--text-secondary)'
+            }}>
+              {label}
+            </span>
+          </button>
+        ))}
+      </div>
       <main id="main-content" style={{
         flex: 1,
         padding: '1rem',
@@ -918,6 +1008,7 @@ function HomeContent() {
       <FeedbackButton />
 
       {/* Sidebar Desktop - siempre visible */}
+      {/* Sidebar Desktop - Controlled via Header */}
       {isDesktop && (
         <SidebarDesktop
           adisoAbierto={adisoAbierto}
@@ -929,11 +1020,18 @@ function HomeContent() {
           onPublicar={handlePublicar}
           onError={(msg) => error(msg)}
           onSuccess={(msg) => success(msg)}
-          seccionInicial={seccionSidebarInicial}
+          seccionActiva={seccionDesktopActiva}
+          minimizado={isSidebarMinimizado}
           onMinimizadoChange={setIsSidebarMinimizado}
           todosLosAdisos={adisosFiltrados}
         />
       )}
+
+      {/* Left Sidebar (Desktop/Mobile if requested) */}
+      <LeftSidebar
+        isOpen={isLeftSidebarOpen}
+        onClose={() => setIsLeftSidebarOpen(false)}
+      />
 
       {/* Navbar Mobile - siempre visible en mobile */}
       {!isDesktop && (

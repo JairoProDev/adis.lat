@@ -1,173 +1,309 @@
 'use client';
 
 import { useState } from 'react';
-import { FaChartLine, FaCog } from 'react-icons/fa';
+import {
+  FaBars,
+  FaBell,
+  FaFacebookMessenger,
+  FaCog,
+  FaChartLine
+} from 'react-icons/fa';
 import ThemeToggle from './ThemeToggle';
 import LanguageSelector from './LanguageSelector';
 import UserMenu from './UserMenu';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { SeccionSidebar } from './SidebarDesktop';
+import {
+  IconAdiso,
+  IconMap,
+  IconMegaphone,
+  IconStore,
+  IconGratuitos
+} from './Icons';
+import { useAuth } from '@/hooks/useAuth';
 
 interface HeaderProps {
   onChangelogClick?: () => void;
+  seccionActiva?: SeccionSidebar;
+  onSeccionChange?: (seccion: SeccionSidebar) => void;
+  onToggleLeftSidebar?: () => void;
 }
 
-export default function Header({ onChangelogClick }: HeaderProps) {
+export default function Header({
+  onChangelogClick,
+  seccionActiva,
+  onSeccionChange,
+  onToggleLeftSidebar
+}: HeaderProps) {
   const { t } = useTranslation();
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const [showMobileSettings, setShowMobileSettings] = useState(false);
+  const [hoveredItem, setHoveredItem] = useState<SeccionSidebar | null>(null);
+  const { user } = useAuth();
+  const isAuthenticated = !!user;
+
+  const navItems = [
+    { id: 'adiso' as SeccionSidebar, icon: IconAdiso, label: 'Inicio' },
+    { id: 'gratuitos' as SeccionSidebar, icon: IconGratuitos, label: 'Gratuitos' },
+    { id: 'publicar' as SeccionSidebar, icon: IconMegaphone, label: 'Publicar' },
+    { id: 'mapa' as SeccionSidebar, icon: IconMap, label: 'Mapa' },
+    { id: 'negocio' as SeccionSidebar, icon: IconStore, label: 'Negocio' },
+  ];
 
   return (
     <header style={{
-      backgroundColor: 'var(--bg-primary)', // Solid background for better contrast
+      backgroundColor: 'var(--bg-primary)',
       borderBottom: '1px solid var(--border-color)',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.06)', // Sutil separación suggested by user
-      padding: isDesktop ? '1rem 1.5rem' : '1rem 1.25rem', // increased padding
-      paddingRight: isDesktop ? 'calc(var(--sidebar-width, 60px) + 1.5rem)' : '1.25rem',
+      boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+      height: '72px', // Increased height for labels
       position: 'sticky',
       top: 0,
       zIndex: 1000,
-      backdropFilter: 'blur(8px)',
+      display: 'flex',
+      alignItems: 'center',
+      padding: '0 1rem',
     }}>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        maxWidth: '1400px',
-        margin: '0 auto',
-        gap: '1rem'
-      }}>
-        <a
-          href="/"
+      {/* LEFT: Hamburger + Logo */}
+      <div style={{ display: 'flex', alignItems: 'center', minWidth: isDesktop ? '280px' : 'auto' }}>
+        <button
+          onClick={onToggleLeftSidebar}
           style={{
-            textDecoration: 'none',
+            background: 'none',
+            border: 'none',
             cursor: 'pointer',
-            flexShrink: 0
+            padding: '8px',
+            borderRadius: '50%',
+            color: 'var(--text-secondary)',
+            marginRight: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
+          className="hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
         >
-          <h1
-            className="text-[#1e40af] dark:text-blue-400"
-            style={{
-              fontSize: isDesktop ? '1.75rem' : '1.5rem',
-              fontWeight: 800,
-              letterSpacing: '-0.02em',
-              margin: 0,
-              lineHeight: 1.2,
-              transition: 'opacity 0.2s',
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-          >
-            {t('header.title')}
-          </h1>
-        </a>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem',
-          flexShrink: 0
-        }}>
-          <UserMenu onProgressClick={onChangelogClick} />
+          <FaBars size={22} />
+        </button>
 
-          {isDesktop ? (
-            <>
-              <LanguageSelector />
-              <ThemeToggle />
-            </>
-          ) : (
-            <div style={{ position: 'relative' }}>
+        <a href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <span style={{
+            fontWeight: 900,
+            fontSize: '28px',
+            color: 'var(--brand-blue)',
+            letterSpacing: '-1px'
+          }}>
+            Buscadis
+          </span>
+        </a>
+      </div>
+
+      {/* CENTER: Navigation (Desktop Only) */}
+      <div style={{ flex: 1, display: 'flex', justifyContent: 'center', height: '100%' }}>
+        {isDesktop && onSeccionChange && (
+          <div style={{ display: 'flex', gap: '8px', height: '100%' }}>
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = seccionActiva === item.id;
+              const isHovered = hoveredItem === item.id;
+
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    if (item.id === 'negocio') {
+                      window.location.href = '/mi-negocio';
+                      return;
+                    }
+                    onSeccionChange(item.id);
+                  }}
+                  onMouseEnter={() => setHoveredItem(item.id)}
+                  onMouseLeave={() => setHoveredItem(null)}
+                  style={{
+                    height: '100%',
+                    padding: '0 24px',
+                    border: 'none',
+                    background: 'none',
+                    cursor: 'pointer',
+                    position: 'relative',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: isActive ? 'var(--brand-blue)' : (isHovered ? 'var(--brand-blue)' : 'var(--text-secondary)'),
+                    transition: 'all 0.2s ease',
+                  }}
+                  className="group"
+                >
+                  <div style={{
+                    position: 'relative',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '28px',
+                    marginBottom: '2px',
+                    transition: 'transform 0.2s',
+                    transform: isHovered ? 'scale(1.1)' : 'scale(1)'
+                  }}>
+                    <Icon size={24} color={isActive || isHovered ? 'var(--brand-blue)' : undefined} />
+                  </div>
+                  <span style={{
+                    fontSize: '11px',
+                    fontWeight: isActive ? 600 : 500,
+                    opacity: isActive || isHovered ? 1 : 0.8
+                  }}>
+                    {item.label}
+                  </span>
+
+                  {/* Active Indicator Line */}
+                  <div style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: '3px',
+                    backgroundColor: 'var(--brand-blue)',
+                    opacity: isActive ? 1 : 0,
+                    transition: 'opacity 0.2s',
+                    borderTopLeftRadius: '3px',
+                    borderTopRightRadius: '3px'
+                  }} />
+
+                  {/* Hover background effect (optional, subtle) */}
+                  <div style={{
+                    position: 'absolute',
+                    inset: '4px',
+                    backgroundColor: isHovered && !isActive ? 'var(--hover-bg)' : 'transparent',
+                    borderRadius: '8px',
+                    zIndex: -1,
+                    transition: 'background-color 0.2s'
+                  }} />
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* RIGHT: Actions */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', minWidth: isDesktop ? '280px' : 'auto', gap: '8px' }}>
+        {isAuthenticated && ( // Only show these actions if logged in
+          <>
+            {/* Helper Action: Changelog */}
+            {onChangelogClick && isDesktop && (
               <button
-                onClick={() => setShowMobileSettings(!showMobileSettings)}
-                className="bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                onClick={onChangelogClick}
                 style={{
-                  border: 'none',
-                  borderRadius: '8px',
-                  width: '36px',
-                  height: '36px',
+                  width: '40px',
+                  height: '40px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  cursor: 'pointer',
+                  borderRadius: '50%',
+                  background: 'var(--bg-secondary)',
+                  color: 'var(--text-primary)',
+                  border: 'none',
+                  cursor: 'pointer'
                 }}
+                className="hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors hover:text-[var(--brand-blue)]"
+                title={t('header.progress')}
               >
-                <FaCog size={18} />
+                <FaChartLine size={18} />
               </button>
+            )}
 
-              {showMobileSettings && (
-                <>
-                  <div
-                    style={{ position: 'fixed', inset: 0, zIndex: 998 }}
-                    onClick={() => setShowMobileSettings(false)}
-                  />
-                  <div style={{
-                    position: 'absolute',
-                    top: '120%',
-                    right: 0,
-                    marginTop: '0.5rem',
-                    background: 'var(--bg-primary)',
-                    borderRadius: '12px',
-                    boxShadow: 'var(--shadow-lg)',
-                    border: '1px solid var(--border-color)',
-                    padding: '0.75rem',
-                    zIndex: 999,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.75rem',
-                    minWidth: '160px'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Idioma</span>
-                      <LanguageSelector />
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Tema</span>
-                      <ThemeToggle />
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-          {onChangelogClick && isDesktop && (
+            {/* Notifications */}
             <button
-              onClick={onChangelogClick}
-              aria-label={t('header.progress')}
               style={{
-                background: 'var(--bg-primary)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '8px',
-                padding: '0.625rem 1rem',
-                color: 'var(--text-secondary)',
-                cursor: 'pointer',
+                width: '40px',
+                height: '40px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.5rem',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                whiteSpace: 'nowrap',
-                boxShadow: 'var(--shadow-sm)',
+                justifyContent: 'center',
+                borderRadius: '50%',
+                background: 'var(--bg-secondary)',
+                color: 'var(--text-primary)',
+                border: 'none',
+                cursor: 'pointer'
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-                e.currentTarget.style.color = 'var(--accent-color)';
-                e.currentTarget.style.borderColor = 'var(--accent-color)';
-                e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+              className="hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors hover:text-[var(--brand-blue)]"
+            >
+              <FaBell size={18} />
+            </button>
+
+            {/* Messages */}
+            <button
+              style={{
+                width: '40px',
+                height: '40px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '50%',
+                background: 'var(--bg-secondary)',
+                color: 'var(--text-primary)',
+                border: 'none',
+                cursor: 'pointer'
               }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-                e.currentTarget.style.color = 'var(--text-secondary)';
-                e.currentTarget.style.borderColor = 'var(--border-color)';
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+              className="hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors hover:text-[var(--brand-blue)]"
+            >
+              <FaFacebookMessenger size={18} />
+            </button>
+          </>
+        )}
+
+        {/* User Profile - Will handle Login button internally if no user */}
+        <UserMenu
+          onProgressClick={onChangelogClick}
+          showExtras={false} // Pass prop to control extras visibility from UserMenu if needed, but doing it here is cleaner if we had access to auth state.
+        // However, UserMenu handles auth state internally. We can modify UserMenu to accept children or expose state,
+        // OR we just import useAuth here. Let's import useAuth in the file header first.
+        />
+
+        {/* Mobile Settings Toggle */}
+        {!isDesktop && (
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setShowMobileSettings(!showMobileSettings)}
+              style={{
+                width: '40px',
+                height: '40px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '50%',
+                background: 'var(--bg-secondary)',
+                color: 'var(--text-primary)',
+                border: 'none',
+                cursor: 'pointer'
               }}
             >
-              <FaChartLine size={14} aria-hidden="true" />
-              {t('header.progress')}
+              <FaCog size={18} />
             </button>
-          )}
-        </div>
+            {showMobileSettings && (
+              <>
+                <div style={{ position: 'fixed', inset: 0, zIndex: 998 }} onClick={() => setShowMobileSettings(false)} />
+                <div style={{
+                  position: 'absolute',
+                  top: '120%',
+                  right: 0,
+                  background: 'var(--bg-primary)',
+                  padding: '1rem',
+                  borderRadius: '8px',
+                  boxShadow: 'var(--shadow-lg)',
+                  zIndex: 999,
+                  border: '1px solid var(--border-color)',
+                  minWidth: '200px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '1rem'
+                }}>
+                  <LanguageSelector />
+                  <ThemeToggle />
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
     </header>
   );

@@ -105,9 +105,9 @@ export default function Buscador({ value, onChange, categoriaSeleccionada = 'tod
             />
           </div>
 
-          {/* AI Hint */}
-          <button className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-br from-[#667eea] to-[#764ba2] text-white border-none rounded-lg text-xs font-bold tracking-wide shadow-sm hover:shadow-md transition-shadow ml-2 shrink-0">
-            <FaMagic className="text-yellow-300" />
+          {/* AI Hint - Updated to Brand Yellow/Blue */}
+          <button className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-[var(--brand-blue)] text-white border-none rounded-lg text-xs font-bold tracking-wide shadow-sm hover:shadow-md hover:bg-opacity-90 transition-all ml-2 shrink-0">
+            <FaMagic className="text-[var(--brand-yellow)]" />
             <span>AI</span>
           </button>
         </div>

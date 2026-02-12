@@ -144,15 +144,15 @@ export const IconServicios = (props: IconProps) => (
 );
 
 export const IconProductos = (props: IconProps) => (
-  <FaBox size={getSize(props)} color={props.color || 'currentColor'} />
+  <FaGift size={getSize(props)} color={props.color || 'currentColor'} />
 );
 
 export const IconEventos = (props: IconProps) => (
-  <FaCalendarCheck size={getSize(props)} color={props.color || 'currentColor'} />
+  <FaCalendarAlt size={getSize(props)} color={props.color || 'currentColor'} />
 );
 
 export const IconNegocios = (props: IconProps) => (
-  <FaBuilding size={getSize(props)} color={props.color || 'currentColor'} />
+  <FaStore size={getSize(props)} color={props.color || 'currentColor'} />
 );
 
 export const IconComunidad = (props: IconProps) => (
