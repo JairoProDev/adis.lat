@@ -117,6 +117,7 @@ function HomeContent() {
   const [seccionDesktopActiva, setSeccionDesktopActiva] = useState<SeccionSidebar>(seccionUrl === 'publicar' ? 'publicar' : 'adiso');
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(false);
   const [mostrarFiltroUbicacion, setMostrarFiltroUbicacion] = useState(false);
+  const [vista, setVista] = useState<'grid' | 'list'>('grid');
   const [isSidebarMinimizado, setIsSidebarMinimizado] = useState(false);
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const { toasts, removeToast, success, error } = useToast();
@@ -350,51 +351,44 @@ function HomeContent() {
     // Filtrar por ubicación
     if (filtroUbicacion) {
       filtrados = filtrados.filter(a => {
-        // Solo filtrar adisos que tienen ubicación detallada
-        if (typeof a.ubicacion !== 'object' || a.ubicacion === null || !('departamento' in a.ubicacion)) {
-          return false; // Excluir adisos sin ubicación detallada
-        }
+        // Si no tiene ubicación, excluir solo si el filtro de ubicación es obligatorio
+        if (!a.ubicacion) return false;
 
-        const ubi = a.ubicacion as any;
+        const ubi = typeof a.ubicacion === 'string'
+          ? { departamento: a.ubicacion, provincia: '', distrito: '' }
+          : a.ubicacion as any;
 
         // Filtrar por distrito (más específico)
         if (filtroUbicacion.distrito) {
-          if (ubi.distrito !== filtroUbicacion.distrito) {
-            // Si hay radio de búsqueda y coordenadas, verificar distancia
-            if (filtroUbicacion.radioKm && ubi.latitud && ubi.longitud &&
-              profile?.latitud && profile?.longitud) {
-              const distancia = calcularDistanciaKm(
-                profile.latitud,
-                profile.longitud,
-                ubi.latitud,
-                ubi.longitud
-              );
-              return distancia <= (filtroUbicacion.radioKm || 5);
-            }
-            return false;
+          const matchDistrito = ubi.distrito?.toLowerCase().trim() === filtroUbicacion.distrito.toLowerCase().trim();
+          if (matchDistrito) return true;
+
+          // Si hay radio de búsqueda y coordenadas, verificar distancia
+          if (filtroUbicacion.radioKm && ubi.latitud && ubi.longitud &&
+            profile?.latitud && profile?.longitud) {
+            const distancia = calcularDistanciaKm(
+              profile.latitud,
+              profile.longitud,
+              ubi.latitud,
+              ubi.longitud
+            );
+            return distancia <= (filtroUbicacion.radioKm || 5);
           }
+          return false;
         }
 
         // Filtrar por provincia
-        if (filtroUbicacion.provincia && !filtroUbicacion.distrito) {
-          if (ubi.provincia !== filtroUbicacion.provincia) return false;
+        if (filtroUbicacion.provincia) {
+          const matchProvincia = ubi.provincia?.toLowerCase().trim() === filtroUbicacion.provincia.toLowerCase().trim();
+          if (matchProvincia) return true;
+          if (!filtroUbicacion.distrito) return false;
         }
 
         // Filtrar por departamento
-        if (filtroUbicacion.departamento && !filtroUbicacion.provincia) {
-          if (ubi.departamento !== filtroUbicacion.departamento) return false;
-        }
-
-        // Si hay radio de búsqueda y coordenadas del usuario, verificar distancia
-        if (filtroUbicacion.radioKm && ubi.latitud && ubi.longitud &&
-          profile?.latitud && profile?.longitud) {
-          const distancia = calcularDistanciaKm(
-            profile.latitud,
-            profile.longitud,
-            ubi.latitud,
-            ubi.longitud
-          );
-          return distancia <= (filtroUbicacion.radioKm || 5);
+        if (filtroUbicacion.departamento) {
+          const matchDepartamento = ubi.departamento?.toLowerCase().trim() === filtroUbicacion.departamento.toLowerCase().trim();
+          if (matchDepartamento) return true;
+          if (!filtroUbicacion.provincia && !filtroUbicacion.distrito) return false;
         }
 
         return true;
@@ -748,6 +742,8 @@ function HomeContent() {
           setIsSidebarMinimizado(false); // Expand sidebar when changing section via header
         }}
         onToggleLeftSidebar={() => setIsLeftSidebarOpen(!isLeftSidebarOpen)}
+        ubicacion={filtroUbicacion?.distrito || filtroUbicacion?.provincia || 'Perú'}
+        onUbicacionClick={() => setMostrarFiltroUbicacion(true)}
       />
       {/* Category Bar - Horizontal Scroll */}
       <div
@@ -862,10 +858,6 @@ function HomeContent() {
             onChange={(value) => {
               setBusqueda(value);
             }}
-            ubicacion={filtroUbicacion?.distrito || filtroUbicacion?.provincia || 'Todo el Perú'}
-            onUbicacionClick={() => {
-              setMostrarFiltroUbicacion(true);
-            }}
             onAudioSearch={() => alert("Próximamente: Búsqueda por voz")}
             onVisualSearch={() => alert("Próximamente: Búsqueda visual con cámara/fotos")}
           />
@@ -888,74 +880,107 @@ function HomeContent() {
           <>
             {adisosFiltrados.length > 0 && (
               <div style={{
-                marginBottom: '1rem',
+                marginBottom: '0.75rem',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                fontSize: '0.875rem',
+                fontSize: '0.8rem',
                 color: 'var(--text-secondary)',
-                padding: '0.5rem 0',
-                flexWrap: 'wrap',
-                gap: '0.5rem'
+                padding: '0.25rem 0',
+                gap: '8px',
+                width: '100%',
+                whiteSpace: 'nowrap'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <span>
-                    Mostrando {adisosFiltrados.length} {adisosFiltrados.length === 1 ? 'adiso' : 'adisos'}
-                    {(busqueda || categoriaFiltro !== 'todos' || filtroUbicacion) && ` (de ${adisos.length} total)`}
-                  </span>
-                  {(busqueda.trim() || categoriaFiltro !== 'todos' || filtroUbicacion) && (
-                    <button
-                      onClick={async () => {
-                        const url = getBusquedaUrl(categoriaFiltro, busqueda);
-                        try {
-                          await navigator.clipboard.writeText(url);
-                          success('Link de búsqueda copiado');
-                        } catch (err) {
-                          console.error('Error al copiar:', err);
-                          error('Error al copiar link');
-                        }
-                      }}
-                      style={{
-                        padding: '0.375rem 0.75rem',
-                        fontSize: '0.75rem',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '6px',
-                        backgroundColor: 'var(--bg-primary)',
-                        color: 'var(--text-primary)',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.35rem',
-                        transition: 'all 0.2s'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-                      }}
-                    >
-                      📋 Compartir búsqueda
-                    </button>
-                  )}
+                {/* Left: Count & Share */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
+                      {adisosFiltrados.length}
+                    </span>
+                    <span style={{ marginLeft: '4px', opacity: 0.8 }} className="hidden sm:inline">
+                      {adisosFiltrados.length === 1 ? 'adiso encontrado' : 'adisos encontrados'}
+                    </span>
+                    <span style={{ marginLeft: '4px' }} className="sm:hidden inline">
+                      adisos
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={async () => {
+                      const url = getBusquedaUrl(categoriaFiltro, busqueda);
+                      try {
+                        await navigator.clipboard.writeText(url);
+                        success('Link de búsqueda copiado');
+                      } catch (err) {
+                        error('Error al copiar link');
+                      }
+                    }}
+                    style={{
+                      padding: '5px',
+                      border: '1px solid var(--border-color)',
+                      backgroundColor: 'var(--bg-primary)',
+                      color: 'var(--brand-blue)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: '50%',
+                      flexShrink: 0
+                    }}
+                    className="hover:bg-blue-50 transition-colors"
+                    title="Compartir búsqueda"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
+                  </button>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <FiltroUbicacion
-                    value={filtroUbicacion}
-                    onChange={setFiltroUbicacion}
-                    ubicacionUsuario={profile?.latitud && profile?.longitud ? {
-                      pais: 'Perú',
-                      departamento: '', // Se puede extraer de reverse geocoding si es necesario
-                      provincia: '',
-                      distrito: '',
-                      latitud: profile.latitud,
-                      longitud: profile.longitud
-                    } : undefined}
-                  />
+
+                {/* Right: Sort & View Mode */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
                   <Ordenamiento
                     valor={ordenamiento}
                     onChange={setOrdenamiento}
                   />
+                  <div style={{
+                    display: 'flex',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '6px',
+                    overflow: 'hidden',
+                    height: '32px'
+                  }}>
+                    <button
+                      onClick={() => setVista('grid')}
+                      style={{
+                        width: '32px',
+                        background: vista === 'grid' ? 'var(--bg-secondary)' : 'transparent',
+                        border: 'none',
+                        borderRight: '1px solid var(--border-color)',
+                        cursor: 'pointer',
+                        color: vista === 'grid' ? 'var(--brand-blue)' : 'var(--text-secondary)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                      title="Vista Cuadrícula"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    </button>
+                    <button
+                      onClick={() => setVista('list')}
+                      style={{
+                        width: '32px',
+                        background: vista === 'list' ? 'var(--bg-secondary)' : 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: vista === 'list' ? 'var(--brand-blue)' : 'var(--text-secondary)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                      title="Vista Lista"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -980,6 +1005,7 @@ function HomeContent() {
                   espacioAdicional={isSidebarMinimizado ? 360 : 0}
                   cargandoMas={cargandoMas}
                   sentinelRef={sentinelRef}
+                  vista={vista}
                 />
                 {adisosFiltrados.length === 0 && !cargando && (
                   <div style={{

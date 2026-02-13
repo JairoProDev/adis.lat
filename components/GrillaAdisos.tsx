@@ -14,6 +14,7 @@ interface GrillaAdisosProps {
   espacioAdicional?: number;
   cargandoMas?: boolean;
   sentinelRef?: React.RefObject<HTMLDivElement>;
+  vista?: 'grid' | 'list';
 }
 
 export default function GrillaAdisos({
@@ -22,7 +23,8 @@ export default function GrillaAdisos({
   adisoSeleccionadoId,
   espacioAdicional = 0,
   cargandoMas = false,
-  sentinelRef
+  sentinelRef,
+  vista = 'grid'
 }: GrillaAdisosProps) {
   const adisoRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const isDesktop = useMediaQuery('(min-width: 768px)');
@@ -60,6 +62,11 @@ export default function GrillaAdisos({
           grid-auto-rows: auto;
           grid-auto-flow: dense;
         }
+
+        .grilla-adisos.vista-list {
+          grid-template-columns: 1fr !important;
+          gap: 1rem;
+        }
         
         @media (min-width: 768px) {
              .grilla-adisos {
@@ -68,14 +75,9 @@ export default function GrillaAdisos({
                 gap: 1.5rem;
              }
         }
-
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
       `}</style>
 
-      <div className="grilla-adisos pb-20">
+      <div className={`grilla-adisos pb-20 ${vista === 'list' ? 'vista-list' : ''}`}>
         {adisos.map((adiso) => (
           <AdisoCard
             key={adiso.id}
@@ -86,6 +88,7 @@ export default function GrillaAdisos({
             onClick={() => handleClickAdiso(adiso)}
             estaSeleccionado={adiso.id === adisoSeleccionadoId}
             isDesktop={isDesktop}
+            vista={vista}
           />
         ))}
 

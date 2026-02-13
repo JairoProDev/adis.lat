@@ -256,20 +256,73 @@ export default function AdisoPageContent({ adiso }: AdisoPageContentProps) {
                                     boxShadow: 'var(--shadow-lg)',
                                     border: '1px solid var(--border-color)'
                                 }}>
-                                    {/* Category Badge */}
-                                    <span style={{
-                                        display: 'inline-block',
-                                        backgroundColor: 'var(--bg-secondary)',
-                                        padding: '0.5rem 1rem',
-                                        borderRadius: '100px',
-                                        fontSize: '0.875rem',
-                                        fontWeight: 600,
-                                        color: 'var(--text-secondary)',
-                                        textTransform: 'capitalize',
-                                        marginBottom: '1rem'
+                                    {/* Hero Identity Badge - Brand awareness */}
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.75rem',
+                                        marginBottom: '1.5rem',
+                                        padding: '0.6rem',
+                                        borderRadius: '12px',
+                                        backgroundColor: 'var(--bg-primary)',
+                                        border: '1px solid var(--border-color)',
+                                        width: 'fit-content',
+                                        boxShadow: 'var(--shadow-sm)'
                                     }}>
-                                        {categoriaLabels[adiso.categoria] || adiso.categoria}
-                                    </span>
+                                        <div style={{
+                                            width: '40px',
+                                            height: '40px',
+                                            borderRadius: '8px',
+                                            overflow: 'hidden',
+                                            position: 'relative',
+                                            backgroundColor: 'var(--bg-secondary)',
+                                            border: '1px solid var(--border-color)'
+                                        }}>
+                                            {adiso.vendedor?.avatarUrl ? (
+                                                <Image
+                                                    src={adiso.vendedor.avatarUrl}
+                                                    alt={adiso.vendedor.nombre}
+                                                    fill
+                                                    style={{ objectFit: 'cover' }}
+                                                />
+                                            ) : (
+                                                <div style={{
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    color: 'var(--brand-blue)',
+                                                    backgroundColor: 'rgba(83, 172, 197, 0.1)'
+                                                }}>
+                                                    {(() => {
+                                                        const IconComponent = getCategoriaIcon(adiso.categoria);
+                                                        return <IconComponent size={24} />;
+                                                    })()}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <span style={{
+                                                fontSize: '0.7rem',
+                                                textTransform: 'uppercase',
+                                                fontWeight: 800,
+                                                letterSpacing: '0.05em',
+                                                color: 'var(--text-tertiary)',
+                                                lineHeight: '1'
+                                            }}>
+                                                Publicado por
+                                            </span>
+                                            <span style={{
+                                                fontSize: '1rem',
+                                                fontWeight: 700,
+                                                color: 'var(--text-primary)',
+                                                lineHeight: '1.2'
+                                            }}>
+                                                {adiso.vendedor?.nombre || 'Anunciante'}
+                                            </span>
+                                        </div>
+                                    </div>
 
                                     <h1 style={{
                                         fontSize: '2.5rem',

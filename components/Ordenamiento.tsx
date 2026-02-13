@@ -15,7 +15,7 @@ export default function Ordenamiento({ valor, onChange }: OrdenamientoProps) {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  
+
   const opcionesOrdenamiento: Array<{ valor: TipoOrdenamiento; labelKey: string; icon: React.ComponentType<{ size?: number }> }> = [
     { valor: 'recientes', labelKey: 'sort.recent', icon: FaSortAmountDown },
     { valor: 'antiguos', labelKey: 'sort.oldest', icon: FaSortAmountUp },
@@ -54,18 +54,20 @@ export default function Ordenamiento({ valor, onChange }: OrdenamientoProps) {
         aria-label={t('sort.label')}
         aria-expanded={isOpen}
         aria-haspopup="true"
+        title={t(opcionActual.labelKey)}
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '0.5rem',
-          padding: '0.5rem 0.75rem',
+          gap: '0.4rem',
+          padding: '0.4rem 0.6rem',
           border: '1px solid var(--border-color)',
           borderRadius: '6px',
           backgroundColor: 'var(--bg-primary)',
           color: 'var(--text-primary)',
           cursor: 'pointer',
-          fontSize: '0.875rem',
+          fontSize: '0.8rem',
           transition: 'all 0.2s',
+          height: '32px'
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
@@ -75,8 +77,8 @@ export default function Ordenamiento({ valor, onChange }: OrdenamientoProps) {
         }}
       >
         <CurrentIcon size={14} aria-hidden="true" />
-        <span>{t(opcionActual.labelKey)}</span>
-        <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>▼</span>
+        <span className="hidden sm:inline">{t(opcionActual.labelKey)}</span>
+        <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', marginLeft: '2px' }}>▼</span>
       </button>
 
       {isOpen && (

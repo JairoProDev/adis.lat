@@ -12,9 +12,7 @@ import {
 interface BuscadorProps {
   value: string;
   onChange: (value: string) => void;
-  // New props for location and features
-  ubicacion?: string;
-  onUbicacionClick?: () => void;
+  // New props for features
   onAudioSearch?: () => void;
   onVisualSearch?: () => void;
 }
@@ -22,8 +20,6 @@ interface BuscadorProps {
 export default function Buscador({
   value,
   onChange,
-  ubicacion = 'Todo el Perú',
-  onUbicacionClick,
   onAudioSearch,
   onVisualSearch
 }: BuscadorProps) {
@@ -40,22 +36,6 @@ export default function Buscador({
             focus-within:shadow-[0_4px_20px_rgba(83,172,197,0.15)] focus-within:border-[var(--brand-blue)]
           `}
         >
-          {/* Location Trigger */}
-          <button
-            onClick={onUbicacionClick}
-            className="flex items-center gap-2 pr-4 mr-2 border-r border-gray-200 hover:bg-gray-50 rounded-l-full py-1 pl-1 transition-colors group/loc"
-            aria-label="Seleccionar ubicación"
-            title="Seleccionar ubicación"
-          >
-            <div className="p-2 bg-gray-100 rounded-full text-[var(--brand-blue)] group-hover/loc:bg-[var(--brand-blue)] group-hover/loc:text-white transition-colors">
-              <IconMapMarkerAlt size={18} />
-            </div>
-            <div className="flex flex-col items-start min-w-[80px] sm:min-w-[100px]">
-              <span className="text-[10px] uppercase font-bold text-gray-400 leading-none">Ubicación</span>
-              <span className="text-sm font-semibold text-gray-800 truncate max-w-[120px]">{ubicacion}</span>
-            </div>
-          </button>
-
           {/* Search Icon */}
           <FaSearch className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0" />
 

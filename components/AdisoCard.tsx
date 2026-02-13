@@ -160,9 +160,10 @@ interface AdisoCardProps {
     onClick: () => void;
     estaSeleccionado?: boolean;
     isDesktop?: boolean;
+    vista?: 'grid' | 'list';
 }
 
-const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, estaSeleccionado, isDesktop = true }, ref) => {
+const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, estaSeleccionado, isDesktop = true, vista = 'grid' }, ref) => {
     const { isFavorite, isHidden, toggleFav, markNotInterested } = useAdInteraction(adiso.id);
     const IconComponent = getCategoriaIcon(adiso.categoria);
     const theme = getCategoriaTheme(adiso.categoria);
@@ -228,16 +229,17 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
                 }
             }}
             className={`
-        group relative flex flex-col items-start text-left bg-white rounded-xl border transition-all duration-300 overflow-hidden outline-none cursor-pointer font-sans
+        group relative flex ${vista === 'list' ? 'flex-row' : 'flex-col'} items-start text-left bg-white rounded-xl border transition-all duration-300 overflow-hidden outline-none cursor-pointer font-sans
         ${estaSeleccionado
                     ? `ring-2 ring-offset-1 shadow-xl scale-[1.01] z-10 ${theme.border.replace('border-', 'ring-')}`
                     : 'border-gray-100 hover:border-gray-300 hover:shadow-lg hover:-translate-y-1'
                 }
       `}
             style={{
-                gridColumn: `span ${gridColumnSpan}`,
-                gridRow: `span ${gridRowSpan}`,
+                gridColumn: vista === 'list' ? '1 / -1' : `span ${gridColumnSpan}`,
+                gridRow: vista === 'list' ? 'auto' : `span ${gridRowSpan}`,
                 height: '100%',
+                minHeight: vista === 'list' ? (isDesktop ? '180px' : '100px') : 'auto',
                 fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
             }}
             aria-label={`Ver detalles: ${adiso.titulo}`}
@@ -270,7 +272,7 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
             {/* --- Card Media Section --- */}
             {tamaño !== 'miniatura' && (
                 <div className={`
-            relative w-full aspect-[4/3] md:aspect-video flex items-center justify-center overflow-hidden flex-shrink-0
+            relative ${vista === 'list' ? 'w-[120px] md:w-[240px] h-full' : 'w-full aspect-[4/3] md:aspect-video'} flex items-center justify-center overflow-hidden flex-shrink-0
             bg-gradient-to-br ${theme.gradient} group
         `}>
                     {imagenUrl ? (
@@ -292,18 +294,37 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
                         </div>
                     )}
 
-                    {/* Top Badges */}
-                    <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start z-10">
-                        <span className={`
-                inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] uppercase tracking-wider font-extrabold backdrop-blur-md shadow-sm border border-white/20
-                ${theme.badgeBg}
-            `}>
-                            <IconComponent size={10} />
-                            {adiso.categoria}
-                        </span>
+                    {/* Top Identity Badge - Brand awareness over categories */}
+                    <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start z-10 transition-transform group-hover:scale-105 origin-top-left">
+                        <div className="flex items-center gap-2 p-1 rounded-lg backdrop-blur-md bg-white/95 shadow-lg border border-white/20">
+                            {/* Brand Square Image */}
+                            <div className="w-8 h-8 rounded-md overflow-hidden bg-gray-100 flex-shrink-0 relative border border-gray-100 shadow-inner">
+                                {adiso.vendedor?.avatarUrl ? (
+                                    <Image
+                                        src={adiso.vendedor.avatarUrl}
+                                        alt={adiso.vendedor.nombre}
+                                        fill
+                                        className="object-cover"
+                                    />
+                                ) : (
+                                    <div className={`w-full h-full flex items-center justify-center ${theme.bg} ${theme.text}`}>
+                                        <IconComponent size={14} />
+                                    </div>
+                                )}
+                            </div>
+                            {/* Brand Name */}
+                            <div className="pr-2.5 flex flex-col justify-center overflow-hidden">
+                                <span className="text-[10px] uppercase tracking-tighter text-gray-400 font-black leading-none mb-0.5 whitespace-nowrap">
+                                    Vendido por
+                                </span>
+                                <span className="text-[11px] font-extrabold text-gray-900 leading-none truncate max-w-[120px]">
+                                    {adiso.vendedor?.nombre || 'Anunciante'}
+                                </span>
+                            </div>
+                        </div>
 
                         {adiso.esDestacado && (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] uppercase tracking-wider font-extrabold backdrop-blur-md bg-amber-400 text-amber-950 border border-amber-300/50 shadow-sm">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] uppercase tracking-wider font-extrabold backdrop-blur-md bg-amber-400 text-amber-950 border border-amber-300/50 shadow-sm transition-all hover:scale-105 active:scale-95">
                                 ⭐ Destacado
                             </span>
                         )}
@@ -342,7 +363,7 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
                 {/* Title - UPPERCASE & BOLD & ADJUSTED SIZE */}
                 <h3 className={`
             font-bold text-gray-900 leading-tight tracking-tight mb-1 transition-colors line-clamp-2 uppercase
-            ${tamaño === 'miniatura' ? 'text-[11px]' : 'text-[13px] md:text-base'}
+            ${vista === 'list' ? 'text-[12px] md:text-lg' : (tamaño === 'miniatura' ? 'text-[11px]' : 'text-[13px] md:text-base')}
             group-hover:${theme.text}
         `}>
                     {adiso.titulo}

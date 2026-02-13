@@ -19,7 +19,8 @@ import {
   IconMap,
   IconMegaphone,
   IconStore,
-  IconGratuitos
+  IconGratuitos,
+  IconLocation
 } from './Icons';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -28,13 +29,17 @@ interface HeaderProps {
   seccionActiva?: SeccionSidebar;
   onSeccionChange?: (seccion: SeccionSidebar) => void;
   onToggleLeftSidebar?: () => void;
+  ubicacion?: string;
+  onUbicacionClick?: () => void;
 }
 
 export default function Header({
   onChangelogClick,
   seccionActiva,
   onSeccionChange,
-  onToggleLeftSidebar
+  onToggleLeftSidebar,
+  ubicacion = 'Perú',
+  onUbicacionClick
 }: HeaderProps) {
   const { t } = useTranslation();
   const isDesktop = useMediaQuery('(min-width: 768px)');
@@ -64,8 +69,13 @@ export default function Header({
       alignItems: 'center',
       padding: '0 1rem',
     }}>
-      {/* LEFT: Hamburger + Logo */}
-      <div style={{ display: 'flex', alignItems: 'center', minWidth: isDesktop ? '280px' : 'auto' }}>
+      {/* LEFT: Logo + Location */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        minWidth: isDesktop ? '340px' : 'auto',
+        gap: '12px'
+      }}>
         <button
           onClick={onToggleLeftSidebar}
           style={{
@@ -73,28 +83,116 @@ export default function Header({
             border: 'none',
             cursor: 'pointer',
             padding: '8px',
-            borderRadius: '50%',
+            borderRadius: '10px',
             color: 'var(--text-secondary)',
-            marginRight: '8px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            transition: 'all 0.2s'
           }}
-          className="hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
+          className="hover:bg-gray-100 dark:hover:bg-zinc-800"
         >
-          <FaBars size={22} />
+          <FaBars size={20} />
         </button>
 
-        <a href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <span style={{
-            fontWeight: 900,
-            fontSize: '28px',
-            color: 'var(--brand-blue)',
-            letterSpacing: '-1px'
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <a href="/" style={{
+            textDecoration: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '4px'
           }}>
-            Buscadis
-          </span>
-        </a>
+            <div style={{
+              height: '40px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden'
+            }}>
+              <img
+                src="/buscadisazulfondo.svg"
+                alt="Buscadis"
+                style={{
+                  height: '100%',
+                  width: 'auto',
+                  objectFit: 'contain',
+                  filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+                }}
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  const parent = e.currentTarget.parentElement;
+                  if (parent && !parent.querySelector('.logo-fallback')) {
+                    const span = document.createElement('span');
+                    span.className = 'logo-fallback';
+                    span.innerText = 'ADIS.LAT';
+                    span.style.fontWeight = '900';
+                    span.style.fontSize = '1.2rem';
+                    span.style.color = 'var(--brand-blue)';
+                    span.style.letterSpacing = '-0.5px';
+                    parent.appendChild(span);
+                  }
+                }}
+              />
+            </div>
+          </a>
+
+          {/* Separator */}
+          {isDesktop && <div style={{ width: '1px', height: '32px', backgroundColor: 'var(--border-color)', margin: '0 4px' }} />}
+
+          {onUbicacionClick && (
+            <button
+              onClick={onUbicacionClick}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                background: 'none',
+                border: '1px solid transparent',
+                cursor: 'pointer',
+                padding: '6px 10px',
+                borderRadius: '8px',
+                transition: 'all 0.2s',
+                maxWidth: isDesktop ? '160px' : '120px',
+                textAlign: 'left',
+                outline: 'none'
+              }}
+              className="hover:bg-gray-100 dark:hover:bg-zinc-800 hover:border-gray-200 dark:hover:border-zinc-700"
+            >
+              <div style={{
+                color: 'var(--brand-blue)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <IconLocation size={18} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                <span style={{
+                  fontSize: '10px',
+                  color: 'var(--text-tertiary)',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  lineHeight: '1'
+                }}>
+                  Cerca de
+                </span>
+                <span style={{
+                  fontSize: '13px',
+                  color: 'var(--text-primary)',
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  width: '100%'
+                }}>
+                  {ubicacion}
+                </span>
+              </div>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* CENTER: Navigation (Desktop Only) */}

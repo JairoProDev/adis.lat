@@ -194,69 +194,174 @@ export default function FiltroUbicacion({ value, onChange, onAplicar, ubicacionU
   // Helper to render form content
   function renderContent() {
     return (
-      <>
-        <div style={{ marginBottom: '1.5rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div>
           <h3 style={{
-            fontSize: '1.1rem',
-            fontWeight: 700,
+            fontSize: '1.25rem',
+            fontWeight: 800,
             color: 'var(--text-primary)',
             margin: 0,
-            marginBottom: '0.25rem'
+            marginBottom: '0.4rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.6rem'
           }}>
-            Filtrar por ubicación
+            <IconLocation size={22} color="var(--brand-blue)" />
+            Ubicación de búsqueda
           </h3>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-            Selecciona la zona donde quieres buscar
+          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+            Encuentra anuncios cerca de ti. Selecciona una zona y ajusta el radio.
           </p>
         </div>
 
-        {/* Opción: Usar mi ubicación */}
-        {ubicacionUsuario && (
-          <label style={{
+        {/* Visual Radius Display - "Map Simulator" */}
+        {(distrito || usarMiUbicacion) && (
+          <div style={{
+            width: '100%',
+            height: '160px',
+            backgroundColor: 'var(--bg-secondary)',
+            borderRadius: '12px',
+            position: 'relative',
+            overflow: 'hidden',
+            border: '1px solid var(--border-color)',
             display: 'flex',
             alignItems: 'center',
-            gap: '0.5rem',
-            padding: '0.75rem',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            marginBottom: '1rem',
-            backgroundColor: usarMiUbicacion ? 'var(--text-primary)' : 'var(--bg-secondary)',
-            color: usarMiUbicacion ? 'var(--bg-primary)' : 'var(--text-primary)',
-            transition: 'all 0.2s',
-            fontWeight: 500
+            justifyContent: 'center',
+            background: `
+              linear-gradient(rgba(83,172,197,0.05) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(83,172,197,0.05) 1px, transparent 1px)
+            `,
+            backgroundSize: '20px 20px'
           }}>
-            <input
-              type="checkbox"
-              checked={usarMiUbicacion}
-              onChange={(e) => {
-                setUsarMiUbicacion(e.target.checked);
-                if (e.target.checked) {
-                  setDepartamento(ubicacionUsuario.departamento);
-                  setProvincia(ubicacionUsuario.provincia);
-                  setDistrito(ubicacionUsuario.distrito);
-                }
-              }}
-              style={{ margin: 0 }}
-            />
-            <FaMapMarkerAlt size={14} />
-            <span style={{ fontSize: '0.875rem' }}>
-              Usar mi ubicación actual
-            </span>
-          </label>
+            {/* Simulated Map Markers */}
+            <div style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              opacity: 0.3,
+              pointerEvents: 'none'
+            }}>
+              {[...Array(6)].map((_, i) => (
+                <div key={i} style={{
+                  position: 'absolute',
+                  left: `${20 + (i * 15) % 70}%`,
+                  top: `${10 + (i * 25) % 80}%`,
+                  color: 'var(--text-tertiary)'
+                }}>
+                  <FaMapMarkerAlt size={12} />
+                </div>
+              ))}
+            </div>
+
+            {/* Radius Circle */}
+            <div style={{
+              width: `${Math.min(140, 40 + (radioKm * 2))}px`,
+              height: `${Math.min(140, 40 + (radioKm * 2))}px`,
+              borderRadius: '50%',
+              backgroundColor: 'rgba(83, 172, 197, 0.15)',
+              border: '2px solid var(--brand-blue)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              position: 'relative',
+              boxShadow: '0 0 20px rgba(83, 172, 197, 0.2)'
+            }}>
+              <div style={{
+                position: 'absolute',
+                top: '-25px',
+                backgroundColor: 'var(--brand-blue)',
+                color: 'white',
+                padding: '2px 8px',
+                borderRadius: '10px',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              }}>
+                {radioKm} km
+              </div>
+              <FaMapMarkerAlt size={24} color="var(--brand-blue)" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }} />
+            </div>
+
+            <div style={{
+              position: 'absolute',
+              bottom: '8px',
+              right: '12px',
+              fontSize: '0.7rem',
+              color: 'var(--text-tertiary)',
+              fontWeight: 500,
+              backgroundColor: 'var(--bg-primary)',
+              padding: '2px 6px',
+              borderRadius: '4px',
+              opacity: 0.8
+            }}>
+              Vista de radio aproximado
+            </div>
+          </div>
+        )}
+
+        {/* Opción: Usar mi ubicación */}
+        {ubicacionUsuario && (
+          <button
+            onClick={() => {
+              const newValue = !usarMiUbicacion;
+              setUsarMiUbicacion(newValue);
+              if (newValue) {
+                setDepartamento(ubicacionUsuario.departamento);
+                setProvincia(ubicacionUsuario.provincia);
+                setDistrito(ubicacionUsuario.distrito);
+              }
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              padding: '1rem',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              border: usarMiUbicacion ? '2px solid var(--brand-blue)' : '1px solid var(--border-color)',
+              backgroundColor: usarMiUbicacion ? 'rgba(83, 172, 197, 0.05)' : 'var(--bg-primary)',
+              color: usarMiUbicacion ? 'var(--brand-blue)' : 'var(--text-primary)',
+              transition: 'all 0.2s',
+              textAlign: 'left',
+              width: '100%',
+              outline: 'none'
+            }}
+          >
+            <div style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              backgroundColor: usarMiUbicacion ? 'var(--brand-blue)' : 'var(--bg-secondary)',
+              color: usarMiUbicacion ? 'white' : 'var(--text-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0
+            }}>
+              <FaMapMarkerAlt size={16} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>Usar mi ubicación actual</div>
+              <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>{ubicacionUsuario.distrito}, {ubicacionUsuario.provincia}</div>
+            </div>
+          </button>
         )}
 
         {!usarMiUbicacion && (
-          <div className="space-y-4">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {/* Departamento */}
-            <div>
+            <div style={{ position: 'relative' }}>
               <label style={{
-                display: 'block',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                color: 'var(--text-secondary)',
-                marginBottom: '0.25rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
+                position: 'absolute',
+                top: '-8px',
+                left: '12px',
+                backgroundColor: 'var(--bg-primary)',
+                padding: '0 4px',
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                color: 'var(--brand-blue)',
+                zIndex: 1
               }}>
                 Departamento
               </label>
@@ -265,13 +370,14 @@ export default function FiltroUbicacion({ value, onChange, onAplicar, ubicacionU
                 onChange={(e) => setDepartamento(e.target.value)}
                 style={{
                   width: '100%',
-                  padding: '0.75rem',
+                  padding: '1rem',
                   border: '1px solid var(--border-color)',
-                  borderRadius: '8px',
-                  backgroundColor: 'var(--bg-secondary)',
+                  borderRadius: '10px',
+                  backgroundColor: 'var(--bg-primary)',
                   color: 'var(--text-primary)',
-                  fontSize: '0.95rem',
+                  fontSize: '1rem',
                   cursor: 'pointer',
+                  appearance: 'none',
                   outline: 'none'
                 }}
               >
@@ -283,161 +389,173 @@ export default function FiltroUbicacion({ value, onChange, onAplicar, ubicacionU
             </div>
 
             {/* Provincia */}
-            <div style={{ opacity: departamento ? 1 : 0.5, pointerEvents: departamento ? 'auto' : 'none' }}>
-              <label style={{
-                display: 'block',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                color: 'var(--text-secondary)',
-                marginBottom: '0.25rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}>
-                Provincia
-              </label>
-              <select
-                value={provincia}
-                onChange={(e) => setProvincia(e.target.value)}
-                disabled={!departamento}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '8px',
-                  backgroundColor: 'var(--bg-secondary)',
-                  color: 'var(--text-primary)',
-                  fontSize: '0.95rem',
-                  cursor: 'pointer',
-                  outline: 'none'
-                }}
-              >
-                <option value="">Seleccionar Provincia</option>
-                {provincias.map(prov => (
-                  <option key={prov} value={prov}>{prov}</option>
-                ))}
-              </select>
-            </div>
+            {departamento && (
+              <div style={{ position: 'relative' }}>
+                <label style={{
+                  position: 'absolute',
+                  top: '-8px',
+                  left: '12px',
+                  backgroundColor: 'var(--bg-primary)',
+                  padding: '0 4px',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  color: 'var(--brand-blue)',
+                  zIndex: 1
+                }}>
+                  Provincia
+                </label>
+                <select
+                  value={provincia}
+                  onChange={(e) => setProvincia(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '1rem',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '10px',
+                    backgroundColor: 'var(--bg-primary)',
+                    color: 'var(--text-primary)',
+                    fontSize: '1rem',
+                    cursor: 'pointer',
+                    appearance: 'none',
+                    outline: 'none'
+                  }}
+                >
+                  <option value="">Seleccionar Provincia</option>
+                  {provincias.map(prov => (
+                    <option key={prov} value={prov}>{prov}</option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Distrito */}
-            <div style={{ opacity: provincia ? 1 : 0.5, pointerEvents: provincia ? 'auto' : 'none' }}>
-              <label style={{
-                display: 'block',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                color: 'var(--text-secondary)',
-                marginBottom: '0.25rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}>
-                Distrito
-              </label>
-              <select
-                value={distrito}
-                onChange={(e) => setDistrito(e.target.value)}
-                disabled={!provincia}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '8px',
-                  backgroundColor: 'var(--bg-secondary)',
-                  color: 'var(--text-primary)',
-                  fontSize: '0.95rem',
-                  cursor: 'pointer',
-                  outline: 'none'
-                }}
-              >
-                <option value="">Seleccionar Distrito</option>
-                {distritos.map(dist => (
-                  <option key={dist} value={dist}>{dist}</option>
-                ))}
-              </select>
+            {provincia && (
+              <div style={{ position: 'relative' }}>
+                <label style={{
+                  position: 'absolute',
+                  top: '-8px',
+                  left: '12px',
+                  backgroundColor: 'var(--bg-primary)',
+                  padding: '0 4px',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  color: 'var(--brand-blue)',
+                  zIndex: 1
+                }}>
+                  Distrito
+                </label>
+                <select
+                  value={distrito}
+                  onChange={(e) => setDistrito(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '1rem',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '10px',
+                    backgroundColor: 'var(--bg-primary)',
+                    color: 'var(--text-primary)',
+                    fontSize: '1rem',
+                    cursor: 'pointer',
+                    appearance: 'none',
+                    outline: 'none'
+                  }}
+                >
+                  <option value="">Seleccionar Distrito</option>
+                  {distritos.map(dist => (
+                    <option key={dist} value={dist}>{dist}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Radio de búsqueda Slider */}
+        {(distrito || usarMiUbicacion) && (
+          <div style={{ marginTop: '0.5rem' }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '0.75rem'
+            }}>
+              <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)' }}>Radio de búsqueda</span>
+              <span style={{
+                fontSize: '1.25rem',
+                fontWeight: 900,
+                color: 'var(--brand-blue)',
+                padding: '4px 12px',
+                backgroundColor: 'rgba(83, 172, 197, 0.1)',
+                borderRadius: '8px'
+              }}>{radioKm} km</span>
+            </div>
+            <input
+              type="range"
+              min="1"
+              max="100"
+              value={radioKm}
+              onChange={(e) => setRadioKm(Number(e.target.value))}
+              style={{
+                width: '100%',
+                height: '8px',
+                borderRadius: '4px',
+                accentColor: 'var(--brand-blue)',
+                cursor: 'pointer'
+              }}
+            />
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              fontSize: '0.75rem',
+              color: 'var(--text-tertiary)',
+              marginTop: '0.5rem',
+              fontWeight: 500
+            }}>
+              <span>1 km</span>
+              <span>50 km</span>
+              <span>100 km</span>
             </div>
           </div>
         )}
 
-        {/* Radio de búsqueda */}
-        <div style={{ marginTop: '1.5rem', opacity: (distrito || usarMiUbicacion) ? 1 : 0.5 }}>
-          <label style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            fontSize: '0.875rem',
-            fontWeight: 500,
-            color: 'var(--text-primary)',
-            marginBottom: '0.5rem'
-          }}>
-            <span>Radio de búsqueda</span>
-            <span style={{ color: 'var(--brand-blue)', fontWeight: 700 }}>{radioKm} km</span>
-          </label>
-          <input
-            type="range"
-            min="1"
-            max="50"
-            value={radioKm}
-            onChange={(e) => setRadioKm(Number(e.target.value))}
-            disabled={!(distrito || usarMiUbicacion)}
-            style={{
-              width: '100%',
-              height: '6px',
-              borderRadius: '3px',
-              accentColor: 'var(--brand-blue)'
-            }}
-          />
-        </div>
-
-        <div style={{ display: 'flex', gap: '0.75rem', marginTop: '2rem' }}>
+        <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
           <button
             onClick={handleLimpiar}
             style={{
               flex: 1,
-              padding: '0.75rem',
+              padding: '1rem',
               border: '1px solid var(--border-color)',
-              borderRadius: '8px',
+              borderRadius: '12px',
               backgroundColor: 'transparent',
               color: 'var(--text-secondary)',
               cursor: 'pointer',
-              fontSize: '0.95rem',
-              fontWeight: 500,
+              fontSize: '1rem',
+              fontWeight: 600,
               transition: 'all 0.2s'
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-              e.currentTarget.style.color = 'var(--text-primary)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.color = 'var(--text-secondary)';
-            }}
           >
-            Borrar filtros
+            Limpiar
           </button>
           <button
             onClick={handleAplicar}
             style={{
-              flex: 1.5,
-              padding: '0.75rem',
+              flex: 2,
+              padding: '1rem',
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: '12px',
               backgroundColor: 'var(--brand-blue)',
               color: 'white',
               cursor: 'pointer',
-              fontSize: '0.95rem',
-              fontWeight: 600,
-              transition: 'opacity 0.2s',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.opacity = '0.9';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.opacity = '1';
+              fontSize: '1rem',
+              fontWeight: 700,
+              boxShadow: '0 4px 12px rgba(83, 172, 197, 0.3)',
+              transition: 'all 0.2s'
             }}
           >
-            Aplicar Ubicación
+            Aplicar Cambios
           </button>
         </div>
-      </>
+      </div>
     );
   }
 
