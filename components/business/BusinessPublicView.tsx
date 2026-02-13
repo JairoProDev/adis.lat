@@ -465,14 +465,14 @@ export default function BusinessPublicView({ profile, adisos, isPreview = false,
 
                             {/* Products Grid */}
                             {filteredAdisos.length > 0 ? (
-                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-8">
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
                                     {filteredAdisos.map((adiso) => (
                                         <BentoCard
                                             key={adiso.id}
                                             adiso={adiso}
                                             icon={<IconBox size={14} className="text-[var(--brand-color)]" />}
                                             onClick={() => router.push(`/adiso/${(adiso as any).slug || adiso.id}`)}
-                                            className="!rounded-[2.5rem]"
+                                            className="!rounded-2xl"
                                         />
                                     ))}
                                 </div>

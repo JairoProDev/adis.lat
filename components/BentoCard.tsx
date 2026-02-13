@@ -53,7 +53,7 @@ export default function BentoCard({ adiso, isSelected, onClick, icon, className 
       className={cn(
         'bento-card group relative w-full h-full text-left',
         'flex flex-col gap-3',
-        'bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl overflow-hidden',
+        'bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden',
         'shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] transition-all duration-500',
         sizeClasses[tamaño],
         isSelected && 'ring-2 ring-[var(--brand-color)] shadow-xl',
@@ -79,7 +79,7 @@ export default function BentoCard({ adiso, isSelected, onClick, icon, className 
       {/* Image Section */}
       {hasImage ? (
         <motion.div
-          className="relative w-full rounded-2xl overflow-hidden bg-slate-100"
+          className="relative w-full rounded-xl overflow-hidden bg-slate-100"
           style={{
             aspectRatio: tamaño === 'miniatura' ? '4/3' : '1',
             maxHeight: tamaño === 'miniatura' ? '140px' : 'auto'
@@ -105,25 +105,13 @@ export default function BentoCard({ adiso, isSelected, onClick, icon, className 
           <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity" />
         </motion.div>
       ) : (
-        <div className="w-full aspect-square bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300">
+        <div className="w-full aspect-square bg-slate-50 rounded-xl flex items-center justify-center text-slate-300">
           {icon}
         </div>
       )}
 
       {/* Content Area */}
-      <div className="flex-1 flex flex-col gap-2">
-        <div className="flex items-center justify-between">
-          <div className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-zinc-800 text-[10px] font-black uppercase tracking-tighter text-slate-500 flex items-center gap-1">
-            {icon}
-            <span>{adiso.categoria}</span>
-          </div>
-          {adiso.descripcion?.includes('Precio:') && (
-            <span className="text-[10px] font-bold text-[var(--brand-color)]">
-              {adiso.descripcion.split('Precio:')[1].trim()}
-            </span>
-          )}
-        </div>
-
+      <div className="flex-1 flex flex-col gap-1">
         <h3
           className={cn(
             titleSizes[tamaño],

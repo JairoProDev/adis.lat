@@ -119,14 +119,14 @@ export default function FormularioCatalogo({ onSave, onCancel, businessAddress }
             <div className="flex gap-4 pt-4">
                 <button
                     onClick={onCancel}
-                    className="flex-1 py-4 rounded-2xl font-bold text-slate-500 hover:bg-slate-50 transition-colors"
+                    className="flex-1 py-4 rounded-2xl font-bold text-slate-500 hover:bg-slate-100 transition-colors"
                 >
                     Cancelar
                 </button>
                 <button
                     onClick={handleSave}
                     disabled={!name || loading}
-                    className="flex-1 py-4 rounded-2xl font-black bg-[var(--brand-color)] text-white shadow-xl shadow-[var(--brand-color)]/20 hover:brightness-110 active:scale-[0.97] transition-all disabled:opacity-40 disabled:pointer-events-none"
+                    className="flex-1 py-4 rounded-2xl font-black bg-blue-600 text-white shadow-xl shadow-blue-500/20 hover:bg-blue-700 active:scale-[0.97] transition-all disabled:opacity-40 disabled:pointer-events-none"
                 >
                     {loading ? (
                         <div className="flex items-center justify-center gap-2">
@@ -136,9 +136,9 @@ export default function FormularioCatalogo({ onSave, onCancel, businessAddress }
                             >
                                 <IconImage size={18} />
                             </motion.div>
-                            <span>Guardando...</span>
+                            <span>Publicando...</span>
                         </div>
-                    ) : 'Guardar Producto'}
+                    ) : 'Publicar'}
                 </button>
             </div>
         </div>

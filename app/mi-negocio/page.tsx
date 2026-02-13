@@ -578,15 +578,27 @@ function BusinessBuilderPageContent() {
                         <div className="p-6">
                             <FormularioCatalogo
                                 onSave={async (adiso) => {
+                                    console.log('Finalizing product save:', adiso);
                                     try {
-                                        await saveAdiso(adiso);
-                                        setUserAdisos(prev => [adiso, ...prev]);
+                                        // If user is authenticated, we should associate their ID
+                                        const adisoToSave = {
+                                            ...adiso,
+                                            usuario_id: user?.id,
+                                            user_id: user?.id // Compatible with both mappings
+                                        };
+
+                                        await saveAdiso(adisoToSave);
+                                        setUserAdisos(prev => [adisoToSave, ...prev]);
                                         setShowPublishModal(false);
-                                        // Switch to 'catalog' view on success to see it
                                         handleEditPart('catalog');
-                                        success('¡Producto añadido con éxito!');
+                                        showToast('¡Producto añadido con éxito!', 'success');
+
+                                        // Open the product immediately in a new tab
+                                        const productUrl = `/adiso/${(adisoToSave as any).slug || adisoToSave.id}`;
+                                        window.open(productUrl, '_blank');
                                     } catch (err) {
-                                        error('Error al guardar el producto');
+                                        console.error('Save error:', err);
+                                        showToast('Error al guardar el producto. Inténtalo de nuevo.', 'error');
                                     }
                                 }}
                                 onCancel={() => setShowPublishModal(false)}
