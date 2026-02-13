@@ -86,7 +86,7 @@ export default function BentoCard({ adiso, isSelected, onClick, icon, className 
           }}
         >
           <motion.div
-            className="w-full h-full"
+            className="w-full h-full relative"
             whileHover={{ scale: 1.1 }}
             transition={{ duration: 0.6, ease: [0.33, 1, 0.68, 1] }}
           >

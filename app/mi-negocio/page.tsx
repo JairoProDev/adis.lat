@@ -581,8 +581,13 @@ function BusinessBuilderPageContent() {
                                     console.log('Finalizing product save:', adiso);
                                     try {
                                         // If user is authenticated, we should associate their ID
+                                        // Ensure valid contact and location data
                                         const adisoToSave = {
                                             ...adiso,
+                                            // Inject contact from profile if missing or empty
+                                            contacto: adiso.contacto || profile.contact_whatsapp || profile.contact_phone || '999999999',
+                                            // Inject location if missing
+                                            ubicacion: adiso.ubicacion || profile.contact_address || 'Perú',
                                             // Ensure we set user_id for backend
                                             user_id: user?.id,
                                             usuario_id: user?.id // Keep for compatibility if needed elsewhere

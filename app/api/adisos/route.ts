@@ -215,7 +215,10 @@ export async function POST(request: NextRequest) {
         imagenesUrls: sanitizedData.imagenesUrls || undefined,
         // Compatibilidad hacia atrás
         imagenUrl: sanitizedData.imagenUrl || sanitizedData.imagenesUrls?.[0] || undefined,
-        esGratuito: ('esGratuito' in body ? body.esGratuito : false) as boolean
+        esGratuito: ('esGratuito' in body ? body.esGratuito : false) as boolean,
+        // Ensure user ID is passed to DB function
+        user_id: sanitizedData.user_id,
+        usuario_id: sanitizedData.usuario_id
       };
     }
 

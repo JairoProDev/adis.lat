@@ -1,66 +1,57 @@
-# Solución Error 400 en Supabase (Adisos)
+# PASOS OBLIGATORIOS PARA ARREGLAR LOS ERRORES
 
-El error `400 Bad Request` que estás experimentando ocurre porque la tabla `adisos` en Supabase **no tiene la columna `user_id`** (o está mal nombrada), pero la aplicación está intentando filtrar por ella (`.eq('usuario_id', ...)`).
+Para que la subida de productos y el perfil funcionen perfectamente (sin error 500 ni 406), **debes ejecutar este último script SQL en Supabase**.
 
-Además, el problema de que te redirija a `localhost` al iniciar sesión en otros dispositivos es una configuración de **Redirect URLs** en Supabase.
-
-He realizado los cambios en el código para estandarizar el uso de `user_id`, pero **necesitas ejecutar script SQL en Supabase** para aplicar los cambios en la base de datos.
-
-## Paso 1: Ejecutar Script SQL en Supabase
-
-1. Ve a tu proyecto en [Supabase Dashboard](https://supabase.com/dashboard).
-2. Ve a la sección **SQL Editor**.
-3. Abre el archivo `sql/supabase-add-userid-to-adisos.sql` que he creado en tu proyecto, o copia y pega el siguiente código:
+1. Ve a [Supabase Dashboard](https://supabase.com/dashboard).
+2. Entra a tu proyecto -> **SQL Editor**.
+3. Copia y pega el contenido del archivo `sql/fix_all_errors.sql` que he creado (está abajo también).
+4. Haz clic en **RUN**.
 
 ```sql
 -- ============================================
--- AGREGAR COLUMNA USER_ID A TABLA ADISOS
+-- SQL SCRIPT PARA ARREGLAR TODOS LOS ERRORES
 -- ============================================
 
--- 1. Agregar columna user_id si no existe
-DO $$ 
-BEGIN 
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'adisos' AND column_name = 'user_id') THEN
-        ALTER TABLE adisos ADD COLUMN user_id UUID REFERENCES auth.users(id);
-        CREATE INDEX idx_adisos_user_id ON adisos(user_id);
-    END IF;
-END $$;
+CREATE TABLE IF NOT EXISTS profiles (
+  id UUID REFERENCES auth.users(id) PRIMARY KEY,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
+  nombre TEXT,
+  apellido TEXT,
+  avatar_url TEXT,
+  rol TEXT DEFAULT 'usuario',
+  telefono TEXT,
+  ubicacion TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
 
--- 2. Actualizar políticas RLS para permitir gestión propia
-DROP POLICY IF EXISTS "Usuarios pueden actualizar sus propios adisos" ON adisos;
-DROP POLICY IF EXISTS "Usuarios pueden eliminar sus propios adisos" ON adisos;
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Usuarios pueden actualizar sus propios adisos"
-ON adisos FOR UPDATE TO authenticated
-USING (auth.uid() = user_id)
-WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Todos pueden ver perfiles" ON profiles;
+CREATE POLICY "Todos pueden ver perfiles" ON profiles FOR SELECT USING (true);
 
-CREATE POLICY "Usuarios pueden eliminar sus propios adisos"
-ON adisos FOR DELETE TO authenticated
-USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Usuarios editan su propio perfil" ON profiles;
+CREATE POLICY "Usuarios editan su propio perfil" ON profiles FOR UPDATE USING (auth.uid() = id);
+
+DROP POLICY IF EXISTS "Usuarios crean su perfil" ON profiles;
+CREATE POLICY "Usuarios crean su perfil" ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
+
+-- ARREGLAR ADISOS
+ALTER TABLE adisos ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id);
+
+ALTER TABLE adisos ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Todos pueden ver adisos" ON adisos;
+CREATE POLICY "Todos pueden ver adisos" ON adisos FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Todos pueden crear adisos" ON adisos;
+CREATE POLICY "Todos pueden crear adisos" ON adisos FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Usuarios editan sus propios adisos" ON adisos;
+CREATE POLICY "Usuarios editan sus propios adisos" ON adisos FOR UPDATE USING (auth.uid() = user_id);
+
+SELECT 'Todo listo. Tablas profiles y adisos configuradas.' as mensaje;
 ```
 
-4. Haz clic en **Run**.
+5. **Recarga tu aplicación web** y prueba subir un producto. ¡Debería funcionar sin errores!
 
-## Paso 2: Configurar Redirect URLs (Solución "me lleva a localhost")
-
-El problema de que te redirija a localhost en otros dispositivos es porque Supabase usa `Site URL` por defecto para los enlaces de magia/auth.
-
-1. Ve a **Authentication** -> **URL Configuration** en Supabase Dashboard.
-2. En **Site URL**, asegura que esté tu dominio de producción: `https://adis.lat` (NO localhost).
-3. En **Redirect URLs**, añade todas las URLs permitidas:
-   - `http://localhost:3000/**`
-   - `https://adis.lat/**`
-   - `https://www.adis.lat/**`
-   - `https://adis.lat`
-
-Esto asegurará que cuando inicies sesión desde el móvil o laptop, te redirija al dominio correcto y no a localhost.
-
-## Resumen de Cambios en Código
-
-He actualizado:
-- `types/index.ts`: Agregado `user_id` y `usuario_id` a la interfaz `Adiso`.
-- `lib/supabase.ts`: Mapeado correctamente `user_id` para lectura y escritura en la BD.
-- `app/mi-negocio/page.tsx`: Corregido el filtro `.eq('user_id', ...)` para usar la columna estándar.
-
-Una vez apliques el SQL, el error 400 debería desaparecer y podrás ver tus productos en "Mi Negocio".
+Nota: He corregido también el error de las imágenes (invalid position) en el código.

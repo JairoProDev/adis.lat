@@ -27,10 +27,11 @@ export const adisoSchema = z.object({
       return val.replace(/\s+/g, '').replace(/[()-]/g, '').trim();
     })
     .refine((val) => {
-      // Validar formato después de normalizar: debe tener entre 9 y 15 dígitos (puede incluir + al inicio)
-      return /^\+?[1-9]\d{8,14}$/.test(val);
+      // Validar formato después de normalizar: debe tener entre 7 y 15 dígitos (puede incluir + al inicio)
+      // Permitimos que empiece con 0 (fijos) o cualquier dígito
+      return /^\+?\d{7,15}$/.test(val);
     }, {
-      message: 'Número de contacto inválido. Debe tener entre 9 y 15 dígitos (puede incluir + al inicio)'
+      message: 'Número de contacto inválido. Debe tener entre 7 y 15 dígitos.'
     }),
   ubicacion: z.union([
     z.string()
@@ -61,6 +62,9 @@ export const adisoSchema = z.object({
   ).optional().nullable(),
   fechaPublicacion: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato de fecha inválido'),
   horaPublicacion: z.string().regex(/^\d{2}:\d{2}$/, 'Formato de hora inválido'),
+  // User ID fields (optional but vital for backend)
+  user_id: z.string().optional(),
+  usuario_id: z.string().optional(),
 });
 
 // Schema para adisos gratuitos (más restrictivo)
@@ -128,7 +132,7 @@ export function sanitizeHtml(html: string): string {
       .replace(/'/g, '&#x27;')
       .replace(/\//g, '&#x2F;');
   }
-  
+
   // En el cliente, usar DOMPurify si está disponible
   // Por ahora, usar sanitización básica
   const div = document.createElement('div');
@@ -140,15 +144,15 @@ export function sanitizeHtml(html: string): string {
 export function validateImageFile(file: File): { valid: boolean; error?: string } {
   const MAX_SIZE = 5 * 1024 * 1024; // 5MB
   const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-  
+
   if (!ALLOWED_TYPES.includes(file.type)) {
     return { valid: false, error: 'Tipo de archivo no permitido. Use JPEG, PNG o WebP' };
   }
-  
+
   if (file.size > MAX_SIZE) {
     return { valid: false, error: 'El archivo es demasiado grande. Máximo 5MB' };
   }
-  
+
   return { valid: true };
 }
 
