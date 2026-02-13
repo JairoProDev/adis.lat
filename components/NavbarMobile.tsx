@@ -26,15 +26,16 @@ export default function NavbarMobile({
   onCambiarSeccion,
   tieneAdisoAbierto
 }: NavbarMobileProps) {
+  const [mounted, setMounted] = React.useState(false);
   const isDesktop = useMediaQuery('(min-width: 768px)');
 
-  // Checking current path safely
-  const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  // Solo mostrar en mobile
-  if (isDesktop) {
-    return null;
-  }
+  // Safe checks
+  if (!mounted) return null;
+  if (isDesktop) return null;
 
   const secciones = [
     { id: 'feed', icono: IconGlobe, label: 'Feed', href: '/feed' },
@@ -88,11 +89,10 @@ export default function NavbarMobile({
           const tieneNotificacion = seccion.id === 'adiso' && tieneAdisoAbierto && !estaActiva;
 
           return (
-            <button
+            <span
               key={seccion.id}
               onClick={() => {
                 if (seccion.href) {
-                  // If we are already on the page, maybe reset state?
                   if (pathname === seccion.href) {
                     if (onCambiarSeccion && seccion.id === 'adiso') onCambiarSeccion('adiso' as SeccionSidebar);
                     return;
@@ -120,14 +120,9 @@ export default function NavbarMobile({
                 position: 'relative',
                 minHeight: '60px'
               }}
-              onTouchStart={(e) => {
-                e.currentTarget.style.opacity = '0.7';
-              }}
-              onTouchEnd={(e) => {
-                e.currentTarget.style.opacity = '1';
-              }}
+              className="navbar-item"
             >
-              <div
+              <span
                 style={{
                   position: 'relative',
                   display: 'flex',
@@ -137,7 +132,7 @@ export default function NavbarMobile({
               >
                 <IconComponent size={esPublicar ? 22 : 20} />
                 {esPublicar && (
-                  <div
+                  <span
                     style={{
                       position: 'absolute',
                       top: '-4px',
@@ -151,7 +146,7 @@ export default function NavbarMobile({
                   />
                 )}
                 {tieneNotificacion && (
-                  <div
+                  <span
                     style={{
                       position: 'absolute',
                       top: '-4px',
@@ -164,10 +159,10 @@ export default function NavbarMobile({
                     }}
                   />
                 )}
-              </div>
+              </span>
               <span>{seccion.label}</span>
               {estaActiva && (
-                <div
+                <span
                   style={{
                     position: 'absolute',
                     bottom: '0',
@@ -180,7 +175,7 @@ export default function NavbarMobile({
                   }}
                 />
               )}
-            </button>
+            </span>
           );
         })}
       </nav>

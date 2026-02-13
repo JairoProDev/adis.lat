@@ -2,21 +2,17 @@
 
 /**
  * ADIS AI - Tu Asistente de Búsqueda Personalizada
- * 
- * Componente mejorado con UX "Wow":
- * - Cero jerga técnica (adiós RAG/Semántica explícita)
- * - Tarjetas interactivas
- * - Animaciones fluidas
- * - Manejo robusto de errores y keys
+ * Version Premium 2.0 - LLM Standard Design
  */
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Adiso } from '@/types';
-import { FaPaperPlane, FaSpinner, FaSearch, FaImage, FaMapMarkerAlt, FaTag } from 'react-icons/fa';
+import { FaPaperPlane, FaSpinner, FaSearch, FaImage, FaMapMarkerAlt, FaTag, FaRobot, FaUser, FaRegCopy, FaExpand, FaCompress } from 'react-icons/fa';
+import { AiOutlineClear } from 'react-icons/ai';
 import { hybridSearch } from '@/actions/ai-search';
-import Link from 'next/link';
 import { nanoid } from 'nanoid';
 import { useNavigation } from '@/contexts/NavigationContext';
+import Image from 'next/image';
 
 interface Mensaje {
   id: string;
@@ -42,8 +38,23 @@ export default function ChatbotIANew({ onPublicar, onError, onSuccess, onMinimiz
   const [imageUrl, setImageUrl] = useState<string>('');
   const mensajesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+
+  // Auto-resize textarea
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+      // Max height limit
+      if (textareaRef.current.scrollHeight > 150) {
+        textareaRef.current.style.overflowY = 'auto';
+      } else {
+        textareaRef.current.style.overflowY = 'hidden';
+      }
+    }
+  }, [inputMensaje]);
 
   // Load from LocalStorage
   useEffect(() => {
@@ -51,7 +62,6 @@ export default function ChatbotIANew({ onPublicar, onError, onSuccess, onMinimiz
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        // Date strings need to be converted back to Date objects
         const hydrated = parsed.map((m: any) => ({
           ...m,
           timestamp: new Date(m.timestamp)
@@ -60,20 +70,14 @@ export default function ChatbotIANew({ onPublicar, onError, onSuccess, onMinimiz
       } catch (e) {
         console.error('Failed to parse chat history', e);
       }
-    } else {
-      setMensajes([{
-        id: 'welcome-msg',
-        tipo: 'asistente',
-        contenido: '¡Hola! Soy tu asistente personal de ADIS 🤖\n\nEstoy aquí para ayudarte a encontrar exactamente lo que buscas o a publicar tus anuncios en segundos.\n\nSimplemente dime qué necesitas o sube una foto.',
-        timestamp: new Date()
-      }]);
     }
+    // Don't set initial message if loaded, let EmptyState handle empty history
     setIsInitialized(true);
   }, []);
 
   // Save to LocalStorage
   useEffect(() => {
-    if (isInitialized && mensajes.length > 0) {
+    if (isInitialized) {
       localStorage.setItem('adis_chat_history', JSON.stringify(mensajes));
     }
   }, [mensajes, isInitialized]);
@@ -97,87 +101,61 @@ export default function ChatbotIANew({ onPublicar, onError, onSuccess, onMinimiz
     };
     setMensajes(prev => {
       const updated = [...prev, nuevoMensaje];
-      // Limit history to 50 messages to prevent localStorage bloat
       if (updated.length > 50) return updated.slice(updated.length - 50);
       return updated;
     });
   };
 
+  const handleClearHistory = () => {
+    if (confirm('¿Estás seguro de borrar el historial de chat?')) {
+      setMensajes([]);
+      localStorage.removeItem('adis_chat_history');
+    }
+  };
+
   const procesarBusqueda = async (query: string) => {
     try {
-      agregarMensaje('asistente', '🔍 Buscando las mejores opciones para ti...');
-
       const resultados = await hybridSearch({
         query,
-        maxResults: 10
+        maxResults: 8 // Fewer qualitative results
       });
 
       if (resultados.length > 0) {
         agregarMensaje(
           'asistente',
-          `✨ He encontrado ${resultados.length} coincidencias que te pueden interesar:`,
+          `Aquí tienes ${resultados.length} opciones relevantes:`,
           resultados.map(r => r.adiso)
         );
       } else {
-        agregarMensaje('asistente', '🤔 No encontré nada exacto con esa descripción. ¿Podrías darme más detalles o intentar con otras palabras?');
+        agregarMensaje('asistente', 'No encontré nada exacto con esa descripción. ¿Podrías intentar con otros términos?');
       }
     } catch (error: any) {
       console.error("Error búsqueda:", error);
-      agregarMensaje('asistente', `Ups, tuve un pequeño problema buscando. Inténtalo de nuevo por favor.`);
-      onError?.(error.message);
-    }
-  };
-
-  const procesarImagen = async (imageDataUrl: string, descripcion: string) => {
-    try {
-      agregarMensaje('asistente', '👀 Analizando tu imagen...');
-
-      // Placeholder for Vision API implementation
-      agregarMensaje('asistente', '¡Qué buena foto! 📸\n\nPara completar tu publicación con "Snap & Sell", necesito que esta función esté conectada a mi sistema de visión. \n\nPor ahora, ¿te gustaría que busque algo similar a lo que hay en la foto?');
-
-    } catch (error: any) {
-      agregarMensaje('asistente', `No pude procesar la imagen correctamente.`);
+      agregarMensaje('asistente', `Tuve un problema buscando. Por favor intenta de nuevo.`);
       onError?.(error.message);
     }
   };
 
   const procesarMensaje = async (texto: string) => {
     setProcesando(true);
-    // Use nanoid for temporary key if needed, or just let re-render handle it
-    agregarMensaje('usuario', imageUrl ? '📸 [Imagen] ' + texto : texto);
+    agregarMensaje('usuario', imageUrl ? '[Imagen] ' + texto : texto);
+
+    // Simulate thinking delay for natural feel
+    await new Promise(r => setTimeout(r, 600));
 
     try {
-      if (imageUrl) {
-        await procesarImagen(imageUrl, texto);
-        setImageUrl('');
+      // Enhanced Intent Detection Logic (Placeholder)
+      const textoLower = texto.toLowerCase();
+
+      if (textoLower.includes('publicar') || textoLower.includes('vender')) {
+        agregarMensaje('asistente', 'Para publicar, puedes usar el botón de "Publicar" en la barra superior o subir una foto aquí mismo.');
+      } else if (textoLower.includes('hola') || textoLower.includes('buenos dias')) {
+        agregarMensaje('asistente', '¡Hola! ¿Qué estás buscando hoy? Puedo ayudarte a encontrar departamentos, empleos, vehículos y más.');
       } else {
-        // Detectar intención simple
-        const textoLower = texto.toLowerCase();
-
-        // Simple logic to route to search or general chat
-        // In a real agent, this would be determined by an LLM router
-        const esBusqueda =
-          textoLower.includes('busco') ||
-          textoLower.includes('busca') ||
-          textoLower.includes('encontrar') ||
-          textoLower.includes('necesito') ||
-          textoLower.includes('quiero') ||
-          textoLower.includes('alquiler') ||
-          textoLower.includes('venta') ||
-          textoLower.includes('empleo') ||
-          textoLower.includes('comprar');
-
-        if (esBusqueda) {
-          await procesarBusqueda(texto);
-        } else if (textoLower.includes('publicar') || textoLower.includes('vender')) {
-          agregarMensaje('asistente', '📸 ¡Entendido! Para publicar rápido, haz clic en el icono de cámara y sube una foto.\n\nYo me encargaré de crear el título y la descripción por ti.');
-        } else if (textoLower.includes('hola') || textoLower.includes('gracias')) {
-          agregarMensaje('asistente', '¡Hola! ¿En qué puedo ayudarte hoy? Puedes buscar "departamento en Cusco" o "trabajo de medio tiempo".');
-        } else {
-          // Default to search if unsure, asking clarification often frustrates users
-          await procesarBusqueda(texto);
-        }
+        await procesarBusqueda(texto);
       }
+
+      setImageUrl('');
     } catch (error: any) {
       agregarMensaje('asistente', `Lo siento, hubo un error técnico.`);
     } finally {
@@ -185,12 +163,23 @@ export default function ChatbotIANew({ onPublicar, onError, onSuccess, onMinimiz
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
     if ((inputMensaje.trim() || imageUrl) && !procesando) {
-      const texto = inputMensaje.trim() || 'Analiza esto';
-      setInputMensaje('');
-      procesarMensaje(texto);
+      const texto = inputMensaje.trim() || (imageUrl ? 'Analiza esta imagen' : '');
+      if (texto) {
+        setInputMensaje('');
+        // Reset textarea height
+        if (textareaRef.current) textareaRef.current.style.height = 'auto';
+        procesarMensaje(texto);
+      }
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
     }
   };
 
@@ -204,359 +193,273 @@ export default function ChatbotIANew({ onPublicar, onError, onSuccess, onMinimiz
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      onError?.('La imagen es muy grande. Intenta con una menor a 5MB');
+      onError?.('La imagen es muy grande. Máximo 5MB.');
       return;
     }
 
     const reader = new FileReader();
     reader.onloadend = () => {
       setImageUrl(reader.result as string);
-      setInputMensaje('Quiero vender esto');
-      inputRef.current?.focus();
+      if (textareaRef.current) textareaRef.current.focus();
     };
     reader.readAsDataURL(file);
   };
 
-  return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-primary)' }}>
-      {/* Header Premium */}
-      <div style={{
-        padding: '1rem',
-        borderBottom: '1px solid rgba(0,0,0,0.05)',
-        background: 'rgba(255,255,255,0.8)',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.75rem',
-        backdropFilter: 'blur(10px)',
-        zIndex: 10
-      }}>
-        <div style={{
-          position: 'relative',
-          width: '42px',
-          height: '42px',
-          borderRadius: '12px',
-          background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'white',
-          fontSize: '1.2rem',
-          boxShadow: '0 4px 10px rgba(99, 102, 241, 0.3)'
-        }}>
-          <span role="img" aria-label="bot">✨</span>
-          <div style={{
-            position: 'absolute',
-            bottom: '-2px',
-            right: '-2px',
-            width: '12px',
-            height: '12px',
-            background: '#22c55e',
-            border: '2px solid white',
-            borderRadius: '50%'
-          }} />
-        </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: 800, color: '#1f2937', fontSize: '1rem', letterSpacing: '-0.025em' }}>
-            ADIS AI
-          </div>
-          <div style={{ fontSize: '0.75rem', color: '#6b7280', fontWeight: 500 }}>
-            Tu asistente de búsqueda personalizada con IA
-          </div>
-        </div>
+  // Render Functions
+  const renderMessageContent = (msg: Mensaje) => {
+    return (
+      <div className={`prose dark:prose-invert max-w-none text-sm break-words whitespace-pre-wrap leading-relaxed ${msg.tipo === 'usuario' ? 'text-white' : 'text-gray-800 dark:text-gray-200'
+        }`}>
+        {msg.contenido}
       </div>
+    );
+  };
 
-      {/* Mensajes */}
-      <div style={{
-        flex: 1,
-        overflowY: 'auto',
-        padding: '1.5rem 1rem',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '1.5rem',
-        scrollBehavior: 'smooth'
-      }}>
-        {mensajes.map((mensaje) => (
-          <div key={mensaje.id} style={{
-            display: 'flex',
-            justifyContent: mensaje.tipo === 'usuario' ? 'flex-end' : 'flex-start',
-            animation: 'fadeIn 0.3s ease-out'
-          }}>
-            {mensaje.tipo === 'asistente' && (
-              <div style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#6366f1',
-                fontSize: '0.9rem',
-                marginRight: '0.75rem',
-                flexShrink: 0,
-                border: '1px solid white',
-                boxShadow: '0 2px 5px rgba(0,0,0,0.05)'
-              }}>
-                🤖
-              </div>
-            )}
-
-            <div style={{ maxWidth: '85%', display: 'flex', flexDirection: 'column' }}>
-              <div style={{
-                padding: '1rem',
-                borderRadius: mensaje.tipo === 'usuario' ? '1rem 1rem 0.25rem 1rem' : '1rem 1rem 1rem 0.25rem',
-                background: mensaje.tipo === 'usuario'
-                  ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'
-                  : 'white',
-                color: mensaje.tipo === 'usuario' ? 'white' : '#374151',
-                boxShadow: mensaje.tipo === 'usuario'
-                  ? '0 4px 12px rgba(99, 102, 241, 0.25)'
-                  : '0 2px 8px rgba(0,0,0,0.04)',
-                whiteSpace: 'pre-wrap',
-                lineHeight: 1.6,
-                fontSize: '0.95rem',
-                border: mensaje.tipo === 'asistente' ? '1px solid rgba(0,0,0,0.03)' : 'none'
-              }}>
-                {mensaje.contenido}
-              </div>
-
-              {/* Resultados Interactivos */}
-              {mensaje.resultados && mensaje.resultados.length > 0 && (
-                <div style={{
-                  marginTop: '1rem',
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-                  gap: '0.75rem'
-                }}>
-                  {mensaje.resultados.slice(0, 5).map((adiso) => (
-                    <div
-                      key={adiso.id}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        if (onMinimize) onMinimize();
-
-                        // Try to open seamlessly first
-                        try {
-                          abrirAdiso(adiso.id);
-                        } catch (e) {
-                          // Fallback to standard navigation if context is not available
-                          // or if opener is not registered (e.g. not on home page)
-                          window.location.href = `/${adiso.categoria || 'anuncio'}/${adiso.id}`;
-                        }
-                      }}
-                      style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}
-                    >
-                      <div className="ad-card-hover" style={{
-                        padding: '0.875rem',
-                        background: 'white',
-                        borderRadius: '1rem',
-                        border: '1px solid rgba(0,0,0,0.06)',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
-                        height: '100%',
-                        display: 'flex',
-                        flexDirection: 'column'
-                      }}>
-                        <div style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.35rem', color: '#111827', lineHeight: 1.4 }}>
-                          {adiso.titulo}
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-                          <span style={{
-                            fontSize: '0.7rem',
-                            padding: '2px 8px',
-                            background: '#f3f4f6',
-                            color: '#4b5563',
-                            borderRadius: '12px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}>
-                            <FaTag size={8} /> {adiso.categoria || 'General'}
-                          </span>
-                          {adiso.ubicacion && (
-                            <span style={{
-                              fontSize: '0.7rem',
-                              padding: '2px 8px',
-                              background: '#eff6ff',
-                              color: '#3b82f6',
-                              borderRadius: '12px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px'
-                            }}>
-                              <FaMapMarkerAlt size={8} /> {typeof adiso.ubicacion === 'string' ? adiso.ubicacion : 'Ver mapa'}
-                            </span>
-                          )}
-                        </div>
-
-                        {adiso.descripcion && (
-                          <div style={{ fontSize: '0.8rem', color: '#6b7280', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                            {adiso.descripcion}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+  const renderResults = (resultados: Adiso[]) => {
+    // Usar Grid para resultados
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 w-full">
+        {resultados.map(adiso => (
+          <div
+            key={adiso.id}
+            onClick={() => abrirAdiso(adiso.id)} // This hook might need to check if on desktop/mobile context
+            className="group relative bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col md:flex-row h-auto md:h-32"
+          >
+            {/* Image Section */}
+            <div className="md:w-32 h-32 md:h-full relative bg-gray-100 dark:bg-zinc-900 shrink-0">
+              {adiso.imagenesUrls && adiso.imagenesUrls.length > 0 ? (
+                <Image
+                  src={adiso.imagenesUrls[0]}
+                  alt={adiso.titulo}
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-zinc-600">
+                  <FaImage size={24} />
                 </div>
               )}
+              <div className="absolute top-2 left-2 px-2 py-0.5 bg-black/50 backdrop-blur-sm rounded-full text-[10px] font-medium text-white flex items-center gap-1">
+                <FaTag size={8} />
+                {adiso.categoria || 'Varios'}
+              </div>
+            </div>
+
+            {/* Content Section */}
+            <div className="p-3 flex flex-col justify-between flex-1 min-w-0">
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-white text-sm line-clamp-2 mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                  {adiso.titulo}
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+                  {adiso.descripcion || 'Sin descripción disponible.'}
+                </p>
+              </div>
+
+              <div className="mt-2 flex items-center justify-between">
+                <span className="font-bold text-gray-900 dark:text-white text-sm">
+                  {adiso.precio && adiso.precio > 0
+                    ? `S/ ${adiso.precio.toLocaleString('es-PE')}`
+                    : <span className="text-green-600 dark:text-green-400">Gratis / A tratar</span>}
+                </span>
+                {adiso.ubicacion && (
+                  <div className="flex items-center gap-1 text-[10px] text-gray-400 dark:text-gray-500 truncate max-w-[100px]">
+                    <FaMapMarkerAlt size={8} />
+                    <span className="truncate">{typeof adiso.ubicacion === 'string' ? adiso.ubicacion : 'Cusco'}</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         ))}
-        <div ref={mensajesEndRef} />
       </div>
+    );
+  };
 
-      {/* Input Area */}
-      <div style={{ padding: '1rem', borderTop: '1px solid rgba(0,0,0,0.05)', background: 'white' }}>
-        {imageUrl && (
-          <div style={{ marginBottom: '0.75rem', padding: '0.5rem', background: '#f9fafb', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '0.75rem', border: '1px solid #e5e7eb' }}>
-            <img src={imageUrl} alt="Preview" style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover' }} />
-            <div style={{ flex: 1 }}>
-              <span style={{ fontSize: '0.85rem', fontWeight: 500, display: 'block' }}>Imagen adjuntada</span>
-              <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>Lista para analizar</span>
+  return (
+    <div className="flex flex-col h-full bg-white dark:bg-zinc-900 font-sans">
+
+      {/* Top Bar - Minimalist */}
+      {/* If minimizing is allowed (modal mode), show header else hidden or simple */}
+      {onMinimize && (
+        <div className="px-4 py-3 border-b border-gray-100 dark:border-zinc-800 flex justify-between items-center bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md sticky top-0 z-10">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center text-white text-sm shadow-md">
+              <FaRobot />
             </div>
-            <button
-              onClick={() => setImageUrl('')}
-              style={{
-                width: '24px', height: '24px', borderRadius: '50%', background: '#e5e7eb',
-                border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#6b7280'
-              }}
-            >✕</button>
+            <span className="font-bold text-gray-800 dark:text-white">Adis AI</span>
           </div>
-        )}
-
-        <form onSubmit={handleSubmit} style={{ position: 'relative', display: 'flex', gap: '0.75rem', alignItems: 'flex-end' }}>
-          <div style={{ position: 'relative', flex: 1 }}>
-            <input
-              ref={inputRef}
-              type="text"
-              value={inputMensaje}
-              onChange={(e) => setInputMensaje(e.target.value)}
-              placeholder="Escribe lo que buscas..."
-              disabled={procesando}
-              style={{
-                width: '100%',
-                padding: '1rem 3rem 1rem 1.25rem',
-                border: '1px solid #e5e7eb',
-                borderRadius: '1.5rem',
-                backgroundColor: '#f9fafb',
-                color: '#1f2937',
-                fontSize: '0.95rem',
-                outline: 'none',
-                transition: 'all 0.2s',
-                boxShadow: '0 2px 5px rgba(0,0,0,0.02)'
-              }}
-              onFocus={(e) => e.target.style.borderColor = '#6366f1'}
-              onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
-            />
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={procesando}
-              title="Adjuntar imagen"
-              style={{
-                position: 'absolute',
-                right: '10px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                padding: '0.5rem',
-                border: 'none',
-                borderRadius: '50%',
-                backgroundColor: 'transparent',
-                color: '#9ca3af',
-                cursor: 'pointer',
-                transition: 'color 0.2s'
-              }}
-              onMouseOver={(e) => e.currentTarget.style.color = '#6366f1'}
-              onMouseOut={(e) => e.currentTarget.style.color = '#9ca3af'}
-            >
-              <FaImage size={18} />
+          <div className="flex gap-2 text-gray-400">
+            <button onClick={handleClearHistory} title="Borrar historial" className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition-colors">
+              <AiOutlineClear size={16} />
             </button>
           </div>
+        </div>
+      )}
 
-          <button
-            type="submit"
-            disabled={(!inputMensaje.trim() && !imageUrl) || procesando}
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '50%',
-              border: 'none',
-              background: procesando || (!inputMensaje.trim() && !imageUrl)
-                ? '#e5e7eb'
-                : 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-              color: 'white',
-              cursor: procesando ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
-              transition: 'transform 0.1s'
-            }}
-            onMouseDown={(e) => !procesando && (e.currentTarget.style.transform = 'scale(0.95)')}
-            onMouseUp={(e) => !procesando && (e.currentTarget.style.transform = 'scale(1)')}
-          >
-            {procesando ? <FaSpinner style={{ animation: 'spin 1s linear infinite' }} /> : <FaPaperPlane size={18} />}
-          </button>
-        </form>
+      {/* Main Chat Area */}
+      <div className="flex-1 overflow-y-auto w-full">
+        <div className="max-w-3xl mx-auto w-full h-full flex flex-col p-4 md:p-6 pb-4">
 
-        <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          {[
-            'Departamento en Cusco',
-            'Trabajo de ventas',
-            'Alquiler de local',
-            'Comprar auto'
-          ].map((suggestion) => (
-            <button
-              key={suggestion}
-              onClick={() => { setInputMensaje(`Busco ${suggestion.toLowerCase()}`); inputRef.current?.focus(); }}
-              style={{
-                padding: '0.4rem 0.8rem',
-                border: '1px solid #f3f4f6',
-                borderRadius: '0.75rem',
-                backgroundColor: 'white',
-                color: '#6b7280',
-                fontSize: '0.75rem',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.25rem'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.borderColor = '#c7d2fe';
-                e.currentTarget.style.color = '#4f46e5';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.borderColor = '#f3f4f6';
-                e.currentTarget.style.color = '#6b7280';
-              }}
-            >
-              <FaSearch size={10} />
-              {suggestion}
-            </button>
-          ))}
+          {/* Empty State */}
+          {mensajes.length === 0 && (
+            <div className="flex-1 flex flex-col items-center justify-center text-center opacity-0 animate-in fade-in zoom-in duration-700 delay-200 min-h-[60vh]">
+              <div className="relative mb-8 group">
+                <div className="absolute -inset-4 bg-gradient-to-r from-blue-500/20 to-violet-500/20 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition duration-1000"></div>
+                <div className="relative w-20 h-20 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-3xl flex items-center justify-center text-white text-4xl shadow-2xl shadow-blue-500/30 transform group-hover:scale-110 transition-transform duration-500">
+                  <FaRobot />
+                </div>
+              </div>
+
+              <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-3 tracking-tight">
+                ¿Cómo puedo ayudarte hoy?
+              </h2>
+              <p className="text-gray-500 dark:text-gray-400 max-w-md mb-10 text-lg leading-relaxed">
+                Soy tu asistente AI. Pregúntame sobre alquileres, empleos o productos y encontraré lo mejor para ti.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 w-full max-w-xl">
+                {[
+                  { icon: FaSearch, text: "Buscar departamento en Wanchaq", color: "text-blue-500" },
+                  { icon: FaTag, text: "Vender mi laptop usada", color: "text-emerald-500" },
+                  { icon: FaUser, text: "Encontrar trabajo de medio tiempo", color: "text-violet-500" },
+                  { icon: FaMapMarkerAlt, text: "Tiendas de ropa cerca de mí", color: "text-amber-500" },
+                ].map((item, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setInputMensaje(item.text);
+                      if (textareaRef.current) textareaRef.current.focus();
+                    }}
+                    className="group p-4 text-sm text-left bg-white dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-700/50 rounded-2xl hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-xl hover:shadow-blue-500/5 transition-all text-gray-700 dark:text-gray-300 flex items-center gap-4 active:scale-95"
+                  >
+                    <div className={`w-8 h-8 rounded-lg bg-gray-50 dark:bg-zinc-700/50 flex items-center justify-center ${item.color} group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-colors`}>
+                      <item.icon size={14} />
+                    </div>
+                    <span className="font-medium">{item.text}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Messages List */}
+          <div className="space-y-6 pb-4">
+            {mensajes.map((msg) => (
+              <div
+                key={msg.id}
+                className={`flex w-full ${msg.tipo === 'usuario' ? 'justify-end' : 'justify-start'}`}
+              >
+                {/* Assistant Avatar */}
+                {msg.tipo === 'asistente' && (
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-100 to-violet-100 dark:from-blue-900/30 dark:to-violet-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 mr-3 mt-1">
+                    <FaRobot size={14} />
+                  </div>
+                )}
+
+                <div className={`flex flex-col max-w-[85%] md:max-w-[75%]`}>
+                  <div
+                    className={`px-5 py-3.5 rounded-2xl shadow-sm ${msg.tipo === 'usuario'
+                      ? 'bg-blue-600 text-white rounded-tr-sm'
+                      : 'bg-gray-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-200 rounded-tl-sm border border-transparent dark:border-zinc-700'
+                      }`}
+                  >
+                    {renderMessageContent(msg)}
+                  </div>
+
+                  {/* Results attached to message */}
+                  {msg.resultados && msg.resultados.length > 0 && (
+                    <div className="mt-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                      {renderResults(msg.resultados)}
+                    </div>
+                  )}
+                </div>
+
+                {/* User Avatar (Optional - can use icon) */}
+                {msg.tipo === 'usuario' && (
+                  <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-zinc-700 flex items-center justify-center text-gray-500 dark:text-gray-400 shrink-0 ml-3 mt-1">
+                    <FaUser size={12} />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          <div ref={mensajesEndRef} className="h-4" />
         </div>
       </div>
 
-      <style jsx global>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .ad-card-hover:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 16px rgba(0,0,0,0.06) !important;
-          border-color: #c7d2fe !important;
-        }
-      `}</style>
+      {/* Input Area - Sticky Bottom */}
+      <div className="p-4 bg-white dark:bg-zinc-900 border-t border-gray-100 dark:border-zinc-800 z-20">
+        <div className="max-w-3xl mx-auto relative">
+
+          {/* Image Preview Overlay */}
+          {imageUrl && (
+            <div className="absolute bottom-full left-0 mb-3 p-2 bg-white dark:bg-zinc-800 rounded-xl shadow-lg border border-gray-200 dark:border-zinc-700 flex items-center gap-3 animate-in slide-in-from-bottom-2">
+              <img src={imageUrl} alt="Upload preview" className="w-12 h-12 rounded-lg object-cover bg-gray-100" />
+              <button
+                onClick={() => setImageUrl('')}
+                className="w-6 h-6 rounded-full bg-gray-100 dark:bg-zinc-700 flex items-center justify-center hover:bg-red-100 hover:text-red-500 transition-colors"
+              >
+                &times;
+              </button>
+            </div>
+          )}
+
+          <form
+            onSubmit={handleSubmit}
+            className={`
+                    relative flex items-end gap-2 p-2 rounded-[26px] border transition-all duration-300
+                    ${procesando ? 'bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700' : 'bg-gray-50 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 hover:shadow-md focus-within:ring-2 focus-within:ring-blue-100 dark:focus-within:ring-blue-900/30 focus-within:border-blue-300 dark:focus-within:border-blue-700'}
+                `}
+          >
+            {/* Upload Button */}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="p-3 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors rounded-full hover:bg-white dark:hover:bg-zinc-700"
+              title="Subir imagen"
+            >
+              <FaImage size={18} />
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+            />
+
+            {/* Text Input */}
+            <textarea
+              ref={textareaRef}
+              value={inputMensaje}
+              onChange={(e) => setInputMensaje(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Escribe un mensaje..."
+              rows={1}
+              className="flex-1 bg-transparent border-none focus:ring-0 resize-none py-3 px-1 max-h-[120px] text-gray-900 dark:text-white placeholder-gray-400 text-[15px] leading-relaxed"
+            />
+
+            {/* Send Button */}
+            <button
+              type="submit"
+              disabled={(!inputMensaje.trim() && !imageUrl) || procesando}
+              className={`
+                        p-3 rounded-full transition-all duration-200 shrink-0
+                        ${(!inputMensaje.trim() && !imageUrl) || procesando
+                  ? 'bg-gray-200 dark:bg-zinc-700 text-gray-400 cursor-not-allowed'
+                  : 'bg-blue-600 text-white shadow-md hover:bg-blue-700 hover:shadow-lg active:scale-95'}
+                    `}
+            >
+              {procesando ? <FaSpinner className="animate-spin" size={16} /> : <FaPaperPlane size={16} />}
+            </button>
+          </form>
+
+          <div className="text-center mt-2 text-[11px] text-gray-400 dark:text-gray-500">
+            Adis AI puede cometer errores. Considera verificar la información importante.
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

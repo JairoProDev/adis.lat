@@ -116,6 +116,7 @@ function HomeContent() {
   const [seccionMobileActiva, setSeccionMobileActiva] = useState<SeccionSidebar | null>(seccionUrl ? seccionUrl : null);
   const [seccionDesktopActiva, setSeccionDesktopActiva] = useState<SeccionSidebar>(seccionUrl ? seccionUrl : 'adiso');
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(false);
+  const isDesktop = useMediaQuery('(min-width: 768px)');
   const [mostrarFiltroUbicacion, setMostrarFiltroUbicacion] = useState(false);
 
   // Sync state with URL param 'seccion' to support deep linking from other pages
@@ -130,7 +131,6 @@ function HomeContent() {
   }, [seccionUrl, isDesktop]);
   const [vista, setVista] = useState<'grid' | 'list'>('grid');
   const [isSidebarMinimizado, setIsSidebarMinimizado] = useState(false);
-  const isDesktop = useMediaQuery('(min-width: 768px)');
   const { toasts, removeToast, success, error } = useToast();
   const [isOnlineState, setIsOnlineState] = useState(() => {
     if (typeof window !== 'undefined') {

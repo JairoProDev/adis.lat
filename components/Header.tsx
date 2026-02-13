@@ -44,12 +44,20 @@ export default function Header({
   ubicacion = 'Perú',
   onUbicacionClick
 }: HeaderProps) {
+  const [mounted, setMounted] = useState(false);
   const { t } = useTranslation();
   const isDesktop = useMediaQuery('(min-width: 768px)');
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [showMobileSettings, setShowMobileSettings] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<SeccionSidebar | null>(null);
   const { user } = useAuth();
   const isAuthenticated = !!user;
+
+  if (!mounted) return null;
 
   const navItems = [
     { id: 'adiso' as SeccionSidebar, icon: IconAdiso, label: 'Inicio' },
@@ -247,7 +255,7 @@ export default function Header({
                   }}
                   className="group"
                 >
-                  <div style={{
+                  <span style={{
                     position: 'relative',
                     display: 'flex',
                     alignItems: 'center',
@@ -258,7 +266,7 @@ export default function Header({
                     transform: isHovered ? 'scale(1.1)' : 'scale(1)'
                   }}>
                     <Icon size={24} color={isActive || isHovered ? 'var(--brand-blue)' : undefined} />
-                  </div>
+                  </span>
                   <span style={{
                     fontSize: '11px',
                     fontWeight: isActive ? 600 : 500,
@@ -268,7 +276,7 @@ export default function Header({
                   </span>
 
                   {/* Active Indicator Line */}
-                  <div style={{
+                  <span style={{
                     position: 'absolute',
                     bottom: 0,
                     left: 0,
@@ -281,8 +289,8 @@ export default function Header({
                     borderTopRightRadius: '3px'
                   }} />
 
-                  {/* Hover background effect (optional, subtle) */}
-                  <div style={{
+                  {/* Hover background effect (subtle) */}
+                  <span style={{
                     position: 'absolute',
                     inset: '4px',
                     backgroundColor: isHovered && !isActive ? 'var(--hover-bg)' : 'transparent',
