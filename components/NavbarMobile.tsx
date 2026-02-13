@@ -42,7 +42,7 @@ export default function NavbarMobile({
   const secciones = [
     { id: 'feed', icono: IconGlobe, label: 'Feed', href: '/feed' },
     { id: 'adiso', icono: IconSearch, label: 'Buscar', href: '/' },
-    { id: 'publicar', icono: IconMegaphone, label: 'Publicar' },
+    { id: 'publicar', icono: IconMegaphone, label: 'Publicar', href: '/publicar' },
     { id: 'negocio', icono: IconStore, label: 'Negocio', href: '/mi-negocio' },
     { id: 'chatbot', icono: IconRobot, label: 'Asistente', href: '/chat' },
   ];

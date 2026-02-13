@@ -16,6 +16,7 @@ import AuthModal from '@/components/AuthModal';
 import BusinessPublicView from '@/components/business/BusinessPublicView';
 import { supabase, dbToAdiso } from '@/lib/supabase';
 import { Adiso } from '@/types';
+import { saveAdiso } from '@/lib/storage';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/hooks/useToast';
 import dynamic from 'next/dynamic';
@@ -24,6 +25,7 @@ const FormularioPublicar = dynamic(() => import('@/components/FormularioPublicar
     ssr: false,
     loading: () => <div className="p-8 text-center text-slate-500">Cargando formulario...</div>
 });
+import FormularioCatalogo from '@/components/business/FormularioCatalogo';
 import { EditorSteps } from './components/EditorSteps';
 
 function BusinessBuilderPageContent() {
@@ -76,6 +78,8 @@ function BusinessBuilderPageContent() {
         loadProfile();
     }, [user, authLoading]);
 
+
+
     // Handle Deep Linking from Public View Edit Icons
     useEffect(() => {
         const editPart = searchParams.get('edit');
@@ -90,22 +94,21 @@ function BusinessBuilderPageContent() {
         try {
             let result;
             if (profile.id) {
+                // Update existing
                 result = await updateBusinessProfile(user.id, profile);
+                // We DO NOT setProfile(result) here to avoid overwriting user's typing with old server state
+                // unless we returned specific computed fields, but for now we trust local state.
             } else {
+                // Create new
                 result = await createBusinessProfile({ ...profile, user_id: user.id });
-            }
-
-            if (result) {
-                setProfile(result);
-                // Show toast or nice alert
-                // alert('¡Tu negocio ha sido actualizado correctamente!'); 
-                // Removed alert for smoother experience if used often, or keep it? 
-                // Let's keep a subtle indicator or just the button state is enough usually, but alert is safe for now.
-                // However user complained about UX. Let's use a nice browser notification or just rely on the button stopping "Loading".
+                // For creation, we MUST update to get the ID.
+                if (result) {
+                    setProfile(result);
+                }
             }
         } catch (e) {
             console.error(e);
-            alert('Error al guardar. Por favor intenta de nuevo.');
+            // alert('Error al guardar. Por favor intenta de nuevo.'); // Silent fail for autosave is better, maybe toast?
         } finally {
             setSaving(false);
         }
@@ -158,10 +161,6 @@ function BusinessBuilderPageContent() {
     const [activeStep, setActiveStep] = useState(0);
     const [showPublishModal, setShowPublishModal] = useState(false);
 
-    // Auto-save: Debounce profile changes
-    const debouncedProfile = useDebounce(profile, 1500);
-    const [lastSavedProfile, setLastSavedProfile] = useState<string>('');
-
     // Fetch user ads for preview
     useEffect(() => {
         if (!user || !supabase) return;
@@ -183,22 +182,25 @@ function BusinessBuilderPageContent() {
         fetchUserAds();
     }, [user]);
 
+    // Auto-save: Debounce profile changes
+    const debouncedProfile = useDebounce(profile, 1500);
+    const [lastSavedProfile, setLastSavedProfile] = useState<string>('');
+
     // Auto-save Logic
     useEffect(() => {
-        if (!user || profileLoading || !profile.id) return;
+        if (!user || profileLoading || !profile.id || !debouncedProfile) return;
 
         // Check if there are actual changes to save
-        const currentProfileStr = JSON.stringify(profile);
+        const currentProfileStr = JSON.stringify(debouncedProfile);
+
+        // Prevent saving if nothing changed from last save (or initial load)
         if (currentProfileStr === lastSavedProfile) return;
 
         const autoSave = async () => {
             setSaving(true);
             try {
-                // Determine if we create or update
-                // Note: We usually update here since profile.id should exist after initial load
-                // If it's a new profile, we might wait for explicit save or handle it carefully
                 if (profile.id) {
-                    await updateBusinessProfile(user.id, profile);
+                    await updateBusinessProfile(user.id, debouncedProfile);
                     setLastSavedProfile(currentProfileStr);
                 }
             } catch (e) {
@@ -406,19 +408,22 @@ function BusinessBuilderPageContent() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                        {/* Mobile Toggle */}
-                        <div className="flex md:hidden bg-slate-100 p-1 rounded-lg border border-slate-200 mr-2">
+                        {/* Mobile Toggle: Show "Edit" button if in Preview, "Close" if in Editor */}
+                        <div className="flex md:hidden mr-2">
                             <button
-                                onClick={() => setActiveTab('editor')}
-                                className={cn("p-2 rounded-md transition-all", activeTab === 'editor' ? "bg-white shadow text-blue-600" : "text-slate-500")}
+                                onClick={() => setActiveTab(activeTab === 'preview' ? 'editor' : 'preview')}
+                                className={cn(
+                                    "px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2 transition-all shadow-md",
+                                    activeTab === 'preview'
+                                        ? "bg-slate-900 text-white"
+                                        : "bg-white text-slate-700 border border-slate-200"
+                                )}
                             >
-                                <IconEdit size={18} />
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('preview')}
-                                className={cn("p-2 rounded-md transition-all", activeTab === 'preview' ? "bg-white shadow text-blue-600" : "text-slate-500")}
-                            >
-                                <IconEye size={18} />
+                                {activeTab === 'preview' ? (
+                                    <><IconEdit size={16} /> Editar Página</>
+                                ) : (
+                                    <><IconClose size={16} /> Ver Vista Previa</>
+                                )}
                             </button>
                         </div>
 
@@ -570,16 +575,22 @@ function BusinessBuilderPageContent() {
                                 <IconClose size={20} />
                             </button>
                         </div>
-                        <div className="overflow-y-auto max-h-[calc(90vh-60px)] p-6">
-                            <FormularioPublicar
-                                onPublicar={(adiso) => {
-                                    setUserAdisos(prev => [adiso, ...prev]);
-                                    setShowPublishModal(false);
-                                    success('Producto añadido al catálogo');
+                        <div className="p-6">
+                            <FormularioCatalogo
+                                onSave={async (adiso) => {
+                                    try {
+                                        await saveAdiso(adiso);
+                                        setUserAdisos(prev => [adiso, ...prev]);
+                                        setShowPublishModal(false);
+                                        // Switch to 'catalog' view on success to see it
+                                        handleEditPart('catalog');
+                                        success('¡Producto añadido con éxito!');
+                                    } catch (err) {
+                                        error('Error al guardar el producto');
+                                    }
                                 }}
-                                onCerrar={() => setShowPublishModal(false)}
-                                onError={error}
-                                onSuccess={success}
+                                onCancel={() => setShowPublishModal(false)}
+                                businessAddress={profile.contact_address || undefined}
                             />
                         </div>
                     </div>

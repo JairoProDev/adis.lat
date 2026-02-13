@@ -28,39 +28,23 @@ export default function BentoCard({ adiso, isSelected, onClick, icon, className 
   const tamaño = adiso.tamaño || 'miniatura';
   const paquete = PAQUETES[tamaño];
   const imagenUrl = adiso.imagenesUrls?.[0] || adiso.imagenUrl;
-  const showImage = tamaño !== 'miniatura' && imagenUrl;
+  const hasImage = !!imagenUrl;
 
   // Responsive sizing based on tamaño
   const sizeClasses = {
-    miniatura: 'p-2 md:p-2.5',
-    pequeño: 'p-2.5 md:p-3',
-    mediano: 'p-3 md:p-3.5',
-    grande: 'p-3.5 md:p-4',
-    gigante: 'p-4 md:p-4.5',
+    miniatura: 'p-3',
+    pequeño: 'p-3.5',
+    mediano: 'p-4',
+    grande: 'p-5',
+    gigante: 'p-6',
   };
 
   const titleSizes = {
-    miniatura: 'text-sm md:text-base',
-    pequeño: 'text-base md:text-lg',
+    miniatura: 'text-sm md:text-sm',
+    pequeño: 'text-base md:text-base',
     mediano: 'text-lg md:text-xl',
     grande: 'text-xl md:text-2xl',
     gigante: 'text-2xl md:text-3xl',
-  };
-
-  const titleWeights = {
-    miniatura: 'font-semibold',
-    pequeño: 'font-bold',
-    mediano: 'font-bold',
-    grande: 'font-extrabold',
-    gigante: 'font-black',
-  };
-
-  const lineClamps = {
-    miniatura: 'line-clamp-2 md:line-clamp-3',
-    pequeño: 'line-clamp-2 md:line-clamp-3',
-    mediano: 'line-clamp-3 md:line-clamp-4',
-    grande: 'line-clamp-4 md:line-clamp-5',
-    gigante: 'line-clamp-5 md:line-clamp-6',
   };
 
   return (
@@ -68,9 +52,11 @@ export default function BentoCard({ adiso, isSelected, onClick, icon, className 
       onClick={onClick}
       className={cn(
         'bento-card group relative w-full h-full text-left',
-        'flex flex-col gap-2',
+        'flex flex-col gap-3',
+        'bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl overflow-hidden',
+        'shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] transition-all duration-500',
         sizeClasses[tamaño],
-        isSelected && 'ring-2 ring-electric-500 shadow-glow-electric',
+        isSelected && 'ring-2 ring-[var(--brand-color)] shadow-xl',
         className
       )}
       style={{
@@ -78,73 +64,80 @@ export default function BentoCard({ adiso, isSelected, onClick, icon, className 
         gridRow: `span ${paquete.filas}`,
       }}
       whileHover={{
-        y: -4,
-        transition: { type: 'spring', stiffness: 400, damping: 25 }
+        y: -6,
+        transition: { type: 'spring', stiffness: 300, damping: 20 }
       }}
       whileTap={{
-        scale: 0.98,
-        y: -2,
-        transition: { type: 'spring', stiffness: 400, damping: 25 }
+        scale: 0.97,
+        transition: { duration: 0.1 }
       }}
-      aria-label={`Ver detalles del adiso: ${adiso.titulo} en ${adiso.categoria}`}
-      tabIndex={0}
+      aria-label={`Ver detalles del adiso: ${adiso.titulo}`}
     >
-      {/* Glow Line on Hover */}
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-electric-400 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      {/* Glow highlight */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
 
-      {/* Image Section with Zoom Effect */}
-      {showImage && (
+      {/* Image Section */}
+      {hasImage ? (
         <motion.div
-          className="relative w-full rounded-lg overflow-hidden bg-graphite-800"
+          className="relative w-full rounded-2xl overflow-hidden bg-slate-100"
           style={{
-            height: tamaño === 'pequeño' ? '130px' :
-                    tamaño === 'mediano' ? '150px' :
-                    tamaño === 'grande' ? '190px' : '230px'
+            aspectRatio: tamaño === 'miniatura' ? '4/3' : '1',
+            maxHeight: tamaño === 'miniatura' ? '140px' : 'auto'
           }}
         >
           <motion.div
             className="w-full h-full"
-            whileHover={{ scale: 1.05 }}
-            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            whileHover={{ scale: 1.1 }}
+            transition={{ duration: 0.6, ease: [0.33, 1, 0.68, 1] }}
           >
             <Image
-              src={imagenUrl}
+              src={imagenUrl!}
               alt={adiso.titulo}
               fill
-              sizes="(max-width: 768px) 50vw, 25vw"
+              unoptimized={imagenUrl!.startsWith('data:')}
+              sizes="(max-width: 768px) 50vw, 33vw"
               className="object-cover"
               loading="lazy"
             />
           </motion.div>
 
-          {/* Gradient Overlay for Better Text Contrast */}
-          <div className="absolute inset-0 bg-gradient-to-t from-obsidian-900/20 via-transparent to-transparent pointer-events-none" />
+          {/* Subtle overlay */}
+          <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity" />
         </motion.div>
+      ) : (
+        <div className="w-full aspect-square bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300">
+          {icon}
+        </div>
       )}
 
-      {/* Category Badge */}
-      <div className="badge flex items-center gap-1.5">
-        {icon}
-        <span className="capitalize text-[0.7rem] md:text-xs font-semibold tracking-wider">
-          {adiso.categoria}
-        </span>
-      </div>
+      {/* Content Area */}
+      <div className="flex-1 flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <div className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-zinc-800 text-[10px] font-black uppercase tracking-tighter text-slate-500 flex items-center gap-1">
+            {icon}
+            <span>{adiso.categoria}</span>
+          </div>
+          {adiso.descripcion?.includes('Precio:') && (
+            <span className="text-[10px] font-bold text-[var(--brand-color)]">
+              {adiso.descripcion.split('Precio:')[1].trim()}
+            </span>
+          )}
+        </div>
 
-      {/* Title Section */}
-      <div className="flex-1 flex flex-col justify-start min-h-0">
         <h3
           className={cn(
             titleSizes[tamaño],
-            titleWeights[tamaño],
-            lineClamps[tamaño],
-            'text-primary break-words hyphens-auto'
+            'font-bold text-slate-800 dark:text-zinc-100 line-clamp-2 leading-tight'
           )}
-          style={{
-            letterSpacing: tamaño === 'miniatura' ? '-0.01em' : '-0.02em'
-          }}
         >
           {adiso.titulo}
         </h3>
+
+        {tamaño !== 'miniatura' && adiso.descripcion && (
+          <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+            {adiso.descripcion.replace('Precio:', '')}
+          </p>
+        )}
       </div>
 
       {/* Selected Indicator */}

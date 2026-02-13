@@ -29,6 +29,9 @@ interface FormularioPublicarProps {
   onSuccess?: (message: string) => void;
   modoGratuito?: boolean;
   dentroSidebar?: boolean;
+  titulo?: string;
+  categoriaPredefinida?: Categoria;
+  ubicacionPredefinida?: any;
 }
 
 interface ImagenPreview {
@@ -82,14 +85,24 @@ const getCategoriaIcon = (categoria: Categoria): React.ComponentType<{ size?: nu
 const PASOS_TOTALES = 6;
 const PASOS_TOTALES_GRATUITO = 4; // Sin paquete ni imágenes
 
-export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSuccess, modoGratuito = false, dentroSidebar = false }: FormularioPublicarProps) {
-  const [pasoActual, setPasoActual] = useState<Paso>(1);
+export default function FormularioPublicar({
+  onPublicar,
+  onCerrar,
+  onError,
+  onSuccess,
+  modoGratuito = false,
+  dentroSidebar = false,
+  titulo: tituloCustom,
+  categoriaPredefinida,
+  ubicacionPredefinida
+}: FormularioPublicarProps) {
+  const [pasoActual, setPasoActual] = useState<Paso>(categoriaPredefinida ? 2 : 1);
   const [formData, setFormData] = useState<AdisoFormData>({
-    categoria: 'empleos',
+    categoria: categoriaPredefinida || 'empleos',
     titulo: '',
     descripcion: '',
     contacto: '',
-    ubicacion: undefined,
+    ubicacion: ubicacionPredefinida || undefined,
     tamaño: 'miniatura'
   });
   const [imagenesPreviews, setImagenesPreviews] = useState<ImagenPreview[]>([]);
@@ -177,14 +190,14 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
     if (erroresCambiaron) {
       setErrors(erroresActuales);
     }
-    
+
     return esValido;
   };
 
   const siguientePaso = () => {
     const esValido = validarPaso(pasoActual);
     if (!esValido) return;
-    
+
     // Saltar paso 3 (paquete) si es gratuito
     if (modoGratuito && pasoActual === 2) {
       setPasoActual(4);
@@ -264,9 +277,9 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    
+
     if (enviando) return;
-    
+
     if (!validarPaso(6)) {
       onError?.('Por favor completa todos los campos requeridos');
       return;
@@ -280,11 +293,11 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
       const hora = ahora.toTimeString().split(' ')[0].substring(0, 5);
       const idUnico = generarIdUnico();
       const previewsUrls = imagenesPreviews.map(img => img.preview);
-      
-      const ubicacionFinal = formData.ubicacion 
-        ? (formData.ubicacion.distrito 
-            ? `${formData.ubicacion.distrito}, ${formData.ubicacion.provincia}, ${formData.ubicacion.departamento}${formData.ubicacion.direccion ? `, ${formData.ubicacion.direccion}` : ''}`
-            : formData.ubicacion as any)
+
+      const ubicacionFinal = formData.ubicacion
+        ? (formData.ubicacion.distrito
+          ? `${formData.ubicacion.distrito}, ${formData.ubicacion.provincia}, ${formData.ubicacion.departamento}${formData.ubicacion.direccion ? `, ${formData.ubicacion.direccion}` : ''}`
+          : formData.ubicacion as any)
         : '';
 
       const nuevoAdiso: Adiso = {
@@ -303,7 +316,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
       setEnviando(false);
       onPublicar(nuevoAdiso);
       onSuccess?.('¡Adiso publicado con éxito!');
-      
+
       try {
         await saveAdiso(nuevoAdiso);
       } catch (error: any) {
@@ -318,7 +331,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
               const formDataUpload = new FormData();
               formDataUpload.append('image', imgPreview.file);
               formDataUpload.append('bucket', 'adisos-images');
-              
+
               const uploadResponse = await fetch('/api/upload-image', {
                 method: 'POST',
                 body: formDataUpload
@@ -343,14 +356,14 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
               imagenesUrls: urlsSubidas
             };
             onPublicar(adisoActualizado);
-            saveAdiso(adisoActualizado).catch(() => {});
+            saveAdiso(adisoActualizado).catch(() => { });
           }
         })();
       }
     } catch (error: any) {
       console.error('Error al publicar:', error);
       let errorMessage = 'Hubo un error al publicar el adiso. Por favor intenta nuevamente.';
-      
+
       if (error?.message?.includes('conexión') || error?.message?.includes('network') || error?.message?.includes('fetch failed')) {
         errorMessage = 'No hay conexión a internet. El adiso se guardó localmente y se publicará cuando se restablezca la conexión.';
       } else if (error?.message?.includes('validación') || error?.message?.includes('inválido')) {
@@ -360,7 +373,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
       } else if (error?.message) {
         errorMessage = error.message;
       }
-      
+
       onError?.(errorMessage);
       setEnviando(false);
     }
@@ -380,14 +393,14 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
           fontWeight: 500,
           color: 'var(--text-secondary)'
         }}>
-          Paso {pasoActual} de {totalPasos}
+          Paso {categoriaPredefinida ? pasoActual - 1 : pasoActual} de {categoriaPredefinida ? totalPasos - 1 : totalPasos}
         </span>
         <span style={{
           fontSize: '0.875rem',
           fontWeight: 600,
           color: 'var(--text-primary)'
         }}>
-          {Math.round(progreso)}%
+          {Math.round(categoriaPredefinida ? ((pasoActual - 1) / (totalPasos - 1)) * 100 : progreso)}%
         </span>
       </div>
       <div style={{
@@ -410,17 +423,17 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
 
   // Paso 1: Categoría - usar useRef para evitar loops
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   const handleCategoriaSelect = (categoria: Categoria) => {
     if (formData.categoria === categoria) return; // Evitar actualizaciones innecesarias
-    
+
     // Limpiar timeout anterior si existe
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-    
+
     setFormData(prev => ({ ...prev, categoria }));
-    
+
     // Auto-avanzar después de seleccionar
     timeoutRef.current = setTimeout(() => {
       siguientePaso();
@@ -439,7 +452,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
 
   const renderPaso1 = () => {
     const IconComponent = getCategoriaIcon(formData.categoria);
-    
+
     return (
       <div>
         <div style={{ marginBottom: '1.5rem' }}>
@@ -468,7 +481,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
           {CATEGORIAS.map((categoria) => {
             const IconCat = getCategoriaIcon(categoria);
             const estaSeleccionada = formData.categoria === categoria;
-            
+
             return (
               <button
                 key={categoria}
@@ -533,7 +546,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
           color: 'var(--text-secondary)',
           margin: 0
         }}>
-          {modoGratuito 
+          {modoGratuito
             ? 'Escribe un título claro y atractivo (máximo 30 caracteres)'
             : 'Describe tu anuncio de manera clara y atractiva para que más personas lo vean'}
         </p>
@@ -590,8 +603,8 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
           {errors.titulo && (
             <span role="alert" style={{ fontSize: '0.75rem', color: '#ef4444' }}>{errors.titulo}</span>
           )}
-          <span style={{ 
-            fontSize: '0.75rem', 
+          <span style={{
+            fontSize: '0.75rem',
             color: formData.titulo.length > (modoGratuito ? 30 : LIMITS.TITULO_MAX) * 0.9 ? '#f59e0b' : 'var(--text-tertiary)',
             marginLeft: 'auto'
           }}>
@@ -653,8 +666,8 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
             {errors.descripcion && (
               <span role="alert" style={{ fontSize: '0.75rem', color: '#ef4444' }}>{errors.descripcion}</span>
             )}
-            <span style={{ 
-              fontSize: '0.75rem', 
+            <span style={{
+              fontSize: '0.75rem',
               color: formData.descripcion.length > LIMITS.DESCRIPCION_MAX * 0.9 ? '#f59e0b' : 'var(--text-tertiary)',
               marginLeft: 'auto'
             }}>
@@ -734,7 +747,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
             const estaSeleccionado = formData.tamaño === paquete.tamaño;
             const paqueteInfo = PAQUETES[paquete.tamaño];
             const esPopular = paquete.tamaño === 'mediano';
-            
+
             return (
               <button
                 key={paquete.tamaño}
@@ -986,8 +999,8 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
             label="Ubicación del anuncio (opcional)"
           />
           {errors.ubicacion && (
-            <span role="alert" style={{ 
-              fontSize: '0.75rem', 
+            <span role="alert" style={{
+              fontSize: '0.75rem',
               color: '#ef4444',
               marginTop: '0.25rem',
               display: 'block'
@@ -1003,7 +1016,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
   // Paso 5: Imágenes (solo si no es gratuito y el paquete lo permite)
   const renderPaso5 = () => {
     if (modoGratuito) return null;
-    
+
     const paqueteSeleccionado = formData.tamaño ? PAQUETES[formData.tamaño] : PAQUETES.miniatura;
     const puedeSubirImagenes = paqueteSeleccionado.maxImagenes > 0;
 
@@ -1072,7 +1085,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
           <FaPlus size={20} />
           <span>Haz clic o arrastra imágenes aquí</span>
         </label>
-        
+
         {imagenesPreviews.length > 0 && (
           <div style={{
             display: 'grid',
@@ -1159,7 +1172,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
   const renderPaso6 = () => {
     const IconComponent = getCategoriaIcon(formData.categoria);
     const paqueteSeleccionado = formData.tamaño ? PAQUETES[formData.tamaño] : PAQUETES.miniatura;
-    
+
     return (
       <div>
         <div style={{ marginBottom: '1.5rem' }}>
@@ -1389,9 +1402,9 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
           Anterior
         </button>
       )}
-      
+
       <div style={{ flex: 1 }} />
-      
+
       {pasoActual < totalPasos ? (
         <button
           type="button"
@@ -1446,9 +1459,9 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
         >
           {enviando ? (
             <>
-              <span style={{ 
-                width: '14px', 
-                height: '14px', 
+              <span style={{
+                width: '14px',
+                height: '14px',
                 border: '2px solid currentColor',
                 borderTop: '2px solid transparent',
                 borderRadius: '50%',
@@ -1493,7 +1506,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
           color: 'var(--text-primary)',
           marginBottom: '1.5rem'
         }}>
-          {modoGratuito ? 'Publicar adiso gratuito' : 'Publicar adiso'}
+          {tituloCustom ? tituloCustom : (modoGratuito ? 'Publicar adiso gratuito' : 'Publicar adiso')}
         </h2>
         {renderForm()}
       </div>
@@ -1540,7 +1553,7 @@ export default function FormularioPublicar({ onPublicar, onCerrar, onError, onSu
             fontWeight: 600,
             color: 'var(--text-primary)'
           }}>
-            {modoGratuito ? 'Publicar adiso gratuito' : 'Publicar adiso'}
+            {tituloCustom ? tituloCustom : (modoGratuito ? 'Publicar adiso gratuito' : 'Publicar adiso')}
           </h2>
           <button
             onClick={onCerrar}

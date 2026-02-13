@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   FaTimes, FaChevronLeft, FaChevronRight, FaCopy, FaShare, FaWhatsapp, FaCheck, FaSearch,
   FaMapMarkerAlt, FaCalendarAlt, FaBriefcase, FaHome, FaCar, FaWrench, FaBox, FaCalendarCheck,
@@ -100,3 +99,4 @@ export const IconGoogleLens = (p: IconProps) => <MdCenterFocusWeak size={getSize
 export const IconMinimize = (p: IconProps) => <FaChevronRight size={getSize(p)} color={p.color || 'currentColor'} className={p.className} />;
 export const IconExpand = (p: IconProps) => <FaChevronLeft size={getSize(p)} color={p.color || 'currentColor'} className={p.className} />;
 export const IconPlus = (p: IconProps) => <FaPlus size={getSize(p)} color={p.color || 'currentColor'} className={p.className} />;
+export const IconImage = (p: IconProps) => <FaImage size={getSize(p)} color={p.color || 'currentColor'} className={p.className} />;

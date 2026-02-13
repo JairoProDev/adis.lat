@@ -213,7 +213,7 @@ export default function Header({
             {[
               { id: 'feed', icon: IconGlobe, label: 'Feed', href: '/feed' },
               { id: 'adiso', icon: IconSearch, label: 'Buscar', href: '/' },
-              { id: 'publicar', icon: IconMegaphone, label: 'Publicar' },
+              { id: 'publicar', icon: IconMegaphone, label: 'Publicar', href: '/publicar' },
               { id: 'mapa', icon: IconMap, label: 'Mapa' },
               { id: 'chatbot', icon: IconRobot, label: 'Asistente', href: '/chat' },
             ].map((item) => {

@@ -6,7 +6,10 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: '**.supabase.co',
-        pathname: '/storage/v1/object/public/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
       },
     ],
   },
@@ -40,12 +43,7 @@ const nextConfig = {
     ];
   },
   async rewrites() {
-    return [
-      {
-        source: '/publicar',
-        destination: '/?seccion=publicar',
-      },
-    ];
+    return [];
   },
 }
 

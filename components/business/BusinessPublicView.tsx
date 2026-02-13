@@ -10,7 +10,7 @@ import {
     IconInstagram, IconFacebook, IconTiktok,
     IconVerified, IconShareAlt, IconGlobe, IconPhone, IconClock, IconChevronDown,
     IconLinkedin, IconYoutube, IconSearch, IconArrowRight, IconHeart,
-    IconFileAlt, IconEdit, IconPlus
+    IconFileAlt, IconEdit, IconPlus, IconBox
 } from '@/components/Icons';
 import BentoCard from '@/components/BentoCard';
 import { useRouter } from 'next/navigation';
@@ -119,7 +119,7 @@ export default function BusinessPublicView({ profile, adisos, isPreview = false,
             )}
 
             {/* --- HERO SECTION --- */}
-            <div className="relative w-full h-[60vh] max-h-[500px] min-h-[350px] overflow-hidden group">
+            <div className="relative w-full h-[25vh] md:h-[30vh] max-h-[350px] min-h-[180px] overflow-hidden group">
                 {/* Banner Image */}
                 <div className="absolute inset-0 bg-gray-900">
                     {profile.banner_url ? (
@@ -131,7 +131,7 @@ export default function BusinessPublicView({ profile, adisos, isPreview = false,
                     ) : (
                         <div className="w-full h-full bg-gradient-to-br from-[var(--brand-color)] to-purple-900 opacity-80" />
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
                 </div>
 
                 {/* Main Content Overlay */}
@@ -143,7 +143,7 @@ export default function BusinessPublicView({ profile, adisos, isPreview = false,
                         animate={{ scale: 1, opacity: 1 }}
                         className="relative group/logo flex-shrink-0"
                     >
-                        <div className="w-24 h-24 md:w-36 md:h-36 rounded-2xl bg-white shadow-2xl p-1 overflow-hidden border-4 border-white/10 backdrop-blur-sm relative">
+                        <div className="w-24 h-24 md:w-36 md:h-36 rounded-2xl bg-white shadow-xl p-1 overflow-hidden border-2 border-white/50 backdrop-blur-sm relative">
                             {profile.logo_url ? (
                                 <img src={profile.logo_url} alt="Logo" className="w-full h-full object-cover rounded-xl" />
                             ) : (
@@ -428,55 +428,61 @@ export default function BusinessPublicView({ profile, adisos, isPreview = false,
                     {activeTab === 'catalogo' && (
                         <motion.div
                             key="catalogo"
-                            initial={{ opacity: 0, scale: 0.95 }}
+                            initial={{ opacity: 0, scale: 0.98 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
+                            exit={{ opacity: 0, scale: 0.98 }}
+                            className="max-w-7xl mx-auto space-y-12"
                         >
-                            <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-                                <h3 className="font-bold text-xl md:text-2xl text-[var(--text-primary)]">
-                                    Catálogo de Productos
-                                </h3>
+                            {/* Catalog Header & Search */}
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                <div>
+                                    <h2 className="text-4xl font-black text-slate-800 dark:text-zinc-100 flex items-center gap-3">
+                                        Catálogo <span className="bg-[var(--brand-color)]/10 text-[var(--brand-color)] text-xs px-3 py-1 rounded-full">{filteredAdisos.length}</span>
+                                    </h2>
+                                    <p className="text-slate-500 font-medium italic">Selección premium exclusiva</p>
+                                </div>
 
-                                <div className="flex items-center gap-3 w-full md:w-auto">
-                                    <div className="relative flex-1 md:w-64">
-                                        <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                                <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+                                    <div className="relative w-full sm:w-80 group">
+                                        <IconSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[var(--brand-color)] transition-colors" size={20} />
                                         <input
                                             type="text"
-                                            placeholder="Buscar en el catálogo..."
+                                            placeholder="¿Qué buscas hoy?..."
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-2 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-full text-sm focus:outline-none focus:border-[var(--brand-color)] focus:ring-1 focus:ring-[var(--brand-color)] transition-all"
+                                            className="w-full pl-14 pr-6 py-4 bg-white dark:bg-zinc-800 border-2 border-slate-100 dark:border-zinc-800 rounded-2xl shadow-sm focus:outline-none focus:border-[var(--brand-color)] focus:ring-4 focus:ring-[var(--brand-color)]/10 transition-all font-medium"
                                         />
                                     </div>
                                     <button
                                         onClick={() => window.print()}
-                                        className="flex items-center gap-2 text-sm font-medium text-[var(--brand-color)] bg-[var(--brand-color)]/10 px-4 py-2 rounded-full hover:bg-[var(--brand-color)] hover:text-white transition-colors"
-                                        title="Descargar Catálogo (PDF)"
+                                        className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-2xl font-bold hover:brightness-110 active:scale-95 transition-all shadow-xl shadow-slate-200 dark:shadow-none"
                                     >
-                                        <IconFileAlt size={16} />
-                                        <span className="hidden sm:inline">Descargar</span>
+                                        <IconFileAlt size={20} />
+                                        <span>PDF</span>
                                     </button>
                                 </div>
                             </div>
 
+                            {/* Products Grid */}
                             {filteredAdisos.length > 0 ? (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-8">
                                     {filteredAdisos.map((adiso) => (
                                         <BentoCard
                                             key={adiso.id}
                                             adiso={adiso}
-                                            icon={<IconStore size={12} />}
+                                            icon={<IconBox size={14} className="text-[var(--brand-color)]" />}
                                             onClick={() => router.push(`/adiso/${(adiso as any).slug || adiso.id}`)}
+                                            className="!rounded-[2.5rem]"
                                         />
                                     ))}
                                 </div>
                             ) : (
-                                <div className="bg-[var(--bg-primary)] rounded-3xl p-12 text-center border border-[var(--border-subtle)]">
-                                    <div className="w-16 h-16 bg-[var(--bg-secondary)] rounded-full flex items-center justify-center mx-auto mb-4 text-[var(--text-tertiary)]">
-                                        <IconSearch size={32} />
+                                <div className="py-24 text-center">
+                                    <div className="w-24 h-24 bg-slate-50 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-200 dark:text-zinc-700">
+                                        <IconSearch size={48} />
                                     </div>
-                                    <h4 className="font-bold text-[var(--text-secondary)] mb-2">No se encontraron productos</h4>
-                                    <p className="text-sm text-[var(--text-tertiary)]">Intenta con otros términos o explora las categorías.</p>
+                                    <h3 className="text-xl font-bold text-slate-400">Sin resultados</h3>
+                                    <p className="text-slate-300">Intenta con otros términos</p>
                                 </div>
                             )}
                         </motion.div>
