@@ -1,4 +1,4 @@
-    # Roadmap 50+: llevar "Mi Negocio" al Nivel Dios
+    # Roadmap 50+: llevar "Mi Negocio" al Nivel Avanzado
 
 ## 🎨 Experiencia de Usuario (UI/UX) y Editor
 1.  **Subida de Imágenes Real**: Arrastrar y soltar (Drag & Drop) para logo y banner. nada de pegar URLs.

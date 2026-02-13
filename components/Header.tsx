@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   FaBars,
   FaBell,
@@ -48,7 +48,7 @@ export default function Header({
   const { t } = useTranslation();
   const isDesktop = useMediaQuery('(min-width: 768px)');
 
-  React.useEffect(() => {
+  useEffect(() => {
     setMounted(true);
   }, []);
 

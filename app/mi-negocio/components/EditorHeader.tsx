@@ -21,7 +21,7 @@ export function EditorHeader({ progress = 0 }: { progress: number }) {
             <div className="flex justify-between mt-1">
                 <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Nivel Principiante</span>
                 <span className="text-[10px] font-bold text-blue-600">{progress}% Completado</span>
-                <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Nivel Dios</span>
+                <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Nivel Avanzado</span>
             </div>
         </div>
     );

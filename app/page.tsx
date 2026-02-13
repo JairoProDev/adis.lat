@@ -772,7 +772,13 @@ function HomeContent() {
           msOverflowStyle: 'none',
           WebkitOverflowScrolling: 'touch',
           alignItems: 'center',
-          maxWidth: '100%',
+          width: '100%',
+          maxWidth: isDesktop
+            ? 'calc(100% - var(--sidebar-width, 60px))'
+            : '100%',
+          margin: '0 auto',
+          transition: 'max-width 0.3s ease, margin-right 0.3s ease',
+          ...(isDesktop && { marginRight: 'var(--sidebar-width, 60px)' })
         }}
       >
         {[
