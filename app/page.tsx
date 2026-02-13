@@ -116,6 +116,7 @@ function HomeContent() {
   const [seccionMobileActiva, setSeccionMobileActiva] = useState<SeccionSidebar | null>(seccionUrl === 'publicar' ? 'publicar' : null);
   const [seccionDesktopActiva, setSeccionDesktopActiva] = useState<SeccionSidebar>(seccionUrl === 'publicar' ? 'publicar' : 'adiso');
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(false);
+  const [mostrarFiltroUbicacion, setMostrarFiltroUbicacion] = useState(false);
   const [isSidebarMinimizado, setIsSidebarMinimizado] = useState(false);
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const { toasts, removeToast, success, error } = useToast();
@@ -860,36 +861,27 @@ function HomeContent() {
             value={busqueda}
             onChange={(value) => {
               setBusqueda(value);
-              // Actualizar URL cuando el usuario deja de escribir (debounce)
-              // Esto se hace en un useEffect separado para evitar demasiadas actualizaciones
             }}
-            categoriaSeleccionada={categoriaFiltro}
-            onCategoriaChange={(categoria) => {
-              setCategoriaFiltro(categoria);
-              // Actualizar URL sin recargar
-              const params = new URLSearchParams(searchParams.toString());
-              if (categoria === 'todos') {
-                params.delete('categoria');
-              } else {
-                params.set('categoria', categoria);
-              }
-              // Mantener búsqueda si existe
-              if (busqueda.trim()) {
-                params.set('buscar', busqueda.trim());
-              } else {
-                params.delete('buscar');
-              }
-              // Mantener adiso si está abierto
-              if (adisoId) {
-                params.set('adiso', adisoId);
-              } else {
-                params.delete('adiso');
-              }
-              const newUrl = params.toString() ? `/?${params.toString()}` : '/';
-              router.push(newUrl, { scroll: false });
+            ubicacion={filtroUbicacion?.distrito || filtroUbicacion?.provincia || 'Todo el Perú'}
+            onUbicacionClick={() => {
+              setMostrarFiltroUbicacion(true);
             }}
+            onAudioSearch={() => alert("Próximamente: Búsqueda por voz")}
+            onVisualSearch={() => alert("Próximamente: Búsqueda visual con cámara/fotos")}
           />
         </div>
+
+        {/* Modal de Filtro de Ubicación */}
+        {mostrarFiltroUbicacion && (
+          <FiltroUbicacion
+            filtrosActuales={filtroUbicacion}
+            onAplicar={(filtros) => {
+              setFiltroUbicacion(filtros);
+              setMostrarFiltroUbicacion(false);
+            }}
+            onCerrar={() => setMostrarFiltroUbicacion(false)}
+          />
+        )}
         {cargando ? (
           <SkeletonAdisos />
         ) : (

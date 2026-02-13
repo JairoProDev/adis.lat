@@ -65,9 +65,11 @@ import {
   FaExclamationTriangle,
   FaInfoCircle,
   FaQrcode,
-  FaRegHeart
+  FaRegHeart,
+  FaMicrophone
 } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
+import { MdCenterFocusWeak } from 'react-icons/md';
 
 interface IconProps {
   width?: number;
@@ -294,4 +296,12 @@ export const IconHeart = (props: IconProps) => (
 
 export const IconHeartOutline = (props: IconProps) => (
   <FaRegHeart size={getSize(props)} color={props.color || 'currentColor'} />
+);
+
+export const IconMicrophone = (props: IconProps) => (
+  <FaMicrophone size={getSize(props)} color={props.color || 'currentColor'} />
+);
+
+export const IconGoogleLens = (props: IconProps) => (
+  <MdCenterFocusWeak size={getSize(props)} color={props.color || 'currentColor'} />
 );
