@@ -113,10 +113,21 @@ function HomeContent() {
   const ITEMS_POR_PAGINA = 100;
   const [modalMobileAbierto, setModalMobileAbierto] = useState(false);
   const [seccionMobileInicial, setSeccionMobileInicial] = useState<SeccionMobile>('gratuitos');
-  const [seccionMobileActiva, setSeccionMobileActiva] = useState<SeccionSidebar | null>(seccionUrl === 'publicar' ? 'publicar' : null);
-  const [seccionDesktopActiva, setSeccionDesktopActiva] = useState<SeccionSidebar>(seccionUrl === 'publicar' ? 'publicar' : 'adiso');
+  const [seccionMobileActiva, setSeccionMobileActiva] = useState<SeccionSidebar | null>(seccionUrl ? seccionUrl : null);
+  const [seccionDesktopActiva, setSeccionDesktopActiva] = useState<SeccionSidebar>(seccionUrl ? seccionUrl : 'adiso');
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(false);
   const [mostrarFiltroUbicacion, setMostrarFiltroUbicacion] = useState(false);
+
+  // Sync state with URL param 'seccion' to support deep linking from other pages
+  useEffect(() => {
+    if (seccionUrl) {
+      if (isDesktop) {
+        setSeccionDesktopActiva(seccionUrl);
+      } else {
+        setSeccionMobileActiva(seccionUrl);
+      }
+    }
+  }, [seccionUrl, isDesktop]);
   const [vista, setVista] = useState<'grid' | 'list'>('grid');
   const [isSidebarMinimizado, setIsSidebarMinimizado] = useState(false);
   const isDesktop = useMediaQuery('(min-width: 768px)');

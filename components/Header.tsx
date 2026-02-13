@@ -20,7 +20,10 @@ import {
   IconMegaphone,
   IconStore,
   IconGratuitos,
-  IconLocation
+  IconLocation,
+  IconGlobe,
+  IconRobot,
+  IconSearch
 } from './Icons';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -197,24 +200,36 @@ export default function Header({
 
       {/* CENTER: Navigation (Desktop Only) */}
       <div style={{ flex: 1, display: 'flex', justifyContent: 'center', height: '100%' }}>
-        {isDesktop && onSeccionChange && (
+        {isDesktop && (
           <div style={{ display: 'flex', gap: '8px', height: '100%' }}>
-            {navItems.map((item) => {
+            {[
+              { id: 'feed', icon: IconGlobe, label: 'Feed', href: '/feed' },
+              { id: 'adiso', icon: IconSearch, label: 'Buscar', href: '/' },
+              { id: 'publicar', icon: IconMegaphone, label: 'Publicar' },
+              { id: 'mapa', icon: IconMap, label: 'Mapa' },
+              { id: 'chatbot', icon: IconRobot, label: 'Asistente', href: '/chat' },
+            ].map((item) => {
               const Icon = item.icon;
-              const isActive = seccionActiva === item.id;
+              // Check if active based on prop OR current path (for href items)
+              const isPathActive = typeof window !== 'undefined' && item.href && window.location.pathname === item.href;
+              const isSectionActive = seccionActiva === item.id || (item.id === 'adiso' && seccionActiva === 'adiso'); // Maintain 'adiso' logic
+
+              // Helper logic: 'adiso' corresponds to 'Buscar'/'Inicio' in terms of active section
+              const isActive = (isPathActive && item.href !== '/') || (item.id === 'adiso' && window.location.pathname === '/' && seccionActiva !== 'mapa' && seccionActiva !== 'publicar') || (seccionActiva === item.id);
+
               const isHovered = hoveredItem === item.id;
 
               return (
                 <button
                   key={item.id}
                   onClick={() => {
-                    if (item.id === 'negocio') {
-                      window.location.href = '/mi-negocio';
-                      return;
+                    if (item.href) {
+                      window.location.href = item.href;
+                    } else if (onSeccionChange) {
+                      onSeccionChange(item.id as SeccionSidebar);
                     }
-                    onSeccionChange(item.id);
                   }}
-                  onMouseEnter={() => setHoveredItem(item.id)}
+                  onMouseEnter={() => setHoveredItem(item.id as SeccionSidebar)}
                   onMouseLeave={() => setHoveredItem(null)}
                   style={{
                     height: '100%',

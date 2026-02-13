@@ -108,7 +108,6 @@ export default function RootLayout({
                 <AdisosGratuitosCacheProvider>
                   <NavigationProvider>
                     {children}
-                    <FloatingChatbot />
                   </NavigationProvider>
                 </AdisosGratuitosCacheProvider>
               </UIProvider>
