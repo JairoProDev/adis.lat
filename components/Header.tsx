@@ -375,9 +375,6 @@ export default function Header({
         {/* User Profile - Will handle Login button internally if no user */}
         <UserMenu
           onProgressClick={onChangelogClick}
-          showExtras={false} // Pass prop to control extras visibility from UserMenu if needed, but doing it here is cleaner if we had access to auth state.
-        // However, UserMenu handles auth state internally. We can modify UserMenu to accept children or expose state,
-        // OR we just import useAuth here. Let's import useAuth in the file header first.
         />
 
         {/* Mobile Settings Toggle */}

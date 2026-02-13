@@ -192,7 +192,9 @@ export default function SidebarDesktop({
                 textAlign: 'center',
                 color: 'var(--text-secondary)'
               }}>
-                <IconAdiso size={48} style={{ opacity: 0.5, marginBottom: '1rem' }} />
+                <div style={{ opacity: 0.5, marginBottom: '1rem' }}>
+                  <IconAdiso size={48} />
+                </div>
                 <p>Selecciona un adiso para ver los detalles</p>
               </div>
             )}

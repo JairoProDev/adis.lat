@@ -17,7 +17,7 @@ interface FiltroUbicacionProps {
     distrito?: string;
     radioKm?: number;
   };
-  onChange: (filtro: {
+  onChange?: (filtro: {
     departamento?: string;
     provincia?: string;
     distrito?: string;
@@ -87,7 +87,7 @@ export default function FiltroUbicacion({ value, onChange, onAplicar, ubicacionU
   const commitChanges = (newFiltros: any) => {
     if (onAplicar) {
       onAplicar(newFiltros);
-    } else {
+    } else if (onChange) {
       onChange(newFiltros);
     }
   };

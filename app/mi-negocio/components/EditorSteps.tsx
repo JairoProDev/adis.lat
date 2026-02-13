@@ -5,7 +5,7 @@ import { uploadBusinessImage } from '@/lib/business';
 import {
     IconStore, IconPhone, IconClock, IconShare, IconArrowRight, IconCheck,
     IconStar, IconMegaphone, IconEdit, IconMapMarkerAlt, IconEnvelope,
-    IconInstagram, IconFacebook, IconTiktok, IconGlobe, IconBox
+    IconInstagram, IconFacebook, IconTiktok, IconGlobe, IconBox, IconPlus
 } from '@/components/Icons';
 import { cn } from '@/lib/utils';
 import { Adiso } from '@/types';
@@ -334,10 +334,16 @@ export function EditorSteps({
                                         {userAdisos.slice(0, 5).map((ad) => (
                                             <div key={ad.id} className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200 hover:border-slate-300 transition-colors">
                                                 <div className="w-12 h-12 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0">
-                                                    {ad.imagenUrl || (ad.imagenesUrls && ad.imagenesUrls[0]) ? (
-                                                        <img src={ad.imagenUrl || ad.imagenesUrls[0]} alt={ad.titulo} className="w-full h-full object-cover" />
+                                                    {(ad.imagenUrl || ad.imagenesUrls?.[0]) ? (
+                                                        <img
+                                                            src={ad.imagenUrl || ad.imagenesUrls?.[0] || ''}
+                                                            alt={ad.titulo}
+                                                            className="w-full h-full object-cover"
+                                                        />
                                                     ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-slate-300"><IconStore size={16} /></div>
+                                                        <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                                            <IconStore size={16} />
+                                                        </div>
                                                     )}
                                                 </div>
                                                 <div className="flex-1 min-w-0">

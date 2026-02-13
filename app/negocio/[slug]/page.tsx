@@ -1,5 +1,7 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+
 import { getBusinessProfileBySlug } from '@/lib/business';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';

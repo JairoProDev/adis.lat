@@ -97,7 +97,8 @@ export default function AdisoPageContent({ adiso }: AdisoPageContentProps) {
                 puedeAnterior={false}
                 puedeSiguiente={false}
                 onPublicar={() => router.push('/?action=publicar')}
-                defaultMinimized={true}
+                seccionActiva="adiso"
+                minimizado={true}
             />
 
             {/* Main Content Wrapper - add right padding to account for fixed sidebar */}
