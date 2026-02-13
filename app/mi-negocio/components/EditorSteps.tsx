@@ -27,18 +27,28 @@ interface EditorStepsProps {
     setProfile: (p: any) => void;
     saving: boolean;
     userAdisos?: Adiso[];
+    activeStep: number;
+    setActiveStep: (step: number) => void;
+    onAddProduct?: () => void;
 }
 
-export function EditorSteps({ profile, setProfile, saving, userAdisos = [] }: EditorStepsProps) {
-    const [activeStep, setActiveStep] = useState(0);
+export function EditorSteps({
+    profile,
+    setProfile,
+    saving,
+    userAdisos = [],
+    activeStep,
+    setActiveStep,
+    onAddProduct
+}: EditorStepsProps) {
     const [uploadingImage, setUploadingImage] = useState<string | null>(null);
 
     const handleNext = () => {
-        if (activeStep < STEPS.length - 1) setActiveStep(prev => prev + 1);
+        if (activeStep < STEPS.length - 1) setActiveStep(activeStep + 1);
     };
 
     const handlePrev = () => {
-        if (activeStep > 0) setActiveStep(prev => prev - 1);
+        if (activeStep > 0) setActiveStep(activeStep - 1);
     };
 
     const handleImageUpload = async (file: File, type: 'logo' | 'banner') => {
@@ -83,6 +93,7 @@ export function EditorSteps({ profile, setProfile, saving, userAdisos = [] }: Ed
                 {STEPS.map((step, index) => {
                     const isActive = index === activeStep;
                     const isCompleted = index < activeStep;
+                    const StepIcon = step.icon;
                     return (
                         <button
                             key={step.id}
@@ -96,7 +107,7 @@ export function EditorSteps({ profile, setProfile, saving, userAdisos = [] }: Ed
                                         : "bg-white border-slate-100 text-slate-400 hover:border-slate-300"
                             )}
                         >
-                            <step.icon size={14} className={isActive ? "text-blue-600" : isCompleted ? "text-green-500" : "text-slate-300"} />
+                            <StepIcon size={14} className={isActive ? "text-blue-600" : isCompleted ? "text-green-500" : "text-slate-300"} />
                             {step.label}
                             {isCompleted && <IconCheck size={12} className="text-green-500 ml-1" />}
                         </button>
@@ -291,294 +302,295 @@ export function EditorSteps({ profile, setProfile, saving, userAdisos = [] }: Ed
                         </div>
                     )}
 
-                </div>
-                    )}
-
-                {/* Step 3: Catalog Management */}
-                {activeStep === 2 && (
-                    <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
-                        <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100 text-center">
-                            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm text-blue-500">
-                                <IconBox size={32} />
-                            </div>
-                            <h3 className="font-bold text-blue-900 text-lg mb-2">Tu Catálogo Digital</h3>
-                            <p className="text-sm text-blue-700 mb-6 max-w-sm mx-auto">
-                                Sube fotos de tus productos, añade descripciones y precios. ¡Todo lo que subas aparecerá aquí!
-                            </p>
-
-                            <Link
-                                href="/?seccion=publicar"
-                                className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/30"
-                            >
-                                <IconEdit size={18} />
-                                Agregar Nuevo Producto
-                            </Link>
-                        </div>
-
-                        {/* Catalog Preview List */}
-                        <div>
-                            <h4 className="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2">
-                                Productos Actuales <span className="text-xs font-normal text-slate-400">({userAdisos.length})</span>
-                            </h4>
-
-                            {userAdisos.length > 0 ? (
-                                <div className="space-y-3">
-                                    {userAdisos.slice(0, 5).map((ad) => (
-                                        <div key={ad.id} className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200 hover:border-slate-300 transition-colors">
-                                            <div className="w-12 h-12 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0">
-                                                {ad.imagenUrl || (ad.imagenesUrls && ad.imagenesUrls[0]) ? (
-                                                    <img src={ad.imagenUrl || ad.imagenesUrls[0]} alt={ad.titulo} className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-slate-300"><IconStore size={16} /></div>
-                                                )}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <h5 className="font-semibold text-sm text-slate-900 truncate">{ad.titulo}</h5>
-                                                <p className="text-xs text-slate-500 truncate">{ad.categoria}</p>
-                                            </div>
-                                            <Link href={`/adiso/${(ad as any).slug || ad.id}`} target="_blank" className="p-2 text-slate-400 hover:text-blue-500 transition-colors">
-                                                <IconArrowRight size={16} />
-                                            </Link>
-                                        </div>
-                                    ))}
-                                    {userAdisos.length > 5 && (
-                                        <p className="text-center text-xs text-slate-500 pt-2">
-                                            y {userAdisos.length - 5} productos más...
-                                        </p>
-                                    )}
+                    {/* Step 3: Catalog Management */}
+                    {activeStep === 2 && (
+                        <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
+                            <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100 text-center">
+                                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm text-blue-500">
+                                    <IconBox size={32} />
                                 </div>
-                            ) : (
-                                <div className="text-center py-8 border-2 border-dashed border-slate-200 rounded-xl">
-                                    <p className="text-sm text-slate-400">Aún no has subido productos.</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )}
+                                <h3 className="font-bold text-blue-900 text-lg mb-2">Tu Catálogo Digital</h3>
+                                <p className="text-sm text-blue-700 mb-6 max-w-sm mx-auto">
+                                    Sube fotos de tus productos, añade descripciones y precios. ¡Todo lo que subas aparecerá aquí!
+                                </p>
 
-                {/* Step 4: Contact Info */}
-                {activeStep === 3 && (
-                    <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
-                        {[
-                            { label: 'WhatsApp / Teléfono', icon: IconPhone, field: 'contact_phone', placeholder: '987 654 321' },
-                            { label: 'Dirección Física', icon: IconStore, field: 'contact_address', placeholder: 'Av. Principal 123, Miraflores' },
-                            { label: 'Email Público', icon: IconShare, field: 'contact_email', placeholder: 'contacto@tu-negocio.com' }
-                        ].map((item: any) => (
-                            <label key={item.field} className="block">
-                                <span className="text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-2">
-                                    <item.icon size={16} className="text-slate-400" />
-                                    {item.label}
-                                </span>
-                                <input
-                                    type="text"
-                                    value={(profile as any)[item.field] || ''}
-                                    onChange={e => setProfile({ ...profile, [item.field]: e.target.value })}
-                                    className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium text-slate-900 placeholder:text-slate-400"
-                                    placeholder={item.placeholder}
-                                />
-                            </label>
-                        ))}
-                    </div>
-                )}
-
-                {/* Step 5: Social Media */}
-                {activeStep === 5 && (
-                    <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
-                        <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 flex items-start gap-3">
-                            <div className="bg-blue-100 p-2 rounded-lg text-blue-600">
-                                <IconMegaphone size={20} />
+                                <button
+                                    onClick={onAddProduct}
+                                    className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/30"
+                                >
+                                    <IconPlus size={18} />
+                                    Agregar Nuevo Producto
+                                </button>
                             </div>
+
+                            {/* Catalog Preview List */}
                             <div>
-                                <h4 className="font-bold text-blue-900 text-sm">Conecta tus Redes</h4>
-                                <p className="text-xs text-blue-700 mt-1">Pega el link completo o solo tu usuario. Nosotros hacemos el resto.</p>
-                            </div>
-                        </div>
+                                <h4 className="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2">
+                                    Productos Actuales <span className="text-xs font-normal text-slate-400">({userAdisos.length})</span>
+                                </h4>
 
-                        <div className="space-y-3">
-                            {[
-                                { network: 'instagram', placeholder: '@usuario o link', color: 'bg-pink-50 text-pink-600 border-pink-100' },
-                                { network: 'facebook', placeholder: 'facebook.com/pagina', color: 'bg-blue-50 text-blue-600 border-blue-100' },
-                                { network: 'tiktok', placeholder: '@tiktoker', color: 'bg-slate-50 text-slate-900 border-slate-200' },
-                                { network: 'website', placeholder: 'https://miweb.com', color: 'bg-emerald-50 text-emerald-600 border-emerald-100' }
-                            ].map((social) => {
-                                const link = profile.social_links?.find((l: SocialLink) => l.network === social.network);
-                                return (
-                                    <div key={social.network} className="flex items-center gap-3 group">
-                                        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center border transition-transform group-hover:scale-110 shadow-sm", social.color)}>
-                                            {social.network === 'instagram' && <IconInstagram size={20} />}
-                                            {social.network === 'facebook' && <IconFacebook size={20} />}
-                                            {social.network === 'tiktok' && <IconTiktok size={20} />}
-                                            {social.network === 'website' && <IconGlobe size={20} />}
-                                        </div>
-                                        <div className="flex-1 relative">
-                                            <input
-                                                type="text"
-                                                value={link?.url || ''}
-                                                onChange={(e) => {
-                                                    let url = e.target.value;
-                                                    // Smart Username Logic
-                                                    if (url && !url.includes('http') && !url.includes('.com') && social.network !== 'website') {
-                                                        const clean = url.replace('@', '');
-                                                        if (social.network === 'instagram') url = `https://instagram.com/${clean}`;
-                                                        if (social.network === 'facebook') url = `https://facebook.com/${clean}`;
-                                                        if (social.network === 'tiktok') url = `https://tiktok.com/@${clean}`;
-                                                    }
-                                                    const currentLinks = profile.social_links || [];
-                                                    const otherLinks = currentLinks.filter((l: SocialLink) => l.network !== social.network);
-
-                                                    if (e.target.value.trim().length > 0) {
-                                                        setProfile({ ...profile, social_links: [...otherLinks, { network: social.network as any, url: e.target.value }] });
-                                                    } else {
-                                                        setProfile({ ...profile, social_links: otherLinks });
-                                                    }
-                                                }}
-                                                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-blue-500 outline-none text-sm transition-all text-slate-700"
-                                                placeholder={social.placeholder}
-                                            />
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                )}
-
-                {/* Step 6: Hours */}
-                {activeStep === 4 && (
-                    <div className="space-y-4 animate-in fade-in slide-in-from-right-8 duration-500">
-                        <div className="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
-                            {[
-                                { day: 'Lunes', key: 'mon' },
-                                { day: 'Martes', key: 'tue' },
-                                { day: 'Miércoles', key: 'wed' },
-                                { day: 'Jueves', key: 'thu' },
-                                { day: 'Viernes', key: 'fri' },
-                                { day: 'Sábado', key: 'sat' },
-                                { day: 'Domingo', key: 'sun' }
-                            ].map(({ day, key }) => {
-                                const schedule = profile.business_hours?.[key];
-                                const isOpen = !!schedule && !schedule.closed;
-
-                                return (
-                                    <div key={day} className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 last:border-0 hover:bg-white transition-colors">
-                                        <div className="w-24 text-sm font-medium text-slate-700">{day}</div>
-                                        <label className="relative inline-flex items-center cursor-pointer mr-2">
-                                            <input
-                                                type="checkbox"
-                                                className="sr-only peer"
-                                                checked={isOpen}
-                                                onChange={(e) => {
-                                                    const currentHours = profile.business_hours || {};
-                                                    if (e.target.checked) {
-                                                        setProfile({ ...profile, business_hours: { ...currentHours, [key]: { open: '09:00', close: '18:00', closed: false } } });
-                                                    } else {
-                                                        // Mark as closed or remove key? Let's mark as closed
-                                                        const newHours = { ...currentHours };
-                                                        if (newHours[key]) newHours[key].closed = true;
-                                                        else newHours[key] = { open: '09:00', close: '18:00', closed: true };
-                                                        setProfile({ ...profile, business_hours: newHours });
-                                                    }
-                                                }}
-                                            />
-                                            <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-                                        </label>
-
-                                        {isOpen ? (
-                                            <div className="flex items-center gap-2 flex-1">
-                                                <input
-                                                    type="time"
-                                                    value={schedule?.open || '09:00'}
-                                                    onChange={(e) => {
-                                                        const currentHours = profile.business_hours || {};
-                                                        setProfile({ ...profile, business_hours: { ...currentHours, [key]: { ...schedule, open: e.target.value, closed: false } } });
-                                                    }}
-                                                    className="bg-slate-100 border-none rounded px-2 py-1 text-xs font-mono text-slate-700 focus:ring-1 focus:ring-blue-500 outline-none"
-                                                />
-                                                <span className="text-slate-300">-</span>
-                                                <input
-                                                    type="time"
-                                                    value={schedule?.close || '18:00'}
-                                                    onChange={(e) => {
-                                                        const currentHours = profile.business_hours || {};
-                                                        setProfile({ ...profile, business_hours: { ...currentHours, [key]: { ...schedule, close: e.target.value, closed: false } } });
-                                                    }}
-                                                    className="bg-slate-100 border-none rounded px-2 py-1 text-xs font-mono text-slate-700 focus:ring-1 focus:ring-blue-500 outline-none"
-                                                />
+                                {userAdisos.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {userAdisos.slice(0, 5).map((ad) => (
+                                            <div key={ad.id} className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200 hover:border-slate-300 transition-colors">
+                                                <div className="w-12 h-12 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0">
+                                                    {ad.imagenUrl || (ad.imagenesUrls && ad.imagenesUrls[0]) ? (
+                                                        <img src={ad.imagenUrl || ad.imagenesUrls[0]} alt={ad.titulo} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-slate-300"><IconStore size={16} /></div>
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h5 className="font-semibold text-sm text-slate-900 truncate">{ad.titulo}</h5>
+                                                    <p className="text-xs text-slate-500 truncate">{ad.categoria}</p>
+                                                </div>
+                                                <Link href={`/adiso/${(ad as any).slug || ad.id}`} target="_blank" className="p-2 text-slate-400 hover:text-blue-500 transition-colors">
+                                                    <IconArrowRight size={16} />
+                                                </Link>
                                             </div>
-                                        ) : (
-                                            <span className="text-xs text-slate-400 italic">Cerrado</span>
+                                        ))}
+                                        {userAdisos.length > 5 && (
+                                            <p className="text-center text-xs text-slate-500 pt-2">
+                                                y {userAdisos.length - 5} productos más...
+                                            </p>
                                         )}
                                     </div>
+                                ) : (
+                                    <div className="text-center py-8 border-2 border-dashed border-slate-200 rounded-xl">
+                                        <p className="text-sm text-slate-400">Aún no has subido productos.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Step 4: Contact Info */}
+                    {activeStep === 3 && (
+                        <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
+                            {[
+                                { label: 'WhatsApp / Teléfono', icon: IconPhone, field: 'contact_phone', placeholder: '987 654 321' },
+                                { label: 'Dirección Física', icon: IconStore, field: 'contact_address', placeholder: 'Av. Principal 123, Miraflores' },
+                                { label: 'Email Público', icon: IconShare, field: 'contact_email', placeholder: 'contacto@tu-negocio.com' }
+                            ].map((item: any) => {
+                                const ItemIcon = item.icon;
+                                return (
+                                    <label key={item.field} className="block">
+                                        <span className="text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-2">
+                                            <ItemIcon size={16} className="text-slate-400" />
+                                            {item.label}
+                                        </span>
+                                        <input
+                                            type="text"
+                                            value={(profile as any)[item.field] || ''}
+                                            onChange={e => setProfile({ ...profile, [item.field]: e.target.value })}
+                                            className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium text-slate-900 placeholder:text-slate-400"
+                                            placeholder={item.placeholder}
+                                        />
+                                    </label>
                                 );
                             })}
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {/* Step 7: Marketing & Config */}
-                {activeStep === 6 && (
-                    <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
-                        <div className="bg-gradient-to-br from-purple-50 to-indigo-50 p-4 rounded-xl border border-purple-100">
-                            <label className="block">
-                                <span className="text-xs font-bold text-purple-800 mb-2 flex items-center gap-2">
-                                    <IconMegaphone size={14} /> Barra de Anuncios (Sticky Bar) <span className="text-[10px] bg-white px-1.5 py-0.5 rounded border border-purple-200">NUEVO</span>
-                                </span>
-                                <input
-                                    type="text"
-                                    className="w-full px-4 py-2.5 rounded-lg bg-white border border-purple-100 focus:border-purple-500 outline-none text-sm placeholder:text-purple-300"
-                                    placeholder="Ej. ¡Envío gratis por compras mayores a S/100!"
-                                />
-                                <div className="mt-2 flex items-center gap-2">
-                                    <input type="checkbox" className="rounded text-purple-600 focus:ring-purple-500" defaultChecked />
-                                    <span className="text-xs text-purple-700">Mostrar barra en la parte superior</span>
+                    {/* Step 5: Social Media */}
+                    {activeStep === 5 && (
+                        <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
+                            <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 flex items-start gap-3">
+                                <div className="bg-blue-100 p-2 rounded-lg text-blue-600">
+                                    <IconMegaphone size={20} />
                                 </div>
-                            </label>
-                        </div>
+                                <div>
+                                    <h4 className="font-bold text-blue-900 text-sm">Conecta tus Redes</h4>
+                                    <p className="text-xs text-blue-700 mt-1">Pega el link completo o solo tu usuario. Nosotros hacemos el resto.</p>
+                                </div>
+                            </div>
 
-                        <div className="p-4 rounded-xl border border-amber-200 bg-amber-50">
-                            <h4 className="text-sm font-bold text-amber-800 flex items-center gap-2">
-                                ⚡ Impulsa tus ventas
-                            </h4>
-                            <p className="text-xs text-amber-700 mt-1 mb-0">
-                                Utiliza la barra de anuncios para promociones especiales o mensaje importantes.
-                            </p>
-                        </div>
+                            <div className="space-y-3">
+                                {[
+                                    { network: 'instagram', placeholder: '@usuario o link', color: 'bg-pink-50 text-pink-600 border-pink-100' },
+                                    { network: 'facebook', placeholder: 'facebook.com/pagina', color: 'bg-blue-50 text-blue-600 border-blue-100' },
+                                    { network: 'tiktok', placeholder: '@tiktoker', color: 'bg-slate-50 text-slate-900 border-slate-200' },
+                                    { network: 'website', placeholder: 'https://miweb.com', color: 'bg-emerald-50 text-emerald-600 border-emerald-100' }
+                                ].map((social) => {
+                                    const link = profile.social_links?.find((l: SocialLink) => l.network === social.network);
+                                    return (
+                                        <div key={social.network} className="flex items-center gap-3 group">
+                                            <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center border transition-transform group-hover:scale-110 shadow-sm", social.color)}>
+                                                {social.network === 'instagram' && <IconInstagram size={20} />}
+                                                {social.network === 'facebook' && <IconFacebook size={20} />}
+                                                {social.network === 'tiktok' && <IconTiktok size={20} />}
+                                                {social.network === 'website' && <IconGlobe size={20} />}
+                                            </div>
+                                            <div className="flex-1 relative">
+                                                <input
+                                                    type="text"
+                                                    value={link?.url || ''}
+                                                    onChange={(e) => {
+                                                        let url = e.target.value;
+                                                        // Smart Username Logic
+                                                        if (url && !url.includes('http') && !url.includes('.com') && social.network !== 'website') {
+                                                            const clean = url.replace('@', '');
+                                                            if (social.network === 'instagram') url = `https://instagram.com/${clean}`;
+                                                            if (social.network === 'facebook') url = `https://facebook.com/${clean}`;
+                                                            if (social.network === 'tiktok') url = `https://tiktok.com/@${clean}`;
+                                                        }
+                                                        const currentLinks = profile.social_links || [];
+                                                        const otherLinks = currentLinks.filter((l: SocialLink) => l.network !== social.network);
 
-                        <div className="p-4 rounded-xl border border-amber-200 bg-amber-50">
-                            <h4 className="text-sm font-bold text-amber-800 flex items-center gap-2">
-                                ⚡ ¿Listo para vender?
-                            </h4>
-                            <p className="text-xs text-amber-700 mt-1 mb-3">
-                                Asegúrate de tener adisos publicados. Aparecerán automáticamente en la pestaña "Catálogo".
-                            </p>
-                            <Link href="/?seccion=publicar" className="text-xs font-bold text-amber-900 underline hover:no-underline">
-                                Publicar nuevo adiso
-                            </Link>
+                                                        if (e.target.value.trim().length > 0) {
+                                                            setProfile({ ...profile, social_links: [...otherLinks, { network: social.network as any, url: e.target.value }] });
+                                                        } else {
+                                                            setProfile({ ...profile, social_links: otherLinks });
+                                                        }
+                                                    }}
+                                                    className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-blue-500 outline-none text-sm transition-all text-slate-700"
+                                                    placeholder={social.placeholder}
+                                                />
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
+                    )}
+
+                    {/* Step 6: Hours */}
+                    {activeStep === 4 && (
+                        <div className="space-y-4 animate-in fade-in slide-in-from-right-8 duration-500">
+                            <div className="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+                                {[
+                                    { day: 'Lunes', key: 'mon' },
+                                    { day: 'Martes', key: 'tue' },
+                                    { day: 'Miércoles', key: 'wed' },
+                                    { day: 'Jueves', key: 'thu' },
+                                    { day: 'Viernes', key: 'fri' },
+                                    { day: 'Sábado', key: 'sat' },
+                                    { day: 'Domingo', key: 'sun' }
+                                ].map(({ day, key }) => {
+                                    const schedule = profile.business_hours?.[key];
+                                    const isOpen = !!schedule && !schedule.closed;
+
+                                    return (
+                                        <div key={day} className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 last:border-0 hover:bg-white transition-colors">
+                                            <div className="w-24 text-sm font-medium text-slate-700">{day}</div>
+                                            <label className="relative inline-flex items-center cursor-pointer mr-2">
+                                                <input
+                                                    type="checkbox"
+                                                    className="sr-only peer"
+                                                    checked={isOpen}
+                                                    onChange={(e) => {
+                                                        const currentHours = profile.business_hours || {};
+                                                        if (e.target.checked) {
+                                                            setProfile({ ...profile, business_hours: { ...currentHours, [key]: { open: '09:00', close: '18:00', closed: false } } });
+                                                        } else {
+                                                            // Mark as closed or remove key? Let's mark as closed
+                                                            const newHours = { ...currentHours };
+                                                            if (newHours[key]) newHours[key].closed = true;
+                                                            else newHours[key] = { open: '09:00', close: '18:00', closed: true };
+                                                            setProfile({ ...profile, business_hours: newHours });
+                                                        }
+                                                    }}
+                                                />
+                                                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                                            </label>
+
+                                            {isOpen ? (
+                                                <div className="flex items-center gap-2 flex-1">
+                                                    <input
+                                                        type="time"
+                                                        value={schedule?.open || '09:00'}
+                                                        onChange={(e) => {
+                                                            const currentHours = profile.business_hours || {};
+                                                            setProfile({ ...profile, business_hours: { ...currentHours, [key]: { ...schedule, open: e.target.value, closed: false } } });
+                                                        }}
+                                                        className="bg-slate-100 border-none rounded px-2 py-1 text-xs font-mono text-slate-700 focus:ring-1 focus:ring-blue-500 outline-none"
+                                                    />
+                                                    <span className="text-slate-300">-</span>
+                                                    <input
+                                                        type="time"
+                                                        value={schedule?.close || '18:00'}
+                                                        onChange={(e) => {
+                                                            const currentHours = profile.business_hours || {};
+                                                            setProfile({ ...profile, business_hours: { ...currentHours, [key]: { ...schedule, close: e.target.value, closed: false } } });
+                                                        }}
+                                                        className="bg-slate-100 border-none rounded px-2 py-1 text-xs font-mono text-slate-700 focus:ring-1 focus:ring-blue-500 outline-none"
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <span className="text-xs text-slate-400 italic">Cerrado</span>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Step 7: Marketing & Config */}
+                    {activeStep === 6 && (
+                        <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
+                            <div className="bg-gradient-to-br from-purple-50 to-indigo-50 p-4 rounded-xl border border-purple-100">
+                                <label className="block">
+                                    <span className="text-xs font-bold text-purple-800 mb-2 flex items-center gap-2">
+                                        <IconMegaphone size={14} /> Barra de Anuncios (Sticky Bar) <span className="text-[10px] bg-white px-1.5 py-0.5 rounded border border-purple-200">NUEVO</span>
+                                    </span>
+                                    <input
+                                        type="text"
+                                        className="w-full px-4 py-2.5 rounded-lg bg-white border border-purple-100 focus:border-purple-500 outline-none text-sm placeholder:text-purple-300"
+                                        placeholder="Ej. ¡Envío gratis por compras mayores a S/100!"
+                                    />
+                                    <div className="mt-2 flex items-center gap-2">
+                                        <input type="checkbox" className="rounded text-purple-600 focus:ring-purple-500" defaultChecked />
+                                        <span className="text-xs text-purple-700">Mostrar barra en la parte superior</span>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div className="p-4 rounded-xl border border-amber-200 bg-amber-50">
+                                <h4 className="text-sm font-bold text-amber-800 flex items-center gap-2">
+                                    ⚡ Impulsa tus ventas
+                                </h4>
+                                <p className="text-xs text-amber-700 mt-1 mb-0">
+                                    Utiliza la barra de anuncios para promociones especiales o mensaje importantes.
+                                </p>
+                            </div>
+
+                            <div className="p-4 rounded-xl border border-amber-200 bg-amber-50">
+                                <h4 className="text-sm font-bold text-amber-800 flex items-center gap-2">
+                                    ⚡ ¿Listo para vender?
+                                </h4>
+                                <p className="text-xs text-amber-700 mt-1 mb-3">
+                                    Asegúrate de tener adisos publicados. Aparecerán automáticamente en la pestaña "Catálogo".
+                                </p>
+                                <Link href="/?seccion=publicar" className="text-xs font-bold text-amber-900 underline hover:no-underline">
+                                    Publicar nuevo adiso
+                                </Link>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Footer Navigation */}
+                    <div className="p-4 border-t border-slate-200 bg-white flex justify-between items-center fixed bottom-0 left-0 md:left-auto md:w-[450px] lg:w-[500px] z-20">
+                        <button
+                            onClick={handlePrev}
+                            disabled={activeStep === 0}
+                            className="px-6 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                            Atrás
+                        </button>
+
+                        <button
+                            onClick={handleNext}
+                            disabled={activeStep === STEPS.length - 1}
+                            className="px-6 py-2.5 rounded-xl bg-slate-900 text-white text-sm font-medium hover:bg-slate-800 disabled:opacity-50 disabled:bg-slate-300 flex items-center gap-2 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                        >
+                            {activeStep === STEPS.length - 1 ? 'Finalizar' : 'Siguiente Paso'}
+                            <IconArrowRight size={16} />
+                        </button>
                     </div>
-                )}
-
-                {/* Footer Navigation */}
-                <div className="p-4 border-t border-slate-200 bg-white flex justify-between items-center fixed bottom-0 left-0 md:left-auto md:w-[450px] lg:w-[500px] z-20">
-                    <button
-                        onClick={handlePrev}
-                        disabled={activeStep === 0}
-                        className="px-6 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                        Atrás
-                    </button>
-
-                    <button
-                        onClick={handleNext}
-                        disabled={activeStep === STEPS.length - 1}
-                        className="px-6 py-2.5 rounded-xl bg-slate-900 text-white text-sm font-medium hover:bg-slate-800 disabled:opacity-50 disabled:bg-slate-300 flex items-center gap-2 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-                    >
-                        {activeStep === STEPS.length - 1 ? 'Finalizar' : 'Siguiente Paso'}
-                        <IconArrowRight size={16} />
-                    </button>
+                    {/* Spacer for fixed footer */}
+                    <div className="h-24"></div>
                 </div>
-                {/* Spacer for fixed footer */}
-                <div className="h-24"></div>
             </div>
         </div>
     );

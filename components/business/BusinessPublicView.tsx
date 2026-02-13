@@ -10,11 +10,12 @@ import {
     IconInstagram, IconFacebook, IconTiktok,
     IconVerified, IconShareAlt, IconGlobe, IconPhone, IconClock, IconChevronDown,
     IconLinkedin, IconYoutube, IconSearch, IconArrowRight, IconHeart,
-    IconFileAlt
+    IconFileAlt, IconEdit, IconPlus
 } from '@/components/Icons';
 import BentoCard from '@/components/BentoCard';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/hooks/useAuth';
 
 // Helper for Social Icons
 const getSocialIcon = (url: string) => {
@@ -36,12 +37,17 @@ interface BusinessPublicViewProps {
     profile: BusinessProfile;
     adisos: Adiso[];
     isPreview?: boolean;
+    onEditPart?: (part: string) => void;
 }
 
-export default function BusinessPublicView({ profile, adisos, isPreview = false }: BusinessPublicViewProps) {
+export default function BusinessPublicView({ profile, adisos, isPreview = false, onEditPart }: BusinessPublicViewProps) {
+    const { user } = useAuth();
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState<'inicio' | 'catalogo' | 'feed' | 'info'>('inicio');
+    const [activeTab, setActiveTab] = useState<'inicio' | 'catalogo' | 'feed'>('catalogo');
     const [isHeaderCompact, setIsHeaderCompact] = useState(false);
+
+    // Ownership check
+    const isOwner = user?.id === profile.user_id || isPreview;
 
     // Catalog State
     const [searchQuery, setSearchQuery] = useState('');
@@ -129,15 +135,15 @@ export default function BusinessPublicView({ profile, adisos, isPreview = false 
                 </div>
 
                 {/* Main Content Overlay */}
-                <div className="absolute bottom-0 left-0 w-full p-6 pb-20 md:pb-6 max-w-6xl mx-auto flex flex-col md:flex-row items-end md:items-center gap-6 z-10">
+                <div className="absolute bottom-0 left-0 w-full p-6 pb-20 md:pb-8 max-w-6xl mx-auto flex flex-row items-end gap-3 md:gap-6 z-10 text-left">
 
                     {/* Logo */}
                     <motion.div
                         initial={{ scale: 0.8, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        className="relative"
+                        className="relative group/logo flex-shrink-0"
                     >
-                        <div className="w-28 h-28 md:w-36 md:h-36 rounded-2xl bg-white shadow-2xl p-1 overflow-hidden border-4 border-white/10 backdrop-blur-sm">
+                        <div className="w-24 h-24 md:w-36 md:h-36 rounded-2xl bg-white shadow-2xl p-1 overflow-hidden border-4 border-white/10 backdrop-blur-sm relative">
                             {profile.logo_url ? (
                                 <img src={profile.logo_url} alt="Logo" className="w-full h-full object-cover rounded-xl" />
                             ) : (
@@ -145,37 +151,75 @@ export default function BusinessPublicView({ profile, adisos, isPreview = false 
                                     {profile.name.substring(0, 1)}
                                 </div>
                             )}
+
+                            {isOwner && (
+                                <button
+                                    onClick={() => onEditPart?.('logo')}
+                                    className="absolute inset-0 bg-black/40 opacity-0 group-hover/logo:opacity-100 transition-opacity flex items-center justify-center text-white"
+                                >
+                                    <IconEdit size={24} />
+                                </button>
+                            )}
                         </div>
                         {/* Verified Badge */}
-                        <div className="absolute -bottom-2 -right-2 bg-blue-500 text-white rounded-full p-1 border-2 border-[var(--bg-secondary)]" title="Verificado">
-                            <IconVerified size={16} />
+                        <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white rounded-full p-1 border-2 border-[var(--bg-secondary)]" title="Verificado">
+                            <IconVerified size={12} className="md:size-4" />
                         </div>
                     </motion.div>
 
                     {/* Text Info */}
-                    <div className="flex-1 text-white mb-2 md:mb-0">
-                        <motion.h1
-                            initial={{ x: -20, opacity: 0 }}
-                            animate={{ x: 0, opacity: 1 }}
-                            className="text-3xl md:text-5xl font-black tracking-tight mb-2 drop-shadow-md"
-                        >
-                            {profile.name}
-                        </motion.h1>
-                        <motion.p
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.1 }}
-                            className="text-white/80 text-sm md:text-base line-clamp-2 max-w-2xl"
-                        >
-                            {profile.description || 'Bienvenido a mi tienda digital.'}
-                        </motion.p>
+                    <div className="flex-1 text-white mb-2 md:mb-4 relative group/info min-w-0">
+                        <div className="relative inline-flex items-center gap-2 max-w-full">
+                            <motion.h1
+                                initial={{ x: -20, opacity: 0 }}
+                                animate={{ x: 0, opacity: 1 }}
+                                className="text-xl md:text-5xl font-black tracking-tight mb-0.5 md:mb-2 drop-shadow-md truncate"
+                            >
+                                {profile.name}
+                            </motion.h1>
+                            {isOwner && (
+                                <button
+                                    onClick={() => onEditPart?.('identity')}
+                                    className="absolute -top-2 -right-8 opacity-0 group-hover/info:opacity-100 bg-white/20 p-1.5 rounded-full backdrop-blur-sm transition-all text-white scale-75"
+                                >
+                                    <IconEdit size={16} />
+                                </button>
+                            )}
+                        </div>
 
-                        {/* Highlights (Location, Rating, Open Status) */}
-                        <div className="flex flex-wrap gap-4 mt-4 text-xs md:text-sm font-medium">
+                        <div className="relative">
+                            <motion.p
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.1 }}
+                                className="text-white/80 text-[10px] md:text-base line-clamp-1 md:line-clamp-2 max-w-2xl leading-tight"
+                            >
+                                {profile.description || 'Bienvenido a mi tienda digital.'}
+                            </motion.p>
+                            {isOwner && (
+                                <button
+                                    onClick={() => onEditPart?.('identity')}
+                                    className="absolute -right-8 top-0 opacity-0 group-hover/info:opacity-100 bg-white/20 p-1.5 rounded-full backdrop-blur-sm transition-all text-white scale-75"
+                                >
+                                    <IconEdit size={16} />
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Highlights (Desktop Status Only) */}
+                        <div className="hidden md:flex flex-wrap justify-start gap-4 mt-4 text-xs md:text-sm font-medium">
                             {hasLocation && (
-                                <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+                                <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 group/loc relative">
                                     <IconMapMarkerAlt className="text-[var(--brand-color)]" size={14} color={profile.theme_color} />
                                     <span>{profile.contact_address}</span>
+                                    {isOwner && (
+                                        <button
+                                            onClick={() => onEditPart?.('contact')}
+                                            className="absolute -top-4 -right-2 opacity-0 group-hover/loc:opacity-100 bg-[var(--brand-color)] p-1 rounded-full text-white scale-75 transition-all"
+                                        >
+                                            <IconEdit size={12} />
+                                        </button>
+                                    )}
                                 </div>
                             )}
                             <div className="flex items-center gap-1.5 bg-emerald-500/20 backdrop-blur-md px-3 py-1.5 rounded-full border border-emerald-500/30 text-emerald-300">
@@ -204,18 +248,27 @@ export default function BusinessPublicView({ profile, adisos, isPreview = false 
                             <IconShareAlt size={20} />
                         </button>
                     </div>
+
+                    {isOwner && (
+                        <button
+                            onClick={() => onEditPart?.('visual')}
+                            className="absolute top-4 right-4 bg-white/10 hover:bg-white/30 backdrop-blur-md text-white p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-all shadow-md border border-white/20"
+                            title="Editar Portada"
+                        >
+                            <IconEdit size={16} />
+                        </button>
+                    )}
                 </div>
             </div>
 
             {/* --- NAVIGATION TABS (Sticky) --- */}
             <div className="sticky top-0 z-40 bg-[var(--bg-secondary)]/80 backdrop-blur-lg border-b border-[var(--border-subtle)]">
                 <div className="max-w-6xl mx-auto px-4">
-                    <div className="flex items-center gap-8 overflow-x-auto no-scrollbar">
+                    <div className="flex items-center justify-center md:items-center md:justify-start gap-8 overflow-x-auto no-scrollbar">
                         {[
-                            { id: 'inicio', label: 'Inicio' },
                             { id: 'catalogo', label: 'Catálogo', count: adisos.length },
-                            { id: 'feed', label: 'Publicaciones' },
-                            { id: 'info', label: 'Información' }
+                            { id: 'inicio', label: 'Sobre Nosotros' },
+                            { id: 'feed', label: 'Publicaciones' }
                         ].map(tab => (
                             <button
                                 key={tab.id}
@@ -298,6 +351,45 @@ export default function BusinessPublicView({ profile, adisos, isPreview = false 
 
                             {/* Right Column: Featured Content / Bento Grid */}
                             <div className="lg:col-span-2">
+                                <div className="bg-[var(--bg-primary)] p-6 rounded-3xl shadow-sm border border-[var(--border-subtle)] mb-8">
+                                    <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                                        <IconMapMarkerAlt className="text-[var(--brand-color)]" /> Ubicación y Contacto
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <p className="text-[var(--text-secondary)] mb-4">{profile.contact_address || 'Dirección no especificada'}</p>
+                                            <div className="w-full h-48 bg-[var(--bg-secondary)] rounded-xl overflow-hidden border border-[var(--border-color)]">
+                                                <iframe
+                                                    width="100%"
+                                                    height="100%"
+                                                    frameBorder="0"
+                                                    scrolling="no"
+                                                    marginHeight={0}
+                                                    marginWidth={0}
+                                                    src={`https://maps.google.com/maps?q=${encodeURIComponent(profile.contact_address || 'peru')}&t=&z=13&ie=UTF8&iwloc=&output=embed`}
+                                                ></iframe>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-4">
+                                            <h4 className="font-bold text-sm text-[var(--text-secondary)] uppercase tracking-wider">Horarios</h4>
+                                            <div className="space-y-2">
+                                                {Object.entries(profile.business_hours || {}).length > 0 ? (
+                                                    Object.entries(profile.business_hours).map(([day, hours]) => (
+                                                        <div key={day} className="flex justify-between text-sm py-1 border-b border-[var(--border-subtle)] last:border-0 lowercase">
+                                                            <span className="font-medium capitalize">{day}</span>
+                                                            <span className={hours.closed ? "text-red-500 font-medium" : "text-[var(--text-secondary)]"}>
+                                                                {hours.closed ? 'Cerrado' : `${hours.open} - ${hours.close}`}
+                                                            </span>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <p className="text-sm text-[var(--text-tertiary)] italic">Consulte horarios directamente.</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <h3 className="font-bold text-xl mb-6">Destacados</h3>
                                 {adisos.length > 0 ? (
                                     <div className={cn(
@@ -418,93 +510,38 @@ export default function BusinessPublicView({ profile, adisos, isPreview = false 
                         </motion.div>
                     )}
 
-                    {/* INFO TAB */}
-                    {activeTab === 'info' && (
-                        <motion.div
-                            key="info"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            className="max-w-2xl mx-auto space-y-8"
-                        >
-                            {/* Location */}
-                            <div className="bg-[var(--bg-primary)] p-6 rounded-3xl shadow-sm border border-[var(--border-subtle)]">
-                                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                                    <IconMapMarkerAlt className="text-[var(--brand-color)]" /> Ubicación
-                                </h3>
-                                <p className="text-[var(--text-secondary)] mb-4">{profile.contact_address || 'Dirección no especificada'}</p>
-                                {/* Mock Map -> Real Map */}
-                                <div className="w-full h-48 bg-[var(--bg-secondary)] rounded-xl overflow-hidden border border-[var(--border-color)]">
-                                    <iframe
-                                        width="100%"
-                                        height="100%"
-                                        frameBorder="0"
-                                        scrolling="no"
-                                        marginHeight={0}
-                                        marginWidth={0}
-                                        src={`https://maps.google.com/maps?q=${encodeURIComponent(profile.contact_address || 'peru')}&t=&z=13&ie=UTF8&iwloc=&output=embed`}
-                                    ></iframe>
-                                </div>
-                            </div>
+                    {/* INFO TAB (FUSED INTO INICIO) */}
 
-                            {/* Hours */}
-                            <div className="bg-[var(--bg-primary)] p-6 rounded-3xl shadow-sm border border-[var(--border-subtle)]">
-                                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                                    <IconClock className="text-[var(--brand-color)]" /> Horarios de Atención
-                                </h3>
-                                <div className="space-y-3">
-                                    {Object.entries(profile.business_hours || {}).length > 0 ? (
-                                        Object.entries(profile.business_hours).map(([day, hours]) => (
-                                            <div key={day} className="flex justify-between text-sm py-2 border-b border-[var(--border-subtle)] last:border-0">
-                                                <span className="font-medium capitalize">{day}</span>
-                                                <span className={hours.closed ? "text-red-500 font-medium" : "text-[var(--text-secondary)]"}>
-                                                    {hours.closed ? 'Cerrado' : `${hours.open} - ${hours.close}`}
-                                                </span>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'].map(day => (
-                                            <div key={day} className="flex justify-between text-sm py-2 border-b border-[var(--border-subtle)] last:border-0">
-                                                <span className="font-medium">{day}</span>
-                                                <span className="text-[var(--text-secondary)]">9:00 AM - 6:00 PM (Ejemplo)</span>
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Contact Form */}
-                            {profile.show_contact_form !== false && (
-                                <div className="bg-[var(--bg-primary)] p-6 rounded-3xl shadow-sm border border-[var(--border-subtle)]">
-                                    <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                                        <IconEnvelope className="text-[var(--brand-color)]" /> Contáctanos
-                                    </h3>
-                                    <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); alert('¡Mensaje enviado! Nos pondremos en contacto pronto.'); }}>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <input type="text" placeholder="Tu Nombre" className="px-4 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] outline-none focus:border-[var(--brand-color)] w-full text-sm" required />
-                                            <input type="email" placeholder="Tu Email" className="px-4 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] outline-none focus:border-[var(--brand-color)] w-full text-sm" required />
-                                        </div>
-                                        <textarea placeholder="¿En qué podemos ayudarte?" className="px-4 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] outline-none focus:border-[var(--brand-color)] w-full min-h-[100px] text-sm" required></textarea>
-                                        <button type="submit" className="w-full bg-[var(--brand-color)] text-white font-bold py-3 rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-[var(--brand-color)]/20">
-                                            Enviar Mensaje
-                                        </button>
-                                    </form>
-                                </div>
-                            )}
-                        </motion.div>
-                    )}
                 </AnimatePresence>
             </div>
 
-            {/* --- FLOATING ACTION BUTTON (Mobile) --- */}
-            <div className="md:hidden fixed bottom-6 right-6 z-50">
-                {profile.contact_whatsapp && (
-                    <a
-                        href={`https://wa.me/${profile.contact_whatsapp}`}
-                        className="flex items-center justify-center w-14 h-14 bg-green-500 text-white rounded-full shadow-lg shadow-green-500/40 hover:scale-110 transition-transform"
+            {/* --- FLOATING ACTION BUTTON --- */}
+            <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
+                {isOwner ? (
+                    <button
+                        onClick={() => onEditPart?.('add-product')}
+                        className="w-14 h-14 bg-[var(--brand-color)] text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform active:scale-95 group relative"
+                        title="Agregar Producto"
                     >
-                        <IconWhatsapp size={28} />
-                    </a>
+                        <IconPlus size={28} />
+                        <span className="absolute right-full mr-3 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                            Nuevo Producto
+                        </span>
+                    </button>
+                ) : (
+                    profile.contact_whatsapp && (
+                        <a
+                            href={getWhatsappUrl(profile.contact_whatsapp, profile.name)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="w-14 h-14 bg-green-500 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform active:scale-95 group relative"
+                        >
+                            <IconWhatsapp size={28} />
+                            <span className="absolute right-full mr-3 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                WhatsApp
+                            </span>
+                        </a>
+                    )
                 )}
             </div>
 

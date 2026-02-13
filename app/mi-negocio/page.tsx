@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { createBusinessProfile, getBusinessProfile, updateBusinessProfile, checkSlugAvailability } from '@/lib/business';
 import { BusinessProfile } from '@/types/business';
@@ -18,11 +18,19 @@ import { supabase, dbToAdiso } from '@/lib/supabase';
 import { Adiso } from '@/types';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/hooks/useToast';
+import dynamic from 'next/dynamic';
+
+const FormularioPublicar = dynamic(() => import('@/components/FormularioPublicar'), {
+    ssr: false,
+    loading: () => <div className="p-8 text-center text-slate-500">Cargando formulario...</div>
+});
 import { EditorSteps } from './components/EditorSteps';
 
 export default function BusinessBuilderPage() {
     const { user, loading: authLoading } = useAuth();
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const { toasts, removeToast, success, error } = useToast();
     const [profileLoading, setProfileLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [showAuthModal, setShowAuthModal] = useState(false);
@@ -67,6 +75,14 @@ export default function BusinessBuilderPage() {
         }
         loadProfile();
     }, [user, authLoading]);
+
+    // Handle Deep Linking from Public View Edit Icons
+    useEffect(() => {
+        const editPart = searchParams.get('edit');
+        if (editPart) {
+            handleEditPart(editPart);
+        }
+    }, [searchParams, profileLoading]);
 
     const handleSave = async () => {
         if (!user) return;
@@ -139,6 +155,8 @@ export default function BusinessBuilderPage() {
     const [userAdisos, setUserAdisos] = useState<Adiso[]>([]);
     const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
     const [activeTab, setActiveTab] = useState<'editor' | 'preview'>('editor'); // For mobile
+    const [activeStep, setActiveStep] = useState(0);
+    const [showPublishModal, setShowPublishModal] = useState(false);
 
     // Auto-save: Debounce profile changes
     const debouncedProfile = useDebounce(profile, 1500);
@@ -243,6 +261,36 @@ export default function BusinessBuilderPage() {
 
         const isAvailable = await checkSlugAvailability(cleanSlug);
         setSlugAvailable(isAvailable);
+    };
+
+    const handleEditPart = (part: string) => {
+        // Map part names to step indices
+        const partToStep: Record<string, number> = {
+            'identity': 0,
+            'logo': 1,
+            'visual': 1,
+            'banner': 1,
+            'catalog': 2,
+            'add-product': 2,
+            'contact': 3,
+            'hours': 4,
+            'social': 5,
+            'marketing': 6
+        };
+
+        if (partToStep[part] !== undefined) {
+            setActiveStep(partToStep[part]);
+
+            // Special case: if adding product, open modal too
+            if (part === 'add-product') {
+                setShowPublishModal(true);
+            }
+
+            // If on mobile, switch back to editor tab
+            if (window.innerWidth < 768) {
+                setActiveTab('editor');
+            }
+        }
     };
 
     // --- Dummy Data for Preview ---
@@ -453,6 +501,9 @@ export default function BusinessBuilderPage() {
                         setProfile={setProfile as any}
                         saving={saving}
                         userAdisos={userAdisos}
+                        activeStep={activeStep}
+                        setActiveStep={setActiveStep}
+                        onAddProduct={() => setShowPublishModal(true)}
                     />
                 </div>
 
@@ -498,12 +549,42 @@ export default function BusinessBuilderPage() {
                                     profile={previewProfile}
                                     adisos={previewAdisos}
                                     isPreview={true}
+                                    onEditPart={handleEditPart}
                                 />
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+            {/* --- PUBLISH MODAL --- */}
+            {showPublishModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowPublishModal(false)} />
+                    <div className="relative bg-white w-full max-w-2xl max-h-[90vh] rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                            <h3 className="font-bold text-slate-800">Agregar Nuevo Producto</h3>
+                            <button
+                                onClick={() => setShowPublishModal(false)}
+                                className="w-8 h-8 rounded-full hover:bg-white flex items-center justify-center transition-colors"
+                            >
+                                <IconClose size={20} />
+                            </button>
+                        </div>
+                        <div className="overflow-y-auto max-h-[calc(90vh-60px)] p-6">
+                            <FormularioPublicar
+                                onPublicar={(adiso) => {
+                                    setUserAdisos(prev => [adiso, ...prev]);
+                                    setShowPublishModal(false);
+                                    success('Producto añadido al catálogo');
+                                }}
+                                onCerrar={() => setShowPublishModal(false)}
+                                onError={error}
+                                onSuccess={success}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

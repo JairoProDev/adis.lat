@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
 import { getBusinessProfileBySlug } from '@/lib/business';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Adiso } from '@/types';
 import BusinessPublicView from '@/components/business/BusinessPublicView';
 
 export default function PublicBusinessPage({ params }: { params: { slug: string } }) {
+    const router = useRouter();
     const [profile, setProfile] = useState<any>(null);
     const [adisos, setAdisos] = useState<Adiso[]>([]);
     const [loading, setLoading] = useState(true);
@@ -75,5 +76,13 @@ export default function PublicBusinessPage({ params }: { params: { slug: string 
     }
 
     // Render the Premium View
-    return <BusinessPublicView profile={profile} adisos={adisos} />;
+    return (
+        <BusinessPublicView
+            profile={profile}
+            adisos={adisos}
+            onEditPart={(part) => {
+                router.push(`/mi-negocio?edit=${part}`);
+            }}
+        />
+    );
 }
