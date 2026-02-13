@@ -169,7 +169,7 @@ function BusinessBuilderPageContent() {
             const { data } = await supabase!
                 .from('adisos')
                 .select('*')
-                .eq('user_id', user!.id)
+                .eq('usuario_id', user!.id)
                 .order('fecha_publicacion', { ascending: false })
                 .limit(6);
 
