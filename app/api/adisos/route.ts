@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { 
-  getAdisosFromSupabase, 
-  createAdisoInSupabase 
+import {
+  getAdisosFromSupabase,
+  createAdisoInSupabase
 } from '@/lib/supabase';
 import { Adiso } from '@/types';
 import { generarIdUnico } from '@/lib/utils';
 import { createAdisoSchema, sanitizeText } from '@/lib/validations';
 import { rateLimit, getClientIP } from '@/lib/rate-limit';
+
+export const dynamic = 'force-dynamic';
 
 // Esta función maneja GET para obtener todos los adisos
 export async function GET(request: NextRequest) {
@@ -19,11 +21,11 @@ export async function GET(request: NextRequest) {
 
   if (!limitResult.allowed) {
     return NextResponse.json(
-      { 
+      {
         error: 'Demasiadas solicitudes. Por favor intenta más tarde.',
         retryAfter: Math.ceil((limitResult.resetTime - Date.now()) / 1000)
       },
-      { 
+      {
         status: 429,
         headers: {
           'Retry-After': Math.ceil((limitResult.resetTime - Date.now()) / 1000).toString(),
@@ -39,7 +41,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = parseInt(searchParams.get('limit') || '50', 10);
-    
+
     // Validar límites
     if (page < 1 || limit < 1 || limit > 1000) {
       return NextResponse.json(
@@ -47,10 +49,10 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       );
     }
-    
+
     // Calcular offset para paginación eficiente
     const offset = (page - 1) * limit;
-    
+
     // Obtener total de adisos para calcular hasMore (solo si es necesario)
     // Por ahora, asumimos que si obtenemos 'limit' resultados, hay más
     const adisos = await getAdisosFromSupabase({
@@ -58,11 +60,11 @@ export async function GET(request: NextRequest) {
       offset: offset,
       soloActivos: false
     });
-    
+
     // Determinar si hay más páginas
     const hasMore = adisos.length > limit;
     const paginatedAdisos = hasMore ? adisos.slice(0, limit) : adisos;
-    
+
     return NextResponse.json({
       data: paginatedAdisos,
       pagination: {
@@ -74,11 +76,11 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('Error al obtener adisos:', error);
-    
+
     // Mensajes más descriptivos
     let errorMessage = 'Error al obtener adisos';
     let statusCode = 500;
-    
+
     if (error?.message?.includes('políticas de seguridad') || error?.message?.includes('permission denied')) {
       errorMessage = 'Las políticas de seguridad no están configuradas. Ejecuta el SQL de seguridad en Supabase.';
       statusCode = 403;
@@ -86,7 +88,7 @@ export async function GET(request: NextRequest) {
       errorMessage = 'Error de conexión con Supabase. Verifica tu conexión y las credenciales.';
       statusCode = 503;
     }
-    
+
     return NextResponse.json(
       { error: errorMessage, details: error?.message },
       { status: statusCode }
@@ -105,11 +107,11 @@ export async function POST(request: NextRequest) {
 
   if (!limitResult.allowed) {
     return NextResponse.json(
-      { 
+      {
         error: 'Demasiadas solicitudes de creación. Por favor espera un momento antes de intentar nuevamente.',
         retryAfter: Math.ceil((limitResult.resetTime - Date.now()) / 1000)
       },
-      { 
+      {
         status: 429,
         headers: {
           'Retry-After': Math.ceil((limitResult.resetTime - Date.now()) / 1000).toString(),
@@ -123,24 +125,24 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    
+
     // Validar y sanitizar entrada
     const validationResult = createAdisoSchema.safeParse(body);
-    
+
     if (!validationResult.success) {
       const errorDetails = validationResult.error.issues.map(e => ({
         path: e.path.join('.'),
         message: e.message,
         code: e.code
       }));
-      
+
       console.error('Error de validación:', {
         body: JSON.stringify(body, null, 2),
         errors: errorDetails
       });
-      
+
       return NextResponse.json(
-        { 
+        {
           error: 'Datos de entrada inválidos',
           details: errorDetails,
           // Incluir el primer error como mensaje principal para debugging
@@ -149,15 +151,15 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    
+
     const validatedData = validationResult.data;
-    
+
     // Preservar ubicación original del body (puede ser objeto o string)
     const ubicacionOriginal = body.ubicacion;
-    const tieneUbicacionDetallada = typeof ubicacionOriginal === 'object' && 
-                                     ubicacionOriginal !== null && 
-                                     'departamento' in ubicacionOriginal;
-    
+    const tieneUbicacionDetallada = typeof ubicacionOriginal === 'object' &&
+      ubicacionOriginal !== null &&
+      'departamento' in ubicacionOriginal;
+
     // Sanitizar campos de texto
     // Nota: validatedData.contacto ya está normalizado por el transform de Zod (sin espacios)
     const sanitizedData = {
@@ -165,21 +167,21 @@ export async function POST(request: NextRequest) {
       titulo: sanitizeText(validatedData.titulo),
       descripcion: validatedData.descripcion ? sanitizeText(validatedData.descripcion) : undefined,
       // Preservar objeto de ubicación si existe, sino sanitizar el string
-      ubicacion: tieneUbicacionDetallada 
-        ? ubicacionOriginal 
+      ubicacion: tieneUbicacionDetallada
+        ? ubicacionOriginal
         : (typeof validatedData.ubicacion === 'string' ? sanitizeText(validatedData.ubicacion) : ''),
       // El contacto ya está normalizado por el transform de Zod, solo sanitizar si es necesario
       contacto: validatedData.contacto, // Ya está normalizado (sin espacios)
     };
-    
+
     // Verificar si el body original tiene id y fechas
     const bodyHasId = 'id' in body && typeof body.id === 'string';
     const bodyHasDates = 'fechaPublicacion' in body && 'horaPublicacion' in body;
-    
+
     // Si el body ya tiene un adiso completo con id, usarlo directamente
     // Si no, crear uno nuevo
     let nuevoAdiso: Adiso;
-    
+
     if (bodyHasId && bodyHasDates) {
       // El adiso ya está completo, usarlo tal cual (con sanitización)
       nuevoAdiso = {
@@ -218,15 +220,15 @@ export async function POST(request: NextRequest) {
     }
 
     const adisoCreado = await createAdisoInSupabase(nuevoAdiso);
-    
+
     return NextResponse.json(adisoCreado, { status: 201 });
   } catch (error: any) {
     console.error('Error al crear adiso:', error);
-    
+
     // Mensajes más descriptivos
     let errorMessage = 'Error al crear adiso';
     let statusCode = 500;
-    
+
     if (error?.message?.includes('políticas de seguridad') || error?.message?.includes('permission denied')) {
       errorMessage = 'Las políticas de seguridad no están configuradas. Ejecuta el SQL de seguridad en Supabase.';
       statusCode = 403;
@@ -243,7 +245,7 @@ export async function POST(request: NextRequest) {
       errorMessage = `Columna no encontrada en la base de datos: ${error?.message || 'Error desconocido'}. Verifica el esquema de la base de datos.`;
       statusCode = 500;
     }
-    
+
     return NextResponse.json(
       { error: errorMessage, details: error?.message, code: error?.code },
       { status: statusCode }

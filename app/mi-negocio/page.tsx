@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { createBusinessProfile, getBusinessProfile, updateBusinessProfile, checkSlugAvailability } from '@/lib/business';
@@ -26,7 +26,7 @@ const FormularioPublicar = dynamic(() => import('@/components/FormularioPublicar
 });
 import { EditorSteps } from './components/EditorSteps';
 
-export default function BusinessBuilderPage() {
+function BusinessBuilderPageContent() {
     const { user, loading: authLoading } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -586,5 +586,20 @@ export default function BusinessBuilderPage() {
                 </div>
             )}
         </div>
+    );
+}
+
+export default function BusinessBuilderPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-[var(--bg-secondary)]">
+                <div className="animate-pulse flex flex-col items-center gap-4">
+                    <div className="h-12 w-12 rounded-full bg-[var(--accent-color)] opacity-20"></div>
+                    <div className="text-[var(--text-secondary)] font-medium">Cargando editor...</div>
+                </div>
+            </div>
+        }>
+            <BusinessBuilderPageContent />
+        </Suspense>
     );
 }
