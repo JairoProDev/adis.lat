@@ -169,7 +169,7 @@ function BusinessBuilderPageContent() {
             const { data } = await supabase!
                 .from('adisos')
                 .select('*')
-                .eq('usuario_id', user!.id)
+                .eq('user_id', user!.id)
                 .order('fecha_publicacion', { ascending: false })
                 .limit(6);
 
@@ -583,8 +583,9 @@ function BusinessBuilderPageContent() {
                                         // If user is authenticated, we should associate their ID
                                         const adisoToSave = {
                                             ...adiso,
-                                            usuario_id: user?.id,
-                                            user_id: user?.id // Compatible with both mappings
+                                            // Ensure we set user_id for backend
+                                            user_id: user?.id,
+                                            usuario_id: user?.id // Keep for compatibility if needed elsewhere
                                         };
 
                                         await saveAdiso(adisoToSave);

@@ -87,7 +87,10 @@ export function dbToAdiso(row: any): Adiso {
     fechaPublicacionOriginal: row.fecha_publicacion_original || undefined,
     contactosMultiples: contactosMultiples || undefined,
     vistas: row.vistas || 0,
-    contactos: row.contactos || 0
+    contactos: row.contactos || 0,
+    // Add user ID mapping
+    usuario_id: row.user_id || row.usuario_id || undefined,
+    user_id: row.user_id || row.usuario_id || undefined
   };
 }
 
@@ -144,7 +147,9 @@ export function adisoToDb(adiso: Adiso): any {
     fuente_original: adiso.fuenteOriginal || null,
     edicion_numero: adiso.edicionNumero || null,
     fecha_publicacion_original: adiso.fechaPublicacionOriginal || null,
-    contactos_multiples: contactosMultiplesJson
+    contactos_multiples: contactosMultiplesJson,
+    // Map user_id to DB column
+    user_id: adiso.user_id || adiso.usuario_id || (typeof window !== 'undefined' ? (window as any).__SUPABASE_USER_ID : null)
   };
 
   // Agregar campos de ubicación detallada si existen

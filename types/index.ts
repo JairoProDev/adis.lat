@@ -107,6 +107,8 @@ export interface Adiso {
   edicionNumero?: string; // Número de edición de la revista
   fechaPublicacionOriginal?: string; // Fecha original de publicación en formato YYYY-MM-DD
   contactosMultiples?: ContactoMultiple[]; // Array de contactos múltiples
+  usuario_id?: string; // ID del usuario que creó el anuncio (Supabase Auth ID)
+  user_id?: string; // Alias para usuario_id (compatible con Supabase)
 
   // Propiedades visuales y de negocio
   precio?: number;
@@ -150,6 +152,7 @@ export interface AdisoFormData {
   ubicacion?: UbicacionDetallada; // Opcional: el anunciante puede decidir no incluir ubicación
   tamaño?: TamañoPaquete; // Tamaño del paquete seleccionado
   imagenes?: File[]; // Archivos de imagen (opcional, múltiples)
+  usuario_id?: string; // ID del usuario que creó el anuncio
 }
 
 // ============================================
