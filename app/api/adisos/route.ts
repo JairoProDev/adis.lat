@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
     const sanitizedData = {
       ...validatedData,
       titulo: sanitizeText(validatedData.titulo),
-      descripcion: validatedData.descripcion ? sanitizeText(validatedData.descripcion) : undefined,
+      descripcion: validatedData.descripcion ? sanitizeText(validatedData.descripcion) : '',
       // Preservar objeto de ubicación si existe, sino sanitizar el string
       ubicacion: tieneUbicacionDetallada
         ? ubicacionOriginal
@@ -250,7 +250,12 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: errorMessage, details: error?.message, code: error?.code },
+      {
+        error: errorMessage,
+        message: error?.message,
+        details: error?.details || error?.hint || 'No details',
+        code: error?.code
+      },
       { status: statusCode }
     );
   }

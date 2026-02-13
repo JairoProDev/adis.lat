@@ -13,7 +13,7 @@ export function cn(...inputs: ClassValue[]) {
 
 export const formatFecha = (fecha: string, hora: string): string => {
   const date = new Date(`${fecha}T${hora}`);
-  
+
   return date.toLocaleDateString('es-ES', {
     day: 'numeric',
     month: 'long',
@@ -43,7 +43,7 @@ export const copiarLink = (categoria: string, id: string): Promise<void> => {
 
 export const compartirNativo = async (categoria: string, id: string, titulo: string): Promise<void> => {
   const url = getAdisoUrl(categoria, id);
-  
+
   if (navigator.share) {
     try {
       await navigator.share({
@@ -78,7 +78,7 @@ export const getBusquedaUrl = (categoria?: Categoria | 'todos', buscar?: string)
 export const formatPhoneNumber = (value: string): string => {
   // Remover todo excepto números, + y espacios
   const cleaned = value.replace(/[^\d+\s]/g, '');
-  
+
   // Si empieza con +, mantenerlo
   if (cleaned.startsWith('+')) {
     // Formato: +XX XXX XXX XXX
@@ -137,6 +137,11 @@ export const generarIdUnico = (): string => {
   //
   // URL-safe, más corto y legible que UUID o timestamp+random
   // Ejemplo: "V1StGXR8_Z" (10 caracteres) vs "1764436785116-tjrfgcu9g" (25 caracteres)
+  // Use crypto.randomUUID if available (modern browsers/Node), otherwise fallback to nanoid
+  // This ensures compatibility if database uses UUID type
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
   return nanoid(10);
 };
 

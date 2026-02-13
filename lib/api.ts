@@ -22,7 +22,7 @@ export async function fetchAdisos(page: number = 1, limit: number = 50): Promise
       throw new Error('Error al obtener adisos');
     }
     const data = await response.json();
-    
+
     // Manejar respuesta paginada (nuevo formato)
     if (data.data && data.pagination) {
       return {
@@ -30,7 +30,7 @@ export async function fetchAdisos(page: number = 1, limit: number = 50): Promise
         pagination: data.pagination
       };
     }
-    
+
     // Compatibilidad hacia atrás: si es array directo
     if (Array.isArray(data)) {
       return {
@@ -43,7 +43,7 @@ export async function fetchAdisos(page: number = 1, limit: number = 50): Promise
         }
       };
     }
-    
+
     return {
       data: data.data || [],
       pagination: {
@@ -96,27 +96,27 @@ export async function createAdiso(adiso: Omit<Adiso, 'id' | 'fechaPublicacion' |
       },
       body: JSON.stringify(adiso),
     });
-    
+
     if (!response.ok) {
       // Intentar obtener el mensaje de error del servidor
       let errorMessage = 'Error al crear adiso';
       try {
         const errorData = await response.json();
-        errorMessage = errorData.error || errorData.message || errorMessage;
+        errorMessage = `${errorData.error || ''} [${errorData.code || 'UNKNOWN'}] - ${errorData.message || ''} - ${errorData.details || ''}`;
       } catch {
         // Si no se puede parsear el error, usar el status
         errorMessage = `Error ${response.status}: ${response.statusText}`;
       }
-      
+
       // Si el error es 409 (conflict), el adiso ya existe, intentar actualizar
       if (response.status === 409 && 'id' in adiso) {
         // Intentar actualizar en lugar de crear
         return await updateAdiso(adiso as Adiso);
       }
-      
+
       throw new Error(errorMessage);
     }
-    
+
     const resultado = await response.json();
     return resultado;
   } catch (error: any) {

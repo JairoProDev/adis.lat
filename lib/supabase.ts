@@ -132,7 +132,7 @@ export function adisoToDb(adiso: Adiso): any {
     id: adiso.id,
     categoria: adiso.categoria,
     titulo: adiso.titulo,
-    descripcion: adiso.descripcion,
+    descripcion: adiso.descripcion || '',
     contacto: adiso.contacto,
     ubicacion: ubicacionString, // Mantener para compatibilidad
     fecha_publicacion: adiso.fechaPublicacion,
