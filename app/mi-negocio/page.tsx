@@ -452,6 +452,7 @@ export default function BusinessBuilderPage() {
                         profile={profile as any}
                         setProfile={setProfile as any}
                         saving={saving}
+                        userAdisos={userAdisos}
                     />
                 </div>
 

@@ -8,10 +8,29 @@ import { cn } from '@/lib/utils';
 import {
     IconStore, IconMapMarkerAlt, IconWhatsapp, IconEnvelope,
     IconInstagram, IconFacebook, IconTiktok,
-    IconVerified, IconShareAlt, IconGlobe, IconPhone, IconClock, IconChevronDown
+    IconVerified, IconShareAlt, IconGlobe, IconPhone, IconClock, IconChevronDown,
+    IconLinkedin, IconYoutube, IconSearch, IconArrowRight, IconHeart,
+    IconFileAlt
 } from '@/components/Icons';
 import BentoCard from '@/components/BentoCard';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+
+// Helper for Social Icons
+const getSocialIcon = (url: string) => {
+    if (url.includes('facebook')) return <IconFacebook size={20} />;
+    if (url.includes('instagram')) return <IconInstagram size={20} />;
+    if (url.includes('tiktok')) return <IconTiktok size={20} />;
+    if (url.includes('linkedin')) return <IconLinkedin size={20} />;
+    if (url.includes('youtube')) return <IconYoutube size={20} />;
+    return <IconGlobe size={20} />;
+};
+
+// WhatsApp Message
+const getWhatsappUrl = (phone: string, businessName: string) => {
+    const text = `Hola, vi su perfil de ${businessName} en Publicadis Business y me gustaría más información.`;
+    return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+};
 
 interface BusinessPublicViewProps {
     profile: BusinessProfile;
@@ -21,8 +40,24 @@ interface BusinessPublicViewProps {
 
 export default function BusinessPublicView({ profile, adisos, isPreview = false }: BusinessPublicViewProps) {
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState<'inicio' | 'catalogo' | 'info'>('inicio');
+    const [activeTab, setActiveTab] = useState<'inicio' | 'catalogo' | 'feed' | 'info'>('inicio');
     const [isHeaderCompact, setIsHeaderCompact] = useState(false);
+
+    // Catalog State
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filteredAdisos, setFilteredAdisos] = useState(adisos);
+
+    useEffect(() => {
+        if (!searchQuery) {
+            setFilteredAdisos(adisos);
+        } else {
+            const query = searchQuery.toLowerCase();
+            setFilteredAdisos(adisos.filter(a =>
+                a.titulo.toLowerCase().includes(query) ||
+                a.descripcion.toLowerCase().includes(query)
+            ));
+        }
+    }, [searchQuery, adisos]);
 
     // Derived State
     const hasSocials = profile.social_links && profile.social_links.length > 0;
@@ -154,7 +189,7 @@ export default function BusinessPublicView({ profile, adisos, isPreview = false 
                     <div className="hidden md:flex gap-3">
                         {profile.contact_whatsapp && (
                             <a
-                                href={`https://wa.me/${profile.contact_whatsapp}`}
+                                href={getWhatsappUrl(profile.contact_whatsapp, profile.name)}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-green-500/30 hover:-translate-y-1"
@@ -179,6 +214,7 @@ export default function BusinessPublicView({ profile, adisos, isPreview = false 
                         {[
                             { id: 'inicio', label: 'Inicio' },
                             { id: 'catalogo', label: 'Catálogo', count: adisos.length },
+                            { id: 'feed', label: 'Publicaciones' },
                             { id: 'info', label: 'Información' }
                         ].map(tab => (
                             <button
@@ -228,20 +264,13 @@ export default function BusinessPublicView({ profile, adisos, isPreview = false 
                                     </p>
 
                                     {/* Socials */}
-                                    {hasSocials ? (
-                                        <div className="flex gap-4">
-                                            {/* Mock rendering socials */}
+                                    {hasSocials && (
+                                        <div className="flex gap-4 flex-wrap">
                                             {profile.social_links.map((link, idx) => (
-                                                <a key={idx} href={link.url} target="_blank" className="bg-[var(--bg-secondary)] p-3 rounded-full hover:bg-[var(--brand-color)] hover:text-white transition-all">
-                                                    <IconGlobe size={18} />
+                                                <a key={idx} href={link.url} target="_blank" rel="noopener noreferrer" className="bg-[var(--bg-secondary)] p-3 rounded-full hover:bg-[var(--brand-color)] hover:text-white transition-all text-[var(--text-secondary)]">
+                                                    {getSocialIcon(link.url)}
                                                 </a>
                                             ))}
-                                        </div>
-                                    ) : (
-                                        <div className="flex gap-3">
-                                            {/* Placeholder socials */}
-                                            <div className="bg-[var(--bg-tertiary)] p-3 rounded-full text-[var(--text-tertiary)]"><IconInstagram size={18} /></div>
-                                            <div className="bg-[var(--bg-tertiary)] p-3 rounded-full text-[var(--text-tertiary)]"><IconFacebook size={18} /></div>
                                         </div>
                                     )}
                                 </div>
@@ -252,7 +281,7 @@ export default function BusinessPublicView({ profile, adisos, isPreview = false 
                                     <h3 className="font-bold text-lg mb-4 relative z-10">Contáctanos</h3>
                                     <div className="space-y-4 relative z-10">
                                         {profile.contact_whatsapp && (
-                                            <a href={`https://wa.me/${profile.contact_whatsapp}`} className="flex items-center gap-3 bg-white/20 p-3 rounded-xl hover:bg-white/30 transition-colors">
+                                            <a href={getWhatsappUrl(profile.contact_whatsapp, profile.name)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 bg-white/20 p-3 rounded-xl hover:bg-white/30 transition-colors">
                                                 <IconWhatsapp size={20} />
                                                 <span className="font-medium">Chatear por WhatsApp</span>
                                             </a>
@@ -311,17 +340,36 @@ export default function BusinessPublicView({ profile, adisos, isPreview = false 
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
                         >
-                            <div className="flex justify-between items-center mb-6">
-                                <h3 className="font-bold text-xl">Todos los Productos</h3>
-                                {/* Filter Button Placeholder */}
-                                <button className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)] bg-[var(--bg-primary)] px-4 py-2 rounded-full border border-[var(--border-subtle)] shadow-sm">
-                                    Filtrar <IconChevronDown size={12} />
-                                </button>
+                            <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+                                <h3 className="font-bold text-xl md:text-2xl text-[var(--text-primary)]">
+                                    Catálogo de Productos
+                                </h3>
+
+                                <div className="flex items-center gap-3 w-full md:w-auto">
+                                    <div className="relative flex-1 md:w-64">
+                                        <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                                        <input
+                                            type="text"
+                                            placeholder="Buscar en el catálogo..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            className="w-full pl-10 pr-4 py-2 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-full text-sm focus:outline-none focus:border-[var(--brand-color)] focus:ring-1 focus:ring-[var(--brand-color)] transition-all"
+                                        />
+                                    </div>
+                                    <button
+                                        onClick={() => window.print()}
+                                        className="flex items-center gap-2 text-sm font-medium text-[var(--brand-color)] bg-[var(--brand-color)]/10 px-4 py-2 rounded-full hover:bg-[var(--brand-color)] hover:text-white transition-colors"
+                                        title="Descargar Catálogo (PDF)"
+                                    >
+                                        <IconFileAlt size={16} />
+                                        <span className="hidden sm:inline">Descargar</span>
+                                    </button>
+                                </div>
                             </div>
 
-                            {adisos.length > 0 ? (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {adisos.map((adiso) => (
+                            {filteredAdisos.length > 0 ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                    {filteredAdisos.map((adiso) => (
                                         <BentoCard
                                             key={adiso.id}
                                             adiso={adiso}
@@ -332,9 +380,41 @@ export default function BusinessPublicView({ profile, adisos, isPreview = false 
                                 </div>
                             ) : (
                                 <div className="bg-[var(--bg-primary)] rounded-3xl p-12 text-center border border-[var(--border-subtle)]">
-                                    <p>No hay productos disponibles.</p>
+                                    <div className="w-16 h-16 bg-[var(--bg-secondary)] rounded-full flex items-center justify-center mx-auto mb-4 text-[var(--text-tertiary)]">
+                                        <IconSearch size={32} />
+                                    </div>
+                                    <h4 className="font-bold text-[var(--text-secondary)] mb-2">No se encontraron productos</h4>
+                                    <p className="text-sm text-[var(--text-tertiary)]">Intenta con otros términos o explora las categorías.</p>
                                 </div>
                             )}
+                        </motion.div>
+                    )}
+
+                    {/* FEED TAB */}
+                    {activeTab === 'feed' && (
+                        <motion.div
+                            key="feed"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="max-w-2xl mx-auto space-y-6"
+                        >
+                            <div className="bg-[var(--bg-primary)] p-8 rounded-3xl text-center shadow-sm border border-[var(--border-subtle)]">
+                                <div className="w-20 h-20 bg-gradient-to-tr from-pink-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-6 text-white shadow-lg">
+                                    <IconHeart size={32} />
+                                </div>
+                                <h3 className="font-bold text-2xl mb-3">Publicaciones Sociales</h3>
+                                <p className="text-[var(--text-secondary)] mb-8 max-w-md mx-auto">
+                                    Aquí podrás ver las últimas novedades, ofertas flash y contenido exclusivo de {profile.name}.
+                                </p>
+                                <div className="inline-flex items-center gap-2 bg-[var(--bg-secondary)] px-4 py-2 rounded-full text-sm font-medium text-[var(--text-secondary)]">
+                                    <span className="relative flex h-3 w-3">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--brand-color)] opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-3 w-3 bg-[var(--brand-color)]"></span>
+                                    </span>
+                                    Próximamente
+                                </div>
+                            </div>
                         </motion.div>
                     )}
 
@@ -430,8 +510,8 @@ export default function BusinessPublicView({ profile, adisos, isPreview = false 
 
             {/* Branding Footer */}
             <div className="py-8 text-center text-xs text-[var(--text-tertiary)]">
-                <p>Powered by <span className="font-bold text-[var(--brand-blue)]">Buscadis Store</span></p>
+                <p>Hecho con <span className="font-bold text-[var(--brand-blue)]">Buscadis Store</span></p>
             </div>
-        </div >
+        </div>
     );
 }

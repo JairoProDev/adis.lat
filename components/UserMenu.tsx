@@ -9,8 +9,9 @@ import HiddenAdsList from './HiddenAdsList';
 import LocationPrompt from './LocationPrompt';
 import ConvertirAnunciante from './ConvertirAnunciante';
 import UserProfile from './UserProfile';
-import { IconClose } from './Icons';
+import { IconClose, IconStore } from './Icons';
 import { FaChartLine } from 'react-icons/fa';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
 
 interface UserMenuProps {
@@ -18,6 +19,7 @@ interface UserMenuProps {
 }
 
 export default function UserMenu({ onProgressClick }: UserMenuProps) {
+  const router = useRouter();
   const { user, signOut, refreshProfile } = useAuth();
   const { profile, isAnunciante, isVerificado } = useUser();
   const { t } = useTranslation();
@@ -163,6 +165,34 @@ export default function UserMenu({ onProgressClick }: UserMenuProps) {
 
           {/* Opciones del menú */}
           <div style={{ padding: '0.25rem' }}>
+            <button
+              onClick={() => {
+                setMostrarMenu(false);
+                router.push('/mi-negocio');
+              }}
+              style={{
+                width: '100%',
+                padding: '0.5rem 0.75rem',
+                textAlign: 'left',
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-primary)',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+                borderRadius: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+            >
+              <IconStore size={16} /> Mi Negocio
+            </button>
             <button
               onClick={() => {
                 setMostrarMenu(false);

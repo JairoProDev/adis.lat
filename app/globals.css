@@ -196,3 +196,38 @@ a {
 .border-border-subtle {
   border-color: var(--border-subtle);
 }
+
+@media print {
+  /* Hide non-printable elements */
+  nav, 
+  header, 
+  .sidebar, 
+  /* Don't hide all buttons, maybe user wants to see some, but usually for catalog printing we want clean */
+  /* button,  Let's keep buttons hidden for cleaner look */
+  button,
+  .no-print,
+  .skip-link,
+  .fixed,
+  .sticky {
+    display: none !important;
+  }
+
+  /* Reset layout for print */
+  body, 
+  main, 
+  .container {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    height: auto !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Ensure background colors/images print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

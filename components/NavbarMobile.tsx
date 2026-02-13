@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { usePathname } from 'next/navigation';
 import { SeccionSidebar } from './SidebarDesktop';
 import {
   IconAdiso,
@@ -26,6 +27,7 @@ export default function NavbarMobile({
   onCambiarSeccion,
   tieneAdisoAbierto
 }: NavbarMobileProps) {
+  const pathname = usePathname();
   const [mounted, setMounted] = React.useState(false);
   const isDesktop = useMediaQuery('(min-width: 768px)');
 
@@ -39,9 +41,9 @@ export default function NavbarMobile({
 
   const secciones = [
     { id: 'feed', icono: IconGlobe, label: 'Feed', href: '/feed' },
-    { id: 'adiso', icono: IconSearch, label: 'Buscar', href: '/' }, // 'adiso' usually maps to '/' home
+    { id: 'adiso', icono: IconSearch, label: 'Buscar', href: '/' },
     { id: 'publicar', icono: IconMegaphone, label: 'Publicar' },
-    { id: 'mapa', icono: IconMap, label: 'Mapa' },
+    { id: 'negocio', icono: IconStore, label: 'Negocio', href: '/mi-negocio' },
     { id: 'chatbot', icono: IconRobot, label: 'Asistente', href: '/chat' },
   ];
 
