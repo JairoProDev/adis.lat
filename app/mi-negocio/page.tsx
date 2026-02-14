@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { createBusinessProfile, getBusinessProfile, updateBusinessProfile, checkSlugAvailability } from '@/lib/business';
 import { BusinessProfile } from '@/types/business';
@@ -10,7 +11,7 @@ import {
     IconCopy, IconEye, IconEdit, IconExternalLink,
     IconWhatsapp, IconMapMarkerAlt, IconEnvelope,
     IconStore, IconCheck, IconClose, IconRobot,
-    IconInstagram, IconFacebook, IconTiktok, IconQrcode
+    IconInstagram, IconFacebook, IconTiktok, IconQrcode, IconBox
 } from '@/components/Icons';
 import AuthModal from '@/components/AuthModal';
 import BusinessPublicView from '@/components/business/BusinessPublicView';
@@ -156,31 +157,46 @@ function BusinessBuilderPageContent() {
 
     const { showToast } = useToast();
     const [userAdisos, setUserAdisos] = useState<Adiso[]>([]);
+    const [catalogProducts, setCatalogProducts] = useState<any[]>([]);
     const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
     const [activeTab, setActiveTab] = useState<'editor' | 'preview'>('editor'); // For mobile
     const [activeStep, setActiveStep] = useState(0);
     const [showPublishModal, setShowPublishModal] = useState(false);
 
-    // Fetch user ads for preview
+    // Fetch user ads and catalog products for preview
     useEffect(() => {
         if (!user || !supabase) return;
 
         async function fetchUserAds() {
-            const { data } = await supabase!
+            // Fetch Legacy Adisos
+            const { data: adsData } = await supabase!
                 .from('adisos')
                 .select('*')
                 .eq('user_id', user!.id)
                 .order('fecha_publicacion', { ascending: false })
-                .limit(6);
+                .limit(10);
 
-            if (data) {
-                // Convert DB adisos to Frontend Adisos
-                const formattedAds = data.map(dbToAdiso);
-                setUserAdisos(formattedAds);
+            if (adsData) {
+                setUserAdisos(adsData.map(dbToAdiso));
+            }
+
+            // Fetch New Catalog Products
+            const { data: catData } = await supabase!
+                .from('catalog_products')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(20);
+
+            // Note: In a real scenario we'd filter by business_profile_id which we get from the profile state
+            // But for now, if we have catData, we filter it locally or rely on the query if we had the ID ready
+            if (catData && profile.id) {
+                setCatalogProducts(catData.filter(p => p.business_profile_id === profile.id));
+            } else if (catData) {
+                setCatalogProducts(catData); // Fallback for initial load
             }
         }
         fetchUserAds();
-    }, [user]);
+    }, [user, profile.id]);
 
     // Auto-save: Debounce profile changes
     const debouncedProfile = useDebounce(profile, 1500);
@@ -334,8 +350,25 @@ function BusinessBuilderPageContent() {
         business_hours: profile.business_hours || {}, // Ensure structure
     } as BusinessProfile;
 
+    // Converted catalog products for preview
+    const convertedCatalog = catalogProducts.map(p => ({
+        id: p.id,
+        titulo: p.title,
+        descripcion: p.description || `Precio: S/ ${p.price?.toFixed(2)}`,
+        imagenesUrls: p.images?.map((img: any) => img.url) || [],
+        imagenUrl: p.images?.[0]?.url,
+        categoria: p.category || 'Varios',
+        fechaPublicacion: p.created_at,
+        horaPublicacion: '',
+        ubicacion: profile.contact_address || '',
+        contacto: profile.contact_whatsapp || '',
+        is_catalog_product: true // Metadata for later use if needed
+    } as any));
+
     // Use dummy ads if user has none, to show catalog potential
-    const previewAdisos = userAdisos.length > 0 ? userAdisos : DUMMY_ADISOS;
+    // Combine both legacy and new catalog products
+    const combinedAdisos = [...convertedCatalog, ...userAdisos];
+    const previewAdisos = combinedAdisos.length > 0 ? combinedAdisos : DUMMY_ADISOS;
 
     if (authLoading || profileLoading) {
         return (
@@ -399,6 +432,14 @@ function BusinessBuilderPageContent() {
                             <IconEye size={12} />
                             <span>{profile.view_count || 0} visitas</span>
                         </div>
+
+                        <Link
+                            href="/mi-negocio/catalogo"
+                            className="hidden md:flex items-center gap-2 ml-4 px-4 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold border border-blue-100 hover:bg-blue-100 transition-colors"
+                        >
+                            <IconBox size={14} />
+                            <span>Panel de Catálogo</span>
+                        </Link>
 
                         {saving && (
                             <span className="text-xs text-slate-400 animate-pulse flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-full">
@@ -506,6 +547,7 @@ function BusinessBuilderPageContent() {
                         setProfile={setProfile as any}
                         saving={saving}
                         userAdisos={userAdisos}
+                        catalogProducts={catalogProducts}
                         activeStep={activeStep}
                         setActiveStep={setActiveStep}
                         onAddProduct={() => setShowPublishModal(true)}

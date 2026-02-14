@@ -5,7 +5,7 @@ import { uploadBusinessImage } from '@/lib/business';
 import {
     IconStore, IconPhone, IconClock, IconShare, IconArrowRight, IconCheck,
     IconStar, IconMegaphone, IconEdit, IconMapMarkerAlt, IconEnvelope,
-    IconInstagram, IconFacebook, IconTiktok, IconGlobe, IconBox, IconPlus
+    IconInstagram, IconFacebook, IconTiktok, IconGlobe, IconBox, IconPlus, IconSparkles
 } from '@/components/Icons';
 import { cn } from '@/lib/utils';
 import { Adiso } from '@/types';
@@ -27,6 +27,7 @@ interface EditorStepsProps {
     setProfile: (p: any) => void;
     saving: boolean;
     userAdisos?: Adiso[];
+    catalogProducts?: any[];
     activeStep: number;
     setActiveStep: (step: number) => void;
     onAddProduct?: () => void;
@@ -37,6 +38,7 @@ export function EditorSteps({
     setProfile,
     saving,
     userAdisos = [],
+    catalogProducts = [],
     activeStep,
     setActiveStep,
     onAddProduct
@@ -274,7 +276,40 @@ export function EditorSteps({
                                                     Agregar Producto
                                                 </button>
 
-                                                <div className="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
+                                                <Link
+                                                    href="/mi-negocio/catalogo"
+                                                    className="w-full flex items-center justify-between gap-2 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 px-4 py-4 rounded-xl font-bold border border-blue-100 hover:shadow-md transition-all group"
+                                                >
+                                                    <div className="flex items-center gap-2">
+                                                        <IconSparkles size={18} className="text-blue-500" />
+                                                        <span>Gestionar con IA ✨</span>
+                                                    </div>
+                                                    <IconArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                                                </Link>
+
+                                                <div className="space-y-2 max-h-80 overflow-y-auto pr-1 custom-scrollbar">
+                                                    {/* AI Catalog Products */}
+                                                    {catalogProducts.map((p) => (
+                                                        <div key={p.id} className="flex items-center gap-3 p-2 bg-blue-50/50 rounded-lg border border-blue-100/50">
+                                                            <div className="w-10 h-10 rounded bg-white overflow-hidden flex-shrink-0 border border-blue-100">
+                                                                {p.images?.[0]?.url && (
+                                                                    <img src={p.images[0].url} className="w-full h-full object-cover" />
+                                                                )}
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="flex items-center gap-1">
+                                                                    <h4 className="font-bold text-xs text-blue-900 truncate">{p.title}</h4>
+                                                                    <IconSparkles size={10} className="text-blue-400 shrink-0" />
+                                                                </div>
+                                                                <p className="text-[10px] text-blue-600 truncate">S/ {p.price?.toFixed(2)}</p>
+                                                            </div>
+                                                            <Link href={`/negocio/${profile.slug}?product=${p.id}`} target="_blank" className="p-1.5 text-blue-400 hover:text-blue-600 hover:bg-white rounded">
+                                                                <IconArrowRight size={14} />
+                                                            </Link>
+                                                        </div>
+                                                    ))}
+
+                                                    {/* Legacy Adisos */}
                                                     {userAdisos.map((ad) => (
                                                         <div key={ad.id} className="flex items-center gap-3 p-2 bg-white rounded-lg border border-slate-100">
                                                             <div className="w-10 h-10 rounded bg-slate-100 overflow-hidden flex-shrink-0">
@@ -291,7 +326,8 @@ export function EditorSteps({
                                                             </Link>
                                                         </div>
                                                     ))}
-                                                    {userAdisos.length === 0 && (
+
+                                                    {userAdisos.length === 0 && catalogProducts.length === 0 && (
                                                         <p className="text-center text-xs text-slate-400 py-4">Sin productos aún</p>
                                                     )}
                                                 </div>

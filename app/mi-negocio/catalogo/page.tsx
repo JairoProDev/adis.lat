@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { IconPlus, IconGrid, IconList, IconSearch, IconFilter, IconSparkles, IconPackage, IconUpload } from '@/components/Icons';
+import Link from 'next/link';
+import { IconPlus, IconGrid, IconList, IconSearch, IconFilter, IconSparkles, IconPackage, IconUpload, IconArrowLeft } from '@/components/Icons';
 import Header from '@/components/Header';
 import { useToast } from '@/hooks/useToast';
 import { ToastContainer } from '@/components/Toast';
@@ -116,6 +117,10 @@ export default function CatalogPage() {
                             <p className="text-sm md:text-base text-[var(--text-secondary)]">
                                 Gestiona tus productos con inteligencia artificial
                             </p>
+                            <Link href="/mi-negocio" className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 mt-2">
+                                <IconArrowLeft size={12} />
+                                Volver al Editor de Negocio
+                            </Link>
                         </div>
 
                         <button
