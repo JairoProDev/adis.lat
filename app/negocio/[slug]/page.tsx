@@ -8,24 +8,7 @@ import type { CatalogProduct } from '@/types/catalog';
 import { getBusinessProfileBySlug } from '@/lib/business';
 import { Adiso } from '@/types';
 
-interface BusinessProfile {
-    id: string;
-    user_id: string;
-    business_name: string;
-    slug: string;
-    logo_url?: string;
-    cover_image_url?: string;
-    description?: string;
-    tagline?: string;
-    phone?: string;
-    email?: string;
-    whatsapp_number?: string;
-    address?: string;
-    instagram_url?: string;
-    facebook_url?: string;
-    is_published: boolean;
-    customization?: any;
-}
+import { BusinessProfile } from '@/types/business';
 
 export default function PublicBusinessPage({ params }: { params: { slug: string } }) {
     const router = useRouter();
@@ -53,7 +36,7 @@ export default function PublicBusinessPage({ params }: { params: { slug: string 
                 return;
             }
 
-            setBusiness(profileData as BusinessProfile);
+            setBusiness(profileData);
 
             // Load products from catalog
             const { data: productsData } = await supabase!
@@ -111,14 +94,14 @@ export default function PublicBusinessPage({ params }: { params: { slug: string 
     };
 
     const handleWhatsAppClick = () => {
-        if (business?.whatsapp_number) {
+        if (business?.contact_whatsapp) {
             trackEvent('whatsapp_click', business.id);
             const message = encodeURIComponent(`Hola! Vi tu página en Adis.lat`);
-            window.open(`https://wa.me/${business.whatsapp_number}?text=${message}`, '_blank');
+            window.open(`https://wa.me/${business.contact_whatsapp}?text=${message}`, '_blank');
         }
     };
 
-    const categories = Array.from(new Set(products.map(p => p.category).filter(Boolean)));
+    const categories = Array.from(new Set(products.map(p => p.category).filter((c): c is string => !!c)));
     const filteredProducts = selectedCategory
         ? products.filter(p => p.category === selectedCategory)
         : products;
@@ -156,18 +139,18 @@ export default function PublicBusinessPage({ params }: { params: { slug: string 
         );
     }
 
-    const primaryColor = business.customization?.primaryColor || '#53acc5';
+    const primaryColor = business.theme_color || '#53acc5';
 
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Hero Section */}
             <div className="relative">
                 {/* Cover Image */}
-                {business.cover_image_url && (
+                {business.banner_url && (
                     <div className="h-48 md:h-64 lg:h-80 overflow-hidden bg-gray-200">
                         <img
-                            src={business.cover_image_url}
-                            alt={business.business_name}
+                            src={business.banner_url}
+                            alt={business.name}
                             className="w-full h-full object-cover"
                         />
                     </div>
@@ -183,7 +166,7 @@ export default function PublicBusinessPage({ params }: { params: { slug: string 
                                     <div className="w-24 h-24 md:w-32 md:h-32 bg-white rounded-2xl shadow-lg p-2 border-4 border-white">
                                         <img
                                             src={business.logo_url}
-                                            alt={business.business_name}
+                                            alt={business.name}
                                             className="w-full h-full object-contain"
                                         />
                                     </div>
@@ -193,7 +176,7 @@ export default function PublicBusinessPage({ params }: { params: { slug: string 
                             {/* Info */}
                             <div className="flex-1">
                                 <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-2">
-                                    {business.business_name}
+                                    {business.name}
                                 </h1>
                                 {business.tagline && (
                                     <p className="text-lg text-gray-600 mb-4">
@@ -208,23 +191,23 @@ export default function PublicBusinessPage({ params }: { params: { slug: string 
 
                                 {/* Quick Info */}
                                 <div className="flex flex-wrap gap-4 mb-4">
-                                    {business.address && (
+                                    {business.contact_address && (
                                         <div className="flex items-center gap-2 text-gray-600">
                                             <IconMapPin size={18} />
-                                            <span className="text-sm">{business.address}</span>
+                                            <span className="text-sm">{business.contact_address}</span>
                                         </div>
                                     )}
-                                    {business.phone && (
+                                    {business.contact_phone && (
                                         <div className="flex items-center gap-2 text-gray-600">
                                             <IconPhone size={18} />
-                                            <span className="text-sm">{business.phone}</span>
+                                            <span className="text-sm">{business.contact_phone}</span>
                                         </div>
                                     )}
                                 </div>
 
                                 {/* Action Buttons */}
                                 <div className="flex flex-wrap gap-3">
-                                    {business.whatsapp_number && (
+                                    {business.contact_whatsapp && (
                                         <button
                                             onClick={handleWhatsAppClick}
                                             className="px-6 py-3 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-xl font-bold flex items-center gap-2 transition-colors shadow-lg"
@@ -304,7 +287,7 @@ export default function PublicBusinessPage({ params }: { params: { slug: string 
             )}
 
             {/* Floating WhatsApp Button */}
-            {business.whatsapp_number && (
+            {business.contact_whatsapp && (
                 <button
                     onClick={handleWhatsAppClick}
                     className="fixed bottom-6 right-6 w-14 h-14 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-full shadow-2xl flex items-center justify-center transition-colors z-50"

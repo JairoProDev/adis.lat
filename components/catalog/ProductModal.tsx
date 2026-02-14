@@ -98,8 +98,8 @@ ${product.description ? `\n📝 ${product.description}\n` : ''}
                                             key={idx}
                                             onClick={() => setSelectedImage(idx)}
                                             className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${selectedImage === idx
-                                                    ? 'border-blue-500 scale-105'
-                                                    : 'border-transparent hover:border-gray-300'
+                                                ? 'border-blue-500 scale-105'
+                                                : 'border-transparent hover:border-gray-300'
                                                 }`}
                                         >
                                             <img
@@ -157,14 +157,17 @@ ${product.description ? `\n📝 ${product.description}\n` : ''}
                             )}
 
                             {/* Attributes */}
-                            {product.attributes && product.attributes.length > 0 && (
+                            {product.attributes && (Array.isArray(product.attributes) ? product.attributes.length > 0 : Object.keys(product.attributes).length > 0) && (
                                 <div className="mb-6">
                                     <h3 className="text-sm font-bold text-gray-700 mb-2">Características</h3>
                                     <div className="grid grid-cols-2 gap-2">
-                                        {product.attributes.map((attr, idx) => (
+                                        {(Array.isArray(product.attributes)
+                                            ? product.attributes
+                                            : Object.entries(product.attributes).map(([name, value]) => ({ name, value }))
+                                        ).map((attr, idx) => (
                                             <div key={idx} className="flex items-center gap-2 text-sm">
                                                 <span className="text-gray-500">{attr.name}:</span>
-                                                <span className="font-medium text-gray-900">{attr.value}</span>
+                                                <span className="font-medium text-gray-900">{String(attr.value)}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -175,10 +178,10 @@ ${product.description ? `\n📝 ${product.description}\n` : ''}
                             {product.stock_status && (
                                 <div className="mb-6">
                                     <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${product.stock_status === 'in_stock'
-                                            ? 'bg-green-100 text-green-700'
-                                            : product.stock_status === 'low_stock'
-                                                ? 'bg-yellow-100 text-yellow-700'
-                                                : 'bg-red-100 text-red-700'
+                                        ? 'bg-green-100 text-green-700'
+                                        : product.stock_status === 'low_stock'
+                                            ? 'bg-yellow-100 text-yellow-700'
+                                            : 'bg-red-100 text-red-700'
                                         }`}>
                                         {product.stock_status === 'in_stock' && '✓ En stock'}
                                         {product.stock_status === 'low_stock' && '⚠️ Pocas unidades'}

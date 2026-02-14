@@ -31,6 +31,7 @@ export interface BusinessProfile {
     description?: string;
     logo_url?: string;
     banner_url?: string;
+    tagline?: string;
 
     theme_color: string;
     theme_mode: 'light' | 'dark' | 'system';

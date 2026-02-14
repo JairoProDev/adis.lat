@@ -29,7 +29,7 @@ export interface CatalogProduct {
     tags: string[];
 
     // Attributes
-    attributes: Record<string, any>;
+    attributes: Record<string, any> | Array<{ name: string; value: string }>;
 
     // Inventory
     stock?: number;
@@ -46,6 +46,7 @@ export interface CatalogProduct {
 
     // Status
     status: 'draft' | 'published' | 'archived';
+    stock_status?: 'in_stock' | 'low_stock' | 'out_of_stock';
     is_featured: boolean;
     sort_order: number;
 
