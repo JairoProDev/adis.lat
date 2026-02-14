@@ -30,7 +30,7 @@ export async function upscaleImage(imageUrl: string): Promise<string> {
                 face_enhance: false
             }
         }
-    ) as string;
+    ) as unknown as string;
 
     return output;
 }
@@ -54,7 +54,7 @@ export async function removeBackground(imageUrl: string): Promise<string> {
                 image: imageUrl
             }
         }
-    ) as string;
+    ) as unknown as string;
 
     return output;
 }
@@ -93,7 +93,7 @@ export async function generateImage(
                 guidance_scale: 7.5
             }
         }
-    ) as string[];
+    ) as unknown as string[];
 
     return output;
 }
@@ -147,7 +147,7 @@ export async function generateLogo(
                 strength: 0.8 // Higher = more variation
             }
         }
-    ) as string[];
+    ) as unknown as string[];
 
     return output;
 }
