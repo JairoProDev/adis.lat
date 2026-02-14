@@ -422,7 +422,7 @@ function BusinessBuilderPageContent() {
                                 {activeTab === 'preview' ? (
                                     <><IconEdit size={16} /> Editar Página</>
                                 ) : (
-                                    <><IconClose size={16} /> Ver Vista Previa</>
+                                    <><IconClose size={16} /> Ver Página</>
                                 )}
                             </button>
                         </div>
