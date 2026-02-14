@@ -14,11 +14,11 @@ export async function GET() {
   // Verificar conexión a Supabase
   if (supabase) {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabase!
         .from('adisos')
         .select('id')
         .limit(1);
-      
+
       health.services.database = error ? 'error' : 'ok';
     } catch (error) {
       health.services.database = 'error';
@@ -26,10 +26,10 @@ export async function GET() {
 
     // Verificar Storage
     try {
-      const { data, error } = await supabase.storage
+      const { data, error } = await supabase!.storage
         .from('adisos-images')
         .list('', { limit: 1 });
-      
+
       health.services.storage = error ? 'error' : 'ok';
     } catch (error) {
       health.services.storage = 'error';
@@ -39,8 +39,8 @@ export async function GET() {
     health.services.storage = 'not_configured';
   }
 
-  const allServicesOk = 
-    health.services.database === 'ok' && 
+  const allServicesOk =
+    health.services.database === 'ok' &&
     health.services.storage === 'ok';
 
   return NextResponse.json(health, {

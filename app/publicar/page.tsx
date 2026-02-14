@@ -82,6 +82,7 @@ function PublicarPageContent() {
                                     success('¡Anuncio publicado correctamente!');
                                     setTimeout(() => router.push(`/?adiso=${adiso.id}`), 1500);
                                 }}
+                                onCerrar={() => router.push('/')}
                                 onError={error}
                                 onSuccess={success}
                             />

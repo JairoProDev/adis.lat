@@ -152,7 +152,7 @@ export default function CatalogImportWizard() {
         }
     };
 
-    const handleImportToLocal = async () => {
+    const handleImportToCatalog = async () => {
         success('Productos importados correctamente');
         router.push('/mi-negocio/catalogo');
     };
@@ -212,7 +212,6 @@ export default function CatalogImportWizard() {
                     {currentStep === 'upload' && (
                         <UploadStep
                             files={files}
-                            onDrop={onDrop}
                             getRootProps={getRootProps}
                             getInputProps={getInputProps}
                             isDragActive={isDragActive}
@@ -246,7 +245,176 @@ export default function CatalogImportWizard() {
     );
 }
 
-// ... (rest of the components remain the same, just update ProcessingStep and ReviewStep signatures)
+// ============================================================
+// UPLOAD STEP COMPONENT
+// ============================================================
+
+function UploadStep({ files, getRootProps, getInputProps, isDragActive, removeFile, options, setOptions, onContinue, uploading }: any) {
+    const getFileIcon = (file: File) => {
+        if (file.type.includes('pdf')) return <IconFile size={48} className="text-red-500" />;
+        if (file.type.includes('image')) return <IconCamera size={48} className="text-blue-500" />;
+        if (file.type.includes('sheet') || file.type.includes('csv')) return <IconTable size={48} className="text-green-500" />;
+        return <IconFile size={48} className="text-gray-500" />;
+    };
+
+    return (
+        <div className="p-6 md:p-10">
+            {/* Drop Zone */}
+            <div
+                {...getRootProps()}
+                className={`border-3 border-dashed rounded-3xl p-8 md:p-12 text-center cursor-pointer transition-all ${isDragActive
+                    ? 'border-[var(--brand-blue)] bg-blue-50'
+                    : 'border-[var(--border-color)] hover:border-[var(--brand-blue)] hover:bg-[var(--bg-secondary)]'
+                    }`}
+            >
+                <input {...getInputProps()} />
+                <div className="flex flex-col items-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-[var(--brand-blue)] to-[#3d8da3] rounded-2xl flex items-center justify-center mb-4">
+                        <IconUpload size={32} className="text-white" />
+                    </div>
+                    <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">
+                        {isDragActive ? '¡Suelta aquí!' : 'Arrastra archivos o haz click'}
+                    </h3>
+                    <p className="text-sm text-[var(--text-secondary)] mb-4">
+                        PDF, imágenes (PNG, JPG), Excel/CSV
+                    </p>
+                    <p className="text-xs text-[var(--text-tertiary)]">
+                        Máximo 50MB por archivo
+                    </p>
+                </div>
+            </div>
+
+            {/* Uploaded Files */}
+            {files.length > 0 && (
+                <div className="mt-6">
+                    <h4 className="text-sm font-bold text-[var(--text-secondary)] mb-3">
+                        {files.length} archivo(s) seleccionado(s)
+                    </h4>
+                    <div className="space-y-2">
+                        {files.map((file: File, index: number) => (
+                            <div key={index} className="flex items-center gap-3 p-3 bg-[var(--bg-secondary)] rounded-xl">
+                                <div className="flex-shrink-0">
+                                    {getFileIcon(file)}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-[var(--text-primary)] truncate">
+                                        {file.name}
+                                    </p>
+                                    <p className="text-xs text-[var(--text-tertiary)]">
+                                        {(file.size / 1024 / 1024).toFixed(2)} MB
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => removeFile(index)}
+                                    className="flex-shrink-0 p-2 hover:bg-red-100 rounded-lg transition-colors"
+                                >
+                                    <IconX size={20} className="text-red-500" />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* AI Options */}
+            <div className="mt-8 pt-8 border-t-2 border-[var(--border-subtle)]">
+                <h4 className="text-lg font-black text-[var(--text-primary)] mb-4 flex items-center gap-2">
+                    <IconSparkles size={20} className="text-[var(--brand-blue)]" />
+                    Opciones de IA
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <AIOption
+                        title="Generar Descripciones"
+                        description="IA crea descripciones persuasivas"
+                        checked={options.generate_descriptions}
+                        onChange={(v: boolean) => setOptions({ ...options, generate_descriptions: v })}
+                    />
+                    <AIOption
+                        title="Detectar Precios"
+                        description="Extrae precios automáticamente"
+                        checked={options.detect_price}
+                        onChange={(v: boolean) => setOptions({ ...options, detect_price: v })}
+                    />
+                    <AIOption
+                        title="Mejorar Imágenes"
+                        description="Optimiza calidad y luz"
+                        checked={options.auto_enhance_images}
+                        onChange={(v: boolean) => setOptions({ ...options, auto_enhance_images: v })}
+                    />
+                    <AIOption
+                        title="Quitar Fondos"
+                        description="Fondo blanco profesional"
+                        checked={options.remove_backgrounds}
+                        onChange={(v: boolean) => setOptions({ ...options, remove_backgrounds: v })}
+                        badge="Premium"
+                    />
+                    <AIOption
+                        title="Upscale 4x"
+                        description="Aumenta resolución"
+                        checked={options.upscale_images}
+                        onChange={(v: boolean) => setOptions({ ...options, upscale_images: v })}
+                        badge="Premium"
+                    />
+                    <AIOption
+                        title="Optimizar SEO"
+                        description="Títulos y tags optimizados"
+                        checked={options.generate_seo}
+                        onChange={(v: boolean) => setOptions({ ...options, generate_seo: v })}
+                    />
+                </div>
+            </div>
+
+            {/* Continue Button */}
+            <div className="mt-8">
+                <button
+                    onClick={onContinue}
+                    disabled={files.length === 0 || uploading}
+                    className="w-full px-6 py-4 bg-gradient-to-r from-[var(--brand-blue)] to-[#3d8da3] text-white rounded-2xl font-bold disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]"
+                >
+                    {uploading ? 'Procesando...' : `Continuar con ${files.length} archivo(s)`}
+                </button>
+            </div>
+        </div>
+    );
+}
+
+// ============================================================
+// AI OPTION COMPONENT
+// ============================================================
+
+function AIOption({ title, description, checked, onChange, badge }: {
+    title: string;
+    description: string;
+    checked: boolean;
+    onChange: (checked: boolean) => void;
+    badge?: string;
+}) {
+    return (
+        <label className="flex items-start gap-3 p-4 bg-[var(--bg-secondary)] rounded-xl cursor-pointer hover:bg-opacity-80 transition-colors">
+            <input
+                type="checkbox"
+                checked={checked}
+                onChange={(e) => onChange(e.target.checked)}
+                className="mt-1 w-5 h-5 text-[var(--brand-blue)] rounded focus:ring-[var(--brand-blue)]"
+            />
+            <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                    <span className="font-bold text-[var(--text-primary)] text-sm">{title}</span>
+                    {badge && (
+                        <span className="px-2 py-0.5 bg-[var(--brand-yellow)] text-xs font-bold rounded-full">
+                            {badge}
+                        </span>
+                    )}
+                </div>
+                <p className="text-xs text-[var(--text-tertiary)]">{description}</p>
+            </div>
+        </label>
+    );
+}
+
+// ============================================================
+// PROCESSING STEP COMPONENT
+// ============================================================
 
 function ProcessingStep({ progress, currentTask, productsFound }: {
     progress: number;
@@ -291,6 +459,10 @@ function ProcessingStep({ progress, currentTask, productsFound }: {
         </div>
     );
 }
+
+// ============================================================
+// REVIEW STEP COMPONENT
+// ============================================================
 
 function ReviewStep({ products, onImport }: {
     products: CatalogProduct[];
@@ -356,4 +528,34 @@ function ReviewStep({ products, onImport }: {
     );
 }
 
-// Keep all other components (UploadStep, AIOption, StepIndicator) the same...
+// ============================================================
+// STEP INDICATOR COMPONENT
+// ============================================================
+
+function StepIndicator({ number, title, active, completed }: {
+    number: number;
+    title: string;
+    active: boolean;
+    completed: boolean;
+}) {
+    return (
+        <div className="flex flex-col items-center">
+            <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm mb-2 transition-all ${completed
+                    ? 'bg-green-500 text-white'
+                    : active
+                        ? 'bg-gradient-to-br from-[var(--brand-blue)] to-[#3d8da3] text-white shadow-lg'
+                        : 'bg-[var(--bg-secondary)] text-[var(--text-tertiary)] border-2 border-[var(--border-color)]'
+                    }`}
+            >
+                {completed ? <IconCheck size={20} /> : number}
+            </div>
+            <span
+                className={`text-xs font-medium ${active ? 'text-[var(--text-primary)]' : 'text-[var(--text-tertiary)]'
+                    }`}
+            >
+                {title}
+            </span>
+        </div>
+    );
+}

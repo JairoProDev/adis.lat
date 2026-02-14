@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/utils/supabase/server';
+import { supabase } from '@/lib/supabase';
 import {
     extractProductsFromPDF,
     detectProductsInImage,
@@ -13,10 +13,15 @@ import {
 
 export async function POST(request: NextRequest) {
     try {
-        const supabase = createClient();
+        if (!supabase) {
+            return NextResponse.json(
+                { success: false, error: 'Supabase no configurado' },
+                { status: 500 }
+            );
+        }
 
         // Check authentication
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        const { data: { user }, error: authError } = await supabase!.auth.getUser();
         if (authError || !user) {
             return NextResponse.json(
                 { success: false, error: 'No autenticado' },
@@ -25,7 +30,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Get business profile
-        const { data: profile, error: profileError } = await supabase
+        const { data: profile, error: profileError } = await supabase!
             .from('business_profiles')
             .select('id')
             .eq('user_id', user.id)
@@ -49,7 +54,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Create import record
-        const { data: importRecord, error: importError } = await supabase
+        const { data: importRecord, error: importError } = await supabase!
             .from('catalog_imports')
             .insert({
                 business_profile_id: profile.id,
@@ -99,7 +104,10 @@ async function processFilesInBackground(
     files: any[],
     options: any
 ) {
-    const supabase = createClient();
+    if (!supabase) {
+        console.error('Supabase not configured');
+        return;
+    }
 
     try {
         // Update status
@@ -126,7 +134,7 @@ async function processFilesInBackground(
                 .eq('id', importId);
 
             try {
-                let products = [];
+                let products: any[] = [];
 
                 if (file.type === 'application/pdf') {
                     // Extract from PDF
@@ -255,7 +263,13 @@ function getFileType(mimeType: string): 'pdf' | 'image' | 'excel' {
 
 export async function GET(request: NextRequest) {
     try {
-        const supabase = createClient();
+        if (!supabase) {
+            return NextResponse.json(
+                { success: false, error: 'Supabase no configurado' },
+                { status: 500 }
+            );
+        }
+
         const { searchParams } = new URL(request.url);
         const importId = searchParams.get('importId');
 

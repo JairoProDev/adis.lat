@@ -6,7 +6,8 @@ import {
   FaUserCheck, FaStar, FaStore, FaInstagram, FaFacebook, FaTiktok, FaGlobe, FaPhoneAlt,
   FaEnvelope, FaShareAlt, FaCheckCircle, FaChevronDown, FaHeart, FaArrowLeft, FaRobot,
   FaHandHoldingHeart, FaPlus, FaImage, FaSpinner, FaEye, FaTags, FaExclamationTriangle,
-  FaInfoCircle, FaQrcode, FaRegHeart, FaMicrophone, FaLinkedin, FaYoutube
+  FaInfoCircle, FaQrcode, FaRegHeart, FaMicrophone, FaLinkedin, FaYoutube,
+  FaFile, FaCamera, FaTable, FaUpload, FaList, FaFilter, FaMapPin, FaShoppingCart, FaMagic
 } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
 import { MdCenterFocusWeak } from 'react-icons/md';
@@ -100,3 +101,15 @@ export const IconMinimize = (p: IconProps) => <FaChevronRight size={getSize(p)} 
 export const IconExpand = (p: IconProps) => <FaChevronLeft size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
 export const IconPlus = (p: IconProps) => <FaPlus size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
 export const IconImage = (p: IconProps) => <FaImage size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
+export const IconFile = (p: IconProps) => <FaFile size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
+export const IconCamera = (p: IconProps) => <FaCamera size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
+export const IconTable = (p: IconProps) => <FaTable size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
+export const IconUpload = (p: IconProps) => <FaUpload size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
+export const IconX = (p: IconProps) => <FaTimes size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
+export const IconSparkles = (p: IconProps) => <FaMagic size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
+export const IconPackage = (p: IconProps) => <FaBox size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
+export const IconGrid = (p: IconProps) => <FaTh size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
+export const IconList = (p: IconProps) => <FaList size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
+export const IconFilter = (p: IconProps) => <FaFilter size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
+export const IconMapPin = (p: IconProps) => <FaMapPin size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
+export const IconShoppingCart = (p: IconProps) => <FaShoppingCart size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;

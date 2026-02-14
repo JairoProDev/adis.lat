@@ -18,11 +18,11 @@ export async function POST(request: NextRequest) {
 
   if (!limitResult.allowed) {
     return NextResponse.json(
-      { 
+      {
         error: 'Demasiadas solicitudes de subida. Por favor espera un momento.',
         retryAfter: Math.ceil((limitResult.resetTime - Date.now()) / 1000)
       },
-      { 
+      {
         status: 429,
         headers: {
           'Retry-After': Math.ceil((limitResult.resetTime - Date.now()) / 1000).toString(),
@@ -61,12 +61,12 @@ export async function POST(request: NextRequest) {
     // Validar dimensiones reales de la imagen y optimizar
     let finalBuffer: Buffer;
     let finalContentType: string;
-    
+
     try {
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
       const metadata = await sharp(buffer).metadata();
-      
+
       if (!metadata.width || !metadata.height) {
         return NextResponse.json(
           { error: 'No se pudieron leer las dimensiones de la imagen' },
@@ -84,15 +84,15 @@ export async function POST(request: NextRequest) {
 
       // Comprimir y optimizar imagen antes de subir
       finalBuffer = await sharp(buffer)
-        .resize(2048, 2048, { 
+        .resize(2048, 2048, {
           fit: 'inside',
-          withoutEnlargement: true 
+          withoutEnlargement: true
         })
         .jpeg({ quality: 85, progressive: true })
         .toBuffer();
 
       finalContentType = 'image/jpeg';
-      
+
     } catch (imageError: any) {
       console.error('Error al procesar imagen:', imageError);
       return NextResponse.json(
@@ -112,9 +112,9 @@ export async function POST(request: NextRequest) {
 
     // Determinar el bucket según el tipo
     const bucketName = tipo === 'feedback' ? 'feedback-images' : 'adisos-images';
-    
+
     // Subir a Supabase Storage usando el buffer optimizado
-    const { data, error } = await supabase.storage
+    const { data, error } = await supabase!.storage
       .from(bucketName)
       .upload(fileName, finalBuffer, {
         contentType: finalContentType,
@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
           error: error
         });
       }
-      
+
       // Mensaje más específico según el tipo de error
       let errorMessage = 'Error al subir la imagen';
       if (error.message?.includes('bucket') || error.message?.includes('Bucket')) {
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
       } else if (error.message?.includes('permission') || error.message?.includes('403')) {
         errorMessage = 'No tienes permisos para subir imágenes. Verifica las políticas de Supabase Storage.';
       }
-      
+
       return NextResponse.json(
         { error: errorMessage },
         { status: 500 }
@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Obtener URL pública
-    const { data: urlData } = supabase.storage
+    const { data: urlData } = supabase!.storage
       .from(bucketName)
       .getPublicUrl(fileName);
 

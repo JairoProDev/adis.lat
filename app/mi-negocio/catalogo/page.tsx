@@ -6,13 +6,12 @@ import { IconPlus, IconGrid, IconList, IconSearch, IconFilter, IconSparkles, Ico
 import Header from '@/components/Header';
 import { useToast } from '@/hooks/useToast';
 import { ToastContainer } from '@/components/Toast';
-import { createClient } from '@/utils/supabase/client';
+import { supabase } from '@/lib/supabase';
 import type { CatalogProduct, ProductFilters } from '@/types/catalog';
 
 export default function CatalogPage() {
     const router = useRouter();
     const { success, error: showError, toasts, removeToast } = useToast();
-    const supabase = createClient();
 
     const [products, setProducts] = useState<CatalogProduct[]>([]);
     const [loading, setLoading] = useState(true);
@@ -33,14 +32,14 @@ export default function CatalogPage() {
 
     const loadBusinessProfile = async () => {
         try {
-            const { data: { user } } = await supabase.auth.getUser();
+            const { data: { user } } = await supabase!.auth.getUser();
             if (!user) {
                 router.push('/auth/login');
                 return;
             }
 
             // Get business profile
-            const { data: profile, error: profileError } = await supabase
+            const { data: profile, error: profileError } = await supabase!
                 .from('business_profiles')
                 .select('*')
                 .eq('user_id', user.id)
@@ -65,7 +64,7 @@ export default function CatalogPage() {
 
         setLoading(true);
         try {
-            let query = supabase
+            let query = supabase!
                 .from('catalog_products')
                 .select('*')
                 .eq('business_profile_id', businessProfileId)
@@ -274,8 +273,8 @@ function ProductCard({ product }: { product: CatalogProduct }) {
                 {/* Status Badge */}
                 <div className="absolute top-2 right-2">
                     <span className={`px-2 py-1 rounded-full text-xs font-bold ${product.status === 'published'
-                            ? 'bg-green-500 text-white'
-                            : 'bg-yellow-500 text-black'
+                        ? 'bg-green-500 text-white'
+                        : 'bg-yellow-500 text-black'
                         }`}>
                         {product.status === 'published' ? 'Publicado' : 'Borrador'}
                     </span>
@@ -368,8 +367,8 @@ function ProductListItem({ product }: { product: CatalogProduct }) {
                             {product.title}
                         </h3>
                         <span className={`px-2 py-0.5 rounded-full text-xs font-bold flex-shrink-0 ${product.status === 'published'
-                                ? 'bg-green-500 text-white'
-                                : 'bg-yellow-500 text-black'
+                            ? 'bg-green-500 text-white'
+                            : 'bg-yellow-500 text-black'
                             }`}>
                             {product.status === 'published' ? '✓' : '○'}
                         </span>

@@ -3,7 +3,31 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/utils/supabase/server';
+import { supabase } from '@/lib/supabase';
+
+// Helper to check auth and get profile
+async function checkAuthAndGetProfile() {
+    if (!supabase) {
+        throw new Error('Supabase no configurado');
+    }
+
+    const { data: { user }, error: authError } = await supabase!.auth.getUser();
+    if (authError || !user) {
+        return { error: 'No autenticado', status: 401 };
+    }
+
+    const { data: profile } = await supabase!
+        .from('business_profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+    if (!profile) {
+        return { error: 'Perfil de negocio no encontrado', status: 404 };
+    }
+
+    return { user, profile };
+}
 
 // ============================================================
 // GET: List Products
@@ -11,31 +35,16 @@ import { createClient } from '@/utils/supabase/server';
 
 export async function GET(request: NextRequest) {
     try {
-        const supabase = createClient();
+        const auth = await checkAuthAndGetProfile();
+        if ('error' in auth) {
+            return NextResponse.json(
+                { success: false, error: auth.error },
+                { status: auth.status }
+            );
+        }
+
+        const { profile } = auth;
         const { searchParams } = new URL(request.url);
-
-        // Auth check
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) {
-            return NextResponse.json(
-                { success: false, error: 'No autenticado' },
-                { status: 401 }
-            );
-        }
-
-        // Get business profile
-        const { data: profile } = await supabase
-            .from('business_profiles')
-            .select('id')
-            .eq('user_id', user.id)
-            .single();
-
-        if (!profile) {
-            return NextResponse.json(
-                { success: false, error: 'Perfil de negocio no encontrado' },
-                { status: 404 }
-            );
-        }
 
         // Parse filters
         const status = searchParams.get('status');
@@ -45,7 +54,7 @@ export async function GET(request: NextRequest) {
         const perPage = parseInt(searchParams.get('per_page') || '20');
 
         // Build query
-        let query = supabase
+        let query = supabase!
             .from('catalog_products')
             .select('*', { count: 'exact' })
             .eq('business_profile_id', profile.id);
@@ -100,31 +109,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
     try {
-        const supabase = createClient();
-
-        // Auth check
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) {
+        const auth = await checkAuthAndGetProfile();
+        if ('error' in auth) {
             return NextResponse.json(
-                { success: false, error: 'No autenticado' },
-                { status: 401 }
+                { success: false, error: auth.error },
+                { status: auth.status }
             );
         }
 
-        // Get business profile
-        const { data: profile } = await supabase
-            .from('business_profiles')
-            .select('id')
-            .eq('user_id', user.id)
-            .single();
-
-        if (!profile) {
-            return NextResponse.json(
-                { success: false, error: 'Perfil de negocio no encontrado' },
-                { status: 404 }
-            );
-        }
-
+        const { profile } = auth;
         const body = await request.json();
 
         // Validate required fields
@@ -136,7 +129,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Create product
-        const { data: product, error } = await supabase
+        const { data: product, error } = await supabase!
             .from('catalog_products')
             .insert({
                 business_profile_id: profile.id,
@@ -184,7 +177,14 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
     try {
-        const supabase = createClient();
+        const auth = await checkAuthAndGetProfile();
+        if ('error' in auth) {
+            return NextResponse.json(
+                { success: false, error: auth.error },
+                { status: auth.status }
+            );
+        }
+
         const { searchParams } = new URL(request.url);
         const productId = searchParams.get('id');
 
@@ -195,19 +195,10 @@ export async function PUT(request: NextRequest) {
             );
         }
 
-        // Auth check
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) {
-            return NextResponse.json(
-                { success: false, error: 'No autenticado' },
-                { status: 401 }
-            );
-        }
-
         const body = await request.json();
 
         // Update product
-        const { data: product, error } = await supabase
+        const { data: product, error } = await supabase!
             .from('catalog_products')
             .update({
                 ...body,
@@ -242,7 +233,14 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
     try {
-        const supabase = createClient();
+        const auth = await checkAuthAndGetProfile();
+        if ('error' in auth) {
+            return NextResponse.json(
+                { success: false, error: auth.error },
+                { status: auth.status }
+            );
+        }
+
         const { searchParams } = new URL(request.url);
         const productId = searchParams.get('id');
 
@@ -253,17 +251,8 @@ export async function DELETE(request: NextRequest) {
             );
         }
 
-        // Auth check
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) {
-            return NextResponse.json(
-                { success: false, error: 'No autenticado' },
-                { status: 401 }
-            );
-        }
-
         // Delete product
-        const { error } = await supabase
+        const { error } = await supabase!
             .from('catalog_products')
             .delete()
             .eq('id', productId);

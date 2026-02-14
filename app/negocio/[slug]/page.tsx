@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/utils/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { IconPhone, IconMapPin, IconShare, IconHeart, IconShoppingCart } from '@/components/Icons';
 import type { CatalogProduct } from '@/types/catalog';
 import { getBusinessProfileBySlug } from '@/lib/business';
@@ -30,7 +30,6 @@ interface BusinessProfile {
 export default function PublicBusinessPage({ params }: { params: { slug: string } }) {
     const router = useRouter();
     const slug = params.slug;
-    const supabase = createClient();
 
     const [business, setBusiness] = useState<BusinessProfile | null>(null);
     const [products, setProducts] = useState<CatalogProduct[]>([]);
@@ -57,7 +56,7 @@ export default function PublicBusinessPage({ params }: { params: { slug: string 
             setBusiness(profileData as BusinessProfile);
 
             // Load products from catalog
-            const { data: productsData } = await supabase
+            const { data: productsData } = await supabase!
                 .from('catalog_products')
                 .select('*')
                 .eq('business_profile_id', profileData.id)
@@ -67,7 +66,7 @@ export default function PublicBusinessPage({ params }: { params: { slug: string 
             setProducts(productsData || []);
 
             // Load adisos (existing functionality)
-            const { data: ads } = await supabase
+            const { data: ads } = await supabase!
                 .from('adisos')
                 .select('*')
                 .eq('user_id', profileData.user_id)
@@ -88,7 +87,7 @@ export default function PublicBusinessPage({ params }: { params: { slug: string 
 
     const trackEvent = async (eventType: string, businessId: string, productId?: string) => {
         try {
-            await supabase.from('page_analytics').insert({
+            await supabase!.from('page_analytics').insert({
                 business_profile_id: businessId,
                 event_type: eventType,
                 product_id: productId,
@@ -260,8 +259,8 @@ export default function PublicBusinessPage({ params }: { params: { slug: string 
                                 <button
                                     onClick={() => setSelectedCategory(null)}
                                     className={`px-4 py-2 rounded-xl font-medium whitespace-nowrap transition-colors ${selectedCategory === null
-                                            ? 'text-white shadow-lg'
-                                            : 'bg-white text-gray-700 hover:bg-gray-100'
+                                        ? 'text-white shadow-lg'
+                                        : 'bg-white text-gray-700 hover:bg-gray-100'
                                         }`}
                                     style={selectedCategory === null ? { backgroundColor: primaryColor } : {}}
                                 >
@@ -272,8 +271,8 @@ export default function PublicBusinessPage({ params }: { params: { slug: string 
                                         key={cat}
                                         onClick={() => setSelectedCategory(cat)}
                                         className={`px-4 py-2 rounded-xl font-medium whitespace-nowrap transition-colors ${selectedCategory === cat
-                                                ? 'text-white shadow-lg'
-                                                : 'bg-white text-gray-700 hover:bg-gray-100'
+                                            ? 'text-white shadow-lg'
+                                            : 'bg-white text-gray-700 hover:bg-gray-100'
                                             }`}
                                         style={selectedCategory === cat ? { backgroundColor: primaryColor } : {}}
                                     >

@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
 
   if (code && supabase) {
     try {
-      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      const { error } = await supabase!.auth.exchangeCodeForSession(code);
       if (error) {
         console.error('Error al intercambiar código por sesión:', error);
         return NextResponse.redirect(new URL('/?error=auth_error', requestUrl.origin));
