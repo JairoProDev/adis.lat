@@ -7,7 +7,8 @@ import {
   FaEnvelope, FaShareAlt, FaCheckCircle, FaChevronDown, FaHeart, FaArrowLeft, FaRobot,
   FaHandHoldingHeart, FaPlus, FaImage, FaSpinner, FaEye, FaTags, FaExclamationTriangle,
   FaInfoCircle, FaQrcode, FaRegHeart, FaMicrophone, FaLinkedin, FaYoutube,
-  FaFile, FaCamera, FaTable, FaUpload, FaList, FaFilter, FaMapPin, FaShoppingCart, FaMagic, FaMinus
+  FaFile, FaCamera, FaTable, FaUpload, FaList, FaFilter, FaMapPin, FaShoppingCart, FaMagic, FaMinus,
+  FaFileExcel, FaDownload
 } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
 import { MdCenterFocusWeak } from 'react-icons/md';
@@ -114,3 +115,6 @@ export const IconFilter = (p: IconProps) => <FaFilter size={getSize(p)} color={p
 export const IconMapPin = (p: IconProps) => <FaMapPin size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
 export const IconShoppingCart = (p: IconProps) => <FaShoppingCart size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
 export const IconMinus = (p: IconProps) => <FaMinus size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
+export const IconAlertTriangle = (p: IconProps) => <FaExclamationTriangle size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
+export const IconFileSpreadsheet = (p: IconProps) => <FaFileExcel size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
+export const IconDownload = (p: IconProps) => <FaDownload size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;

@@ -149,7 +149,7 @@ Example response:
                 product.attributes![attrKey] = this.parseValue(value);
             } else {
                 // Direct field mapping
-                product[targetField] = this.parseValue(value, targetFieldtype);
+                product[targetField] = this.parseValue(value, targetField);
             }
         });
 

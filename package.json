@@ -11,14 +11,16 @@
   "dependencies": {
     "@ai-sdk/openai": "^1.0.8",
     "@google/generative-ai": "^0.24.1",
+    "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.86.0",
     "ai": "^4.0.0",
     "clsx": "^2.1.1",
+    "fastest-levenshtein": "^1.0.16",
     "framer-motion": "^12.23.26",
     "nanoid": "^5.1.6",
     "next": "14.2.5",
     "next-intl": "^4.5.6",
-    "openai": "^4.77.0",
+    "openai": "^4.104.0",
     "pdf-parse": "^1.1.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -28,6 +30,7 @@
     "resend": "^6.5.2",
     "sharp": "^0.34.5",
     "tailwind-merge": "^3.4.0",
+    "xlsx": "^0.18.5",
     "zod": "^3.24.1"
   },
   "devDependencies": {

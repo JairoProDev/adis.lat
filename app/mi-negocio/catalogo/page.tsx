@@ -123,13 +123,22 @@ export default function CatalogPage() {
                             </Link>
                         </div>
 
-                        <button
-                            onClick={() => router.push('/mi-negocio/catalogo/nuevo')}
-                            className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-[var(--brand-blue)] to-[#3d8da3] text-white rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]"
-                        >
-                            <IconSparkles size={20} />
-                            <span>Importar con IA</span>
-                        </button>
+                        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                            <button
+                                onClick={() => router.push('/mi-negocio/catalogo/tabla')}
+                                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-bold hover:border-blue-400 hover:text-blue-600 transition-all"
+                            >
+                                <IconList size={18} />
+                                <span>Vista Tabla</span>
+                            </button>
+                            <button
+                                onClick={() => router.push('/mi-negocio/catalogo/importar')}
+                                className="flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[var(--brand-blue)] to-[#3d8da3] text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]"
+                            >
+                                <IconSparkles size={20} />
+                                <span>Importar con IA</span>
+                            </button>
+                        </div>
                     </div>
 
                     {/* Stats Cards */}
@@ -202,7 +211,7 @@ export default function CatalogPage() {
                         <p className="mt-4 text-[var(--text-secondary)]">Cargando productos...</p>
                     </div>
                 ) : products.length === 0 ? (
-                    <EmptyState onImport={() => router.push('/mi-negocio/catalogo/nuevo')} />
+                    <EmptyState onImport={() => router.push('/mi-negocio/catalogo/importar')} />
                 ) : (
                     <div className={viewMode === 'grid'
                         ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
@@ -258,7 +267,7 @@ function ProductCard({ product }: { product: CatalogProduct }) {
 
     return (
         <div
-            onClick={() => router.push(`/mi-negocio/catalogo/productos/${product.id}`)}
+            onClick={() => router.push(`/mi-negocio/catalogo/${product.id}`)}
             className="group bg-[var(--bg-primary)] rounded-2xl overflow-hidden border-2 border-[var(--border-color)] hover:border-[var(--brand-blue)] cursor-pointer transition-all duration-200 hover:shadow-lg"
         >
             {/* Image */}
@@ -346,7 +355,7 @@ function ProductListItem({ product }: { product: CatalogProduct }) {
 
     return (
         <div
-            onClick={() => router.push(`/mi-negocio/catalogo/productos/${product.id}`)}
+            onClick={() => router.push(`/mi-negocio/catalogo/${product.id}`)}
             className="bg-[var(--bg-primary)] rounded-xl p-4 border-2 border-[var(--border-color)] hover:border-[var(--brand-blue)] cursor-pointer transition-all duration-200 hover:shadow-md"
         >
             <div className="flex gap-4">

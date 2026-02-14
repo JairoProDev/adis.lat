@@ -42,13 +42,39 @@ CREATE INDEX idx_categories_business ON product_categories(business_profile_id);
 CREATE INDEX idx_categories_parent ON product_categories(parent_id);
 
 -- ============================================================
--- 2. PRODUCT VARIANTS (already exists, but extend it)
+-- 2. PRODUCT VARIANTS (Create from scratch)
 -- ============================================================
-ALTER TABLE product_variants
-ADD COLUMN IF NOT EXISTS attributes JSONB DEFAULT '{}'::jsonb,
-ADD COLUMN IF NOT EXISTS cost DECIMAL(10,2),
-ADD COLUMN IF NOT EXISTS stock_quantity INTEGER DEFAULT 0,
-ADD COLUMN IF NOT EXISTS barcode VARCHAR(100);
+CREATE TABLE IF NOT EXISTS product_variants (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    product_id UUID REFERENCES catalog_products(id) ON DELETE CASCADE,
+    
+    -- Identificadores
+    variant_title VARCHAR(200), -- "Rojo - Grande"
+    sku VARCHAR(100),
+    barcode VARCHAR(100),
+    
+    -- Atributos específicos de variante
+    attributes JSONB DEFAULT '{}'::jsonb,
+    
+    -- Pricing (puede override el del producto maestro)
+    price DECIMAL(10,2),
+    compare_at_price DECIMAL(10,2),
+    cost DECIMAL(10,2),
+    
+    -- Inventario
+    stock_quantity INTEGER DEFAULT 0,
+    stock_status VARCHAR(20),
+    
+    -- Media
+    image_urls TEXT[],
+    primary_image_url TEXT,
+    
+    -- Orden de display
+    sort_order INTEGER DEFAULT 0,
+    
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
 
 CREATE INDEX IF NOT EXISTS idx_variants_product ON product_variants(product_id);
 CREATE INDEX IF NOT EXISTS idx_variants_attributes ON product_variants USING GIN(attributes);
