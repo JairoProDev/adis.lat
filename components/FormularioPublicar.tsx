@@ -413,7 +413,7 @@ export default function FormularioPublicar({
         <div style={{
           width: `${progreso}%`,
           height: '100%',
-          backgroundColor: 'var(--text-primary)',
+          backgroundColor: 'var(--brand-blue)',
           transition: 'width 0.3s ease',
           borderRadius: '4px'
         }} />
@@ -489,10 +489,10 @@ export default function FormularioPublicar({
                 onClick={() => handleCategoriaSelect(categoria)}
                 style={{
                   padding: '1rem',
-                  border: `2px solid ${estaSeleccionada ? 'var(--text-primary)' : 'var(--border-color)'}`,
+                  border: `2px solid ${estaSeleccionada ? 'var(--brand-blue)' : 'var(--border-color)'}`,
                   borderRadius: '12px',
-                  backgroundColor: estaSeleccionada ? 'var(--text-primary)' : 'var(--bg-primary)',
-                  color: estaSeleccionada ? 'var(--bg-primary)' : 'var(--text-primary)',
+                  backgroundColor: estaSeleccionada ? 'var(--brand-blue)' : 'var(--bg-primary)',
+                  color: estaSeleccionada ? 'white' : 'var(--text-primary)',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                   display: 'flex',
@@ -514,7 +514,7 @@ export default function FormularioPublicar({
                   }
                 }}
               >
-                <IconCat size={32} color={estaSeleccionada ? 'var(--bg-primary)' : 'var(--text-primary)'} />
+                <IconCat size={32} color={estaSeleccionada ? 'white' : 'var(--text-primary)'} />
                 <span style={{
                   fontSize: '0.875rem',
                   fontWeight: 500
@@ -593,7 +593,7 @@ export default function FormularioPublicar({
             transition: 'border-color 0.2s'
           }}
           onFocus={(e) => {
-            e.target.style.borderColor = errors.titulo ? '#ef4444' : 'var(--text-primary)';
+            e.target.style.borderColor = errors.titulo ? '#ef4444' : 'var(--brand-blue)';
           }}
           onBlur={(e) => {
             e.target.style.borderColor = errors.titulo ? '#ef4444' : 'var(--border-color)';
@@ -656,7 +656,7 @@ export default function FormularioPublicar({
               transition: 'border-color 0.2s'
             }}
             onFocus={(e) => {
-              e.target.style.borderColor = errors.descripcion ? '#ef4444' : 'var(--text-primary)';
+              e.target.style.borderColor = errors.descripcion ? '#ef4444' : 'var(--brand-blue)';
             }}
             onBlur={(e) => {
               e.target.style.borderColor = errors.descripcion ? '#ef4444' : 'var(--border-color)';
@@ -770,10 +770,10 @@ export default function FormularioPublicar({
                 }}
                 style={{
                   padding: '1.25rem',
-                  border: `2px solid ${estaSeleccionado ? 'var(--text-primary)' : esPopular ? 'var(--text-secondary)' : 'var(--border-color)'}`,
+                  border: `2px solid ${estaSeleccionado ? 'var(--brand-blue)' : esPopular ? 'var(--brand-blue)' : 'var(--border-color)'}`,
                   borderRadius: '12px',
-                  backgroundColor: estaSeleccionado ? 'var(--text-primary)' : 'var(--bg-primary)',
-                  color: estaSeleccionado ? 'var(--bg-primary)' : 'var(--text-primary)',
+                  backgroundColor: estaSeleccionado ? 'var(--brand-blue)' : 'var(--bg-primary)',
+                  color: estaSeleccionado ? 'white' : 'var(--text-primary)',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                   textAlign: 'left',
@@ -781,7 +781,7 @@ export default function FormularioPublicar({
                   flexDirection: 'column',
                   gap: '0.75rem',
                   position: 'relative',
-                  boxShadow: estaSeleccionado ? '0 4px 12px rgba(0,0,0,0.15)' : 'none'
+                  boxShadow: estaSeleccionado ? '0 4px 12px rgba(83, 172, 197, 0.3)' : 'none'
                 }}
                 onMouseEnter={(e) => {
                   if (!estaSeleccionado) {
@@ -801,12 +801,15 @@ export default function FormularioPublicar({
                     position: 'absolute',
                     top: '-0.5rem',
                     right: '0.75rem',
-                    backgroundColor: 'var(--text-primary)',
-                    color: 'var(--bg-primary)',
-                    padding: '0.25rem 0.5rem',
-                    borderRadius: '12px',
-                    fontSize: '0.7rem',
-                    fontWeight: 600
+                    backgroundColor: 'var(--brand-yellow)',
+                    color: '#000',
+                    padding: '0.25rem 0.6rem',
+                    borderRadius: '20px',
+                    fontSize: '0.75rem',
+                    fontWeight: 800,
+                    boxShadow: '0 2px 8px rgba(255, 194, 74, 0.4)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em'
                   }}>
                     Popular
                   </div>
@@ -968,7 +971,7 @@ export default function FormularioPublicar({
             transition: 'border-color 0.2s'
           }}
           onFocus={(e) => {
-            e.target.style.borderColor = errors.contacto ? '#ef4444' : 'var(--text-primary)';
+            e.target.style.borderColor = errors.contacto ? '#ef4444' : 'var(--brand-blue)';
           }}
           onBlur={(e) => {
             e.target.style.borderColor = errors.contacto ? '#ef4444' : 'var(--border-color)';
@@ -1072,9 +1075,9 @@ export default function FormularioPublicar({
             marginBottom: '1rem'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = 'var(--text-primary)';
-            e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-            e.currentTarget.style.color = 'var(--text-primary)';
+            e.currentTarget.style.borderColor = 'var(--brand-blue)';
+            e.currentTarget.style.backgroundColor = 'rgba(83, 172, 197, 0.05)';
+            e.currentTarget.style.color = 'var(--brand-blue)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.borderColor = 'var(--border-color)';
@@ -1415,8 +1418,8 @@ export default function FormularioPublicar({
             fontSize: '0.875rem',
             border: 'none',
             borderRadius: '8px',
-            backgroundColor: puedeAvanzar() ? 'var(--text-primary)' : 'var(--bg-secondary)',
-            color: puedeAvanzar() ? 'var(--bg-primary)' : 'var(--text-tertiary)',
+            backgroundColor: puedeAvanzar() ? 'var(--brand-blue)' : 'var(--bg-secondary)',
+            color: puedeAvanzar() ? 'white' : 'var(--text-tertiary)',
             cursor: puedeAvanzar() ? 'pointer' : 'not-allowed',
             display: 'flex',
             alignItems: 'center',
@@ -1447,8 +1450,8 @@ export default function FormularioPublicar({
             fontSize: '0.875rem',
             border: 'none',
             borderRadius: '8px',
-            backgroundColor: enviando || !puedeAvanzar() ? 'var(--bg-secondary)' : 'var(--text-primary)',
-            color: enviando || !puedeAvanzar() ? 'var(--text-tertiary)' : 'var(--bg-primary)',
+            backgroundColor: enviando || !puedeAvanzar() ? 'var(--bg-secondary)' : 'var(--brand-blue)',
+            color: enviando || !puedeAvanzar() ? 'var(--text-tertiary)' : 'white',
             cursor: enviando || !puedeAvanzar() ? 'not-allowed' : 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -1489,20 +1492,20 @@ export default function FormularioPublicar({
     </form>
   );
 
-  if (dentroSidebar) {
+  if (dentroSidebar || !onCerrar) {
     return (
       <div
         style={{
-          backgroundColor: 'var(--bg-primary)',
-          padding: '1.5rem',
+          backgroundColor: 'transparent',
+          padding: dentroSidebar ? '1.5rem' : '0',
           width: '100%',
           height: '100%',
-          overflowY: 'auto'
+          overflowY: 'visible'
         }}
       >
         <h2 style={{
-          fontSize: '1.25rem',
-          fontWeight: 600,
+          fontSize: '1.5rem',
+          fontWeight: 700,
           color: 'var(--text-primary)',
           marginBottom: '1.5rem'
         }}>

@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/useToast';
 import { ToastContainer } from '@/components/Toast';
 import LeftSidebar from '@/components/LeftSidebar';
 import { useState } from 'react';
+import { IconMegaphone } from '@/components/Icons';
 
 function PublicarPageContent() {
     const router = useRouter();
@@ -20,59 +21,67 @@ function PublicarPageContent() {
                 onToggleLeftSidebar={() => setIsLeftSidebarOpen(!isLeftSidebarOpen)}
             />
 
-            <main className="max-w-4xl mx-auto px-4 py-8 md:py-12">
-                <div className="bg-white rounded-[2rem] shadow-xl shadow-slate-200/50 overflow-hidden border border-slate-100">
-                    <div className="md:flex">
+            <main className="max-w-6xl mx-auto px-4 py-8 md:py-16">
+                <div className="bg-[var(--bg-primary)] rounded-[2.5rem] shadow-2xl shadow-[var(--brand-blue)]/5 overflow-hidden border border-[var(--border-subtle)]">
+                    <div className="md:flex min-h-[600px]">
                         {/* Info Side (Hidden on mobile) */}
-                        <div className="hidden md:flex md:w-1/3 bg-slate-900 p-10 text-white flex-col justify-between relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--brand-color)] rounded-full blur-[100px] opacity-20 -translate-y-1/2 translate-x-1/2" />
+                        <div className="hidden md:flex md:w-2/5 bg-gradient-to-br from-[var(--brand-blue)] to-[#3d8da3] p-12 text-white flex-col justify-between relative overflow-hidden">
+                            {/* Decorative Elements */}
+                            <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2" />
+                            <div className="absolute bottom-0 left-0 w-64 h-64 bg-[var(--brand-yellow)]/20 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2" />
 
                             <div className="relative z-10">
-                                <h1 className="text-3xl font-black mb-4">¿Tienes algo que anunciar?</h1>
-                                <p className="text-slate-400 text-sm leading-relaxed">
+                                <div className="w-12 h-12 bg-white/20 rounded-2xl backdrop-blur-md flex items-center justify-center mb-8">
+                                    <IconMegaphone size={24} color="white" />
+                                </div>
+                                <h1 className="text-4xl font-black mb-6 leading-tight">¿Tienes algo que anunciar?</h1>
+                                <p className="text-white/80 text-lg leading-relaxed max-w-xs">
                                     Únete a miles de personas que publican en Buscadis. Es rápido, seguro y efectivo.
                                 </p>
                             </div>
 
-                            <div className="relative z-10 space-y-6">
-                                <div className="flex items-start gap-4">
-                                    <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
-                                        <span className="font-bold text-[var(--brand-color)]">1</span>
+                            <div className="relative z-10 space-y-8">
+                                <div className="flex items-start gap-5 group">
+                                    <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center flex-shrink-0 transition-all group-hover:scale-110 group-hover:bg-white/25">
+                                        <span className="font-bold text-white">1</span>
                                     </div>
                                     <div>
-                                        <p className="font-bold text-sm">Elige Categoría</p>
-                                        <p className="text-xs text-slate-500">Empleos, Productos, Servicios y más.</p>
+                                        <p className="font-bold text-lg mb-1">Elige Categoría</p>
+                                        <p className="text-sm text-white/60">Empleos, Productos, Servicios y más.</p>
                                     </div>
                                 </div>
-                                <div className="flex items-start gap-4">
-                                    <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
-                                        <span className="font-bold text-[var(--brand-color)]">2</span>
+                                <div className="flex items-start gap-5 group">
+                                    <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center flex-shrink-0 transition-all group-hover:scale-110 group-hover:bg-white/25">
+                                        <span className="font-bold text-white">2</span>
                                     </div>
                                     <div>
-                                        <p className="font-bold text-sm">Sube Fotos</p>
-                                        <p className="text-xs text-slate-500">Muestra lo mejor de tu anuncio.</p>
+                                        <p className="font-bold text-lg mb-1">Sube Fotos</p>
+                                        <p className="text-sm text-white/60">Muestra lo mejor de tu anuncio.</p>
                                     </div>
                                 </div>
-                                <div className="flex items-start gap-4">
-                                    <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
-                                        <span className="font-bold text-[var(--brand-color)]">3</span>
+                                <div className="flex items-start gap-5 group">
+                                    <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center flex-shrink-0 transition-all group-hover:scale-110 group-hover:bg-white/25">
+                                        <span className="font-bold text-white">3</span>
                                     </div>
                                     <div>
-                                        <p className="font-bold text-sm">¡Listo!</p>
-                                        <p className="text-xs text-slate-500">Recibe contactos en WhatsApp.</p>
+                                        <p className="font-bold text-lg mb-1 font-display">¡Listo!</p>
+                                        <p className="text-sm text-white/60">Recibe contactos en WhatsApp.</p>
                                     </div>
                                 </div>
+                            </div>
+
+                            <div className="relative z-10 pt-10 border-t border-white/10">
+                                <p className="text-xs text-white/40 uppercase tracking-widest font-bold">Adis.lat Platform</p>
                             </div>
                         </div>
 
                         {/* Form Side */}
-                        <div className="flex-1 p-6 md:p-10 bg-white">
+                        <div className="flex-1 p-8 md:p-14 bg-[var(--bg-primary)]">
                             <FormularioPublicar
                                 onPublicar={(adiso) => {
                                     success('¡Anuncio publicado correctamente!');
                                     setTimeout(() => router.push(`/?adiso=${adiso.id}`), 1500);
                                 }}
-                                onCerrar={() => router.push('/')}
                                 onError={error}
                                 onSuccess={success}
                             />
