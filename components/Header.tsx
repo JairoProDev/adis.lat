@@ -122,7 +122,7 @@ export default function Header({
               overflow: 'hidden'
             }}>
               <img
-                src="/buscadisazulfondo.svg"
+                src="/logo.png"
                 alt="Buscadis"
                 style={{
                   height: '100%',
