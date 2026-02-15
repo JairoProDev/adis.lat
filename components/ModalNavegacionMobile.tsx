@@ -112,13 +112,13 @@ export default function ModalNavegacionMobile({
           id: 'mapa',
           label: 'Mapa Interactivo',
           icon: FaMap,
-          href: '/'
+          href: '/mapa'
         },
         {
           id: 'gratuitos',
           label: 'Anuncios Gratuitos',
           icon: FaGift,
-          href: '/'
+          href: '/gratuitos'
         },
       ]
     },
@@ -143,14 +143,14 @@ export default function ModalNavegacionMobile({
           id: 'favoritos',
           label: 'Mis Favoritos',
           icon: FaHeart,
-          onClick: onOpenFavorites,
+          href: '/favoritos',
           authenticated: true
         },
         {
           id: 'ocultos',
           label: 'Anuncios Ocultos',
           icon: FaEyeSlash,
-          onClick: onOpenHidden,
+          href: '/ocultos',
           authenticated: true
         },
       ]

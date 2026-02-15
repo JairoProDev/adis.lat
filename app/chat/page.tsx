@@ -3,6 +3,7 @@
 import React from 'react';
 import Header from '@/components/Header';
 import ChatbotIANew from '@/components/ChatbotIANew';
+import LeftSidebar from '@/components/LeftSidebar';
 import NavbarMobile from '@/components/NavbarMobile';
 import { useRouter } from 'next/navigation';
 import { useNavigation } from '@/contexts/NavigationContext';
@@ -10,6 +11,7 @@ import { useNavigation } from '@/contexts/NavigationContext';
 export default function ChatPage() {
     const router = useRouter();
     const { setSidebarExpanded } = useNavigation();
+    const [sidebarOpen, setSidebarOpen] = React.useState(false);
 
     React.useEffect(() => {
         setSidebarExpanded(false);
@@ -18,7 +20,7 @@ export default function ChatPage() {
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-zinc-900 flex flex-col pb-16 md:pb-0">
             <Header
-                onToggleLeftSidebar={() => { }}
+                onToggleLeftSidebar={() => setSidebarOpen(true)}
                 seccionActiva={'chatbot' as any}
             />
             <main className="flex-1 flex flex-col relative h-[calc(100vh-72px-4rem)] md:h-[calc(100vh-72px)]">
@@ -32,6 +34,10 @@ export default function ChatPage() {
                     />
                 </div>
             </main>
+            <LeftSidebar
+                isOpen={sidebarOpen}
+                onClose={() => setSidebarOpen(false)}
+            />
             <div className="block md:hidden">
                 <NavbarMobile
                     seccionActiva={'chatbot' as any}

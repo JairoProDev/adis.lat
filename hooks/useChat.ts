@@ -16,6 +16,8 @@ export function useChat(conversationId: string | null) {
         }
 
         const fetchMessages = async () => {
+            if (!supabase) return;
+
             setLoading(true);
             const { data, error } = await supabase
                 .from('messages')
@@ -57,7 +59,7 @@ export function useChat(conversationId: string | null) {
     }, [user, conversationId]);
 
     const sendMessage = async (content: string) => {
-        if (!user || !conversationId || !content.trim()) return;
+        if (!supabase || !user || !conversationId || !content.trim()) return;
 
         setSending(true);
         const { error } = await supabase

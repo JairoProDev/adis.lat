@@ -2,8 +2,7 @@ import React from 'react';
 import { useConversations } from '@/hooks/useConversations';
 import { FaComments, FaSearch, FaUserCircle, FaPaperPlane, FaEnvelopeOpen } from 'react-icons/fa';
 import { Conversation, Message } from '@/types';
-import { formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { formatTimeAgo } from '@/utils/date';
 import Image from 'next/image';
 
 interface MessagesPopoverProps {
@@ -96,7 +95,7 @@ export default function MessagesPopover({ onClose, onOpenConversation }: Message
                                                 {conversation.other_user?.nombre || conversation.other_user?.email || 'Usuario Desconocido'}
                                             </h4>
                                             <span className="text-[10px] text-gray-400 font-medium flex-shrink-0 ml-2">
-                                                {conversation.last_message_at ? formatDistanceToNow(new Date(conversation.last_message_at), { addSuffix: true, locale: es }).replace('alrededor de ', '') : ''}
+                                                {conversation.last_message_at ? formatTimeAgo(conversation.last_message_at) : ''}
                                             </span>
                                         </div>
                                         <p className={`text-xs text-gray-500 dark:text-gray-400 truncate flex items-center gap-1 ${conversation.unread_count && conversation.unread_count > 0 ? 'text-gray-900 font-medium' : ''}`}>
@@ -130,6 +129,6 @@ export default function MessagesPopover({ onClose, onOpenConversation }: Message
                     Ver todos los mensajes
                 </button>
             </div>
-        </div>
+        </div >
     );
 }

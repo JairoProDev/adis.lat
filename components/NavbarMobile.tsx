@@ -44,8 +44,8 @@ export default function NavbarMobile({
     { id: 'feed', icono: IconGlobe, label: 'Feed', href: '/feed' },
     { id: 'adiso', icono: IconSearch, label: 'Buscar', href: '/' },
     { id: 'publicar', icono: IconMegaphone, label: 'Publicar', href: '/publicar' },
-    { id: 'negocio', icono: IconStore, label: 'Negocio', href: '/mi-negocio' },
-    { id: 'chatbot', icono: IconRobot, label: 'Asistente', href: '/chat' },
+    { id: 'mapa', icono: IconMap, label: 'Mapa', href: '/mapa' }, // Added Map to mobile nav? User asked for Map page.
+    { id: 'chatbot', icono: IconChatbot, label: 'Asistente', href: '/chat' },
   ];
 
   return (
@@ -96,13 +96,8 @@ export default function NavbarMobile({
               key={seccion.id}
               onClick={() => {
                 if (seccion.href) {
-                  if (pathname === seccion.href) {
-                    if (onCambiarSeccion && seccion.id === 'adiso') onCambiarSeccion('adiso' as SeccionSidebar);
-                    return;
-                  }
-                  // Prevent full reload
                   router.push(seccion.href);
-                } else {
+                } else if (onCambiarSeccion) {
                   onCambiarSeccion(seccion.id as SeccionSidebar);
                 }
               }}

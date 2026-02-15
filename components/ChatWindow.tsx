@@ -1,8 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useChat } from '@/hooks/useChat';
 import { FaTimes, FaUserCircle, FaPaperPlane } from 'react-icons/fa';
-import { formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { formatTimeAgo } from '@/utils/date';
 
 interface ChatWindowProps {
     conversationId: string;
@@ -79,7 +78,7 @@ export default function ChatWindow({ conversationId, onClose }: ChatWindowProps)
                                         {msg.content}
                                     </div>
                                     <span className="text-[10px] text-gray-400 mt-1 px-1">
-                                        {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true, locale: es })}
+                                        {formatTimeAgo(msg.created_at)}
                                     </span>
                                 </div>
                             );

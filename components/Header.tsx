@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   FaBars,
   FaBell,
@@ -212,29 +213,22 @@ export default function Header({
               { id: 'feed', icon: IconGlobe, label: 'Feed', href: '/feed' },
               { id: 'adiso', icon: IconSearch, label: 'Buscar', href: '/' },
               { id: 'publicar', icon: IconMegaphone, label: 'Publicar', href: '/publicar' },
-              { id: 'mapa', icon: IconMap, label: 'Mapa' },
+              { id: 'mapa', icon: IconMap, label: 'Mapa', href: '/mapa' },
               { id: 'chatbot', icon: IconRobot, label: 'Asistente', href: '/chat' },
             ].map((item) => {
               const Icon = item.icon;
-              // Check if active based on prop OR current path (for href items)
-              const isPathActive = typeof window !== 'undefined' && item.href && window.location.pathname === item.href;
-              const isSectionActive = seccionActiva === item.id || (item.id === 'adiso' && seccionActiva === 'adiso'); // Maintain 'adiso' logic
-
-              // Helper logic: 'adiso' corresponds to 'Buscar'/'Inicio' in terms of active section
-              const isActive = (isPathActive && item.href !== '/') || (item.id === 'adiso' && window.location.pathname === '/' && seccionActiva !== 'mapa' && seccionActiva !== 'publicar') || (seccionActiva === item.id);
+              // Simple active check based on current path
+              const isActive = (typeof window !== 'undefined' && (
+                (item.href === '/' && window.location.pathname === '/' && !window.location.search.includes('seccion=')) ||
+                (item.href !== '/' && window.location.pathname.startsWith(item.href || ''))
+              ));
 
               const isHovered = hoveredItem === item.id;
 
               return (
-                <button
+                <Link
+                  href={item.href || '#'}
                   key={item.id}
-                  onClick={() => {
-                    if (item.href) {
-                      window.location.href = item.href;
-                    } else if (onSeccionChange) {
-                      onSeccionChange(item.id as SeccionSidebar);
-                    }
-                  }}
                   onMouseEnter={() => setHoveredItem(item.id as SeccionSidebar)}
                   onMouseLeave={() => setHoveredItem(null)}
                   style={{
@@ -250,6 +244,7 @@ export default function Header({
                     justifyContent: 'center',
                     color: isActive ? 'var(--brand-blue)' : (isHovered ? 'var(--brand-blue)' : 'var(--text-secondary)'),
                     transition: 'all 0.2s ease',
+                    textDecoration: 'none'
                   }}
                   className="group"
                 >
@@ -296,7 +291,7 @@ export default function Header({
                     zIndex: -1,
                     transition: 'background-color 0.2s'
                   }} />
-                </button>
+                </Link>
               );
             })}
           </div>

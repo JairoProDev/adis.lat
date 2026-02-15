@@ -1,20 +1,18 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Header from '@/components/Header';
 import NavbarMobile from '@/components/NavbarMobile';
 import LeftSidebar from '@/components/LeftSidebar';
 import { useNavigation } from '@/contexts/NavigationContext';
 import dynamic from 'next/dynamic';
-import { useRouter } from 'next/navigation';
 
-const FormularioPublicar = dynamic(() => import('@/components/FormularioPublicar'), {
-    loading: () => <div className="p-8 text-center">Cargando formulario...</div>,
+const MapaInteractivo = dynamic(() => import('@/components/MapaInteractivo'), {
+    loading: () => <div className="h-full flex items-center justify-center">Cargando mapa...</div>,
     ssr: false,
 });
 
-export default function PublicarPage() {
-    const router = useRouter();
+export default function MapaPage() {
     const { setSidebarExpanded } = useNavigation();
     const [sidebarOpen, setSidebarOpen] = React.useState(false);
 
@@ -26,19 +24,15 @@ export default function PublicarPage() {
         <div className="min-h-screen bg-gray-50 dark:bg-zinc-900 flex flex-col pb-16 md:pb-0">
             <Header
                 onToggleLeftSidebar={() => setSidebarOpen(true)}
-                seccionActiva={'publicar'}
+                seccionActiva={'mapa'}
             />
-            <main className="flex-1 container mx-auto px-4 py-6 max-w-4xl">
-                <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm p-6">
-                    <h1 className="text-2xl font-bold mb-6 dark:text-white">Publicar Nuevo Adiso</h1>
-                    <FormularioPublicar
-                        onCerrar={() => router.push('/')}
-                        onPublicar={(adiso) => {
-                            // Redirect to home and open the new ad
-                            router.push(`/?adiso=${adiso.id}`);
-                        }}
-                    />
-                </div>
+            {/* Map Container */}
+            <main className="flex-1 relative h-[calc(100vh-72px)] w-full">
+                <MapaInteractivo
+                    adisos={[]} // TODO: Fetch geolocated ads
+                    ubicacionUsuario={null}
+                    onVerAdiso={() => { }}
+                />
             </main>
             <LeftSidebar
                 isOpen={sidebarOpen}
@@ -46,7 +40,7 @@ export default function PublicarPage() {
             />
             <div className="block md:hidden">
                 <NavbarMobile
-                    seccionActiva={'publicar'}
+                    seccionActiva={'mapa'}
                     tieneAdisoAbierto={false}
                 />
             </div>

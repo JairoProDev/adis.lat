@@ -2,8 +2,7 @@ import React from 'react';
 import { useNotifications } from '@/hooks/useNotifications';
 import { FaBell, FaCheck, FaInfoCircle, FaHeart, FaCommentAlt, FaBullhorn } from 'react-icons/fa';
 import { Notification, NotificationType } from '@/types';
-import { formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { formatTimeAgo } from '@/utils/date';
 
 interface NotificationsPopoverProps {
     onClose: () => void;
@@ -81,7 +80,7 @@ export default function NotificationsPopover({ onClose }: NotificationsPopoverPr
                                             {notification.message}
                                         </p>
                                         <p className="text-[10px] text-gray-400 mt-1.5 font-medium">
-                                            {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true, locale: es })}
+                                            {formatTimeAgo(notification.created_at)}
                                         </p>
                                     </div>
                                     {!notification.read && (
