@@ -38,8 +38,8 @@ CREATE TABLE IF NOT EXISTS product_categories (
     UNIQUE(business_profile_id, slug)
 );
 
-CREATE INDEX idx_categories_business ON product_categories(business_profile_id);
-CREATE INDEX idx_categories_parent ON product_categories(parent_id);
+CREATE INDEX IF NOT EXISTS idx_categories_business ON product_categories(business_profile_id);
+CREATE INDEX IF NOT EXISTS idx_categories_parent ON product_categories(parent_id);
 
 -- ============================================================
 -- 2. PRODUCT VARIANTS (Create from scratch)
@@ -97,8 +97,8 @@ CREATE TABLE IF NOT EXISTS product_attributes (
     UNIQUE(product_id, attribute_key)
 );
 
-CREATE INDEX idx_attributes_product ON product_attributes(product_id);
-CREATE INDEX idx_attributes_key ON product_attributes(attribute_key);
+CREATE INDEX IF NOT EXISTS idx_attributes_product ON product_attributes(product_id);
+CREATE INDEX IF NOT EXISTS idx_attributes_key ON product_attributes(attribute_key);
 
 -- ============================================================
 -- 4. PRODUCT IMAGES (Multi-source)
@@ -127,9 +127,9 @@ CREATE TABLE IF NOT EXISTS product_images (
     CHECK (product_id IS NOT NULL OR variant_id IS NOT NULL)
 );
 
-CREATE INDEX idx_images_product ON product_images(product_id);
-CREATE INDEX idx_images_variant ON product_images(variant_id);
-CREATE INDEX idx_images_primary ON product_images(is_primary) WHERE is_primary = true;
+CREATE INDEX IF NOT EXISTS idx_images_product ON product_images(product_id);
+CREATE INDEX IF NOT EXISTS idx_images_variant ON product_images(variant_id);
+CREATE INDEX IF NOT EXISTS idx_images_primary ON product_images(is_primary) WHERE is_primary = true;
 
 -- ============================================================
 -- 5. IMPORT SESSIONS (Tracking)
@@ -164,8 +164,8 @@ CREATE TABLE IF NOT EXISTS import_sessions (
     created_by UUID REFERENCES auth.users(id)
 );
 
-CREATE INDEX idx_import_sessions_business ON import_sessions(business_profile_id);
-CREATE INDEX idx_import_sessions_status ON import_sessions(status);
+CREATE INDEX IF NOT EXISTS idx_import_sessions_business ON import_sessions(business_profile_id);
+CREATE INDEX IF NOT EXISTS idx_import_sessions_status ON import_sessions(status);
 
 -- ============================================================
 -- 6. DUPLICATE CANDIDATES (Para revisión manual)
@@ -193,8 +193,8 @@ CREATE TABLE IF NOT EXISTS duplicate_candidates (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_duplicates_session ON duplicate_candidates(import_session_id);
-CREATE INDEX idx_duplicates_resolution ON duplicate_candidates(resolution) WHERE resolution = 'pending';
+CREATE INDEX IF NOT EXISTS idx_duplicates_session ON duplicate_candidates(import_session_id);
+CREATE INDEX IF NOT EXISTS idx_duplicates_resolution ON duplicate_candidates(resolution) WHERE resolution = 'pending';
 
 -- ============================================================
 -- 7. EXTEND catalog_products (Add missing fields)
@@ -331,6 +331,7 @@ ALTER TABLE import_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE duplicate_candidates ENABLE ROW LEVEL SECURITY;
 
 -- Policies para product_categories
+DROP POLICY IF EXISTS "Users can view categories of their business" ON product_categories;
 CREATE POLICY "Users can view categories of their business"
     ON product_categories FOR SELECT
     USING (
@@ -340,6 +341,7 @@ CREATE POLICY "Users can view categories of their business"
         OR business_profile_id IS NULL -- Categorías globales
     );
 
+DROP POLICY IF EXISTS "Users can create categories for their business" ON product_categories;
 CREATE POLICY "Users can create categories for their business"
     ON product_categories FOR INSERT
     WITH CHECK (
@@ -349,6 +351,7 @@ CREATE POLICY "Users can create categories for their business"
     );
 
 -- Policies para product_attributes (heredan del producto)
+DROP POLICY IF EXISTS "Users can view attributes of their products" ON product_attributes;
 CREATE POLICY "Users can view attributes of their products"
     ON product_attributes FOR SELECT
     USING (
@@ -360,6 +363,7 @@ CREATE POLICY "Users can view attributes of their products"
     );
 
 -- Policies para product_images
+DROP POLICY IF EXISTS "Users can view images of their products" ON product_images;
 CREATE POLICY "Users can view images of their products"
     ON product_images FOR SELECT
     USING (
@@ -371,6 +375,7 @@ CREATE POLICY "Users can view images of their products"
     );
 
 -- Policies para import_sessions
+DROP POLICY IF EXISTS "Users can view their import sessions" ON import_sessions;
 CREATE POLICY "Users can view their import sessions"
     ON import_sessions FOR SELECT
     USING (
@@ -379,11 +384,55 @@ CREATE POLICY "Users can view their import sessions"
         )
     );
 
+DROP POLICY IF EXISTS "Users can create import sessions for their business" ON import_sessions;
 CREATE POLICY "Users can create import sessions for their business"
     ON import_sessions FOR INSERT
     WITH CHECK (
         business_profile_id IN (
             SELECT id FROM business_profiles WHERE user_id = auth.uid()
+        )
+    );
+
+DROP POLICY IF EXISTS "Users can update their import sessions" ON import_sessions;
+CREATE POLICY "Users can update their import sessions"
+    ON import_sessions FOR UPDATE
+    USING (
+        business_profile_id IN (
+            SELECT id FROM business_profiles WHERE user_id = auth.uid()
+        )
+    );
+
+-- Policies para duplicate_candidates
+DROP POLICY IF EXISTS "Users can view duplicate candidates" ON duplicate_candidates;
+CREATE POLICY "Users can view duplicate candidates"
+    ON duplicate_candidates FOR SELECT
+    USING (
+        import_session_id IN (
+            SELECT id FROM import_sessions WHERE business_profile_id IN (
+                SELECT id FROM business_profiles WHERE user_id = auth.uid()
+            )
+        )
+    );
+
+DROP POLICY IF EXISTS "Users can create duplicate candidates" ON duplicate_candidates;
+CREATE POLICY "Users can create duplicate candidates"
+    ON duplicate_candidates FOR INSERT
+    WITH CHECK (
+        import_session_id IN (
+            SELECT id FROM import_sessions WHERE business_profile_id IN (
+                SELECT id FROM business_profiles WHERE user_id = auth.uid()
+            )
+        )
+    );
+
+DROP POLICY IF EXISTS "Users can update duplicate candidates" ON duplicate_candidates;
+CREATE POLICY "Users can update duplicate candidates"
+    ON duplicate_candidates FOR UPDATE
+    USING (
+        import_session_id IN (
+            SELECT id FROM import_sessions WHERE business_profile_id IN (
+                SELECT id FROM business_profiles WHERE user_id = auth.uid()
+            )
         )
     );
 

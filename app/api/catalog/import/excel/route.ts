@@ -17,6 +17,7 @@ import { createServerClient } from '@/lib/supabase-server';
 import { ExcelParser } from '@/lib/ai/excel-parser';
 import { ProductNormalizer } from '@/lib/ai/product-normalizer';
 import { DuplicateDetector } from '@/lib/ai/duplicate-detector';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300; // 5 minutes for large files
@@ -33,19 +34,56 @@ export async function POST(request: NextRequest) {
         const supabase = await createServerClient();
 
         // 1. Verify authentication
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) {
+        const authHeader = request.headers.get('Authorization');
+        const token = authHeader?.split(' ')[1];
+
+        let user;
+        // Check if token exists and is not the string "undefined"
+        if (token && token !== 'undefined') {
+            try {
+                // Try setSession first to authenticate the client instance
+                const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+                    access_token: token,
+                    refresh_token: token // Use token as placeholder for refresh_token if needed
+                });
+
+                if (sessionError) {
+                    // Fallback: Just verify user and we'll handle DB authorization differently if needed
+                    const { data: { user: verifiedUser }, error: authError } = await supabase.auth.getUser(token);
+                    if (authError || !verifiedUser) {
+                        return NextResponse.json({ error: 'Unauthorized: Invalid token' }, { status: 401 });
+                    }
+                    user = verifiedUser;
+                } else {
+                    user = sessionData.user;
+                }
+            } catch (err) {
+                console.error('Session setup error:', err);
+                const { data: { user: verifiedUser } } = await supabase.auth.getUser(token);
+                user = verifiedUser;
+            }
+        } else {
+            // Try cookie-based auth
+            const { data: { user: cookieUser }, error: authError } = await supabase.auth.getUser();
+            if (authError || !cookieUser) {
+                return NextResponse.json({ error: 'Unauthorized: No session found' }, { status: 401 });
+            }
+            user = cookieUser;
+        }
+
+        if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // 2. Get business profile
-        const { data: profile } = await supabase
+        // 2. Get business profile (Using admin to ensure we find it correctly)
+        const { data: profile, error: profileError } = await supabaseAdmin
             .from('business_profiles')
             .select('id')
             .eq('user_id', user.id)
             .single();
 
-        if (!profile) {
+        if (profileError || !profile) {
+            console.error('Profile not found:', profileError);
             return NextResponse.json({ error: 'Business profile not found' }, { status: 404 });
         }
 
@@ -65,8 +103,8 @@ export async function POST(request: NextRequest) {
             }, { status: 400 });
         }
 
-        // 4. Create import session
-        const { data: importSession, error: sessionError } = await supabase
+        // 4. Create import session (Using admin)
+        const { data: importSession, error: sessionError } = await supabaseAdmin
             .from('import_sessions')
             .insert({
                 business_profile_id: profile.id,
@@ -85,12 +123,14 @@ export async function POST(request: NextRequest) {
         }
 
         // 5. Parse Excel file
+        console.log('Step 5: Parsing Excel file...');
         const buffer = await file.arrayBuffer();
         const excelParser = new ExcelParser();
         const parsedData = await excelParser.parse(Buffer.from(buffer));
+        console.log(`Parsed ${parsedData.rows.length} rows`);
 
         if (parsedData.rows.length === 0) {
-            await supabase
+            await supabaseAdmin
                 .from('import_sessions')
                 .update({ status: 'failed', error_details: { message: 'No data found in file' } })
                 .eq('id', importSession.id);
@@ -99,43 +139,53 @@ export async function POST(request: NextRequest) {
         }
 
         // 6. AI Column Mapping
+        console.log('Step 6: AI Column Mapping...');
         const normalizer = new ProductNormalizer();
         const columnMapping = await normalizer.detectColumns(parsedData.headers, parsedData.rows[0]);
+        console.log('Column mapping detected:', columnMapping);
 
         // 7. Normalize products
+        console.log('Step 7: Normalizing products...');
         const normalizedProducts = [];
         const errors = [];
 
+        // We process rows using the proper normalizer but skip the AI enrichment per row
         for (let i = 0; i < parsedData.rows.length; i++) {
             try {
-                const normalized = await normalizer.normalize(parsedData.rows[i], columnMapping);
+                const normalized = await normalizer.normalize(parsedData.rows[i], columnMapping, {
+                    skipEnrichment: true
+                });
+
                 normalizedProducts.push({
                     ...normalized,
-                    importRowNumber: i + 2, // +2 because Excel is 1-indexed and we skip header
+                    importRowNumber: i + 2,
                     import_source: 'excel',
                     import_source_file: file.name
                 });
             } catch (error: any) {
-                errors.push({
-                    row: i + 2,
-                    error: error.message
-                });
+                console.error(`Error in row ${i + 2}:`, error.message);
+                errors.push({ row: i + 2, error: error.message });
             }
         }
+        console.log(`Normalized ${normalizedProducts.length} products successfully`);
 
         // 8. Duplicate Detection
-        const duplicateDetector = new DuplicateDetector(supabase);
+        console.log('Step 8: Duplicate Detection...');
+        const duplicateDetector = new DuplicateDetector(supabaseAdmin);
+        // Process in smaller chunks if needed, but for now direct batch
         const detectionResults = await duplicateDetector.detectBatch(
             normalizedProducts,
             profile.id
         );
 
-        // 9. Separate intoCreate vs Review
+        // 9. Separate into Create vs Review
         const toCreate = detectionResults.filter(r => !r.isDuplicate);
         const toReview = detectionResults.filter(r => r.isDuplicate);
+        console.log(`To create: ${toCreate.length}, To review: ${toReview.length}`);
 
         // 10. Store duplicate candidates for review
         if (toReview.length > 0) {
+            console.log('Step 10: Storing duplicate candidates...');
             const duplicateCandidates = toReview.map(item => ({
                 import_session_id: importSession.id,
                 new_product_data: item.product,
@@ -144,34 +194,67 @@ export async function POST(request: NextRequest) {
                 match_reasons: item.reasons
             }));
 
-            await supabase
+            await supabaseAdmin
                 .from('duplicate_candidates')
                 .insert(duplicateCandidates);
         }
 
-        // 11. Auto-create products with low duplicate risk (can be configurable)
-        const autoCreateThreshold = 0.5; // Si score < 0.5, auto-crear
+        // 11. Auto-create products with low duplicate risk
+        const autoCreateThreshold = 0.5;
         const autoCreate = toCreate.filter(r => (r.score || 0) < autoCreateThreshold);
 
         let productsCreated = 0;
-        if (autoCreate.length > 0) {
-            const productsToInsert = autoCreate.map(r => ({
-                ...r.product,
-                business_profile_id: profile.id,
-                status: 'draft', // Start as draft until reviewed
-                import_confidence: 1 - (r.score || 0)
-            }));
+        let insertErr: any = null;
 
-            const { error: insertError } = await supabase
+        if (autoCreate.length > 0) {
+            console.log(`Step 11: Auto-creating ${autoCreate.length} products...`);
+
+            // Define allowed columns to prevent DB errors
+            const allowedColumns = [
+                'business_profile_id', 'title', 'description', 'sku', 'barcode',
+                'price', 'compare_at_price', 'currency', 'category', 'brand',
+                'supplier', 'stock', 'attributes', 'images', 'status',
+                'import_source', 'import_source_file', 'import_confidence'
+            ];
+
+            const productsToInsert = autoCreate.map(r => {
+                const cleanProduct: any = {};
+
+                // Only keep allowed columns
+                allowedColumns.forEach(col => {
+                    // Map 'stock' to 'stock' (it was previously 'inventory_quantity' in some contexts)
+                    // Ensure the column name matches the database schema
+                    const mappedCol = col === 'stock' ? 'stock' : col;
+                    if (r.product[mappedCol] !== undefined) {
+                        cleanProduct[mappedCol] = r.product[mappedCol];
+                    }
+                });
+
+                // Set required/system fields
+                cleanProduct.business_profile_id = profile.id;
+                cleanProduct.status = 'published'; // Let's make them published by default to be sure they show up
+                cleanProduct.import_source = 'excel';
+                cleanProduct.import_source_file = file.name;
+                cleanProduct.import_confidence = 1 - (r.score || 0);
+
+                return cleanProduct;
+            });
+
+            const { error: insertError } = await supabaseAdmin
                 .from('catalog_products')
                 .insert(productsToInsert);
 
-            if (!insertError) {
+            if (insertError) {
+                console.error('Insert error details:', JSON.stringify(insertError, null, 2));
+                insertErr = insertError;
+            } else {
                 productsCreated = productsToInsert.length;
+                console.log(`Successfully created ${productsCreated} products`);
             }
         }
 
         // 12. Update import session
+        console.log('Step 12: Updating import session status...');
         const stats: ImportStats = {
             totalRows: parsedData.rows.length,
             productsToCreate: autoCreate.length,
@@ -179,15 +262,20 @@ export async function POST(request: NextRequest) {
             errors: errors.length
         };
 
-        await supabase
+        const finalStatus = insertErr ? 'failed' : (toReview.length > 0 ? 'review_needed' : 'completed');
+
+        await supabaseAdmin
             .from('import_sessions')
             .update({
-                status: toReview.length > 0 ? 'review_needed' : 'completed',
+                status: finalStatus,
                 total_rows: stats.totalRows,
                 products_created: productsCreated,
                 duplicates_found: stats.duplicatesFound,
-                errors_count: stats.errors,
-                error_details: errors.length > 0 ? { errors } : null,
+                errors_count: stats.errors + (insertErr ? 1 : 0),
+                error_details: {
+                    errors: errors.slice(0, 10),
+                    insertError: insertErr
+                },
                 processing_log: {
                     columnMapping,
                     stats
@@ -196,20 +284,22 @@ export async function POST(request: NextRequest) {
             })
             .eq('id', importSession.id);
 
+        console.log(`Import completed with status: ${finalStatus}`);
         // 13. Return results
         return NextResponse.json({
-            success: true,
+            success: !insertErr,
             sessionId: importSession.id,
             stats,
             columnMapping,
             needsReview: toReview.length > 0,
-            duplicates: toReview.map(r => ({
+            duplicates: toReview.slice(0, 50).map(r => ({ // Don't send too many to avoid response size limits
                 newProduct: r.product,
                 existingProduct: r.matchedProduct,
                 score: r.score,
                 reasons: r.reasons
             })),
-            errors: errors.length > 0 ? errors.slice(0, 10) : [] // Limit to first 10
+            errors: errors.slice(0, 10),
+            error: insertErr ? 'Partial success: products could not be saved' : undefined
         });
 
     } catch (error: any) {

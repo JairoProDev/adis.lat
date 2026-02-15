@@ -48,7 +48,7 @@ Standard fields available:
 - brand: Brand name
 - barcode: Barcode/EAN
 - supplier: Supplier name
-- stock_quantity: Stock amount
+- stock: Stock amount
 - attributes: Any other specifications (color, size, voltage, etc.)
 
 Return a JSON object mapping each header to its standard field. If a header doesn't match any standard field but contains useful info, map it to "attributes".
@@ -95,7 +95,7 @@ Example response:
             category: [/categor[ií]a/i, /category/i, /tipo/i, /type/i, /grupo/i],
             brand: [/marca/i, /brand/i, /fabricante/i],
             barcode: [/barcode/i, /ean/i, /c[oó]digo de barras/i],
-            stock_quantity: [/stock/i, /cantidad/i, /inventory/i, /existencia/i],
+            stock: [/stock/i, /cantidad/i, /inventory/i, /existencia/i],
             supplier: [/proveedor/i, /supplier/i, /distribuidor/i]
         };
 
@@ -129,7 +129,7 @@ Example response:
     /**
      * Normalize a product row using the column mapping
      */
-    async normalize(row: any[], mapping: ColumnMapping): Promise<NormalizedProduct> {
+    async normalize(row: any[], mapping: ColumnMapping, options: { skipEnrichment?: boolean } = {}): Promise<NormalizedProduct> {
         const product: NormalizedProduct = {
             title: '',
             attributes: {}
@@ -159,7 +159,7 @@ Example response:
         }
 
         // AI Enhancement: Extract more info from title/description if sparse
-        if (product.title && (!product.category || Object.keys(product.attributes || {}).length < 2)) {
+        if (product.title && !options.skipEnrichment && (!product.category || Object.keys(product.attributes || {}).length < 2)) {
             await this.enrichProduct(product);
         }
 

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { IconPlus, IconGrid, IconList, IconSearch, IconFilter, IconSparkles, IconPackage, IconUpload, IconArrowLeft } from '@/components/Icons';
+import { IconPlus, IconGrid, IconList, IconSearch, IconFilter, IconSparkles, IconPackage, IconUpload, IconArrowLeft, IconEye, IconCopy } from '@/components/Icons';
 import Header from '@/components/Header';
 import { useToast } from '@/hooks/useToast';
 import { ToastContainer } from '@/components/Toast';
@@ -165,7 +165,7 @@ export default function CatalogPage() {
                             <StatCard
                                 label="Vistas"
                                 value={stats.views}
-                                icon={<IconCopy size={20} />}
+                                icon={<IconEye size={20} />}
                                 color="purple"
                             />
                         </div>

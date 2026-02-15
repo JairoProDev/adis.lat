@@ -87,8 +87,13 @@ export default function CatalogImportPage() {
                 setUploadProgress(prev => Math.min(prev + 10, 90));
             }, 200);
 
+            const { data: { session } } = await supabase.auth.getSession();
+
             const response = await fetch('/api/catalog/import/excel', {
                 method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${session?.access_token}`
+                },
                 body: formData
             });
 
