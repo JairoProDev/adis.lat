@@ -73,6 +73,7 @@ export default function ProductForm({ initialData, mode }: ProductFormProps) {
 
                 if (uploadError) throw uploadError;
 
+                if (!supabase) throw new Error('Supabase no está configurado');
                 const { data } = supabase.storage
                     .from('catalog-images')
                     .getPublicUrl(fileName);

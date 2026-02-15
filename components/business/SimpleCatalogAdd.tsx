@@ -72,20 +72,23 @@ export default function SimpleCatalogAdd({ businessProfileId, onSuccess, onClose
 
             let imageUrl = '';
             if (quickImage) {
+                if (!supabase) throw new Error('Supabase no está configurado');
                 const fileName = `${Date.now()}-${quickImage.name}`;
-                const { error: uploadError } = await supabase!.storage
+                const { error: uploadError } = await supabase.storage
                     .from('catalog-images')
                     .upload(fileName, quickImage);
 
                 if (!uploadError) {
-                    const { data: urlData } = supabase!.storage
+                    if (!supabase) throw new Error('Supabase no está configurado');
+                    const { data: urlData } = supabase.storage
                         .from('catalog-images')
                         .getPublicUrl(fileName);
                     imageUrl = urlData.publicUrl;
                 }
             }
 
-            const { error } = await supabase!
+            if (!supabase) throw new Error('Supabase no está configurado');
+            const { error } = await supabase
                 .from('catalog_products')
                 .insert({
                     business_profile_id: businessProfileId,
@@ -117,20 +120,23 @@ export default function SimpleCatalogAdd({ businessProfileId, onSuccess, onClose
 
             let imageUrl = '';
             if (form.image) {
+                if (!supabase) throw new Error('Supabase no está configurado');
                 const fileName = `${Date.now()}-${form.image.name}`;
-                const { error: uploadError } = await supabase!.storage
+                const { error: uploadError } = await supabase.storage
                     .from('catalog-images')
                     .upload(fileName, form.image);
 
                 if (!uploadError) {
-                    const { data: urlData } = supabase!.storage
+                    if (!supabase) throw new Error('Supabase no está configurado');
+                    const { data: urlData } = supabase.storage
                         .from('catalog-images')
                         .getPublicUrl(fileName);
                     imageUrl = urlData.publicUrl;
                 }
             }
 
-            const { error } = await supabase!
+            if (!supabase) throw new Error('Supabase no está configurado');
+            const { error } = await supabase
                 .from('catalog_products')
                 .insert({
                     business_profile_id: businessProfileId,
@@ -165,7 +171,8 @@ export default function SimpleCatalogAdd({ businessProfileId, onSuccess, onClose
             const formData = new FormData();
             formData.append('file', excelFile);
 
-            const { data: session } = await supabase!.auth.getSession();
+            if (!supabase) throw new Error('Supabase no está configurado');
+            const { data: session } = await supabase.auth.getSession();
             if (!session?.session?.access_token) {
                 alert('Sesión expirada');
                 return;

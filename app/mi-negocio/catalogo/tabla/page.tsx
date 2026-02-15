@@ -65,6 +65,7 @@ export default function CatalogTablePage() {
         try {
             setLoading(true);
 
+            if (!supabase) throw new Error('Supabase no está configurado');
             const { data, error: fetchError } = await supabase
                 .from('catalog_products')
                 .select('*')
@@ -142,6 +143,7 @@ export default function CatalogTablePage() {
         if (!confirm('¿Eliminar este producto?')) return;
 
         try {
+            if (!supabase) throw new Error('Supabase no está configurado');
             const { error: deleteError } = await supabase
                 .from('catalog_products')
                 .delete()
@@ -161,6 +163,7 @@ export default function CatalogTablePage() {
         if (!confirm(`¿Eliminar ${selectedProducts.size} productos seleccionados?`)) return;
 
         try {
+            if (!supabase) throw new Error('Supabase no está configurado');
             const { error: deleteError } = await supabase
                 .from('catalog_products')
                 .delete()
@@ -180,6 +183,7 @@ export default function CatalogTablePage() {
         if (selectedProducts.size === 0) return;
 
         try {
+            if (!supabase) throw new Error('Supabase no está configurado');
             const { error: updateError } = await supabase
                 .from('catalog_products')
                 .update({ status: newStatus })
@@ -197,6 +201,7 @@ export default function CatalogTablePage() {
 
     const handleQuickEdit = async (productId: string, field: string, value: any) => {
         try {
+            if (!supabase) throw new Error('Supabase no está configurado');
             const { error: updateError } = await supabase
                 .from('catalog_products')
                 .update({ [field]: value })

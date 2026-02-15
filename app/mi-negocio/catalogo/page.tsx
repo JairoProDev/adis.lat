@@ -42,13 +42,15 @@ export default function CatalogPage() {
 
     const loadBusinessProfile = async () => {
         try {
-            const { data: { user } } = await supabase!.auth.getUser();
+            if (!supabase) throw new Error('Supabase no está configurado');
+            const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
                 router.push('/auth/login');
                 return;
             }
 
-            const { data: profile, error: profileError } = await supabase!
+            if (!supabase) throw new Error('Supabase no está configurado');
+            const { data: profile, error: profileError } = await supabase
                 .from('business_profiles')
                 .select('*')
                 .eq('user_id', user.id)
@@ -69,7 +71,8 @@ export default function CatalogPage() {
         try {
             setLoading(true);
 
-            let query = supabase!
+            if (!supabase) throw new Error('Supabase no está configurado');
+            let query = supabase
                 .from('catalog_products')
                 .select('*')
                 .eq('business_profile_id', businessProfileId!);

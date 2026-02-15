@@ -15,6 +15,13 @@ export interface CatalogProduct {
     description?: string;
     sku?: string;
     barcode?: string;
+    brand?: string;
+    supplier?: string;
+
+    // Import info
+    import_source?: string;
+    import_source_file?: string;
+    import_confidence?: number;
 
     // Images
     images: ProductImage[];

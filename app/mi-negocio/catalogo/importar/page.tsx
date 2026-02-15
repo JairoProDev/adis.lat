@@ -87,6 +87,7 @@ export default function CatalogImportPage() {
                 setUploadProgress(prev => Math.min(prev + 10, 90));
             }, 200);
 
+            if (!supabase) throw new Error('Supabase no está configurado');
             const { data: { session } } = await supabase.auth.getSession();
 
             const response = await fetch('/api/catalog/import/excel', {
@@ -146,6 +147,7 @@ export default function CatalogImportPage() {
                 const fileExt = manualForm.image.name.split('.').pop();
                 const fileName = `manual-${Date.now()}.${fileExt}`;
 
+                if (!supabase) throw new Error('Supabase no está configurado');
                 const { error: uploadError } = await supabase.storage
                     .from('catalog-images') // Make sure this bucket exists!
                     .upload(fileName, manualForm.image);
@@ -155,6 +157,7 @@ export default function CatalogImportPage() {
                     // Continue without image or throw? Let's try to get public URL anyway if it worked partially, or just skip
                 }
 
+                if (!supabase) throw new Error('Supabase no está configurado');
                 const { data: urlData } = supabase.storage
                     .from('catalog-images')
                     .getPublicUrl(fileName);
@@ -163,6 +166,7 @@ export default function CatalogImportPage() {
             }
 
             // 2. Create Product
+            if (!supabase) throw new Error('Supabase no está configurado');
             const { error: insertError } = await supabase
                 .from('catalog_products')
                 .insert({

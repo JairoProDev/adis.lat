@@ -108,6 +108,7 @@ export default function AddProductModal({ isOpen, onClose, businessProfileId, on
 
             let imageUrl = '';
             if (quickImage) {
+                if (!supabase) throw new Error('Supabase no está configurado');
                 const fileName = `${Date.now()}-${quickImage.name}`;
                 const { data: uploadData, error: uploadError } = await supabase.storage
                     .from('catalog-images')
@@ -122,6 +123,7 @@ export default function AddProductModal({ isOpen, onClose, businessProfileId, on
                 imageUrl = urlData.publicUrl;
             }
 
+            if (!supabase) throw new Error('Supabase no está configurado');
             const { error: insertError } = await supabase
                 .from('catalog_products')
                 .insert({
@@ -155,6 +157,7 @@ export default function AddProductModal({ isOpen, onClose, businessProfileId, on
 
             let imageUrl = '';
             if (completeForm.image) {
+                if (!supabase) throw new Error('Supabase no está configurado');
                 const fileName = `${Date.now()}-${completeForm.image.name}`;
                 const { error: uploadError } = await supabase.storage
                     .from('catalog-images')
@@ -169,6 +172,7 @@ export default function AddProductModal({ isOpen, onClose, businessProfileId, on
                 imageUrl = urlData.publicUrl;
             }
 
+            if (!supabase) throw new Error('Supabase no está configurado');
             const { error: insertError } = await supabase
                 .from('catalog_products')
                 .insert({
@@ -209,6 +213,7 @@ export default function AddProductModal({ isOpen, onClose, businessProfileId, on
             const formData = new FormData();
             formData.append('file', aiFile);
 
+            if (!supabase) throw new Error('Supabase no está configurado');
             const { data: session } = await supabase.auth.getSession();
             if (!session?.session?.access_token) {
                 showError('Sesión expirada');

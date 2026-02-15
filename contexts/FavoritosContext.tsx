@@ -47,6 +47,7 @@ export function FavoritosProvider({ children }: { children: React.ReactNode }) {
         if (!user?.id || isLoaded) return;
 
         try {
+            if (!supabase) throw new Error('Supabase no está configurado');
             const { data, error } = await supabase
                 .from('favoritos')
                 .select('adiso_id')
@@ -88,6 +89,7 @@ export function FavoritosProvider({ children }: { children: React.ReactNode }) {
                     await loadFavorites();
                 }
 
+                if (!supabase) throw new Error('Supabase no está configurado');
                 const { error } = await supabase
                     .from('favoritos')
                     .insert({ user_id: user.id, adiso_id: adisoId });
@@ -121,6 +123,7 @@ export function FavoritosProvider({ children }: { children: React.ReactNode }) {
 
         if (user?.id) {
             try {
+                if (!supabase) throw new Error('Supabase no está configurado');
                 const { error } = await supabase
                     .from('favoritos')
                     .delete()
