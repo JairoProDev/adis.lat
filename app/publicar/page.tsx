@@ -52,7 +52,6 @@ export default function PublicarPage() {
             <div className="block md:hidden">
                 <NavbarMobile
                     seccionActiva={'publicar'}
-                    seccionActiva={'publicar'}
                     tieneAdisoAbierto={false}
                     onCambiarSeccion={() => { }}
                 />
