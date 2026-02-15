@@ -10,6 +10,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Adiso } from '@/types';
 import { EditorHeader } from './EditorHeader';
+import InlineCatalogAdd from '@/components/business/InlineCatalogAdd';
 
 // Icons mapping for steps
 const STEPS = [
@@ -268,24 +269,16 @@ export function EditorSteps({
                                         {/* Step 2: Catalog */}
                                         {activeStep === 2 && (
                                             <div className="space-y-4">
-                                                <button
-                                                    onClick={onAddProduct}
-                                                    className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95"
-                                                >
-                                                    <IconPlus size={18} />
-                                                    Agregar Producto
-                                                </button>
-
-                                                <Link
-                                                    href="/mi-negocio/catalogo"
-                                                    className="w-full flex items-center justify-between gap-2 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 px-4 py-4 rounded-xl font-bold border border-blue-100 hover:shadow-md transition-all group"
-                                                >
-                                                    <div className="flex items-center gap-2">
-                                                        <IconSparkles size={18} className="text-blue-500" />
-                                                        <span>Gestionar con IA ✨</span>
-                                                    </div>
-                                                    <IconArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                                                </Link>
+                                                <InlineCatalogAdd
+                                                    businessProfileId={profile.id || ''}
+                                                    onSuccess={() => {
+                                                        // Reload catalog products or trigger refresh
+                                                        window.location.reload();
+                                                    }}
+                                                    onCancel={() => {
+                                                        // Do nothing, just close
+                                                    }}
+                                                />
 
                                                 <div className="space-y-2 max-h-80 overflow-y-auto pr-1 custom-scrollbar">
                                                     {/* AI Catalog Products */}

@@ -46,7 +46,7 @@ export async function esFavorito(userId: string, adisoId: string): Promise<boole
     .select('id')
     .eq('user_id', userId)
     .eq('adiso_id', adisoId)
-    .single();
+    .maybeSingle();
 
   if (error) {
     if (error.code === 'PGRST116') {
@@ -132,7 +132,7 @@ export async function eliminarFavorito(userId: string, adisoId: string): Promise
  */
 export async function toggleFavorito(userId: string, adisoId: string): Promise<boolean> {
   const esFav = await esFavorito(userId, adisoId);
-  
+
   if (esFav) {
     await eliminarFavorito(userId, adisoId);
     return false;

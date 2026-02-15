@@ -433,14 +433,6 @@ function BusinessBuilderPageContent() {
                             <span>{profile.view_count || 0} visitas</span>
                         </div>
 
-                        <Link
-                            href="/mi-negocio/catalogo"
-                            className="hidden md:flex items-center gap-2 ml-4 px-4 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold border border-blue-100 hover:bg-blue-100 transition-colors"
-                        >
-                            <IconBox size={14} />
-                            <span>Panel de Catálogo</span>
-                        </Link>
-
                         {saving && (
                             <span className="text-xs text-slate-400 animate-pulse flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-full">
                                 <span className="w-1.5 h-1.5 bg-slate-400 rounded-full" /> Guardando...
