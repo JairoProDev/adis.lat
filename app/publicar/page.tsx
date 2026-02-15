@@ -29,14 +29,20 @@ export default function PublicarPage() {
                 seccionActiva={'publicar'}
             />
             <main className="flex-1 w-full bg-white dark:bg-zinc-900">
-                <div className="container mx-auto px-4 py-8 max-w-2xl">
-                    <FormularioPublicar
-                        esPaginaCompleta={true}
-                        onPublicar={(adiso) => {
-                            // Redirect to home and open the new ad
-                            router.push(`/?adiso=${adiso.id}`);
-                        }}
-                    />
+                <div className="container mx-auto px-4 py-8 max-w-3xl">
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8 text-center">
+                        Publicar Nuevo Anuncio
+                    </h1>
+
+                    <div className="bg-white dark:bg-zinc-800 rounded-2xl shadow-sm border border-gray-100 dark:border-zinc-700 p-6 md:p-8">
+                        <FormularioPublicar
+                            esPaginaCompleta={true}
+                            onPublicar={(adiso) => {
+                                // Redirect to home and open the new ad
+                                router.push(`/?adiso=${adiso.id}`);
+                            }}
+                        />
+                    </div>
                 </div>
             </main>
             <LeftSidebar

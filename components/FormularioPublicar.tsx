@@ -24,7 +24,7 @@ import SelectorUbicacion from './SelectorUbicacion';
 
 interface FormularioPublicarProps {
   onPublicar: (adiso: Adiso) => void;
-  onCerrar: () => void;
+  onCerrar?: () => void;
   onError?: (message: string) => void;
   onSuccess?: (message: string) => void;
   modoGratuito?: boolean;
@@ -1494,9 +1494,11 @@ export default function FormularioPublicar({
     </form>
   );
 
-  if (dentroSidebar || !onCerrar || esPaginaCompleta) {
+  // Mode: Page, Sidebar, or No Close handler -> Render inline (not modal)
+  if (esPaginaCompleta || dentroSidebar || !onCerrar) {
     return (
       <div
+        className={esPaginaCompleta ? "formulario-publicar-page" : "formulario-publicar-inline"}
         style={{
           backgroundColor: 'transparent',
           padding: dentroSidebar ? '1.5rem' : '0',
@@ -1509,10 +1511,13 @@ export default function FormularioPublicar({
           fontSize: '1.5rem',
           fontWeight: 700,
           color: 'var(--text-primary)',
-          marginBottom: '1.5rem'
+          marginBottom: '1.5rem',
+          display: dentroSidebar ? 'block' : 'none' // Hide default title on full page if header already has it, or keep it?
         }}>
           {tituloCustom ? tituloCustom : (modoGratuito ? 'Publicar adiso gratuito' : 'Publicar adiso')}
         </h2>
+        {/* On full page, we might want the title visible. keeping it block for now */}
+
         {renderForm()}
       </div>
     );

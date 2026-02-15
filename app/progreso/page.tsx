@@ -6,6 +6,8 @@ import { FaTimes, FaRocket, FaCheckCircle, FaBug, FaStar, FaCog, FaLightbulb, Fa
 import Header from '@/components/Header';
 import { useToast } from '@/hooks/useToast';
 import { ToastContainer } from '@/components/Toast';
+import LeftSidebar from '@/components/LeftSidebar';
+import NavbarMobile from '@/components/NavbarMobile';
 import { enviarFeedbackInmediato, enviarFeedbacksAAPI } from '@/lib/feedback';
 
 interface ProgresoEntry {
@@ -392,7 +394,7 @@ const progresoData: ProgresoEntry[] = [
 export default function ProgresoPage() {
   const router = useRouter();
   const { toasts, removeToast, success } = useToast();
-  
+
   // Enviar feedbacks pendientes periódicamente (cada 30 segundos)
   useEffect(() => {
     const interval = setInterval(() => {
@@ -400,6 +402,8 @@ export default function ProgresoPage() {
     }, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mostrarFeedback, setMostrarFeedback] = useState(false);
   const [feedbackTipo, setFeedbackTipo] = useState<'sugerencia' | 'problema'>('sugerencia');
   const [feedbackTexto, setFeedbackTexto] = useState('');
@@ -458,9 +462,9 @@ export default function ProgresoPage() {
 
   const handleFeedbackSubmit = async () => {
     if (!feedbackTexto.trim()) return;
-    
+
     setEnviado(true);
-    
+
     // Intentar enviar inmediatamente
     const enviado = await enviarFeedbackInmediato({
       tipo: feedbackTipo,
@@ -472,7 +476,7 @@ export default function ProgresoPage() {
     } else {
       success('¡Gracias por tu feedback! Se guardó localmente y se enviará pronto.');
     }
-    
+
     setTimeout(() => {
       setFeedbackTexto('');
       setMostrarFeedback(false);
@@ -483,7 +487,11 @@ export default function ProgresoPage() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-secondary)' }}>
-      <Header />
+
+      <Header
+        onToggleLeftSidebar={() => setSidebarOpen(true)}
+        seccionActiva={'feed' as any} // Using feed as a safe default or make param optional
+      />
       <main style={{
         flex: 1,
         padding: '2rem 1rem',
@@ -539,7 +547,7 @@ export default function ProgresoPage() {
             margin: '0 auto',
             lineHeight: 1.6
           }}>
-            Registro de nuestras mejoras continuas, avances e implementaciones. 
+            Registro de nuestras mejoras continuas, avances e implementaciones.
             Cada día trabajamos para hacer buscadis.com mejor para ti.
           </p>
         </div>
@@ -802,42 +810,51 @@ export default function ProgresoPage() {
         </div>
       </main>
 
+      <LeftSidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
+
+      <div className="block md:hidden">
+        <NavbarMobile
+          seccionActiva={null}
+          tieneAdisoAbierto={false}
+          onCambiarSeccion={() => router.push('/')}
+        />
+      </div>
+
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+
       {/* Modal de Feedback */}
       {mostrarFeedback && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            zIndex: 3000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '1rem'
-          }}
-          onClick={() => !enviado && setMostrarFeedback(false)}
-        >
-          <div
-            style={{
-              backgroundColor: 'var(--bg-primary)',
-              borderRadius: '12px',
-              padding: '2rem',
-              width: '100%',
-              maxWidth: '500px',
-              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2000,
+          padding: '1rem'
+        }}>
+          <div style={{
+            backgroundColor: 'var(--bg-primary)',
+            borderRadius: '12px',
+            padding: '1.5rem',
+            width: '100%',
+            maxWidth: '500px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)'
+          }}>
             {!enviado ? (
               <>
                 <div style={{
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  marginBottom: '1.5rem'
+                  marginBottom: '1rem'
                 }}>
                   <h3 style={{
                     fontSize: '1.25rem',
@@ -845,101 +862,74 @@ export default function ProgresoPage() {
                     color: 'var(--text-primary)',
                     margin: 0
                   }}>
-                    {feedbackTipo === 'problema' ? '🚨 Reportar un problema' : '✨ Sugerir una mejora'}
+                    {feedbackTipo === 'sugerencia' ? 'Sugerir una mejora' : 'Reportar un problema'}
                   </h3>
                   <button
                     onClick={() => setMostrarFeedback(false)}
                     style={{
                       background: 'none',
                       border: 'none',
-                      color: 'var(--text-secondary)',
                       cursor: 'pointer',
-                      padding: '0.5rem',
-                      borderRadius: '6px',
+                      color: 'var(--text-secondary)',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center'
+                      justifyContent: 'center',
+                      padding: '4px'
                     }}
                   >
                     <FaTimes size={20} />
                   </button>
                 </div>
 
-                <p style={{
-                  fontSize: '0.875rem',
-                  color: 'var(--text-secondary)',
-                  marginBottom: '1rem',
-                  lineHeight: 1.6
-                }}>
-                  {feedbackTipo === 'problema'
-                    ? 'Ayúdanos a mejorar reportando cualquier problema que encuentres.'
-                    : 'Tu opinión es valiosa. ¿Qué te gustaría ver en la plataforma?'
-                  }
-                </p>
-
-                <div style={{
-                  display: 'flex',
-                  gap: '0.5rem',
-                  marginBottom: '1rem'
-                }}>
-                  {(['sugerencia', 'problema'] as const).map((t) => (
-                    <button
-                      key={t}
-                      onClick={() => setFeedbackTipo(t)}
-                      style={{
-                        flex: 1,
-                        padding: '0.5rem',
-                        borderRadius: '6px',
-                        border: `1px solid ${feedbackTipo === t ? 'var(--text-primary)' : 'var(--border-color)'}`,
-                        backgroundColor: feedbackTipo === t ? 'var(--text-primary)' : 'var(--bg-primary)',
-                        color: feedbackTipo === t ? 'var(--bg-primary)' : 'var(--text-primary)',
-                        cursor: 'pointer',
-                        fontSize: '0.75rem',
-                        fontWeight: 500,
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      {t === 'sugerencia' ? '💡 Sugerencia' : '🚨 Problema'}
-                    </button>
-                  ))}
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    color: 'var(--text-secondary)',
+                    marginBottom: '0.5rem'
+                  }}>
+                    {feedbackTipo === 'sugerencia' ? '¿Qué te gustaría ver en Buscadis?' : '¿Qué problema encontraste?'}
+                  </label>
+                  <textarea
+                    value={feedbackTexto}
+                    onChange={(e) => setFeedbackTexto(e.target.value)}
+                    placeholder={feedbackTipo === 'sugerencia'
+                      ? 'Ej: Me gustaría poder filtrar por rango de precios...'
+                      : 'Ej: El botón de publicar no funciona en Safari...'}
+                    style={{
+                      width: '100%',
+                      height: '120px',
+                      padding: '0.75rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      backgroundColor: 'var(--bg-secondary)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.9375rem',
+                      resize: 'none',
+                      outline: 'none',
+                      fontFamily: 'inherit'
+                    }}
+                    autoFocus
+                  />
                 </div>
 
-                <textarea
-                  value={feedbackTexto}
-                  onChange={(e) => setFeedbackTexto(e.target.value)}
-                  placeholder={feedbackTipo === 'problema' 
-                    ? 'Describe el problema que encontraste...' 
-                    : 'Cuéntanos tu sugerencia...'}
-                  rows={6}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    fontSize: '0.875rem',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '8px',
-                    backgroundColor: 'var(--bg-primary)',
-                    color: 'var(--text-primary)',
-                    outline: 'none',
-                    resize: 'vertical',
-                    fontFamily: 'inherit',
-                    marginBottom: '1rem'
-                  }}
-                />
                 <div style={{
                   display: 'flex',
-                  gap: '0.75rem',
-                  justifyContent: 'flex-end'
+                  justifyContent: 'flex-end',
+                  gap: '0.75rem'
                 }}>
                   <button
                     onClick={() => setMostrarFeedback(false)}
                     style={{
-                      padding: '0.75rem 1.5rem',
-                      borderRadius: '8px',
+                      padding: '0.5rem 1rem',
+                      borderRadius: '6px',
                       border: '1px solid var(--border-color)',
-                      backgroundColor: 'var(--bg-primary)',
-                      color: 'var(--text-primary)',
+                      backgroundColor: 'transparent',
+                      color: 'var(--text-secondary)',
                       cursor: 'pointer',
-                      fontSize: '0.875rem'
+                      fontSize: '0.875rem',
+                      fontWeight: 500
                     }}
                   >
                     Cancelar
@@ -948,37 +938,37 @@ export default function ProgresoPage() {
                     onClick={handleFeedbackSubmit}
                     disabled={!feedbackTexto.trim()}
                     style={{
-                      padding: '0.75rem 1.5rem',
-                      borderRadius: '8px',
+                      padding: '0.5rem 1rem',
+                      borderRadius: '6px',
                       border: 'none',
-                      backgroundColor: feedbackTexto.trim() ? 'var(--text-primary)' : 'var(--bg-secondary)',
-                      color: feedbackTexto.trim() ? 'var(--bg-primary)' : 'var(--text-tertiary)',
-                      cursor: feedbackTexto.trim() ? 'pointer' : 'not-allowed',
+                      backgroundColor: 'var(--text-primary)',
+                      color: 'var(--bg-primary)',
+                      cursor: !feedbackTexto.trim() ? 'not-allowed' : 'pointer',
                       fontSize: '0.875rem',
-                      fontWeight: 600
+                      fontWeight: 600,
+                      opacity: !feedbackTexto.trim() ? 0.7 : 1
                     }}
                   >
-                    Enviar
+                    Enviar Feedback
                   </button>
                 </div>
               </>
             ) : (
-              <div style={{
-                textAlign: 'center',
-                padding: '2rem 0'
-              }}>
-                <FaCheckCircle size={48} color="#10b981" style={{ marginBottom: '1rem' }} />
+              <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
+                <FaCheckCircle size={48} color="#10b981" style={{ marginBottom: '1rem', display: 'inline-block' }} />
                 <h3 style={{
                   fontSize: '1.25rem',
                   fontWeight: 600,
                   color: 'var(--text-primary)',
-                  marginBottom: '0.5rem'
+                  marginBottom: '0.5rem',
+                  marginTop: 0
                 }}>
                   ¡Gracias!
                 </h3>
                 <p style={{
                   fontSize: '0.875rem',
-                  color: 'var(--text-secondary)'
+                  color: 'var(--text-secondary)',
+                  margin: 0
                 }}>
                   Tu feedback ha sido guardado. Lo revisaremos pronto.
                 </p>
@@ -987,8 +977,6 @@ export default function ProgresoPage() {
           </div>
         </div>
       )}
-      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </div>
   );
 }
-

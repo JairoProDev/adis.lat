@@ -41,6 +41,7 @@ export default function GratuitosPage() {
                 <NavbarMobile
                     seccionActiva={'gratuitos' as any}
                     tieneAdisoAbierto={false}
+                    onCambiarSeccion={() => { }}
                 />
             </div>
         </div>
