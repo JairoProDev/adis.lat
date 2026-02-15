@@ -57,7 +57,7 @@ export default function DuplicateReviewPage() {
             setLoading(true);
 
             // Get duplicates that are not resolved yet
-            const { data, error } = await supabase
+            const { data, error } = await supabase!
                 .from('duplicate_candidates')
                 .select(`
                     *,
@@ -104,7 +104,7 @@ export default function DuplicateReviewPage() {
                 // Remove ID if present in new_data to avoid PK conflict
                 delete updates.id;
 
-                const { error: updateError } = await supabase
+                const { error: updateError } = await supabase!
                     .from('catalog_products')
                     .update(updates)
                     .eq('id', current.existing_product_id);
@@ -120,7 +120,7 @@ export default function DuplicateReviewPage() {
                 }
                 newProduct.title = `${newProduct.title} (Copia)`;
 
-                const { error: insertError } = await supabase
+                const { error: insertError } = await supabase!
                     .from('catalog_products')
                     .insert(newProduct);
 
@@ -128,7 +128,7 @@ export default function DuplicateReviewPage() {
             }
 
             // 2. Mark candidate as resolved
-            const { error: resolveError } = await supabase
+            const { error: resolveError } = await supabase!
                 .from('duplicate_candidates')
                 .update({
                     resolution: action,
