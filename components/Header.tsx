@@ -11,6 +11,9 @@ import {
 import ThemeToggle from './ThemeToggle';
 import LanguageSelector from './LanguageSelector';
 import UserMenu from './UserMenu';
+import NotificationsPopover from './NotificationsPopover';
+import MessagesPopover from './MessagesPopover';
+import { useUI } from '@/contexts/UIContext';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { SeccionSidebar } from './SidebarDesktop';
@@ -53,8 +56,10 @@ export default function Header({
   }, []);
 
   const [showMobileSettings, setShowMobileSettings] = useState(false);
+  const [activePopover, setActivePopover] = useState<'notifications' | 'messages' | null>(null);
   const [hoveredItem, setHoveredItem] = useState<SeccionSidebar | null>(null);
   const { user } = useAuth();
+  const { openChat } = useUI();
   const isAuthenticated = !!user;
 
   if (!mounted) return null;
@@ -79,24 +84,7 @@ export default function Header({
         minWidth: isDesktop ? '340px' : 'auto',
         gap: '12px'
       }}>
-        <button
-          onClick={onToggleLeftSidebar}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '8px',
-            borderRadius: '10px',
-            color: 'var(--text-secondary)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'all 0.2s'
-          }}
-          className="hover:bg-gray-100 dark:hover:bg-zinc-800"
-        >
-          <FaBars size={20} />
-        </button>
+
 
         <div style={{
           display: 'flex',
@@ -343,49 +331,85 @@ export default function Header({
             )}
 
             {/* Notifications */}
-            <button
-              style={{
-                width: '40px',
-                height: '40px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: '50%',
-                background: 'var(--bg-secondary)',
-                color: 'var(--text-primary)',
-                border: 'none',
-                cursor: 'pointer'
-              }}
-              className="hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors hover:text-[var(--brand-blue)]"
-            >
-              <FaBell size={18} />
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setActivePopover(activePopover === 'notifications' ? null : 'notifications')}
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '50%',
+                  background: activePopover === 'notifications' ? 'var(--bg-secondary-hover)' : 'var(--bg-secondary)',
+                  color: activePopover === 'notifications' ? 'var(--brand-blue)' : 'var(--text-primary)',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+                className="hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors hover:text-[var(--brand-blue)]"
+              >
+                <FaBell size={18} />
+              </button>
+              {activePopover === 'notifications' && (
+                <NotificationsPopover onClose={() => setActivePopover(null)} />
+              )}
+            </div>
 
             {/* Messages */}
-            <button
-              style={{
-                width: '40px',
-                height: '40px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: '50%',
-                background: 'var(--bg-secondary)',
-                color: 'var(--text-primary)',
-                border: 'none',
-                cursor: 'pointer'
-              }}
-              className="hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors hover:text-[var(--brand-blue)]"
-            >
-              <FaFacebookMessenger size={18} />
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setActivePopover(activePopover === 'messages' ? null : 'messages')}
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '50%',
+                  background: activePopover === 'messages' ? 'var(--bg-secondary-hover)' : 'var(--bg-secondary)',
+                  color: activePopover === 'messages' ? 'var(--brand-blue)' : 'var(--text-primary)',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+                className="hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors hover:text-[var(--brand-blue)]"
+              >
+                <FaFacebookMessenger size={18} />
+              </button>
+              {activePopover === 'messages' && (
+                <MessagesPopover
+                  onClose={() => setActivePopover(null)}
+                  onOpenConversation={(id) => {
+                    setActivePopover(null);
+                    openChat(id);
+                  }}
+                />
+              )}
+            </div>
           </>
         )}
 
-        {/* User Profile - Will handle Login button internally if no user */}
-        <UserMenu
-          onProgressClick={onChangelogClick}
-        />
+        {/* User Profile / Mobile Menu Toggle */}
+        {isDesktop ? (
+          <UserMenu onProgressClick={onChangelogClick} />
+        ) : (
+          <button
+            onClick={onToggleLeftSidebar}
+            style={{
+              width: '40px',
+              height: '40px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '50%',
+              background: 'transparent',
+              color: 'var(--text-primary)',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            <FaBars size={24} />
+          </button>
+        )}
       </div>
     </header>
   );

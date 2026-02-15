@@ -4,25 +4,37 @@ import React, { createContext, useContext, useState, useCallback, ReactNode } fr
 import dynamic from 'next/dynamic';
 
 const AuthModal = dynamic(() => import('@/components/AuthModal'), { ssr: false });
+const ChatWindow = dynamic(() => import('@/components/ChatWindow'), { ssr: false });
 
 interface UIContextType {
     isAuthModalOpen: boolean;
     openAuthModal: () => void;
     closeAuthModal: () => void;
+    activeChatId: string | null;
+    openChat: (conversationId: string) => void;
+    closeChat: () => void;
 }
 
 const UIContext = createContext<UIContextType | undefined>(undefined);
 
 export function UIProvider({ children }: { children: ReactNode }) {
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+    const [activeChatId, setActiveChatId] = useState<string | null>(null);
 
     const openAuthModal = useCallback(() => setIsAuthModalOpen(true), []);
     const closeAuthModal = useCallback(() => setIsAuthModalOpen(false), []);
 
+    const openChat = useCallback((id: string) => setActiveChatId(id), []);
+    const closeChat = useCallback(() => setActiveChatId(null), []);
+
     return (
-        <UIContext.Provider value={{ isAuthModalOpen, openAuthModal, closeAuthModal }}>
+        <UIContext.Provider value={{
+            isAuthModalOpen, openAuthModal, closeAuthModal,
+            activeChatId, openChat, closeChat
+        }}>
             {children}
             <AuthModal abierto={isAuthModalOpen} onCerrar={closeAuthModal} />
+            {activeChatId && <ChatWindow conversationId={activeChatId} onClose={closeChat} />}
         </UIContext.Provider>
     );
 }

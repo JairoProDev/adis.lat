@@ -368,3 +368,50 @@ export interface UserAdInteraction {
   interaction_type: AdInteractionType;
   created_at: string;
 }
+
+// ============================================
+// SYSTEM NOTIFICATIONS
+// ============================================
+
+export type NotificationType = 'system' | 'like' | 'message' | 'ad_approved' | 'ad_rejected';
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  data?: Record<string, any>; // For linking to resources (e.g. ad_id, conversation_id)
+  read: boolean;
+  created_at: string;
+}
+
+// ============================================
+// MESSAGING SYSTEM
+// ============================================
+
+export interface Conversation {
+  id: string;
+  participants: string[]; // User IDs
+  last_message?: string;
+  last_message_at?: string;
+  unread_count?: number; // Calculated field
+  updated_at: string;
+  created_at: string;
+  // Join data
+  other_user?: {
+    id: string;
+    email: string;
+    nombre?: string;
+    avatar_url?: string;
+  };
+}
+
+export interface Message {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  content: string;
+  read: boolean;
+  created_at: string;
+}
