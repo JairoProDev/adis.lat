@@ -234,7 +234,7 @@ export class ProductImageManager {
                 n: 1
             });
 
-            const imageUrl = response.data[0]?.url;
+            const imageUrl = response.data?.[0]?.url;
             if (!imageUrl) return null;
 
             // Download and re-host

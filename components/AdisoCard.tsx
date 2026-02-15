@@ -1,6 +1,6 @@
 'use client';
 
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useState, useRef } from 'react';
 import Image from 'next/image';
 import { Adiso, Categoria, PAQUETES } from '@/types';
 import {
@@ -166,6 +166,8 @@ interface AdisoCardProps {
 const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, estaSeleccionado, isDesktop = true, vista = 'grid' }, ref) => {
     const { isFavorite, isHidden, toggleFav, markNotInterested } = useAdInteraction(adiso.id);
     const IconComponent = getCategoriaIcon(adiso.categoria);
+    const [isLongPressed, setIsLongPressed] = useState(false);
+    const timerRef = useRef<NodeJS.Timeout | null>(null);
     const theme = getCategoriaTheme(adiso.categoria);
 
     if (isHidden) return null;
@@ -245,36 +247,61 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
             aria-label={`Ver detalles: ${adiso.titulo}`}
         >
             {/* --- INTERACTION BUTTONS (Top Right) --- */}
-            <div className="absolute top-2 right-2 flex gap-1.5 z-30">
+            <div className={`absolute top-2 right-2 flex gap-1.5 z-30 transition-opacity duration-300 ${isDesktop || isLongPressed ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
                 {/* Favorite Button */}
                 <button
-                    onClick={toggleFav}
-                    className="p-1.5 rounded-full bg-white/90 shadow-sm border border-gray-100 hover:bg-white hover:scale-110 active:scale-95 transition-all group/btn"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFav();
+                    }}
+                    className="p-1.5 rounded-full bg-black/20 backdrop-blur-md shadow-sm border border-white/20 hover:bg-white/40 hover:scale-110 active:scale-95 transition-all group/btn"
                     title={isFavorite ? "Quitar de favoritos" : "Guardar para más tarde"}
                 >
                     {isFavorite ? (
-                        <IconHeart size={14} className="text-red-500" />
+                        <IconHeart size={14} className="text-red-500 drop-shadow-sm" />
                     ) : (
-                        <IconHeartOutline size={14} className="text-gray-400 group-hover/btn:text-red-500" />
+                        <IconHeartOutline size={14} className="text-white group-hover/btn:text-red-500 drop-shadow-sm" />
                     )}
                 </button>
 
                 {/* Not Interested Button */}
                 <button
-                    onClick={markNotInterested}
-                    className="p-1.5 rounded-full bg-white/90 shadow-sm border border-gray-100 hover:bg-white hover:scale-110 active:scale-95 transition-all group/btn"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        markNotInterested();
+                    }}
+                    className="p-1.5 rounded-full bg-black/20 backdrop-blur-md shadow-sm border border-white/20 hover:bg-white/40 hover:scale-110 active:scale-95 transition-all group/btn"
                     title="No me interesa (Ocultar)"
                 >
-                    <IconClose size={14} className="text-gray-400 group-hover/btn:text-gray-700" />
+                    <IconClose size={14} className="text-white group-hover/btn:text-gray-200 drop-shadow-sm" />
                 </button>
             </div>
 
             {/* --- Card Media Section --- */}
             {tamaño !== 'miniatura' && (
-                <div className={`
-            relative ${vista === 'list' ? 'w-[120px] md:w-[240px] h-full' : 'w-full aspect-[4/3] md:aspect-video'} flex items-center justify-center overflow-hidden flex-shrink-0
-            bg-gradient-to-br ${theme.gradient} group
-        `}>
+                <div
+                    className={`
+                        relative ${vista === 'list' ? 'w-[120px] md:w-[240px] h-full' : 'w-full aspect-[4/3] md:aspect-video'} flex items-center justify-center overflow-hidden flex-shrink-0
+                        bg-gradient-to-br ${theme.gradient} group
+                    `}
+                    onTouchStart={(e) => {
+                        timerRef.current = setTimeout(() => {
+                            setIsLongPressed(true);
+                            if (navigator.vibrate) navigator.vibrate(50);
+                        }, 600);
+                    }}
+                    onTouchEnd={(e) => {
+                        if (timerRef.current) clearTimeout(timerRef.current);
+                    }}
+                    onTouchMove={(e) => {
+                        if (timerRef.current) clearTimeout(timerRef.current);
+                    }}
+                    onClick={() => {
+                        if (isLongPressed) {
+                            setIsLongPressed(false);
+                        }
+                    }}
+                >
                     {imagenUrl ? (
                         <>
                             <Image
@@ -285,7 +312,7 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
                                 className="object-cover transition-transform duration-700 group-hover:scale-105"
                                 loading="lazy"
                             />
-                            {/* Gradient Overlay for Text Readability */}
+                            {/* Gradient Overlay */}
                             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90" />
                         </>
                     ) : (
@@ -294,11 +321,40 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
                         </div>
                     )}
 
-                    {/* Top Identity Badge - Brand awareness over categories */}
+                    {/* Top Identity Badge - Adapted for Mobile/Desktop */}
                     <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start z-10 transition-transform group-hover:scale-105 origin-top-left">
-                        <div className="flex items-center gap-2 p-1 rounded-lg backdrop-blur-md bg-white/95 shadow-lg border border-white/20">
-                            {/* Brand Square Image */}
-                            <div className="w-8 h-8 rounded-md overflow-hidden bg-gray-100 flex-shrink-0 relative border border-gray-100 shadow-inner">
+                        {isDesktop ? (
+                            // Desktop: Full Badge
+                            <div className="flex items-center gap-2 p-1 rounded-lg backdrop-blur-md bg-white/40 shadow-lg border border-white/20">
+                                {/* Brand Square Image */}
+                                <div className="w-8 h-8 rounded-md overflow-hidden bg-white/20 flex-shrink-0 relative border border-white/30 shadow-inner">
+                                    {adiso.vendedor?.avatarUrl ? (
+                                        <Image
+                                            src={adiso.vendedor.avatarUrl}
+                                            alt={adiso.vendedor.nombre}
+                                            fill
+                                            className="object-cover"
+                                        />
+                                    ) : (
+                                        <div className={`w-full h-full flex items-center justify-center ${theme.bg} ${theme.text}`}>
+                                            <IconComponent size={14} />
+                                        </div>
+                                    )}
+                                </div>
+                                {/* Brand Name & User Name (Simulated structure) */}
+                                <div className="pr-2.5 flex flex-col justify-center overflow-hidden">
+                                    {/* Assuming vendedor.nombre is the Business Name. We'll use "Anunciante" as label for now if User Name unavailable */}
+                                    <span className="text-[10px] uppercase tracking-tighter text-white/90 font-black leading-none mb-0.5 whitespace-nowrap drop-shadow-sm">
+                                        Anunciante
+                                    </span>
+                                    <span className="text-[11px] font-extrabold text-white leading-none truncate max-w-[120px] drop-shadow-md">
+                                        {adiso.vendedor?.nombre || 'Anunciante'}
+                                    </span>
+                                </div>
+                            </div>
+                        ) : (
+                            // Mobile: Minimal Badge (Avatar Only)
+                            <div className="w-9 h-9 rounded-full overflow-hidden bg-white/20 backdrop-blur-sm border border-white/30 shadow-lg relative">
                                 {adiso.vendedor?.avatarUrl ? (
                                     <Image
                                         src={adiso.vendedor.avatarUrl}
@@ -307,21 +363,12 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
                                         className="object-cover"
                                     />
                                 ) : (
-                                    <div className={`w-full h-full flex items-center justify-center ${theme.bg} ${theme.text}`}>
-                                        <IconComponent size={14} />
+                                    <div className={`w-full h-full flex items-center justify-center bg-gray-100 text-gray-500`}>
+                                        <IconComponent size={16} />
                                     </div>
                                 )}
                             </div>
-                            {/* Brand Name */}
-                            <div className="pr-2.5 flex flex-col justify-center overflow-hidden">
-                                <span className="text-[10px] uppercase tracking-tighter text-gray-400 font-black leading-none mb-0.5 whitespace-nowrap">
-                                    Vendido por
-                                </span>
-                                <span className="text-[11px] font-extrabold text-gray-900 leading-none truncate max-w-[120px]">
-                                    {adiso.vendedor?.nombre || 'Anunciante'}
-                                </span>
-                            </div>
-                        </div>
+                        )}
 
                         {adiso.esDestacado && (
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] uppercase tracking-wider font-extrabold backdrop-blur-md bg-amber-400 text-amber-950 border border-amber-300/50 shadow-sm transition-all hover:scale-105 active:scale-95">
@@ -337,11 +384,11 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
                             <span className="truncate">{locationString}</span>
                         </div>
 
-                        {/* Price Badge (Only if numeric, simple badge, no button) */}
+                        {/* Price Badge */}
                         {(adiso.precio && adiso.precio > 0) && (
                             <div className={`
                                 font-bold text-[10px] px-2 py-1 rounded shadow-sm backdrop-blur-md
-                                bg-white/90 text-gray-900 border border-white/50
+                                bg-white/40 text-white border border-white/30 drop-shadow-sm
                              `}>
                                 {displayPrice}
                             </div>
@@ -350,7 +397,7 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
 
                     {/* Verified Badge Overlay */}
                     {adiso.vendedor?.esVerificado && (
-                        <div className="absolute top-2 right-2 backdrop-blur-md bg-white/90 rounded-full p-0.5 shadow-sm border border-gray-100 z-10">
+                        <div className="absolute top-2 right-2 backdrop-blur-md bg-blue-500/20 rounded-full p-0.5 shadow-sm border border-blue-200/30 z-10">
                             <TrustBadge type="verified" size="sm" showLabel={false} />
                         </div>
                     )}

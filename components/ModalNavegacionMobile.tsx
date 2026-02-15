@@ -10,6 +10,7 @@ import {
 } from 'react-icons/fa';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import ThemeToggle from './ThemeToggle';
 import LanguageSelector from './LanguageSelector';
 import { Adiso } from '@/types';
@@ -345,8 +346,8 @@ export default function ModalNavegacionMobile({
                   <ModalAdiso
                     adiso={adisoAbierto}
                     onCerrar={onCerrarAdiso || onCerrar}
-                    onAnterior={onAnterior}
-                    onSiguiente={onSiguiente}
+                    {...(onAnterior && { onAnterior })}
+                    {...(onSiguiente && { onSiguiente })}
                     puedeAnterior={puedeAnterior}
                     puedeSiguiente={puedeSiguiente}
                     dentroSidebar={true}
@@ -400,26 +401,9 @@ export default function ModalNavegacionMobile({
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                     {section.items.map((item) => {
                       const Icon = item.icon;
-                      return (
-                        <button
-                          key={item.id}
-                          onClick={() => handleItemClick(item)}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '12px',
-                            padding: '12px',
-                            borderRadius: '8px',
-                            border: 'none',
-                            background: 'transparent',
-                            color: 'var(--text-primary)',
-                            cursor: 'pointer',
-                            transition: 'background-color 0.2s ease',
-                            textAlign: 'left'
-                          }}
-                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--hover-bg)'}
-                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                        >
+
+                      const content = (
+                        <>
                           {/* Icon */}
                           <div style={{
                             width: '36px',
@@ -460,6 +444,51 @@ export default function ModalNavegacionMobile({
                               {item.badge}
                             </span>
                           )}
+                        </>
+                      );
+
+                      const commonStyle = {
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        padding: '12px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: 'transparent',
+                        color: 'var(--text-primary)',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s ease',
+                        textAlign: 'left' as const,
+                        width: '100%',
+                        textDecoration: 'none'
+                      };
+
+                      if (item.href) {
+                        return (
+                          <Link
+                            key={item.id}
+                            href={item.href}
+                            onClick={() => {
+                              if (item.onClick) item.onClick();
+                              onCerrar();
+                            }}
+                            style={commonStyle}
+                            className="hover:bg-gray-100 dark:hover:bg-zinc-800"
+                          >
+                            {content}
+                          </Link>
+                        );
+                      }
+
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => handleItemClick(item)}
+                          style={commonStyle}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--hover-bg)'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                          {content}
                         </button>
                       );
                     })}

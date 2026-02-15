@@ -120,8 +120,7 @@ export default function InlineEditModal({
                                     ${editValue === color ? 'ring-4 ring-offset-2' : ''}
                                 `}
                                 style={{
-                                    backgroundColor: color,
-                                    ringColor: color
+                                    backgroundColor: color
                                 }}
                             />
                         ))}

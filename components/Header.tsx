@@ -98,16 +98,33 @@ export default function Header({
           <FaBars size={20} />
         </button>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <a href="/" style={{
-            textDecoration: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '4px'
-          }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          cursor: !isDesktop ? 'pointer' : 'default'
+        }}
+          onClick={() => {
+            if (!isDesktop && onUbicacionClick) {
+              onUbicacionClick();
+            }
+          }}
+        >
+          <a href={isDesktop ? "/" : undefined}
+            onClick={(e) => {
+              if (!isDesktop) {
+                e.preventDefault();
+              }
+            }}
+            style={{
+              textDecoration: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '4px'
+            }}>
             <div style={{
-              height: '40px',
+              height: isDesktop ? '42px' : '50px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -130,7 +147,7 @@ export default function Header({
                     span.className = 'logo-fallback';
                     span.innerText = 'ADIS.LAT';
                     span.style.fontWeight = '900';
-                    span.style.fontSize = '1.2rem';
+                    span.style.fontSize = isDesktop ? '1.2rem' : '1.4rem';
                     span.style.color = 'var(--brand-blue)';
                     span.style.letterSpacing = '-0.5px';
                     parent.appendChild(span);
@@ -140,10 +157,11 @@ export default function Header({
             </div>
           </a>
 
-          {/* Separator */}
-          {isDesktop && <div style={{ width: '1px', height: '32px', backgroundColor: 'var(--border-color)', margin: '0 4px' }} />}
+          {/* Separator - Desktop only */}
+          {isDesktop && onUbicacionClick && <div style={{ width: '1px', height: '32px', backgroundColor: 'var(--border-color)', margin: '0 4px' }} />}
 
-          {onUbicacionClick && (
+          {/* Location Button - Desktop only */}
+          {isDesktop && onUbicacionClick && (
             <button
               onClick={onUbicacionClick}
               style={{
@@ -156,7 +174,7 @@ export default function Header({
                 padding: '6px 10px',
                 borderRadius: '8px',
                 transition: 'all 0.2s',
-                maxWidth: isDesktop ? '160px' : '120px',
+                maxWidth: '160px',
                 textAlign: 'left',
                 outline: 'none'
               }}
@@ -368,52 +386,6 @@ export default function Header({
         <UserMenu
           onProgressClick={onChangelogClick}
         />
-
-        {/* Mobile Settings Toggle */}
-        {!isDesktop && (
-          <div style={{ position: 'relative' }}>
-            <button
-              onClick={() => setShowMobileSettings(!showMobileSettings)}
-              style={{
-                width: '40px',
-                height: '40px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: '50%',
-                background: 'var(--bg-secondary)',
-                color: 'var(--text-primary)',
-                border: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              <FaCog size={18} />
-            </button>
-            {showMobileSettings && (
-              <>
-                <div style={{ position: 'fixed', inset: 0, zIndex: 998 }} onClick={() => setShowMobileSettings(false)} />
-                <div style={{
-                  position: 'absolute',
-                  top: '120%',
-                  right: 0,
-                  background: 'var(--bg-primary)',
-                  padding: '1rem',
-                  borderRadius: '8px',
-                  boxShadow: 'var(--shadow-lg)',
-                  zIndex: 999,
-                  border: '1px solid var(--border-color)',
-                  minWidth: '200px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '1rem'
-                }}>
-                  <LanguageSelector />
-                  <ThemeToggle />
-                </div>
-              </>
-            )}
-          </div>
-        )}
       </div>
     </header>
   );

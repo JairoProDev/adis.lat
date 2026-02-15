@@ -157,7 +157,7 @@ export default function BusinessPublicView({
                                 <img src={profile.logo_url} alt="Logo" className="w-full h-full object-cover rounded-xl" />
                             ) : (
                                 <div className="w-full h-full bg-gray-100 flex items-center justify-center text-4xl font-bold text-gray-400">
-                                    {profile.name.substring(0, 1)}
+                                    {profile.name?.substring(0, 1) || '?'}
                                 </div>
                             )}
 
@@ -242,7 +242,7 @@ export default function BusinessPublicView({
                     <div className="hidden md:flex gap-3">
                         {profile.contact_whatsapp && (
                             <a
-                                href={getWhatsappUrl(profile.contact_whatsapp, profile.name)}
+                                href={getWhatsappUrl(profile.contact_whatsapp, profile.name || 'Negocio')}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-green-500/30 hover:-translate-y-1"
@@ -328,7 +328,7 @@ export default function BusinessPublicView({
                                     {/* Socials */}
                                     {hasSocials && (
                                         <div className="flex gap-4 flex-wrap">
-                                            {profile.social_links.map((link, idx) => (
+                                            {profile.social_links?.map((link, idx) => (
                                                 <a key={idx} href={link.url} target="_blank" rel="noopener noreferrer" className="bg-[var(--bg-secondary)] p-3 rounded-full hover:bg-[var(--brand-color)] hover:text-white transition-all text-[var(--text-secondary)]">
                                                     {getSocialIcon(link.url)}
                                                 </a>
@@ -343,7 +343,7 @@ export default function BusinessPublicView({
                                     <h3 className="font-bold text-lg mb-4 relative z-10">Contáctanos</h3>
                                     <div className="space-y-4 relative z-10">
                                         {profile.contact_whatsapp && (
-                                            <a href={getWhatsappUrl(profile.contact_whatsapp, profile.name)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 bg-white/20 p-3 rounded-xl hover:bg-white/30 transition-colors">
+                                            <a href={getWhatsappUrl(profile.contact_whatsapp, profile.name || 'Negocio')} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 bg-white/20 p-3 rounded-xl hover:bg-white/30 transition-colors">
                                                 <IconWhatsapp size={20} />
                                                 <span className="font-medium">Chatear por WhatsApp</span>
                                             </a>
@@ -383,7 +383,7 @@ export default function BusinessPublicView({
                                             <h4 className="font-bold text-sm text-[var(--text-secondary)] uppercase tracking-wider">Horarios</h4>
                                             <div className="space-y-2">
                                                 {Object.entries(profile.business_hours || {}).length > 0 ? (
-                                                    Object.entries(profile.business_hours).map(([day, hours]) => (
+                                                    Object.entries(profile.business_hours || {}).map(([day, hours]) => (
                                                         <div key={day} className="flex justify-between text-sm py-1 border-b border-[var(--border-subtle)] last:border-0 lowercase">
                                                             <span className="font-medium capitalize">{day}</span>
                                                             <span className={hours.closed ? "text-red-500 font-medium" : "text-[var(--text-secondary)]"}>
@@ -546,7 +546,7 @@ export default function BusinessPublicView({
                 ) : (
                     profile.contact_whatsapp && (
                         <a
-                            href={getWhatsappUrl(profile.contact_whatsapp, profile.name)}
+                            href={getWhatsappUrl(profile.contact_whatsapp, profile.name || 'Negocio')}
                             target="_blank"
                             rel="noreferrer"
                             className="w-14 h-14 bg-green-500 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform active:scale-95 group relative"

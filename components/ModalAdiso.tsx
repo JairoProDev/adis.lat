@@ -54,8 +54,8 @@ function formatearUbicacion(ubicacion: any): { texto: string; coordenadas: { lat
 interface ModalAdisoProps {
   adiso: Adiso;
   onCerrar: () => void;
-  onAnterior: () => void;
-  onSiguiente: () => void;
+  onAnterior?: () => void;
+  onSiguiente?: () => void;
   puedeAnterior: boolean;
   puedeSiguiente: boolean;
   dentroSidebar?: boolean; // Indica si está dentro del sidebar (sin overlay)
@@ -187,9 +187,9 @@ export default function ModalAdiso({
         } else if (e.key === 'ArrowRight' && imagenAmpliada.index < imagenes.length - 1) {
           setImagenAmpliada({ url: imagenes[imagenAmpliada.index + 1], index: imagenAmpliada.index + 1 });
         }
-      } else if (e.key === 'ArrowLeft' && puedeAnterior) {
+      } else if (e.key === 'ArrowLeft' && puedeAnterior && onAnterior) {
         onAnterior();
-      } else if (e.key === 'ArrowRight' && puedeSiguiente) {
+      } else if (e.key === 'ArrowRight' && puedeSiguiente && onSiguiente) {
         onSiguiente();
       }
     };
@@ -214,9 +214,9 @@ export default function ModalAdiso({
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
 
-    if (isLeftSwipe && puedeSiguiente) {
+    if (isLeftSwipe && puedeSiguiente && onSiguiente) {
       onSiguiente();
-    } else if (isRightSwipe && puedeAnterior) {
+    } else if (isRightSwipe && puedeAnterior && onAnterior) {
       onAnterior();
     }
   };

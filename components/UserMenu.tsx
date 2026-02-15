@@ -13,6 +13,8 @@ import { IconClose, IconStore } from './Icons';
 import { FaChartLine } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
+import ThemeToggle from './ThemeToggle';
+import LanguageSelector from './LanguageSelector';
 
 interface UserMenuProps {
   onProgressClick?: () => void;
@@ -97,30 +99,31 @@ export default function UserMenu({ onProgressClick }: UserMenuProps) {
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '0.5rem',
-          padding: '0.25rem',
-          border: 'none',
+          gap: '0.75rem',
+          padding: '4px',
+          paddingRight: '12px',
+          border: '1px solid var(--border-color)',
           borderRadius: '50px',
           cursor: 'pointer',
-          backgroundColor: 'var(--hover-bg)',
-          transition: 'background-color 0.2s ease'
+          backgroundColor: mostrarMenu ? 'var(--bg-secondary)' : 'var(--bg-primary)',
+          transition: 'all 0.2s ease',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
         }}
         aria-label="Menú de usuario"
-        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
-        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--hover-bg)'}
+        className="hover:shadow-md"
       >
         {/* Avatar */}
         <div style={{
-          width: '40px',
-          height: '40px',
+          width: '32px',
+          height: '32px',
           borderRadius: '50%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: '0.875rem',
-          fontWeight: 600,
+          fontSize: '0.8rem',
+          fontWeight: 700,
           color: 'var(--text-primary)',
-          backgroundColor: profile?.avatar_url ? 'transparent' : 'var(--bg-secondary)',
+          backgroundColor: profile?.avatar_url ? 'transparent' : 'var(--brand-blue-light)',
           border: '1px solid var(--border-color)',
           overflow: 'hidden'
         }}>
@@ -139,33 +142,16 @@ export default function UserMenu({ onProgressClick }: UserMenuProps) {
           )}
         </div>
 
-        {/* Dropdown indicator - Facebook style */}
+        {/* Hamburger Icon for Menu */}
         <div style={{
-          width: '20px',
-          height: '20px',
-          borderRadius: '50%',
-          backgroundColor: 'var(--bg-primary)',
-          border: '1px solid var(--border-color)',
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginLeft: '-8px'
+          flexDirection: 'column',
+          gap: '4px',
+          padding: '0 4px'
         }}>
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 12 12"
-            fill="none"
-            style={{
-              transform: mostrarMenu ? 'rotate(180deg)' : 'rotate(0deg)',
-              transition: 'transform 0.2s ease'
-            }}
-          >
-            <path
-              d="M6 8L2 4h8L6 8z"
-              fill="var(--text-primary)"
-            />
-          </svg>
+          <span style={{ width: '16px', height: '2px', backgroundColor: 'var(--text-primary)', borderRadius: '2px' }}></span>
+          <span style={{ width: '16px', height: '2px', backgroundColor: 'var(--text-primary)', borderRadius: '2px' }}></span>
+          <span style={{ width: '16px', height: '2px', backgroundColor: 'var(--text-primary)', borderRadius: '2px' }}></span>
         </div>
       </button>
 
@@ -173,249 +159,124 @@ export default function UserMenu({ onProgressClick }: UserMenuProps) {
         <div
           style={{
             position: 'absolute',
-            top: 'calc(100% + 0.5rem)',
+            top: 'calc(100% + 0.75rem)',
             right: 0,
             backgroundColor: 'var(--bg-primary)',
             border: '1px solid var(--border-color)',
-            borderRadius: '8px',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-            minWidth: '200px',
+            borderRadius: '16px',
+            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
+            minWidth: '260px',
             zIndex: 1000,
-            padding: '0.5rem'
+            overflow: 'hidden',
+            animation: 'slideDown 0.2s ease-out'
           }}
         >
-          {/* Header del menú */}
-          <div style={{ padding: '0.75rem', borderBottom: '1px solid var(--border-color)' }}>
-            <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
-              {nombreCompleto}
-            </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-              {user.email}
-            </div>
-            {isVerificado && (
-              <div style={{ fontSize: '0.7rem', color: '#22c55e', marginTop: '0.25rem' }}>
-                ✓ Verificado
+          <style dangerouslySetInnerHTML={{
+            __html: `
+            @keyframes slideDown {
+              from { opacity: 0; transform: translateY(-10px); }
+              to { opacity: 1; transform: translateY(0); }
+            }
+          `}} />
+
+          {/* User Info Header */}
+          <div style={{ padding: '1.25rem', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-secondary)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                overflow: 'hidden',
+                border: '2px solid var(--bg-primary)',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+              }}>
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt={nombreCompleto} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <div style={{ width: '100%', height: '100%', background: 'var(--brand-blue-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>{iniciales}</div>
+                )}
               </div>
-            )}
-            {isAnunciante && (
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-primary)', marginTop: '0.25rem', fontWeight: 600 }}>
-                📢 Anunciante
+              <div style={{ flex: 1, overflow: 'hidden' }}>
+                <div style={{ fontSize: '0.925rem', fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {nombreCompleto}
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {user.email}
+                </div>
               </div>
-            )}
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {isVerificado && (
+                <span style={{ fontSize: '0.7rem', color: '#fff', backgroundColor: '#22c55e', padding: '2px 8px', borderRadius: '10px', fontWeight: 600 }}>
+                  Verificado
+                </span>
+              )}
+              {isAnunciante && (
+                <span style={{ fontSize: '0.7rem', color: '#fff', backgroundColor: 'var(--brand-blue)', padding: '2px 8px', borderRadius: '10px', fontWeight: 600 }}>
+                  Anunciante
+                </span>
+              )}
+            </div>
           </div>
 
-          {/* Opciones del menú */}
-          <div style={{ padding: '0.25rem' }}>
-            <button
-              onClick={() => {
-                setMostrarMenu(false);
-                router.push('/mi-negocio');
-              }}
-              style={{
-                width: '100%',
-                padding: '0.5rem 0.75rem',
-                textAlign: 'left',
-                background: 'none',
-                border: 'none',
-                color: 'var(--text-primary)',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-                borderRadius: '4px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-            >
-              <IconStore size={16} /> Mi Negocio
-            </button>
-            <button
-              onClick={() => {
-                setMostrarMenu(false);
-                setMostrarPerfil(true);
-              }}
-              style={{
-                width: '100%',
-                padding: '0.5rem 0.75rem',
-                textAlign: 'left',
-                background: 'none',
-                border: 'none',
-                color: 'var(--text-primary)',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-                borderRadius: '4px'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-            >
-              👤 Mi Perfil
-            </button>
-            <button
-              onClick={() => {
-                setMostrarMenu(false);
-                setMostrarFavoritos(true);
-              }}
-              style={{
-                width: '100%',
-                padding: '0.5rem 0.75rem',
-                textAlign: 'left',
-                background: 'none',
-                border: 'none',
-                color: 'var(--text-primary)',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-                borderRadius: '4px'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-            >
-              ⭐ Favoritos
-            </button>
-            <button
-              onClick={() => {
-                setMostrarMenu(false);
-                setMostrarOcultos(true);
-              }}
-              style={{
-                width: '100%',
-                padding: '0.5rem 0.75rem',
-                textAlign: 'left',
-                background: 'none',
-                border: 'none',
-                color: 'var(--text-primary)',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-                borderRadius: '4px'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-            >
-              🚫 Anuncios Ocultos
-            </button>
+          {/* Menu Options */}
+          <div style={{ padding: '0.5rem' }}>
+            <MenuItem
+              icon={<IconStore size={18} />}
+              label="Mi Negocio"
+              onClick={() => { setMostrarMenu(false); router.push('/mi-negocio'); }}
+            />
+            <MenuItem
+              icon={<span style={{ fontSize: '1.1rem' }}>👤</span>}
+              label="Mi Perfil"
+              onClick={() => { setMostrarMenu(false); setMostrarPerfil(true); }}
+            />
+            <MenuItem
+              icon={<span style={{ fontSize: '1.1rem' }}>⭐</span>}
+              label="Favoritos"
+              onClick={() => { setMostrarMenu(false); setMostrarFavoritos(true); }}
+            />
+            <MenuItem
+              icon={<span style={{ fontSize: '1.1rem' }}>🚫</span>}
+              label="Anuncios Ocultos"
+              onClick={() => { setMostrarMenu(false); setMostrarOcultos(true); }}
+            />
             {onProgressClick && (
-              <button
-                onClick={() => {
-                  setMostrarMenu(false);
-                  onProgressClick();
-                }}
-                style={{
-                  width: '100%',
-                  padding: '0.5rem 0.75rem',
-                  textAlign: 'left',
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--text-primary)',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                  borderRadius: '4px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-              >
-                <FaChartLine size={14} aria-hidden="true" />
-                {t('header.progress')}
-              </button>
+              <MenuItem
+                icon={<FaChartLine size={16} />}
+                label={t('header.progress')}
+                onClick={() => { setMostrarMenu(false); onProgressClick(); }}
+              />
             )}
-            <button
-              onClick={() => {
-                setMostrarMenu(false);
-                // TODO: Navegar a configuración
-              }}
-              style={{
-                width: '100%',
-                padding: '0.5rem 0.75rem',
-                textAlign: 'left',
-                background: 'none',
-                border: 'none',
-                color: 'var(--text-primary)',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-                borderRadius: '4px'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-            >
-              ⚙️ Configuración
-            </button>
-            {!isAnunciante && (
-              <button
-                onClick={() => {
-                  setMostrarMenu(false);
-                  setMostrarConvertirAnunciante(true);
-                }}
-                style={{
-                  width: '100%',
-                  padding: '0.5rem 0.75rem',
-                  textAlign: 'left',
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--text-primary)',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                  borderRadius: '4px',
-                  fontWeight: 600
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-              >
-                📢 Convertirse en Anunciante
-              </button>
-            )}
+
             <div style={{ height: '1px', backgroundColor: 'var(--border-color)', margin: '0.5rem 0' }} />
-            <button
+
+            <MenuItem
+              icon={<span style={{ fontSize: '1.1rem' }}>📢</span>}
+              label="Convertirse en Anunciante"
+              onClick={() => { setMostrarMenu(false); setMostrarConvertirAnunciante(true); }}
+              visible={!isAnunciante}
+            />
+
+            {/* Desktop Settings embedded */}
+            <div style={{ padding: '0.5rem 0.75rem' }}>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.05em' }}>
+                Configuración
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <LanguageSelector />
+                <ThemeToggle />
+              </div>
+            </div>
+
+            <div style={{ height: '1px', backgroundColor: 'var(--border-color)', margin: '0.5rem 0' }} />
+
+            <MenuItem
+              icon={<span style={{ fontSize: '1.1rem' }}>🚪</span>}
+              label="Cerrar Sesión"
               onClick={handleSignOut}
-              style={{
-                width: '100%',
-                padding: '0.5rem 0.75rem',
-                textAlign: 'left',
-                background: 'none',
-                border: 'none',
-                color: '#ef4444',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-                borderRadius: '4px'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-            >
-              Cerrar Sesión
-            </button>
+              danger
+            />
           </div>
         </div>
       )}
@@ -424,22 +285,62 @@ export default function UserMenu({ onProgressClick }: UserMenuProps) {
       <LocationPrompt
         abierto={mostrarLocationPrompt}
         onCerrar={() => setMostrarLocationPrompt(false)}
-        onAceptar={() => {
-          // Refrescar perfil después de guardar ubicación
-          refreshProfile();
-        }}
+        onAceptar={() => refreshProfile()}
       />
       <ConvertirAnunciante
         abierto={mostrarConvertirAnunciante}
         onCerrar={() => setMostrarConvertirAnunciante(false)}
-        onExito={() => {
-          // Mostrar mensaje de éxito o actualizar UI
-        }}
+        onExito={() => { }}
       />
       <UserProfile
         abierto={mostrarPerfil}
         onCerrar={() => setMostrarPerfil(false)}
       />
     </div>
+  );
+}
+
+function MenuItem({ icon, label, onClick, danger, visible = true }: { icon: React.ReactNode, label: string, onClick: () => void, danger?: boolean, visible?: boolean }) {
+  if (!visible) return null;
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        width: '100%',
+        padding: '0.75rem 1rem',
+        textAlign: 'left',
+        background: 'none',
+        border: 'none',
+        color: danger ? '#ef4444' : 'var(--text-primary)',
+        cursor: 'pointer',
+        fontSize: '0.9rem',
+        fontWeight: 500,
+        borderRadius: '10px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        transition: 'all 0.2s',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.backgroundColor = danger ? 'rgba(239, 68, 68, 0.05)' : 'var(--hover-bg)';
+        if (!danger) e.currentTarget.style.transform = 'translateX(4px)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.backgroundColor = 'transparent';
+        e.currentTarget.style.transform = 'translateX(0)';
+      }}
+    >
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '24px',
+        height: '24px',
+        color: danger ? '#ef4444' : 'var(--text-secondary)'
+      }}>
+        {icon}
+      </div>
+      {label}
+    </button>
   );
 }
