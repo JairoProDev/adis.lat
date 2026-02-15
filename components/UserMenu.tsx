@@ -98,34 +98,75 @@ export default function UserMenu({ onProgressClick }: UserMenuProps) {
           display: 'flex',
           alignItems: 'center',
           gap: '0.5rem',
-          padding: '0.5rem',
-          border: '1px solid var(--border-color)',
-          borderRadius: '50%',
+          padding: '0.25rem',
+          border: 'none',
+          borderRadius: '50px',
           cursor: 'pointer',
+          backgroundColor: 'var(--hover-bg)',
+          transition: 'background-color 0.2s ease'
+        }}
+        aria-label="Menú de usuario"
+        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
+        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--hover-bg)'}
+      >
+        {/* Avatar */}
+        <div style={{
           width: '40px',
           height: '40px',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
           justifyContent: 'center',
           fontSize: '0.875rem',
           fontWeight: 600,
           color: 'var(--text-primary)',
-          backgroundColor: profile?.avatar_url ? 'transparent' : 'var(--bg-secondary)'
-        }}
-        aria-label="Menú de usuario"
-      >
-        {profile?.avatar_url ? (
-          <img
-            src={profile.avatar_url}
-            alt={nombreCompleto}
+          backgroundColor: profile?.avatar_url ? 'transparent' : 'var(--bg-secondary)',
+          border: '1px solid var(--border-color)',
+          overflow: 'hidden'
+        }}>
+          {profile?.avatar_url ? (
+            <img
+              src={profile.avatar_url}
+              alt={nombreCompleto}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover'
+              }}
+            />
+          ) : (
+            <span>{iniciales}</span>
+          )}
+        </div>
+
+        {/* Dropdown indicator - Facebook style */}
+        <div style={{
+          width: '20px',
+          height: '20px',
+          borderRadius: '50%',
+          backgroundColor: 'var(--bg-primary)',
+          border: '1px solid var(--border-color)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginLeft: '-8px'
+        }}>
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 12 12"
+            fill="none"
             style={{
-              width: '100%',
-              height: '100%',
-              borderRadius: '50%',
-              objectFit: 'cover'
+              transform: mostrarMenu ? 'rotate(180deg)' : 'rotate(0deg)',
+              transition: 'transform 0.2s ease'
             }}
-          />
-        ) : (
-          <span>{iniciales}</span>
-        )}
+          >
+            <path
+              d="M6 8L2 4h8L6 8z"
+              fill="var(--text-primary)"
+            />
+          </svg>
+        </div>
       </button>
 
       {mostrarMenu && (

@@ -1,94 +1,197 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
-import { Adiso } from '@/types';
-import { IconAdiso, IconMap, IconMegaphone, IconChatbot, IconGratuitos, IconClose, IconStore } from './Icons';
-import ModalAdiso from './ModalAdiso';
-import MapaInteractivo from './MapaInteractivo';
-import FormularioPublicar from './FormularioPublicar';
-import ChatbotIA from './ChatbotIANew';
-import AdisosGratuitos from './AdisosGratuitos';
-import type { SeccionSidebar } from './SidebarDesktop';
+import {
+  FaHome, FaSearch, FaMap, FaBullhorn, FaStore, FaGift,
+  FaRobot, FaHeart, FaEyeSlash, FaUserCircle, FaCog,
+  FaChartLine, FaBook, FaQuestionCircle, FaSignOutAlt,
+  FaTimes
+} from 'react-icons/fa';
+import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from 'next/navigation';
+import ThemeToggle from './ThemeToggle';
+import LanguageSelector from './LanguageSelector';
 
 interface ModalNavegacionMobileProps {
   abierto: boolean;
   onCerrar: () => void;
-  seccionInicial?: SeccionSidebar;
-  adisoAbierto: Adiso | null;
-  onCerrarAdiso: () => void;
-  onAnterior: () => void;
-  onSiguiente: () => void;
-  puedeAnterior: boolean;
-  puedeSiguiente: boolean;
-  onPublicar: (adiso: Adiso) => void;
-  onError?: (message: string) => void;
-  onSuccess?: (message: string) => void;
-  onCambiarSeccion?: (seccion: SeccionSidebar) => void; // Callback para sincronizar con navbar
-  todosLosAdisos?: Adiso[]; // Todos los adisos para mostrar en la sección de gratuitos
+  onOpenFavorites?: () => void;
+  onOpenHidden?: () => void;
+}
+
+interface MenuItem {
+  id: string;
+  label: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  href?: string;
+  onClick?: () => void;
+  badge?: string | number;
+  authenticated?: boolean; // true = solo autenticados, false = solo invitados, undefined = todos
+}
+
+interface MenuSection {
+  title: string;
+  items: MenuItem[];
 }
 
 export default function ModalNavegacionMobile({
   abierto,
   onCerrar,
-  seccionInicial = 'gratuitos',
-  adisoAbierto,
-  onCerrarAdiso,
-  onAnterior,
-  onSiguiente,
-  puedeAnterior,
-  puedeSiguiente,
-  onPublicar,
-  onError,
-  onSuccess,
-  onCambiarSeccion,
-  todosLosAdisos = []
+  onOpenFavorites,
+  onOpenHidden
 }: ModalNavegacionMobileProps) {
-  // TODOS LOS HOOKS DEBEN IR ANTES DEL EARLY RETURN
   const isDesktop = useMediaQuery('(min-width: 768px)');
-  const [seccionActiva, setSeccionActiva] = useState<SeccionSidebar>(seccionInicial);
-  const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const { user, signOut } = useAuth();
+  const router = useRouter();
+  const isAuthenticated = !!user;
 
-  useEffect(() => {
-    if (adisoAbierto) {
-      setSeccionActiva('adiso');
-    }
-  }, [adisoAbierto]);
-
-  useEffect(() => {
-    if (seccionInicial) {
-      setSeccionActiva(seccionInicial);
-    }
-  }, [seccionInicial]);
-
-  // Solo mostrar en mobile - EARLY RETURN DESPUÉS DE TODOS LOS HOOKS
-  if (isDesktop || !abierto) {
+  // Don't show if not open
+  if (!abierto) {
     return null;
   }
 
-  const secciones = [
-    { id: 'adiso' as SeccionSidebar, icono: IconAdiso, label: 'Adiso' },
-    { id: 'mapa' as SeccionSidebar, icono: IconMap, label: 'Mapa' },
-    { id: 'publicar' as SeccionSidebar, icono: IconMegaphone, label: 'Publicar' },
+  const handleItemClick = (item: MenuItem) => {
+    if (item.onClick) {
+      item.onClick();
+    } else if (item.href) {
+      router.push(item.href);
+    }
+    onCerrar();
+  };
 
-    { id: 'gratuitos' as SeccionSidebar, icono: IconGratuitos, label: 'Gratuitos' },
-    { id: 'negocio' as SeccionSidebar, icono: IconStore, label: 'Negocio' }
+  const menuSections: MenuSection[] = [
+    {
+      title: '🔍 Explorar',
+      items: [
+        {
+          id: 'feed',
+          label: 'Feed',
+          icon: FaHome,
+          href: '/feed'
+        },
+        {
+          id: 'buscar',
+          label: 'Buscar Anuncios',
+          icon: FaSearch,
+          href: '/'
+        },
+        {
+          id: 'mapa',
+          label: 'Mapa Interactivo',
+          icon: FaMap,
+          href: '/'
+        },
+        {
+          id: 'gratuitos',
+          label: 'Anuncios Gratuitos',
+          icon: FaGift,
+          href: '/'
+        },
+      ]
+    },
+    {
+      title: '📢 Mis Acciones',
+      items: [
+        {
+          id: 'publicar',
+          label: 'Publicar Anuncio',
+          icon: FaBullhorn,
+          href: '/publicar',
+          authenticated: true
+        },
+        {
+          id: 'negocio',
+          label: 'Mi Negocio',
+          icon: FaStore,
+          href: '/mi-negocio',
+          authenticated: true
+        },
+        {
+          id: 'favoritos',
+          label: 'Mis Favoritos',
+          icon: FaHeart,
+          onClick: onOpenFavorites,
+          authenticated: true
+        },
+        {
+          id: 'ocultos',
+          label: 'Anuncios Ocultos',
+          icon: FaEyeSlash,
+          onClick: onOpenHidden,
+          authenticated: true
+        },
+      ]
+    },
+    {
+      title: '🤖 Asistente',
+      items: [
+        {
+          id: 'chatbot',
+          label: 'Chat IA',
+          icon: FaRobot,
+          href: '/chat'
+        },
+      ]
+    },
+    {
+      title: '👤 Mi Cuenta',
+      items: [
+        {
+          id: 'perfil',
+          label: 'Mi Perfil',
+          icon: FaUserCircle,
+          href: '/perfil',
+          authenticated: true
+        },
+        {
+          id: 'progreso',
+          label: 'Mi Progreso',
+          icon: FaChartLine,
+          href: '/progreso',
+          authenticated: true
+        },
+        {
+          id: 'configuracion',
+          label: 'Configuración',
+          icon: FaCog,
+          href: '/configuracion'
+        },
+      ]
+    },
+    {
+      title: '📚 Ayuda',
+      items: [
+        {
+          id: 'ayuda',
+          label: 'Centro de Ayuda',
+          icon: FaQuestionCircle,
+          href: '/ayuda'
+        },
+        {
+          id: 'guia',
+          label: 'Guía de Uso',
+          icon: FaBook,
+          href: '/guia'
+        },
+      ]
+    }
   ];
 
-  const handleCambiarSeccion = (seccion: SeccionSidebar) => {
-    setSeccionActiva(seccion);
-    if (seccion === 'publicar') {
-      setMostrarFormulario(true);
-    } else {
-      setMostrarFormulario(false);
-    }
-    // Notificar al padre para sincronizar con navbar
-    onCambiarSeccion?.(seccion);
-  };
+  // Filter items based on authentication
+  const filteredSections = menuSections.map(section => ({
+    ...section,
+    items: section.items.filter(item => {
+      if (item.authenticated === undefined) return true;
+      if (item.authenticated === true) return isAuthenticated;
+      if (item.authenticated === false) return !isAuthenticated;
+      return true;
+    })
+  })).filter(section => section.items.length > 0);
 
   return (
     <>
-      {/* Overlay con fondo semitransparente */}
+      {/* Overlay */}
       <div
         style={{
           position: 'fixed',
@@ -96,185 +199,244 @@ export default function ModalNavegacionMobile({
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.3)',
+          backgroundColor: 'rgba(0, 0, 0, 0.4)',
           zIndex: 2000,
-          pointerEvents: abierto ? 'auto' : 'none',
           opacity: abierto ? 1 : 0,
-          transition: 'opacity 0.3s ease'
+          transition: 'opacity 0.3s ease',
+          pointerEvents: abierto ? 'auto' : 'none'
         }}
         onClick={onCerrar}
       />
 
-      {/* Modal con altura parcial */}
+      {/* Sidebar Panel */}
       <div
         style={{
           position: 'fixed',
-          bottom: 0,
+          top: 0,
           left: 0,
-          right: 0,
-          maxHeight: '85vh',
+          bottom: 0,
+          width: '80vw',
+          maxWidth: '320px',
           backgroundColor: 'var(--bg-primary)',
           zIndex: 2001,
           display: 'flex',
           flexDirection: 'column',
-          transform: abierto ? 'translateY(0)' : 'translateY(100%)',
+          transform: abierto ? 'translateX(0)' : 'translateX(-100%)',
           transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          borderRadius: '16px 16px 0 0',
-          overflow: 'hidden',
-          boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.15)',
-          paddingBottom: '4rem' // Espacio para el navbar permanente
+          boxShadow: 'var(--shadow-lg)',
+          overflowY: 'auto'
         }}
-        onClick={(e) => e.stopPropagation()} // Prevenir cierre al hacer click dentro
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* Header con indicador y botón cerrar */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '1rem 1.25rem',
-            borderBottom: '1px solid var(--border-color)',
-            backgroundColor: 'var(--bg-primary)',
-            position: 'relative',
-            flexShrink: 0
-          }}
-        >
-          {/* Indicador visual superior */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '0.5rem',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: '36px',
-              height: '4px',
-              backgroundColor: 'var(--text-tertiary)',
-              borderRadius: '2px',
-              opacity: 0.3
-            }}
-          />
-          <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 0 0.5rem', flex: 1 }}>
-            {secciones.find(s => s.id === seccionActiva)?.label || 'Navegación'}
-          </h2>
-          <button
-            onClick={onCerrar}
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '8px',
-              border: 'none',
-              backgroundColor: 'transparent',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              color: 'var(--text-secondary)',
-              transition: 'all 0.2s ease',
-              flexShrink: 0
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-              e.currentTarget.style.color = 'var(--text-primary)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.color = 'var(--text-secondary)';
-            }}
-          >
-            <IconClose size={20} />
-          </button>
-        </div>
-
-        {/* Contenido con scroll suave */}
-        <div
-          style={{
-            flex: 1,
-            overflowY: 'auto',
-            position: 'relative',
-            WebkitOverflowScrolling: 'touch',
-            minHeight: 0 // Permite que el contenido se comprima si es necesario
-          }}
-        >
-          {seccionActiva === 'adiso' && adisoAbierto && (
-            <ModalAdiso
-              adiso={adisoAbierto}
-              onCerrar={onCerrarAdiso}
-              onAnterior={onAnterior}
-              onSiguiente={onSiguiente}
-              puedeAnterior={puedeAnterior}
-              puedeSiguiente={puedeSiguiente}
-              dentroSidebar={true}
-            />
-          )}
-
-          {seccionActiva === 'mapa' && (
-            <MapaInteractivo adisos={[]} onAbrirAdiso={() => { }} />
-          )}
-
-          {seccionActiva === 'publicar' && (
-            <FormularioPublicar
-              onPublicar={(adiso) => {
-                onPublicar(adiso);
-                setSeccionActiva('adiso');
-                onCambiarSeccion?.('adiso');
-              }}
-              onCerrar={() => {
-                setSeccionActiva('adiso');
-                onCambiarSeccion?.('adiso');
-              }}
-              onError={onError}
-              onSuccess={onSuccess}
-              dentroSidebar={true}
-            />
-          )}
-
-
-
-          {seccionActiva === 'gratuitos' && (
-            <AdisosGratuitos todosLosAdisos={todosLosAdisos} />
-          )}
-
-          {seccionActiva === 'adiso' && !adisoAbierto && (
-            <div
+        {/* Header */}
+        <div style={{
+          padding: '1rem',
+          borderBottom: '1px solid var(--border-color)',
+          backgroundColor: 'var(--bg-primary)',
+          position: 'sticky',
+          top: 0,
+          zIndex: 10
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
+              Menú
+            </h2>
+            <button
+              onClick={onCerrar}
               style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                border: 'none',
+                backgroundColor: 'transparent',
+                color: 'var(--text-primary)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                height: '100%',
-                color: 'var(--text-tertiary)',
-                fontSize: '0.875rem',
-                textAlign: 'center',
-                padding: '2rem'
+                cursor: 'pointer',
+                transition: 'background-color 0.2s ease'
               }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--hover-bg)'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
             >
-              Selecciona un adiso para ver los detalles
+              <FaTimes size={18} />
+            </button>
+          </div>
+
+          {/* User Info if authenticated */}
+          {isAuthenticated && user && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '12px',
+              borderRadius: '8px',
+              backgroundColor: 'var(--bg-secondary)',
+              border: '1px solid var(--border-color)'
+            }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--brand-blue)',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.25rem',
+                fontWeight: 700
+              }}>
+                {user.email?.[0]?.toUpperCase() || '👤'}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--text-primary)' }}>
+                  {user.email}
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                  Usuario verificado ✓
+                </div>
+              </div>
             </div>
           )}
         </div>
 
-        {/* El navbar ahora está fuera del modal, en NavbarMobile permanente */}
-      </div>
+        {/* Menu Content */}
+        <div style={{ flex: 1, padding: '0.5rem' }}>
+          {filteredSections.map((section, sectionIdx) => (
+            <div key={section.title} style={{ marginBottom: '1.5rem' }}>
+              {/* Section Title */}
+              <div style={{
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                color: 'var(--text-tertiary)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                marginBottom: '0.5rem',
+                paddingLeft: '0.75rem'
+              }}>
+                {section.title}
+              </div>
 
-      <style jsx>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-        
-        @keyframes slideUp {
-          from {
-            transform: translateY(100%);
-          }
-          to {
-            transform: translateY(0);
-          }
-        }
-      `}</style>
+              {/* Section Items */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                {section.items.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => handleItemClick(item)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        padding: '12px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: 'transparent',
+                        color: 'var(--text-primary)',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s ease',
+                        textAlign: 'left'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--hover-bg)'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      {/* Icon */}
+                      <div style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '50%',
+                        backgroundColor: 'var(--bg-secondary)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'var(--text-secondary)',
+                        flexShrink: 0
+                      }}>
+                        <Icon size={18} />
+                      </div>
+
+                      {/* Label */}
+                      <span style={{
+                        fontSize: '0.9375rem',
+                        fontWeight: 500,
+                        flex: 1,
+                        color: 'var(--text-primary)'
+                      }}>
+                        {item.label}
+                      </span>
+
+                      {/* Badge if exists */}
+                      {item.badge && (
+                        <span style={{
+                          backgroundColor: '#ef4444',
+                          color: 'white',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          padding: '2px 6px',
+                          borderRadius: '10px',
+                          minWidth: '20px',
+                          textAlign: 'center'
+                        }}>
+                          {item.badge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Footer Settings */}
+        <div style={{
+          padding: '1rem',
+          borderTop: '1px solid var(--border-color)',
+          backgroundColor: 'var(--bg-primary)'
+        }}>
+          <div style={{ marginBottom: '1rem' }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-tertiary)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.5px', paddingLeft: '0.75rem' }}>
+              ⚙️ Preferencias
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <ThemeToggle />
+              <LanguageSelector />
+            </div>
+          </div>
+
+          {/* Logout Button */}
+          {isAuthenticated && (
+            <button
+              onClick={() => {
+                signOut();
+                onCerrar();
+              }}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                padding: '12px',
+                borderRadius: '8px',
+                border: 'none',
+                background: 'transparent',
+                color: '#ef4444',
+                cursor: 'pointer',
+                fontSize: '0.9375rem',
+                fontWeight: 500,
+                transition: 'background-color 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            >
+              <FaSignOutAlt size={18} />
+              Cerrar Sesión
+            </button>
+          )}
+        </div>
+      </div>
     </>
   );
 }
-

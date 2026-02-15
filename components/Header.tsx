@@ -59,14 +59,6 @@ export default function Header({
 
   if (!mounted) return null;
 
-  const navItems = [
-    { id: 'adiso' as SeccionSidebar, icon: IconAdiso, label: 'Inicio' },
-    { id: 'gratuitos' as SeccionSidebar, icon: IconGratuitos, label: 'Gratuitos' },
-    { id: 'publicar' as SeccionSidebar, icon: IconMegaphone, label: 'Publicar' },
-    { id: 'mapa' as SeccionSidebar, icon: IconMap, label: 'Mapa' },
-    { id: 'negocio' as SeccionSidebar, icon: IconStore, label: 'Negocio' },
-  ];
-
   return (
     <header style={{
       backgroundColor: 'var(--bg-primary)',

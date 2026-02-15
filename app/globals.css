@@ -21,29 +21,40 @@
   /* ========================================
      PALETA DE MARCA - ESTRICTA
      ======================================== */
-  --brand-blue: #53acc5;      /* Turquesa principal */
-  --brand-yellow: #ffc24a;    /* Amarillo secundario */
+  --brand-blue: #53acc5;
+  /* Turquesa principal */
+  --brand-yellow: #ffc24a;
+  /* Amarillo secundario */
 
   /* ========================================
      COLORES DE TEXTO - SIN NEGRO PURO
      ======================================== */
-  --text-primary: #1e293b;    /* Gris oscuro para texto principal */
-  --text-secondary: #64748b;  /* Gris medio para texto secundario */
-  --text-tertiary: #94a3b8;   /* Gris claro para texto terciario */
+  --text-primary: #1e293b;
+  /* Gris oscuro para texto principal */
+  --text-secondary: #64748b;
+  /* Gris medio para texto secundario */
+  --text-tertiary: #94a3b8;
+  /* Gris claro para texto terciario */
 
   /* ========================================
      FONDOS
      ======================================== */
-  --bg-primary: #ffffff;      /* Blanco puro */
-  --bg-secondary: #f8fafc;    /* Gris muy claro */
-  --bg-tertiary: #f1f5f9;     /* Gris claro */
+  --bg-primary: #ffffff;
+  /* Blanco puro */
+  --bg-secondary: #f8fafc;
+  /* Gris muy claro */
+  --bg-tertiary: #f1f5f9;
+  /* Gris claro */
 
   /* ========================================
      COLORES DE INTERFAZ
      ======================================== */
-  --border-color: #e2e8f0;    /* Bordes sutiles */
-  --border-subtle: rgba(0, 0, 0, 0.06);  /* Bordes muy sutiles */
-  --hover-bg: #f8fafc;        /* Fondo en hover */
+  --border-color: #e2e8f0;
+  /* Bordes sutiles */
+  --border-subtle: rgba(0, 0, 0, 0.06);
+  /* Bordes muy sutiles */
+  --hover-bg: #f8fafc;
+  /* Fondo en hover */
 
   /* Legacy - Mantener compatibilidad */
   --color-secondary: #ffc24a;
@@ -186,6 +197,19 @@ a {
   outline-offset: 2px;
 }
 
+/* Hover and interactive utilities */
+.hover\:shadow-lg:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.hover\:scale-105:hover {
+  transform: scale(1.05);
+}
+
+.hover\:bg-white\/30:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
 /* Animación de spinner */
 @keyframes spin {
   to {
@@ -205,10 +229,11 @@ a {
 }
 
 @media print {
+
   /* Hide non-printable elements */
-  nav, 
-  header, 
-  .sidebar, 
+  nav,
+  header,
+  .sidebar,
   /* Don't hide all buttons, maybe user wants to see some, but usually for catalog printing we want clean */
   /* button,  Let's keep buttons hidden for cleaner look */
   button,
@@ -220,8 +245,8 @@ a {
   }
 
   /* Reset layout for print */
-  body, 
-  main, 
+  body,
+  main,
   .container {
     width: 100% !important;
     margin: 0 !important;

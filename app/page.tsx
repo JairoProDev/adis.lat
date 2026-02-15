@@ -746,15 +746,13 @@ function HomeContent() {
         Saltar al contenido principal
       </a>
       <Header
-        onChangelogClick={() => router.push('/progreso')}
+        onToggleLeftSidebar={() => setIsLeftSidebarOpen(!isLeftSidebarOpen)}
+        onLogoClick={() => setMostrarFiltroUbicacion(true)}
         seccionActiva={seccionDesktopActiva}
         onSeccionChange={(seccion) => {
           setSeccionDesktopActiva(seccion);
-          setIsSidebarMinimizado(false); // Expand sidebar when changing section via header
+          setIsSidebarMinimizado(false);
         }}
-        onToggleLeftSidebar={() => setIsLeftSidebarOpen(!isLeftSidebarOpen)}
-        ubicacion={filtroUbicacion?.distrito || filtroUbicacion?.provincia || 'Perú'}
-        onUbicacionClick={() => setMostrarFiltroUbicacion(true)}
       />
       {/* Category Bar - Horizontal Scroll */}
       <div
