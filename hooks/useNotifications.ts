@@ -14,6 +14,7 @@ export function useNotifications() {
 
         // Initial Fetch
         const fetchNotifications = async () => {
+            if (!supabase) return;
             setLoading(true);
             const { data, error } = await supabase
                 .from('notifications')
@@ -32,6 +33,8 @@ export function useNotifications() {
         };
 
         fetchNotifications();
+
+        if (!supabase) return;
 
         // Realtime Subscription
         const channel = supabase
@@ -53,11 +56,13 @@ export function useNotifications() {
             .subscribe();
 
         return () => {
-            supabase.removeChannel(channel);
+            supabase?.removeChannel(channel);
         };
     }, [user]);
 
     const markAsRead = async (id: string) => {
+        if (!supabase) return;
+
         // Optimistic update
         setNotifications((prev) =>
             prev.map((n) => (n.id === id ? { ...n, read: true } : n))
@@ -76,6 +81,8 @@ export function useNotifications() {
     };
 
     const markAllAsRead = async () => {
+        if (!supabase) return;
+
         // Optimistic update
         setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
         setUnreadCount(0);

@@ -14,6 +14,7 @@ export function useConversations() {
         if (!user) return;
 
         const fetchConversations = async () => {
+            if (!supabase) return;
             setLoading(true);
 
             // Fetch conversations where user is a participant
@@ -43,7 +44,7 @@ export function useConversations() {
                     const otherUserId = conv.participants.find((id: string) => id !== user.id);
                     let otherUser = null;
 
-                    if (otherUserId) {
+                    if (otherUserId && supabase) {
                         const { data: userData } = await supabase
                             .from('profiles') // Assuming profiles table exists, otherwise users
                             .select('id, email, nombre, avatar_url')
@@ -72,6 +73,8 @@ export function useConversations() {
 
         fetchConversations();
 
+        if (!supabase) return;
+
         // Realtime Subscription to Conversations (new messages update the conversation row)
         const channel = supabase
             .channel('public:conversations')
@@ -92,7 +95,7 @@ export function useConversations() {
             .subscribe();
 
         return () => {
-            supabase.removeChannel(channel);
+            supabase?.removeChannel(channel);
         };
     }, [user]);
 

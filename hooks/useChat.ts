@@ -36,6 +36,8 @@ export function useChat(conversationId: string | null) {
 
         fetchMessages();
 
+        if (!supabase) return;
+
         // Subscribe to new messages in this conversation
         const channel = supabase
             .channel(`chat:${conversationId}`)
@@ -54,7 +56,7 @@ export function useChat(conversationId: string | null) {
             .subscribe();
 
         return () => {
-            supabase.removeChannel(channel);
+            supabase?.removeChannel(channel);
         };
     }, [user, conversationId]);
 
