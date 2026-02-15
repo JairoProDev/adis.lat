@@ -42,13 +42,8 @@ function BusinessBuilderPageContent() {
         logo_url: '',
         banner_url: '',
         theme_color: '#53acc5', // Default: turquesa
-        social_links: {
-            instagram: '',
-            facebook: '',
-            tiktok: '',
-            website: ''
-        },
-        hours: {
+        social_links: [],
+        business_hours: {
             monday: { open: '', close: '', closed: false },
             tuesday: { open: '', close: '', closed: false },
             wednesday: { open: '', close: '', closed: false },
@@ -115,7 +110,7 @@ function BusinessBuilderPageContent() {
 
             let savedProfile;
             if (profile.id) {
-                savedProfile = await updateBusinessProfile(profile.id, profile);
+                savedProfile = await updateBusinessProfile(user.id, profile);
             } else {
                 savedProfile = await createBusinessProfile({
                     ...profile,
@@ -151,14 +146,14 @@ function BusinessBuilderPageContent() {
     };
 
     const handlePublish = async () => {
-        if (!profile.id) {
+        if (!user || !profile.id) {
             error('Guarda los cambios primero');
             return;
         }
 
         try {
             setSaving(true);
-            const updated = await updateBusinessProfile(profile.id, {
+            const updated = await updateBusinessProfile(user.id, {
                 ...profile,
                 is_published: !profile.is_published
             });
@@ -195,9 +190,9 @@ function BusinessBuilderPageContent() {
         return (
             <>
                 <AuthModal
-                    isOpen={showAuthModal}
-                    onClose={() => router.push('/')}
-                    mode="login"
+                    abierto={showAuthModal}
+                    onCerrar={() => router.push('/')}
+                    modoInicial="login"
                 />
                 <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--bg-secondary)' }}>
                     <div className="text-center">

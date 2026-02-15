@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
-import { BusinessProfile, SocialLink } from '@/types/business';
+import { BusinessProfile, SocialLink, BusinessHours } from '@/types/business';
 import { uploadBusinessImage } from '@/lib/business';
 import {
     IconStore, IconPhone, IconClock, IconShare, IconArrowRight, IconCheck,
@@ -355,8 +355,8 @@ export function EditorSteps({
                                         {activeStep === 4 && (
                                             <div className="space-y-2">
                                                 {['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'].map((day, idx) => {
-                                                    const keys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-                                                    const key = keys[idx];
+                                                    const keys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+                                                    const key = keys[idx] as keyof BusinessHours;
                                                     const schedule = profile.business_hours?.[key];
                                                     const isOpen = !!schedule && !schedule.closed;
 

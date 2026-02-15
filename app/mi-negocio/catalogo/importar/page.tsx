@@ -18,6 +18,8 @@ import { useToast } from '@/hooks/useToast';
 import { ToastContainer } from '@/components/Toast';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { getBusinessProfile } from '@/lib/business';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ImportResult {
     success: boolean;
@@ -167,15 +169,24 @@ export default function CatalogImportPage() {
 
             // 2. Create Product
             if (!supabase) throw new Error('Supabase no está configurado');
+
+            // Get Business Profile ID
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error('No se encontró el usuario');
+
+            const profile = await getBusinessProfile(user.id);
+            if (!profile) throw new Error('No tienes un perfil de negocio creado');
+
             const { error: insertError } = await supabase
                 .from('catalog_products')
                 .insert({
+                    business_profile_id: profile.id,
                     title: manualForm.title,
                     price: manualForm.price ? parseFloat(manualForm.price) : null,
                     sku: manualForm.sku || null,
                     status: 'published',
                     images: imageUrl ? [{ url: imageUrl, alt: manualForm.title }] : [],
-                    source: 'manual'
+                    import_source: 'manual'
                 });
 
             if (insertError) throw insertError;

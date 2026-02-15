@@ -747,7 +747,8 @@ function HomeContent() {
       </a>
       <Header
         onToggleLeftSidebar={() => setIsLeftSidebarOpen(!isLeftSidebarOpen)}
-        onLogoClick={() => setMostrarFiltroUbicacion(true)}
+        ubicacion={filtroUbicacion?.distrito || filtroUbicacion?.departamento || 'Perú'}
+        onUbicacionClick={() => setMostrarFiltroUbicacion(true)}
         seccionActiva={seccionDesktopActiva}
         onSeccionChange={(seccion) => {
           setSeccionDesktopActiva(seccion);
