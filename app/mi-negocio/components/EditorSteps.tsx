@@ -10,7 +10,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Adiso } from '@/types';
 import { EditorHeader } from './EditorHeader';
-import InlineCatalogAdd from '@/components/business/InlineCatalogAdd';
+import SimpleCatalogAdd from '@/components/business/SimpleCatalogAdd';
 
 // Icons mapping for steps
 const STEPS = [
@@ -269,13 +269,13 @@ export function EditorSteps({
                                         {/* Step 2: Catalog */}
                                         {activeStep === 2 && (
                                             <div className="space-y-4">
-                                                <InlineCatalogAdd
+                                                <SimpleCatalogAdd
                                                     businessProfileId={profile.id || ''}
                                                     onSuccess={() => {
                                                         // Reload catalog products or trigger refresh
                                                         window.location.reload();
                                                     }}
-                                                    onCancel={() => {
+                                                    onClose={() => {
                                                         // Do nothing, just close
                                                     }}
                                                 />

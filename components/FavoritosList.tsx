@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { getFavoritos, eliminarFavorito } from '@/lib/favoritos';
-import { Favorito, Adiso, UbicacionDetallada } from '@/types';
+import { useFavoritos } from '@/contexts/FavoritosContext';
+import { Adiso, UbicacionDetallada } from '@/types';
 import { getAdisoByIdFromSupabase } from '@/lib/supabase';
 import ModalAdiso from './ModalAdiso';
 import { IconClose } from './Icons';
@@ -28,7 +28,7 @@ function formatearUbicacion(ubicacion: string | UbicacionDetallada | undefined):
 
 export default function FavoritosList({ abierto, onCerrar }: FavoritosListProps) {
   const { user } = useAuth();
-  const [favoritos, setFavoritos] = useState<Favorito[]>([]);
+  const { favoritosIds, loadFavorites, removeFavorite } = useFavoritos();
   const [adisos, setAdisos] = useState<Adiso[]>([]);
   const [cargando, setCargando] = useState(false);
   const [adisoSeleccionado, setAdisoSeleccionado] = useState<Adiso | null>(null);
@@ -44,16 +44,16 @@ export default function FavoritosList({ abierto, onCerrar }: FavoritosListProps)
 
     setCargando(true);
     try {
-      const favoritosData = await getFavoritos(user.id);
-      setFavoritos(favoritosData);
+      // Cargar favoritos desde el contexto (1 petición)
+      await loadFavorites();
 
       // Cargar datos completos de los adisos
-      const adisosPromises = favoritosData.map(async (favorito) => {
+      const adisosPromises = Array.from(favoritosIds).map(async (adisoId) => {
         try {
-          const adiso = await getAdisoByIdFromSupabase(favorito.adiso_id);
+          const adiso = await getAdisoByIdFromSupabase(adisoId);
           return adiso;
         } catch (error) {
-          console.error(`Error al cargar adiso ${favorito.adiso_id}:`, error);
+          console.error(`Error al cargar adiso ${adisoId}:`, error);
           return null;
         }
       });
@@ -73,8 +73,7 @@ export default function FavoritosList({ abierto, onCerrar }: FavoritosListProps)
     if (!user?.id) return;
 
     try {
-      await eliminarFavorito(user.id, adisoId);
-      setFavoritos(favoritos.filter(f => f.adiso_id !== adisoId));
+      await removeFavorite(adisoId);
       setAdisos(adisos.filter(a => a.id !== adisoId));
     } catch (error) {
       console.error('Error al eliminar favorito:', error);

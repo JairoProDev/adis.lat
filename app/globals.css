@@ -18,29 +18,36 @@
 }
 
 :root {
-  /* Brand Colors */
-  --brand-blue: #53acc5;
-  --brand-yellow: #ffc24a;
+  /* ========================================
+     PALETA DE MARCA - ESTRICTA
+     ======================================== */
+  --brand-blue: #53acc5;      /* Turquesa principal */
+  --brand-yellow: #ffc24a;    /* Amarillo secundario */
 
-  /* Background Colors */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f0f2f5;
-  /* Facebook-like light gray */
-  --bg-tertiary: #e4e6eb;
+  /* ========================================
+     COLORES DE TEXTO - SIN NEGRO PURO
+     ======================================== */
+  --text-primary: #1e293b;    /* Gris oscuro para texto principal */
+  --text-secondary: #64748b;  /* Gris medio para texto secundario */
+  --text-tertiary: #94a3b8;   /* Gris claro para texto terciario */
 
-  /* Text Colors - Neutral for "Big Tech" feel */
-  --text-primary: #050505;
-  --text-secondary: #65676b;
-  --text-tertiary: #b0b3b8;
+  /* ========================================
+     FONDOS
+     ======================================== */
+  --bg-primary: #ffffff;      /* Blanco puro */
+  --bg-secondary: #f8fafc;    /* Gris muy claro */
+  --bg-tertiary: #f1f5f9;     /* Gris claro */
 
-  /* Accent Colors */
+  /* ========================================
+     COLORES DE INTERFAZ
+     ======================================== */
+  --border-color: #e2e8f0;    /* Bordes sutiles */
+  --border-subtle: rgba(0, 0, 0, 0.06);  /* Bordes muy sutiles */
+  --hover-bg: #f8fafc;        /* Fondo en hover */
+
+  /* Legacy - Mantener compatibilidad */
   --color-secondary: #ffc24a;
   --accent-color: #53acc5;
-
-  /* UI Colors */
-  --border-color: #ced0d4;
-  --border-subtle: rgba(0, 0, 0, 0.1);
-  --hover-bg: #f2f2f2;
 
   /* Glassmorphism */
   --glass-bg: rgba(255, 255, 255, 0.85);

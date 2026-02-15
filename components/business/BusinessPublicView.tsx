@@ -34,13 +34,22 @@ const getWhatsappUrl = (phone: string, businessName: string) => {
 };
 
 interface BusinessPublicViewProps {
-    profile: BusinessProfile;
-    adisos: Adiso[];
+    profile: Partial<BusinessProfile>;
+    adisos?: Adiso[];
     isPreview?: boolean;
     onEditPart?: (part: string) => void;
+    editMode?: boolean;
+    onUpdate?: (field: keyof BusinessProfile, value: any) => void;
 }
 
-export default function BusinessPublicView({ profile, adisos, isPreview = false, onEditPart }: BusinessPublicViewProps) {
+export default function BusinessPublicView({
+    profile,
+    adisos = [],
+    isPreview = false,
+    onEditPart,
+    editMode = false,
+    onUpdate
+}: BusinessPublicViewProps) {
     const { user } = useAuth();
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<'inicio' | 'catalogo' | 'feed'>('catalogo');
@@ -455,7 +464,7 @@ export default function BusinessPublicView({ profile, adisos, isPreview = false,
                                     </div>
                                     <button
                                         onClick={() => window.print()}
-                                        className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-2xl font-bold hover:brightness-110 active:scale-95 transition-all shadow-xl shadow-slate-200 dark:shadow-none"
+                                        className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 bg-[var(--brand-blue)] text-white rounded-2xl font-bold hover:brightness-110 active:scale-95 transition-all shadow-xl"
                                     >
                                         <IconFileAlt size={20} />
                                         <span>PDF</span>

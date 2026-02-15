@@ -316,7 +316,8 @@ export default function AddProductModal({ isOpen, onClose, businessProfileId, on
 
                             <button
                                 onClick={() => setMode('ai')}
-                                className="w-full p-6 bg-gradient-to-br from-purple-500 to-pink-500 text-white rounded-2xl hover:shadow-lg transition-all group"
+                                className="w-full p-6 bg-gradient-to-br from-[var(--brand-yellow)] to-yellow-400 rounded-2xl hover:shadow-lg transition-all group"
+                                style={{ color: 'var(--text-primary)' }}
                             >
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -509,7 +510,7 @@ export default function AddProductModal({ isOpen, onClose, businessProfileId, on
                                 ← Cambiar modo
                             </button>
 
-                            <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-2xl border-2 border-purple-200">
+                            <div className="bg-gradient-to-br from-yellow-50 to-amber-50 p-6 rounded-2xl border-2" style={{ borderColor: 'var(--brand-yellow)' }}>
                                 <div className="flex items-center gap-3 mb-4">
                                     <IconSparkles size={24} color="#a855f7" />
                                     <div>
@@ -556,7 +557,8 @@ export default function AddProductModal({ isOpen, onClose, businessProfileId, on
                             <button
                                 onClick={handleAISubmit}
                                 disabled={aiProcessing || !aiFile}
-                                className="w-full py-4 rounded-xl font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500"
+                                className="w-full py-4 rounded-xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                style={{ backgroundColor: 'var(--brand-yellow)', color: 'var(--text-primary)' }}
                             >
                                 <IconSparkles size={20} />
                                 {aiProcessing ? 'Procesando con IA...' : 'Procesar Automáticamente'}
