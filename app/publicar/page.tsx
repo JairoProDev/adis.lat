@@ -31,7 +31,7 @@ export default function PublicarPage() {
             <main className="flex-1 w-full bg-white dark:bg-zinc-900">
                 <div className="container mx-auto px-4 py-8 max-w-2xl">
                     <FormularioPublicar
-                        onCerrar={() => router.push('/')}
+                        esPaginaCompleta={true}
                         onPublicar={(adiso) => {
                             // Redirect to home and open the new ad
                             router.push(`/?adiso=${adiso.id}`);

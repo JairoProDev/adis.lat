@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Adiso, Categoria, UbicacionDetallada } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
-import { AdisoCard } from '@/components/AdisoCard'; // Might need to check if AdisoCard is default or named export
+
 import GrillaAdisos from '@/components/GrillaAdisos';
 import { getFavoriteAdisos, getAdisoById } from '@/lib/storage';
 import Header from '@/components/Header';

@@ -32,6 +32,7 @@ interface FormularioPublicarProps {
   titulo?: string;
   categoriaPredefinida?: Categoria;
   ubicacionPredefinida?: any;
+  esPaginaCompleta?: boolean;
 }
 
 interface ImagenPreview {
@@ -94,7 +95,8 @@ export default function FormularioPublicar({
   dentroSidebar = false,
   titulo: tituloCustom,
   categoriaPredefinida,
-  ubicacionPredefinida
+  ubicacionPredefinida,
+  esPaginaCompleta = false
 }: FormularioPublicarProps) {
   const [pasoActual, setPasoActual] = useState<Paso>(categoriaPredefinida ? 2 : 1);
   const [formData, setFormData] = useState<AdisoFormData>({
@@ -1492,7 +1494,7 @@ export default function FormularioPublicar({
     </form>
   );
 
-  if (dentroSidebar || !onCerrar) {
+  if (dentroSidebar || !onCerrar || esPaginaCompleta) {
     return (
       <div
         style={{
