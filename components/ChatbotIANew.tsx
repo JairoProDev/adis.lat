@@ -140,8 +140,7 @@ export default function ChatbotIANew({ onPublicar, onError, onSuccess, onMinimiz
     setProcesando(true);
     agregarMensaje('usuario', imageUrl ? '[Imagen] ' + texto : texto);
 
-    // Simulate thinking delay for natural feel
-    await new Promise(r => setTimeout(r, 600));
+
 
     try {
       // Enhanced Intent Detection Logic (Placeholder)

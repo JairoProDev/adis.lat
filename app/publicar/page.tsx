@@ -28,9 +28,8 @@ export default function PublicarPage() {
                 onToggleLeftSidebar={() => setSidebarOpen(true)}
                 seccionActiva={'publicar'}
             />
-            <main className="flex-1 container mx-auto px-4 py-6 max-w-4xl">
-                <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm p-6">
-                    <h1 className="text-2xl font-bold mb-6 dark:text-white">Publicar Nuevo Adiso</h1>
+            <main className="flex-1 w-full bg-white dark:bg-zinc-900">
+                <div className="container mx-auto px-4 py-8 max-w-2xl">
                     <FormularioPublicar
                         onCerrar={() => router.push('/')}
                         onPublicar={(adiso) => {

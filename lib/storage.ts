@@ -242,3 +242,87 @@ export const isMyAdiso = (adisoId: string): boolean => {
   const myAdisos = getMyAdisos();
   return myAdisos.includes(adisoId);
 };
+
+// --- FAVORITOS ---
+const FAVORITES_KEY = 'buscadis_favoritos';
+
+export const getFavoriteAdisos = (): string[] => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const stored = localStorage.getItem(FAVORITES_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.error('Error al leer favoritos:', error);
+    return [];
+  }
+};
+
+export const toggleFavoriteAdiso = (adisoId: string): boolean => {
+  if (typeof window === 'undefined') return false;
+  try {
+    const favorites = getFavoriteAdisos();
+    const index = favorites.indexOf(adisoId);
+    let isFav = false;
+
+    if (index >= 0) {
+      favorites.splice(index, 1);
+      isFav = false;
+    } else {
+      favorites.push(adisoId);
+      isFav = true;
+    }
+
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
+    return isFav;
+  } catch (error) {
+    console.error('Error al cambiar favorito:', error);
+    return false;
+  }
+};
+
+export const isFavoriteAdiso = (adisoId: string): boolean => {
+  const favorites = getFavoriteAdisos();
+  return favorites.includes(adisoId);
+};
+
+// --- OCULTOS ---
+const HIDDEN_KEY = 'buscadis_ocultos';
+
+export const getHiddenAdisos = (): string[] => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const stored = localStorage.getItem(HIDDEN_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.error('Error al leer ocultos:', error);
+    return [];
+  }
+};
+
+export const toggleHiddenAdiso = (adisoId: string): boolean => {
+  if (typeof window === 'undefined') return false;
+  try {
+    const hidden = getHiddenAdisos();
+    const index = hidden.indexOf(adisoId);
+    let isHidden = false;
+
+    if (index >= 0) {
+      hidden.splice(index, 1);
+      isHidden = false;
+    } else {
+      hidden.push(adisoId);
+      isHidden = true;
+    }
+
+    localStorage.setItem(HIDDEN_KEY, JSON.stringify(hidden));
+    return isHidden;
+  } catch (error) {
+    console.error('Error al cambiar oculto:', error);
+    return false;
+  }
+};
+
+export const isHiddenAdiso = (adisoId: string): boolean => {
+  const hidden = getHiddenAdisos();
+  return hidden.includes(adisoId);
+};
