@@ -44,10 +44,13 @@ export default function MapaInteractivo({ adisos, onAbrirAdiso }: MapaInteractiv
         return;
       }
 
-      const map = L.map(mapContainerRef.current).setView([-13.5319, -71.9675], 13); // Cusco Default
+      const map = L.map(mapContainerRef.current, {
+        zoomControl: false,
+        attributionControl: false
+      }).setView([-13.5319, -71.9675], 13); // Cusco Default
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        attribution: '&copy; OpenStreetMap'
       }).addTo(map);
 
       mapInstance.current = map;
@@ -77,20 +80,24 @@ export default function MapaInteractivo({ adisos, onAbrirAdiso }: MapaInteractiv
       const coords = getCoordenadas(adiso);
       if (!coords) return;
 
-      // Generate fake coords near Cusco center if both are 0 (demo mode)
-      // SOLO para el prototipo si el usuario quiere que "parezca real" y no tenemos coords reales en DB
+      // Coordinate jitter only if exact duplicate (or 0,0 for demo)
       let lat = coords.lat;
       let lng = coords.lng;
 
-      if (lat === 0 && lng === 0) {
+      if (Math.abs(lat) < 0.1 && Math.abs(lng) < 0.1) {
+        // Demo jitter
         lat = -13.5319 + (Math.random() - 0.5) * 0.05;
         lng = -71.9675 + (Math.random() - 0.5) * 0.05;
+      } else {
+        // Small jitter to prevent exact overlap
+        lat += (Math.random() - 0.5) * 0.0005;
+        lng += (Math.random() - 0.5) * 0.0005;
       }
 
       const markerIcon = L.divIcon({
         className: 'custom-pin',
-        html: `<div style="background-color: var(--brand-blue); width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">
-                        <span style="font-size: 16px;">${getCategoryEmoji(adiso.categoria)}</span>
+        html: `<div style="background-color: var(--brand-blue); width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); font-size: 16px;">
+                        ${getCategoryEmoji(adiso.categoria)}
                        </div>`,
         iconSize: [30, 30],
         iconAnchor: [15, 15]
@@ -98,10 +105,10 @@ export default function MapaInteractivo({ adisos, onAbrirAdiso }: MapaInteractiv
 
       const marker = L.marker([lat, lng], { icon: markerIcon })
         .bindPopup(`
-                    <div style="min-width: 200px;">
-                        <h3 style="margin: 0 0 5px 0; font-size: 14px; font-weight: bold;">${adiso.titulo}</h3>
-                        <p style="margin: 0 0 5px 0; font-size: 12px; color: #666;">${adiso.precio ? `S/ ${adiso.precio}` : 'Consultar'}</p>
-                        <button id="btn-${adiso.id}" style="background: var(--brand-blue); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; width: 100%;">Ver Detalle</button>
+                    <div style="min-width: 200px; font-family: system-ui, -apple-system, sans-serif;">
+                        <h3 style="margin: 0 0 5px 0; font-size: 14px; font-weight: bold; color: #333;">${adiso.titulo}</h3>
+                        <p style="margin: 0 0 8px 0; font-size: 12px; color: #666;">${adiso.precio ? `S/ ${adiso.precio}` : 'Consultar'}</p>
+                        <button id="btn-${adiso.id}" style="background: var(--brand-blue); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; width: 100%; font-weight: 500;">Ver Detalle</button>
                     </div>
                 `);
 
@@ -117,12 +124,38 @@ export default function MapaInteractivo({ adisos, onAbrirAdiso }: MapaInteractiv
       markersRef.current.push(marker);
     });
 
-    // Fit bounds if markers exist
-    if (markersRef.current.length > 0) {
-      // mapInstance.current.fitBounds(markersGroup.getBounds().pad(0.1));
-    }
+  }, [adisosFiltrados, onAbrirAdiso]);
 
-  }, [adisosFiltrados, onAbrirAdiso]); // Ensure markers update when filter changes
+  const handleLocateMe = () => {
+    if (!mapInstance.current) return;
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          mapInstance.current.setView([latitude, longitude], 15);
+
+          // Add 'You are here' marker if not exists
+          L.marker([latitude, longitude], {
+            icon: L.divIcon({
+              className: 'user-loc',
+              html: `<div style="width: 16px; height: 16px; background-color: #3b82f6; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);"></div>`,
+              iconSize: [20, 20]
+            })
+          }).addTo(mapInstance.current).bindPopup("Estás aquí").openPopup();
+        },
+        () => {
+          alert("No se pudo obtener tu ubicación");
+        }
+      );
+    }
+  };
+
+  const handleZoom = (delta: number) => {
+    if (mapInstance.current) {
+      mapInstance.current.setZoom(mapInstance.current.getZoom() + delta);
+    }
+  };
 
   return (
     <div className="relative w-full h-full">
@@ -130,8 +163,8 @@ export default function MapaInteractivo({ adisos, onAbrirAdiso }: MapaInteractiv
         {/* Leaflet map will render here */}
       </div>
 
-      {/* Filters Overlay */}
-      <div className="absolute top-4 left-4 z-[500] flex gap-2 overflow-x-auto max-w-[calc(100%-60px)] pb-2 scrollbar-hide">
+      {/* Filters Overlay - Changed top position to avoid status bar overlap on mobile */}
+      <div className="absolute top-4 left-4 right-16 z-[500] flex gap-2 overflow-x-auto pb-2 scrollbar-hide mask-linear-fade">
         {[
           { id: 'todos', label: 'Todos' },
           { id: 'inmuebles', label: '🏠 Casas' },
@@ -142,7 +175,7 @@ export default function MapaInteractivo({ adisos, onAbrirAdiso }: MapaInteractiv
           <button
             key={f.id}
             onClick={() => setFilter(f.id as any)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium border shadow-sm whitespace-nowrap transition-colors
+            className={`px-3 py-1.5 rounded-full text-xs font-medium border shadow-sm whitespace-nowrap transition-colors flex-shrink-0
                             ${filter === f.id
                 ? 'bg-blue-600 text-white border-blue-600'
                 : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
@@ -152,18 +185,29 @@ export default function MapaInteractivo({ adisos, onAbrirAdiso }: MapaInteractiv
         ))}
       </div>
 
-      {/* Controls */}
+      {/* Controls Group - Right Side */}
       <div className="absolute top-4 right-4 z-[500] flex flex-col gap-2">
         <button
-          onClick={() => {
-            if (mapInstance.current) {
-              mapInstance.current.setView([-13.5319, -71.9675], 15);
-            }
-          }}
-          className="w-9 h-9 bg-white rounded-lg shadow-md flex items-center justify-center text-blue-600 hover:bg-gray-50"
-          title="Centrar en Cusco"
+          onClick={() => handleZoom(1)}
+          className="w-10 h-10 bg-white rounded-xl shadow-md flex items-center justify-center text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+          title="Acercar"
         >
-          <FaLocationArrow />
+          <FaPlus size={14} />
+        </button>
+        <button
+          onClick={() => handleZoom(-1)}
+          className="w-10 h-10 bg-white rounded-xl shadow-md flex items-center justify-center text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+          title="Alejar"
+        >
+          <FaMinus size={14} />
+        </button>
+        <div className="h-2" /> {/* Spacer */}
+        <button
+          onClick={handleLocateMe}
+          className="w-10 h-10 bg-white rounded-xl shadow-md flex items-center justify-center text-blue-600 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+          title="Mi Ubicación"
+        >
+          <FaLocationArrow size={14} />
         </button>
       </div>
 

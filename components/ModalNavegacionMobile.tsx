@@ -183,12 +183,14 @@ export default function ModalNavegacionMobile({
           href: '/progreso',
           authenticated: true
         },
-        {
-          id: 'configuracion',
-          label: 'Configuración',
-          icon: FaCog,
-          href: '/configuracion'
-        },
+        /*
+      {
+        id: 'configuracion',
+        label: 'Configuración',
+        icon: FaCog,
+        href: '/configuracion'
+      },
+        */
       ]
     },
     {

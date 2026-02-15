@@ -5,10 +5,16 @@ import Header from '@/components/Header';
 import { FaQuestionCircle, FaSearch, FaBook, FaEnvelope, FaWhatsapp } from 'react-icons/fa';
 import NavbarMobile from '@/components/NavbarMobile';
 
+import LeftSidebar from '@/components/LeftSidebar';
+import { useRouter } from 'next/navigation';
+
 export default function HelpCenterPage() {
+    const [sidebarOpen, setSidebarOpen] = React.useState(false);
+    const router = useRouter();
+
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-zinc-900 flex flex-col pb-16 md:pb-0">
-            <Header onToggleLeftSidebar={() => { }} />
+            <Header onToggleLeftSidebar={() => setSidebarOpen(true)} />
 
             <main className="flex-1 max-w-4xl mx-auto w-full p-6">
                 <div className="text-center py-12">
@@ -61,11 +67,19 @@ export default function HelpCenterPage() {
                 </div>
             </main>
 
+            <LeftSidebar
+                isOpen={sidebarOpen}
+                onClose={() => setSidebarOpen(false)}
+            />
+
             <div className="block md:hidden">
                 <NavbarMobile
-                    seccionActiva={null}
+                    seccionActiva={'ayuda' as any}
                     tieneAdisoAbierto={false}
-                    onCambiarSeccion={(seccion: any) => window.location.href = `/?seccion=${seccion}`}
+                    onCambiarSeccion={(seccion: any) => {
+                        if (seccion === 'ayuda') return;
+                        router.push('/?seccion=' + seccion);
+                    }}
                 />
             </div>
         </div>

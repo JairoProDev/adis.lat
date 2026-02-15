@@ -238,14 +238,16 @@ function BusinessBuilderPageContent() {
                         {!isFirstTime && (
                             <button
                                 onClick={() => setEditMode(!editMode)}
-                                className="px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all"
+                                className="px-3 md:px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all whitespace-nowrap text-sm md:text-base"
                                 style={{
                                     backgroundColor: editMode ? 'var(--brand-yellow)' : 'var(--bg-secondary)',
                                     color: editMode ? '#fff' : 'var(--text-primary)'
                                 }}
                             >
                                 {editMode ? <IconCheck size={16} /> : <IconEdit size={16} />}
-                                {editMode ? 'Vista Normal' : 'Editar'}
+                                <span className={editMode ? "hidden sm:inline" : ""}>
+                                    {editMode ? 'Vista Normal' : 'Editar'}
+                                </span>
                             </button>
                         )}
 

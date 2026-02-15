@@ -234,7 +234,8 @@ export default function ChatbotGuide({ profile, onUpdate, onComplete, isMinimize
             style={{
                 height: '40vh',
                 maxHeight: '500px',
-                borderColor: 'var(--brand-blue)'
+                borderColor: 'var(--brand-blue)',
+                paddingBottom: 'env(safe-area-inset-bottom)'
             }}
         >
             {/* Header */}
