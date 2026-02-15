@@ -72,8 +72,7 @@ export default function GuidePage() {
                 <NavbarMobile
                     seccionActiva={'guia' as any}
                     tieneAdisoAbierto={false}
-                    onCambiarSeccion={(seccion) => {
-                        if (seccion === 'guia') return;
+                    onCambiarSeccion={(seccion: any) => {
                         router.push('/?seccion=' + seccion);
                     }}
                 />

@@ -31,6 +31,9 @@ function BusinessBuilderPageContent() {
     const [chatbotMinimized, setChatbotMinimized] = useState(false);
     const [isFirstTime, setIsFirstTime] = useState(false);
 
+    const lastSavedProfileStr = React.useRef<string>('');
+    const [lastSavedTime, setLastSavedTime] = useState<Date | null>(null);
+
     const [profile, setProfile] = useState<Partial<BusinessProfile>>({
         name: '',
         slug: '',
@@ -74,6 +77,10 @@ function BusinessBuilderPageContent() {
     // Auto-save on debounced profile change
     useEffect(() => {
         if (!profile.id || profileLoading) return;
+
+        const currentStr = JSON.stringify(debouncedProfile);
+        if (currentStr === lastSavedProfileStr.current) return;
+
         handleSave(false);
     }, [debouncedProfile]);
 
@@ -86,13 +93,16 @@ function BusinessBuilderPageContent() {
 
             if (existingProfile) {
                 setProfile(existingProfile);
+                lastSavedProfileStr.current = JSON.stringify(existingProfile);
                 setIsFirstTime(false);
                 setChatbotMinimized(true); // Usuario existente: chatbot minimizado
             } else {
                 // Primera vez: mostrar chatbot
                 setIsFirstTime(true);
                 setChatbotMinimized(false);
-                setProfile(prev => ({ ...prev, user_id: user.id }));
+                const initialProfile = { ...profile, user_id: user.id };
+                setProfile(initialProfile);
+                // Don't set lastSavedProfileStr here so it saves on first meaningful change or creation
             }
         } catch (err) {
             console.error('Error loading profile:', err);
@@ -108,6 +118,9 @@ function BusinessBuilderPageContent() {
         try {
             setSaving(true);
 
+            // Optimistic update of ref to prevent double triggering if debounce fires again quickly
+            // But better to do it after success to ensure consistency
+
             let savedProfile;
             if (profile.id) {
                 savedProfile = await updateBusinessProfile(user.id, profile);
@@ -121,6 +134,9 @@ function BusinessBuilderPageContent() {
 
             if (savedProfile) {
                 setProfile(savedProfile);
+                lastSavedProfileStr.current = JSON.stringify(savedProfile);
+                setLastSavedTime(new Date());
+
                 if (showNotification) {
                     success('¡Cambios guardados!');
                 }
@@ -160,6 +176,7 @@ function BusinessBuilderPageContent() {
 
             if (updated) {
                 setProfile(updated);
+                lastSavedProfileStr.current = JSON.stringify(updated);
                 success(updated.is_published ? '¡Página publicada! 🎉' : 'Página despublicada');
             }
         } catch (err: any) {
@@ -217,20 +234,23 @@ function BusinessBuilderPageContent() {
                         >
                             <IconX size={20} color="var(--text-secondary)" />
                         </button>
-                        <div>
+                        <div className="flex items-center gap-2">
                             <h1 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
                                 {profile.name || 'Tu Página de Negocio'}
                             </h1>
-                            {saving && (
-                                <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                                    Guardando...
-                                </span>
-                            )}
-                            {!saving && profile.id && (
-                                <span className="text-xs" style={{ color: 'var(--brand-blue)' }}>
-                                    ✓ Guardado automáticamente
-                                </span>
-                            )}
+
+                            {/* Improved Auto-save Indicator */}
+                            <div className="w-6 h-6 flex items-center justify-center">
+                                {saving ? (
+                                    <div className="w-4 h-4 border-2 border-[var(--text-tertiary)] border-t-transparent rounded-full animate-spin"></div>
+                                ) : (
+                                    lastSavedTime && (
+                                        <div className="text-green-500 animate-fade-in tooltip-container cursor-help" title={`Guardado ${lastSavedTime.toLocaleTimeString()}`}>
+                                            <IconCheck size={16} />
+                                        </div>
+                                    )
+                                )}
+                            </div>
                         </div>
                     </div>
 

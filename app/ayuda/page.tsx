@@ -77,7 +77,6 @@ export default function HelpCenterPage() {
                     seccionActiva={'ayuda' as any}
                     tieneAdisoAbierto={false}
                     onCambiarSeccion={(seccion: any) => {
-                        if (seccion === 'ayuda') return;
                         router.push('/?seccion=' + seccion);
                     }}
                 />

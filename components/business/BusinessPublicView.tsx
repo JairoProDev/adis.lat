@@ -42,9 +42,11 @@ interface BusinessPublicViewProps {
     onUpdate?: (field: keyof BusinessProfile, value: any) => void;
 }
 
+const DEFAULT_ADISOS: Adiso[] = [];
+
 export default function BusinessPublicView({
     profile,
-    adisos = [],
+    adisos = DEFAULT_ADISOS,
     isPreview = false,
     onEditPart,
     editMode = false,
