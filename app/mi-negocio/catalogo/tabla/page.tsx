@@ -218,332 +218,335 @@ export default function CatalogTablePage() {
     const categories = Array.from(new Set(products.map(p => p.category).filter(Boolean)));
 
     return (
-        <div className="min-h-screen bg-[var(--bg-primary)]">
+        <div className="h-screen flex flex-col bg-[var(--bg-secondary)] overflow-hidden">
             <Header />
             <ToastContainer toasts={toasts} removeToast={removeToast} />
 
-            <div className="max-w-7xl mx-auto px-4 py-6 md:py-8">
-                {/* Header */}
-                <div className="mb-6 md:mb-8">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-                        <div>
-                            <h1 className="text-2xl md:text-3xl font-black text-[var(--text-primary)] mb-2">
-                                📦 Gestión de Catálogo
-                            </h1>
-                            <p className="text-sm md:text-base text-[var(--text-secondary)]">
-                                Vista de tabla - Edición masiva
-                            </p>
-                            <Link href="/mi-negocio" className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 mt-2">
-                                <IconArrowLeft size={12} />
-                                Volver al Editor
-                            </Link>
-                        </div>
+            <div className="flex-1 overflow-y-auto px-4 py-4 md:py-6">
+                <div className="max-w-7xl mx-auto">
+                    {/* Header */}
+                    <div className="mb-6 md:mb-8">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                            <div>
+                                <h1 className="text-2xl md:text-3xl font-black text-slate-800 mb-1 tracking-tight">
+                                    📦 Gestión de Catálogo
+                                </h1>
+                                <p className="text-sm text-slate-500">
+                                    Vista de tabla - Edición masiva
+                                </p>
+                                <Link href="/mi-negocio/catalogo" className="inline-flex items-center gap-1 text-xs font-bold text-[var(--brand-blue)] hover:opacity-80 mt-2 transition-all">
+                                    <IconArrowLeft size={12} />
+                                    Volver al Dashboard
+                                </Link>
+                            </div>
 
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => router.push('/mi-negocio/catalogo')}
-                                className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
-                            >
-                                <IconGrid size={18} />
-                                <span className="hidden sm:inline">Vista Grid</span>
-                            </button>
-                            <button
-                                onClick={() => router.push('/mi-negocio/catalogo/nuevo')}
-                                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg transition-all"
-                            >
-                                <IconPlus size={18} />
-                                <span className="hidden sm:inline">Nuevo Producto</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Stats */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-                        <div className="bg-white p-4 rounded-lg border border-slate-200">
-                            <div className="text-2xl font-black text-slate-900">{stats.total}</div>
-                            <div className="text-xs text-slate-500">Total</div>
-                        </div>
-                        <div className="bg-white p-4 rounded-lg border border-slate-200">
-                            <div className="text-2xl font-black text-green-600">{stats.published}</div>
-                            <div className="text-xs text-slate-500">Publicados</div>
-                        </div>
-                        <div className="bg-white p-4 rounded-lg border border-slate-200">
-                            <div className="text-2xl font-black text-yellow-600">{stats.draft}</div>
-                            <div className="text-xs text-slate-500">Borradores</div>
-                        </div>
-                        <div className="bg-white p-4 rounded-lg border border-slate-200">
-                            <div className="text-2xl font-black text-slate-400">{stats.archived}</div>
-                            <div className="text-xs text-slate-500">Archivados</div>
-                        </div>
-                    </div>
-
-                    {/* Search & Filters */}
-                    <div className="flex flex-col md:flex-row gap-3">
-                        <div className="flex-1 relative">
-                            <IconSearch size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                            <input
-                                type="text"
-                                placeholder="Buscar productos..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            />
-                        </div>
-
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className="px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="all">Todos los estados</option>
-                            <option value="published">Publicados</option>
-                            <option value="draft">Borradores</option>
-                            <option value="archived">Archivados</option>
-                        </select>
-
-                        <select
-                            value={categoryFilter}
-                            onChange={(e) => setCategoryFilter(e.target.value)}
-                            className="px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="all">Todas las categorías</option>
-                            {categories.map(cat => (
-                                <option key={cat} value={cat}>{cat}</option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-
-                {/* Bulk Actions Bar */}
-                {selectedProducts.size > 0 && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 flex flex-wrap items-center gap-3">
-                        <div className="font-bold text-blue-900">
-                            {selectedProducts.size} seleccionados
-                        </div>
-                        <div className="flex gap-2 flex-wrap">
-                            <button
-                                onClick={() => handleBulkStatusChange('published')}
-                                className="px-3 py-1.5 bg-green-600 text-white rounded text-sm hover:bg-green-700"
-                            >
-                                Publicar
-                            </button>
-                            <button
-                                onClick={() => handleBulkStatusChange('draft')}
-                                className="px-3 py-1.5 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-700"
-                            >
-                                Borrador
-                            </button>
-                            <button
-                                onClick={() => handleBulkStatusChange('archived')}
-                                className="px-3 py-1.5 bg-slate-600 text-white rounded text-sm hover:bg-slate-700"
-                            >
-                                Archivar
-                            </button>
-                            <button
-                                onClick={handleBulkDelete}
-                                className="px-3 py-1.5 bg-red-600 text-white rounded text-sm hover:bg-red-700"
-                            >
-                                Eliminar
-                            </button>
-                        </div>
-                        <button
-                            onClick={() => setSelectedProducts(new Set())}
-                            className="ml-auto text-blue-600 hover:text-blue-800 text-sm font-bold"
-                        >
-                            Deseleccionar
-                        </button>
-                    </div>
-                )}
-
-                {/* Table */}
-                {loading ? (
-                    <div className="text-center py-12 text-slate-500">
-                        Cargando productos...
-                    </div>
-                ) : filteredProducts.length === 0 ? (
-                    <div className="text-center py-12">
-                        <div className="text-6xl mb-4">📦</div>
-                        <h3 className="text-xl font-bold text-slate-700 mb-2">
-                            No hay productos
-                        </h3>
-                        <p className="text-slate-500 mb-6">
-                            {searchQuery || statusFilter !== 'all' || categoryFilter !== 'all'
-                                ? 'No se encontraron productos con esos filtros'
-                                : 'Empieza agregando tu primer producto'}
-                        </p>
-                        <button
-                            onClick={() => router.push('/mi-negocio/catalogo/nuevo')}
-                            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                        >
-                            Agregar Producto
-                        </button>
-                    </div>
-                ) : (
-                    <div className>
-                        {/* Desktop Table */}
-                        <div className="hidden md:block bg-white rounded-lg border border-slate-200 overflow-hidden">
-                            <div className="overflow-x-auto">
-                                <table className="w-full">
-                                    <thead className="bg-slate-50 border-b border-slate-200">
-                                        <tr>
-                                            <th className="p-3 text-left">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedProducts.size === filteredProducts.length}
-                                                    onChange={handleSelectAll}
-                                                    className="rounded"
-                                                />
-                                            </th>
-                                            <th className="p-3 text-left text-xs font-bold text-slate-600 uppercase">Producto</th>
-                                            <th className="p-3 text-left text-xs font-bold text-slate-600 uppercase">SKU</th>
-                                            <th className="p-3 text-left text-xs font-bold text-slate-600 uppercase">Categoría</th>
-                                            <th className="p-3 text-left text-xs font-bold text-slate-600 uppercase">Precio</th>
-                                            <th className="p-3 text-left text-xs font-bold text-slate-600 uppercase">Estado</th>
-                                            <th className="p-3 text-left text-xs font-bold text-slate-600 uppercase">Acciones</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {filteredProducts.map((product) => (
-                                            <tr key={product.id} className="border-b border-slate-100 hover:bg-slate-50">
-                                                <td className="p-3">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedProducts.has(product.id)}
-                                                        onChange={() => handleSelectProduct(product.id)}
-                                                        className="rounded"
-                                                    />
-                                                </td>
-                                                <td className="p-3">
-                                                    <div className="flex items-center gap-3">
-                                                        {product.images?.[0]?.url && (
-                                                            <img
-                                                                src={product.images[0].url}
-                                                                alt={product.title}
-                                                                className="w-12 h-12 rounded object-cover"
-                                                            />
-                                                        )}
-                                                        <div>
-                                                            <div className="font-bold text-slate-900">{product.title}</div>
-                                                            <div className="text-xs text-slate-500 line-clamp-1">
-                                                                {product.description}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="p-3 text-sm text-slate-600">{product.sku || '-'}</td>
-                                                <td className="p-3 text-sm text-slate-600">{product.category || '-'}</td>
-                                                <td className="p-3 text-sm font-bold text-slate-900">
-                                                    S/ {product.price?.toFixed(2) || '0.00'}
-                                                </td>
-                                                <td className="p-3">
-                                                    <select
-                                                        value={product.status}
-                                                        onChange={(e) => handleQuickEdit(product.id, 'status', e.target.value)}
-                                                        className={`text-xs px-2 py-1 rounded border-none ${product.status === 'published' ? 'bg-green-100 text-green-700' :
-                                                                product.status === 'draft' ? 'bg-yellow-100 text-yellow-700' :
-                                                                    'bg-slate-100 text-slate-700'
-                                                            }`}
-                                                    >
-                                                        <option value="published">Publicado</option>
-                                                        <option value="draft">Borrador</option>
-                                                        <option value="archived">Archivado</option>
-                                                    </select>
-                                                </td>
-                                                <td className="p-3">
-                                                    <div className="flex items-center gap-2">
-                                                        <button
-                                                            onClick={() => router.push(`/mi-negocio/catalogo/${product.id}`)}
-                                                            className="p-2 text-blue-600 hover:bg-blue-50 rounded"
-                                                            title="Editar"
-                                                        >
-                                                            <IconEdit size={16} />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDeleteProduct(product.id)}
-                                                            className="p-2 text-red-600 hover:bg-red-50 rounded"
-                                                            title="Eliminar"
-                                                        >
-                                                            <IconTrash size={16} />
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => router.push('/mi-negocio/catalogo')}
+                                    className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                                >
+                                    <IconGrid size={18} />
+                                    <span className="hidden sm:inline">Vista Grid</span>
+                                </button>
+                                <button
+                                    onClick={() => router.push('/mi-negocio/catalogo/nuevo')}
+                                    className="flex items-center gap-2 px-4 py-2 bg-[var(--brand-blue)] text-white rounded-lg font-bold shadow-md hover:brightness-110 transition-all active:scale-[0.98]"
+                                >
+                                    <IconPlus size={18} />
+                                    <span className="hidden sm:inline">Nuevo Producto</span>
+                                </button>
                             </div>
                         </div>
 
-                        {/* Mobile Cards */}
-                        <div className="md:hidden space-y-3">
-                            {filteredProducts.map((product) => (
-                                <div key={product.id} className="bg-white rounded-lg border border-slate-200 p-4">
-                                    <div className="flex items-start gap-3 mb-3">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedProducts.has(product.id)}
-                                            onChange={() => handleSelectProduct(product.id)}
-                                            className="mt-1 rounded"
-                                        />
-                                        {product.images?.[0]?.url && (
-                                            <img
-                                                src={product.images[0].url}
-                                                alt={product.title}
-                                                className="w-16 h-16 rounded object-cover"
+                        {/* Stats */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                            <div className="bg-white p-4 rounded-lg border border-slate-200">
+                                <div className="text-2xl font-black text-slate-900">{stats.total}</div>
+                                <div className="text-xs text-slate-500">Total</div>
+                            </div>
+                            <div className="bg-white p-4 rounded-lg border border-slate-200">
+                                <div className="text-2xl font-black text-green-600">{stats.published}</div>
+                                <div className="text-xs text-slate-500">Publicados</div>
+                            </div>
+                            <div className="bg-white p-4 rounded-lg border border-slate-200">
+                                <div className="text-2xl font-black text-yellow-600">{stats.draft}</div>
+                                <div className="text-xs text-slate-500">Borradores</div>
+                            </div>
+                            <div className="bg-white p-4 rounded-lg border border-slate-200">
+                                <div className="text-2xl font-black text-slate-400">{stats.archived}</div>
+                                <div className="text-xs text-slate-500">Archivados</div>
+                            </div>
+                        </div>
+
+                        {/* Search & Filters */}
+                        <div className="flex flex-col md:flex-row gap-3">
+                            <div className="flex-1 relative">
+                                <IconSearch size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Buscar productos..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-[var(--brand-blue)] focus:border-transparent outline-none transition-all"
+                                />
+                            </div>
+
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                className="px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-[var(--brand-blue)] outline-none"
+                            >
+                                <option value="all">Todos los estados</option>
+                                <option value="published">Publicados</option>
+                                <option value="draft">Borradores</option>
+                                <option value="archived">Archivados</option>
+                            </select>
+
+                            <select
+                                value={categoryFilter}
+                                onChange={(e) => setCategoryFilter(e.target.value)}
+                                className="px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-[var(--brand-blue)] outline-none"
+                            >
+                                <option value="all">Todas las categorías</option>
+                                {categories.map(cat => (
+                                    <option key={cat} value={cat}>{cat}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Bulk Actions Bar */}
+                    {selectedProducts.size > 0 && (
+                        <div className="bg-sky-50 border border-sky-100 rounded-xl p-4 mb-6 flex flex-wrap items-center gap-3">
+                            <div className="font-bold text-[var(--brand-blue)]">
+                                {selectedProducts.size} seleccionados
+                            </div>
+                            <div className="flex gap-2 flex-wrap">
+                                <button
+                                    onClick={() => handleBulkStatusChange('published')}
+                                    className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-sm hover:brightness-110 transition-all font-bold"
+                                >
+                                    Publicar
+                                </button>
+                                <button
+                                    onClick={() => handleBulkStatusChange('draft')}
+                                    className="px-3 py-1.5 bg-yellow-600 text-white rounded-lg text-sm hover:brightness-110 transition-all font-bold"
+                                >
+                                    Borrador
+                                </button>
+                                <button
+                                    onClick={() => handleBulkStatusChange('archived')}
+                                    className="px-3 py-1.5 bg-slate-600 text-white rounded-lg text-sm hover:brightness-110 transition-all font-bold"
+                                >
+                                    Archivar
+                                </button>
+                                <button
+                                    onClick={handleBulkDelete}
+                                    className="px-3 py-1.5 bg-red-600 text-white rounded-lg text-sm hover:brightness-110 transition-all font-bold"
+                                >
+                                    Eliminar
+                                </button>
+                            </div>
+                            <button
+                                onClick={() => setSelectedProducts(new Set())}
+                                className="ml-auto text-[var(--brand-blue)] hover:underline text-sm font-bold"
+                            >
+                                Deseleccionar
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Table */}
+                    {loading ? (
+                        <div className="text-center py-12">
+                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-[var(--brand-blue)] border-t-transparent" />
+                            <p className="mt-2 text-slate-500">Cargando productos...</p>
+                        </div>
+                    ) : filteredProducts.length === 0 ? (
+                        <div className="text-center py-12">
+                            <div className="text-6xl mb-4">📦</div>
+                            <h3 className="text-xl font-bold text-slate-700 mb-2">
+                                No hay productos
+                            </h3>
+                            <p className="text-slate-500 mb-6">
+                                {searchQuery || statusFilter !== 'all' || categoryFilter !== 'all'
+                                    ? 'No se encontraron productos con esos filtros'
+                                    : 'Empieza agregando tu primer producto'}
+                            </p>
+                            <button
+                                onClick={() => router.push('/mi-negocio/catalogo/nuevo')}
+                                className="px-6 py-3 bg-[var(--brand-blue)] text-white rounded-xl font-bold hover:brightness-110 transition-all"
+                            >
+                                Agregar Producto
+                            </button>
+                        </div>
+                    ) : (
+                        <div>
+                            {/* Desktop Table */}
+                            <div className="hidden md:block bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full">
+                                        <thead className="bg-slate-50 border-b border-slate-200">
+                                            <tr>
+                                                <th className="p-3 text-left">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedProducts.size === filteredProducts.length}
+                                                        onChange={handleSelectAll}
+                                                        className="rounded text-[var(--brand-blue)] focus:ring-[var(--brand-blue)]"
+                                                    />
+                                                </th>
+                                                <th className="p-3 text-left text-xs font-bold text-slate-500 uppercase">Producto</th>
+                                                <th className="p-3 text-left text-xs font-bold text-slate-500 uppercase">SKU</th>
+                                                <th className="p-3 text-left text-xs font-bold text-slate-500 uppercase">Categoría</th>
+                                                <th className="p-3 text-left text-xs font-bold text-slate-500 uppercase">Precio</th>
+                                                <th className="p-3 text-left text-xs font-bold text-slate-500 uppercase">Estado</th>
+                                                <th className="p-3 text-left text-xs font-bold text-slate-500 uppercase">Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {filteredProducts.map((product) => (
+                                                <tr key={product.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+                                                    <td className="p-3">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedProducts.has(product.id)}
+                                                            onChange={() => handleSelectProduct(product.id)}
+                                                            className="rounded text-[var(--brand-blue)] focus:ring-[var(--brand-blue)]"
+                                                        />
+                                                    </td>
+                                                    <td className="p-3">
+                                                        <div className="flex items-center gap-3">
+                                                            {product.images?.[0]?.url && (
+                                                                <img
+                                                                    src={product.images[0].url}
+                                                                    alt={product.title}
+                                                                    className="w-12 h-12 rounded-lg object-cover"
+                                                                />
+                                                            )}
+                                                            <div>
+                                                                <div className="font-bold text-slate-800">{product.title}</div>
+                                                                <div className="text-xs text-slate-400 line-clamp-1">
+                                                                    {product.description}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-3 text-sm text-slate-500 font-mono">{product.sku || '-'}</td>
+                                                    <td className="p-3 text-sm text-slate-500">{product.category || '-'}</td>
+                                                    <td className="p-3 text-sm font-black text-slate-800">
+                                                        S/ {product.price?.toFixed(2) || '0.00'}
+                                                    </td>
+                                                    <td className="p-3">
+                                                        <select
+                                                            value={product.status}
+                                                            onChange={(e) => handleQuickEdit(product.id, 'status', e.target.value)}
+                                                            className={`text-xs px-2 py-1 rounded-full font-bold border-none ${product.status === 'published' ? 'bg-green-100 text-green-700' :
+                                                                product.status === 'draft' ? 'bg-yellow-100 text-yellow-700' :
+                                                                    'bg-slate-100 text-slate-600'
+                                                                }`}
+                                                        >
+                                                            <option value="published">Publicado</option>
+                                                            <option value="draft">Borrador</option>
+                                                            <option value="archived">Archivado</option>
+                                                        </select>
+                                                    </td>
+                                                    <td className="p-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <button
+                                                                onClick={() => router.push(`/mi-negocio/catalogo/${product.id}`)}
+                                                                className="p-2 text-[var(--brand-blue)] hover:bg-sky-50 rounded-lg transition-colors"
+                                                                title="Editar"
+                                                            >
+                                                                <IconEdit size={16} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDeleteProduct(product.id)}
+                                                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                                title="Eliminar"
+                                                            >
+                                                                <IconTrash size={16} />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            {/* Mobile Cards */}
+                            <div className="md:hidden space-y-3">
+                                {filteredProducts.map((product) => (
+                                    <div key={product.id} className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+                                        <div className="flex items-start gap-3 mb-3">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedProducts.has(product.id)}
+                                                onChange={() => handleSelectProduct(product.id)}
+                                                className="mt-1 rounded text-[var(--brand-blue)] focus:ring-[var(--brand-blue)]"
                                             />
-                                        )}
-                                        <div className="flex-1 min-w-0">
-                                            <h3 className="font-bold text-slate-900 mb-1">{product.title}</h3>
-                                            <p className="text-xs text-slate-500 line-clamp-2 mb-2">
-                                                {product.description}
-                                            </p>
-                                            <div className="flex items-center gap-2 text-xs">
-                                                {product.sku && (
-                                                    <span className="px-2 py-1 bg-slate-100 rounded">
-                                                        SKU: {product.sku}
+                                            {product.images?.[0]?.url && (
+                                                <img
+                                                    src={product.images[0].url}
+                                                    alt={product.title}
+                                                    className="w-16 h-16 rounded-xl object-cover"
+                                                />
+                                            )}
+                                            <div className="flex-1 min-w-0">
+                                                <h3 className="font-bold text-slate-800 mb-1">{product.title}</h3>
+                                                <p className="text-xs text-slate-500 line-clamp-2 mb-2">
+                                                    {product.description}
+                                                </p>
+                                                <div className="flex items-center gap-2 text-xs">
+                                                    {product.sku && (
+                                                        <span className="px-2 py-1 bg-slate-100 rounded-lg text-slate-500">
+                                                            {product.sku}
+                                                        </span>
+                                                    )}
+                                                    <span className="font-black text-slate-800 ml-auto">
+                                                        S/ {product.price?.toFixed(2) || '0.00'}
                                                     </span>
-                                                )}
-                                                <span className="font-bold text-slate-900">
-                                                    S/ {product.price?.toFixed(2) || '0.00'}
-                                                </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center justify-between border-t border-slate-50 pt-3">
+                                            <select
+                                                value={product.status}
+                                                onChange={(e) => handleQuickEdit(product.id, 'status', e.target.value)}
+                                                className={`text-xs px-3 py-1 rounded-full font-bold ${product.status === 'published' ? 'bg-green-100 text-green-700' :
+                                                    product.status === 'draft' ? 'bg-yellow-100 text-yellow-700' :
+                                                        'bg-slate-100 text-slate-600'
+                                                    }`}
+                                            >
+                                                <option value="published">Publicado</option>
+                                                <option value="draft">Borrador</option>
+                                                <option value="archived">Archivado</option>
+                                            </select>
+
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => router.push(`/mi-negocio/catalogo/${product.id}`)}
+                                                    className="p-3 text-[var(--brand-blue)] bg-sky-50 rounded-xl"
+                                                >
+                                                    <IconEdit size={18} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteProduct(product.id)}
+                                                    className="p-3 text-red-500 bg-red-50 rounded-xl"
+                                                >
+                                                    <IconTrash size={18} />
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
-
-                                    <div className="flex items-center justify-between">
-                                        <select
-                                            value={product.status}
-                                            onChange={(e) => handleQuickEdit(product.id, 'status', e.target.value)}
-                                            className={`text-xs px-2 py-1 rounded ${product.status === 'published' ? 'bg-green-100 text-green-700' :
-                                                    product.status === 'draft' ? 'bg-yellow-100 text-yellow-700' :
-                                                        'bg-slate-100 text-slate-700'
-                                                }`}
-                                        >
-                                            <option value="published">Publicado</option>
-                                            <option value="draft">Borrador</option>
-                                            <option value="archived">Archivado</option>
-                                        </select>
-
-                                        <div className="flex items-center gap-2">
-                                            <button
-                                                onClick={() => router.push(`/mi-negocio/catalogo/${product.id}`)}
-                                                className="p-2 text-blue-600 hover:bg-blue-50 rounded"
-                                            >
-                                                <IconEdit size={18} />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDeleteProduct(product.id)}
-                                                className="p-2 text-red-600 hover:bg-red-50 rounded"
-                                            >
-                                                <IconTrash size={18} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
         </div>
     );

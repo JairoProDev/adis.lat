@@ -13,7 +13,7 @@ export async function getProfile(userId: string): Promise<Profile | null> {
     .from('profiles')
     .select('*')
     .eq('id', userId)
-    .single();
+    .maybeSingle();
 
   if (error) {
     // Errores no críticos que no deben lanzar excepciones
@@ -222,7 +222,7 @@ export async function updateUserRole(
 
   // Asegurar que el perfil existe primero
   let perfil = await getProfile(userId);
-  
+
   if (!perfil) {
     // Crear perfil si no existe
     const { data: userData } = await supabase.auth.getUser();

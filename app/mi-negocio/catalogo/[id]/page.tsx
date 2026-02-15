@@ -26,12 +26,13 @@ export default function EditProductPage() {
 
     const fetchProduct = async () => {
         try {
+            if (!supabase) throw new Error('Supabase no está configurado');
             setLoading(true);
             const { data, error } = await supabase
                 .from('catalog_products')
                 .select('*')
                 .eq('id', id)
-                .single();
+                .maybeSingle();
 
             if (error) throw error;
             setProduct(data);
@@ -68,17 +69,19 @@ export default function EditProductPage() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50">
+        <div className="h-screen flex flex-col bg-[var(--bg-secondary)] overflow-hidden">
             <Header />
             <ToastContainer toasts={toasts} removeToast={removeToast} />
 
-            <div className="max-w-6xl mx-auto px-4 py-8">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-black text-slate-900">Editar Producto</h1>
-                    <p className="text-slate-600">Modifica los detalles de tu producto.</p>
-                </div>
+            <div className="flex-1 overflow-y-auto px-4 py-4 md:py-6">
+                <div className="max-w-5xl mx-auto">
+                    <div className="mb-4">
+                        <h1 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">Editar Producto</h1>
+                        <p className="text-slate-500 text-sm">Modifica los detalles de tu producto.</p>
+                    </div>
 
-                <ProductForm mode="edit" initialData={product} />
+                    <ProductForm mode="edit" initialData={product} />
+                </div>
             </div>
         </div>
     );

@@ -56,6 +56,38 @@ npm install react-dropzone @supabase/auth-helpers-nextjs
 
 ---
 
+### ✅ Tareas Completadas (Actualizado)
+
+1.  **UI Brand Refresh (100%)**:
+    *   Se reemplazaron colores genéricos por los de la marca (Celeste `#53acc5` y Amarillo `#ffc24a`).
+    *   Uso de `var(--brand-blue)` en botones, enlaces y acentos.
+    *   Estética premium con bordes redondeados, sombras suaves y transiciones.
+
+2.  **Layout Optimization (100%)**:
+    *   Corrección de scrolling: El contenido ahora se ajusta al viewport usando `h-screen overflow-hidden`.
+    *   Solo las áreas de contenido son scrolleables, manteniendo el Header y Toasts fijos.
+    *   Header de acciones en formularios (`ProductForm`) ahora es **sticky**, mejorando la usabilidad.
+
+3.  **Resolución de Error 406 (100%)**:
+    *   Se reemplazó `.single()` por `.maybeSingle()` en las consultas a Supabase (`profiles`, `business_profiles`, `catalog_products`).
+    *   Esto elimina el error `406 Not Acceptable` que causaba bucles de consola cuando no se encontraba un registro.
+
+4.  **Robustez del Código**:
+    *   Checks de nulidad para el cliente `supabase` antes de cada llamada asíncrona.
+    *   Manejo de estados de carga con spinners coherentes.
+
+---
+
+### 🚀 Próximos Pasos
+
+1.  **Gestión de Variantes**: Implementar la lógica para productos con tallas/colores.
+2.  **Mejoras de IA**: Optimizar el prompt de mejora de descripciones.
+3.  **PDF/Export**: Añadir opción para exportar la tabla a Excel/PDF.
+
+**Estado Final: 100% Funcional y On-Brand** 🚀
+
+---
+
 ## 🚀 CÓMO PROBAR (Flujo de Usuario)
 
 1.  **Ejecutar SQL**: Corre el script `sql/create_catalog_ai_schema.sql` en Supabase.

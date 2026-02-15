@@ -44,7 +44,7 @@ export default function CatalogPage() {
                 .from('business_profiles')
                 .select('*')
                 .eq('user_id', user.id)
-                .single();
+                .maybeSingle();
 
             if (profileError || !profile) {
                 // No tiene perfil de negocio, redirigir a crear uno
@@ -103,129 +103,135 @@ export default function CatalogPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[var(--bg-secondary)]">
+        <div className="h-screen flex flex-col bg-[var(--bg-secondary)] overflow-hidden">
             <Header />
 
-            <main className="max-w-7xl mx-auto px-4 py-6 md:py-8">
-                {/* Header Section */}
-                <div className="mb-6 md:mb-8">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-                        <div>
-                            <h1 className="text-2xl md:text-3xl font-black text-[var(--text-primary)] mb-2">
-                                📦 Mi Catálogo
-                            </h1>
-                            <p className="text-sm md:text-base text-[var(--text-secondary)]">
-                                Gestiona tus productos con inteligencia artificial
-                            </p>
-                            <Link href="/mi-negocio" className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 mt-2">
-                                <IconArrowLeft size={12} />
-                                Volver al Editor de Negocio
-                            </Link>
+            <main className="flex-1 overflow-y-auto px-4 py-4 md:py-6">
+                <div className="max-w-6xl mx-auto">
+                    {/* Header Section */}
+                    <div className="mb-6 md:mb-8">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                            <div>
+                                <h1 className="text-2xl md:text-3xl font-black text-slate-800 mb-2 tracking-tight">
+                                    📦 Mi Catálogo
+                                </h1>
+                                <p className="text-sm md:text-base text-slate-500">
+                                    Gestiona tus productos con inteligencia artificial
+                                </p>
+                                <Link href="/mi-negocio" className="inline-flex items-center gap-1 text-xs font-bold text-[var(--brand-blue)] hover:opacity-80 mt-2 transition-all">
+                                    <IconArrowLeft size={12} />
+                                    Volver al Editor de Negocio
+                                </Link>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                                <button
+                                    onClick={() => router.push('/mi-negocio/catalogo/tabla')}
+                                    className="flex items-center justify-center gap-2 px-4 py-2 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-bold hover:border-[var(--brand-blue)] hover:text-[var(--brand-blue)] transition-all"
+                                >
+                                    <IconList size={18} />
+                                    <span className="text-sm">Vista Tabla</span>
+                                </button>
+                                <button
+                                    onClick={() => router.push('/mi-negocio/catalogo/importar')}
+                                    className="flex items-center justify-center gap-2 px-6 py-2 bg-[var(--brand-blue)] text-white rounded-xl font-bold shadow-md hover:brightness-110 transition-all duration-200"
+                                >
+                                    <IconSparkles size={18} />
+                                    <span className="text-sm">Importar con IA</span>
+                                </button>
+                            </div>
                         </div>
 
-                        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                            <button
-                                onClick={() => router.push('/mi-negocio/catalogo/tabla')}
-                                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-bold hover:border-blue-400 hover:text-blue-600 transition-all"
-                            >
-                                <IconList size={18} />
-                                <span>Vista Tabla</span>
-                            </button>
-                            <button
-                                onClick={() => router.push('/mi-negocio/catalogo/importar')}
-                                className="flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[var(--brand-blue)] to-[#3d8da3] text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]"
-                            >
-                                <IconSparkles size={20} />
-                                <span>Importar con IA</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Stats Cards */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-                        <StatCard
-                            label="Total"
-                            value={stats.total}
-                            icon={<IconPackage size={20} />}
-                            color="blue"
-                        />
-                        <StatCard
-                            label="Publicados"
-                            value={stats.published}
-                            icon={<IconGrid size={20} />}
-                            color="green"
-                        />
-                        <StatCard
-                            label="Borradores"
-                            value={stats.draft}
-                            icon={<IconList size={20} />}
-                            color="yellow"
-                        />
-                        <StatCard
-                            label="Vistas"
-                            value={stats.views}
-                            icon={<IconSparkles size={20} />}
-                            color="purple"
-                        />
-                    </div>
-
-                    {/* Search & Filters */}
-                    <div className="flex flex-col md:flex-row gap-3">
-                        <div className="flex-1 relative">
-                            <IconSearch
-                                size={20}
-                                className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]"
+                        {/* Stats Cards */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                            <StatCard
+                                label="Total"
+                                value={stats.total}
+                                icon={<IconPackage size={20} />}
+                                color="blue"
                             />
-                            <input
-                                type="text"
-                                placeholder="Buscar productos..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-12 pr-4 py-3 bg-[var(--bg-primary)] border-2 border-[var(--border-color)] rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--brand-blue)] focus:outline-none transition-colors"
+                            <StatCard
+                                label="Publicados"
+                                value={stats.published}
+                                icon={<IconGrid size={20} />}
+                                color="green"
+                            />
+                            <StatCard
+                                label="Borradores"
+                                value={stats.draft}
+                                icon={<IconFilter size={20} />}
+                                color="yellow"
+                            />
+                            <StatCard
+                                label="Vistas"
+                                value={stats.views}
+                                icon={<IconCopy size={20} />}
+                                color="purple"
                             />
                         </div>
 
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-                                className="px-4 py-3 bg-[var(--bg-primary)] border-2 border-[var(--border-color)] rounded-xl hover:border-[var(--brand-blue)] transition-colors"
-                                title={viewMode === 'grid' ? 'Vista de lista' : 'Vista de cuadrícula'}
-                            >
-                                {viewMode === 'grid' ? <IconList size={20} /> : <IconGrid size={20} />}
-                            </button>
+                        {/* Search and Filters */}
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="relative flex-1">
+                                <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                                <input
+                                    type="text"
+                                    placeholder="Buscar productos..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-3 bg-white border-2 border-slate-100 rounded-2xl outline-none focus:border-[var(--brand-blue)] transition-all"
+                                />
+                            </div>
 
-                            <button
-                                className="px-4 py-3 bg-[var(--bg-primary)] border-2 border-[var(--border-color)] rounded-xl hover:border-[var(--brand-blue)] transition-colors"
-                                title="Filtros"
-                            >
-                                <IconFilter size={20} />
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <div className="flex bg-slate-100 p-1 rounded-xl">
+                                    <button
+                                        onClick={() => setViewMode('grid')}
+                                        className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-[var(--brand-blue)]' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        <IconGrid size={20} />
+                                    </button>
+                                    <button
+                                        onClick={() => setViewMode('list')}
+                                        className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-[var(--brand-blue)]' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        <IconList size={20} />
+                                    </button>
+                                </div>
+
+                                <button
+                                    className="p-3 bg-white border-2 border-slate-100 rounded-xl text-slate-500 hover:text-[var(--brand-blue)] transition-all"
+                                    title="Filtros"
+                                >
+                                    <IconFilter size={20} />
+                                </button>
+                            </div>
                         </div>
                     </div>
+
+                    {/* Products Grid/List */}
+                    {loading ? (
+                        <div className="text-center py-20">
+                            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[var(--brand-blue)] border-t-transparent" />
+                            <p className="mt-4 text-slate-500">Cargando productos...</p>
+                        </div>
+                    ) : products.length === 0 ? (
+                        <EmptyState onImport={() => router.push('/mi-negocio/catalogo/importar')} />
+                    ) : (
+                        <div className={viewMode === 'grid'
+                            ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
+                            : 'space-y-3'
+                        }>
+                            {products.map(product => (
+                                viewMode === 'grid' ? (
+                                    <ProductCard key={product.id} product={product} />
+                                ) : (
+                                    <ProductListItem key={product.id} product={product} />
+                                )
+                            ))}
+                        </div>
+                    )}
                 </div>
-
-                {/* Products Grid/List */}
-                {loading ? (
-                    <div className="text-center py-20">
-                        <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[var(--brand-blue)] border-t-transparent" />
-                        <p className="mt-4 text-[var(--text-secondary)]">Cargando productos...</p>
-                    </div>
-                ) : products.length === 0 ? (
-                    <EmptyState onImport={() => router.push('/mi-negocio/catalogo/importar')} />
-                ) : (
-                    <div className={viewMode === 'grid'
-                        ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
-                        : 'space-y-3'
-                    }>
-                        {products.map(product => (
-                            viewMode === 'grid' ? (
-                                <ProductCard key={product.id} product={product} />
-                            ) : (
-                                <ProductListItem key={product.id} product={product} />
-                            )
-                        ))}
-                    </div>
-                )}
             </main>
 
             <ToastContainer toasts={toasts} removeToast={removeToast} />
@@ -416,40 +422,25 @@ function EmptyState({ onImport }: { onImport: () => void }) {
     return (
         <div className="text-center py-12 md:py-20">
             <div className="max-w-md mx-auto">
-                <div className="w-20 h-20 bg-gradient-to-br from-[var(--brand-blue)] to-[#3d8da3] rounded-3xl flex items-center justify-center mx-auto mb-6">
+                <div className="w-20 h-20 bg-[var(--brand-blue)] rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-sky-100">
                     <IconUpload size={40} className="text-white" />
                 </div>
 
-                <h2 className="text-2xl font-black text-[var(--text-primary)] mb-3">
+                <h2 className="text-2xl font-black text-slate-800 mb-3">
                     Tu catálogo está vacío
                 </h2>
-                <p className="text-[var(--text-secondary)] mb-8">
+                <p className="text-slate-500 mb-8">
                     Importa tus productos desde PDF, fotos o Excel con inteligencia artificial.
                     ¡Es súper rápido!
                 </p>
 
                 <button
                     onClick={onImport}
-                    className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-[var(--brand-blue)] to-[#3d8da3] text-white rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]"
+                    className="inline-flex items-center gap-2 px-8 py-4 bg-[var(--brand-blue)] text-white rounded-2xl font-bold shadow-lg hover:brightness-110 transition-all active:scale-[0.98]"
                 >
                     <IconSparkles size={20} />
                     <span>Importar Productos con IA</span>
                 </button>
-
-                <div className="mt-8 flex items-center justify-center gap-4 text-sm text-[var(--text-tertiary)]">
-                    <div className="flex items-center gap-2">
-                        <span>📄</span>
-                        <span>PDF</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <span>📸</span>
-                        <span>Fotos</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <span>📊</span>
-                        <span>Excel</span>
-                    </div>
-                </div>
             </div>
         </div>
     );

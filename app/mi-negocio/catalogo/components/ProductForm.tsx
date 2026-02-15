@@ -66,6 +66,7 @@ export default function ProductForm({ initialData, mode }: ProductFormProps) {
                 const fileExt = file.name.split('.').pop();
                 const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
 
+                if (!supabase) throw new Error('Supabase no está configurado');
                 const { error: uploadError } = await supabase.storage
                     .from('catalog-images')
                     .upload(fileName, file);
@@ -113,6 +114,7 @@ export default function ProductForm({ initialData, mode }: ProductFormProps) {
                 updated_at: new Date().toISOString()
             };
 
+            if (!supabase) throw new Error('Supabase no está configurado');
             if (mode === 'create') {
                 const { error } = await supabase
                     .from('catalog_products')
@@ -140,11 +142,11 @@ export default function ProductForm({ initialData, mode }: ProductFormProps) {
 
     return (
         <form onSubmit={handleSubmit} className="max-w-4xl mx-auto pb-20">
-            {/* Header Actions */}
-            <div className="flex items-center justify-between mb-8">
+            {/* Header Actions - Sticky */}
+            <div className="sticky top-0 z-20 bg-[var(--bg-secondary)]/80 backdrop-blur-md py-4 flex items-center justify-between mb-6 border-b border-slate-200">
                 <Link
                     href="/mi-negocio/catalogo/tabla"
-                    className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors"
+                    className="inline-flex items-center gap-2 text-sm font-bold text-[var(--brand-blue)] hover:opacity-80 transition-all"
                 >
                     <IconArrowLeft size={14} />
                     Cancelar
@@ -153,14 +155,14 @@ export default function ProductForm({ initialData, mode }: ProductFormProps) {
                 <button
                     type="submit"
                     disabled={loading}
-                    className="px-8 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-lg hover:shadow-xl transition-all disabled:opacity-50 flex items-center gap-2"
+                    className="px-8 py-2.5 bg-[var(--brand-blue)] text-white font-bold rounded-xl shadow-lg hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center gap-2"
                 >
                     {loading ? (
                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     ) : (
                         <IconCheck size={20} />
                     )}
-                    {mode === 'create' ? 'Crear Producto' : 'Guardar Cambios'}
+                    <span className="text-sm md:text-base">{mode === 'create' ? 'Crear Producto' : 'Guardar Cambios'}</span>
                 </button>
             </div>
 
@@ -182,7 +184,7 @@ export default function ProductForm({ initialData, mode }: ProductFormProps) {
                                     required
                                     value={formData.title}
                                     onChange={e => setFormData({ ...formData, title: e.target.value })}
-                                    className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                    className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-[var(--brand-blue)] focus:border-transparent outline-none transition-all outline-none"
                                     placeholder="Ej. Taladro Percutor Inalámbrico"
                                 />
                             </div>
