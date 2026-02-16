@@ -463,6 +463,7 @@ function BusinessBuilderPageContent() {
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
                     <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                         <ProductEditor
+                            key={editingProduct?.id || 'new-product'}
                             product={editingProduct}
                             businessProfileId={profile.id}
                             userId={user.id}

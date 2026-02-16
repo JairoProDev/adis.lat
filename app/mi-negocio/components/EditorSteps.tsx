@@ -74,18 +74,16 @@ export function EditorSteps({
         if (activeStep > 0) setActiveStep(activeStep - 1);
     };
 
+    const [previews, setPreviews] = useState<{ logo?: string; banner?: string }>({});
+
     const handleImageUpload = async (file: File, type: 'logo' | 'banner') => {
         if (!file) return;
 
-        // Optimistic preview
+        // Local Preview
         const objectUrl = URL.createObjectURL(file);
-        if (type === 'logo') setProfile({ ...profile, logo_url: objectUrl });
-        if (type === 'banner') setProfile({ ...profile, banner_url: objectUrl });
+        setPreviews(prev => ({ ...prev, [type]: objectUrl }));
 
         if (!profile.user_id) {
-            // If we don't have user_id (e.g. creating new), we can't upload yet or need a temp bucket.
-            // For now, let's just warn and rely on the blob URL until profile is saved.
-            // Ideally the parent page should ensure profile.user_id is set before passing it.
             console.warn("No user_id found in profile, skipping upload.");
             return;
         }
@@ -96,6 +94,8 @@ export function EditorSteps({
             if (publicUrl) {
                 if (type === 'logo') setProfile({ ...profile, logo_url: publicUrl });
                 if (type === 'banner') setProfile({ ...profile, banner_url: publicUrl });
+                // Clear preview so we display the real URL (conforms success)
+                setPreviews(prev => ({ ...prev, [type]: undefined }));
             }
         } catch (e) {
             console.error("Upload failed", e);
@@ -220,8 +220,13 @@ export function EditorSteps({
                                                     <div className="col-span-1">
                                                         <span className="text-xs font-bold text-slate-700 mb-2 block uppercase">Logo</span>
                                                         <label className="relative aspect-square rounded-2xl border-2 border-dashed border-slate-300 bg-white hover:border-blue-500 transition-all flex flex-col items-center justify-center cursor-pointer overflow-hidden group/upload">
-                                                            {profile.logo_url ? (
-                                                                <img src={profile.logo_url} className="w-full h-full object-cover" />
+                                                            {uploadingImage === 'logo' ? (
+                                                                <div className="flex flex-col items-center justify-center">
+                                                                    <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin mb-2" />
+                                                                    <span className="text-[10px] font-bold text-blue-500">Subiendo...</span>
+                                                                </div>
+                                                            ) : (previews.logo || profile.logo_url) ? (
+                                                                <img src={previews.logo || profile.logo_url} className="w-full h-full object-cover" />
                                                             ) : (
                                                                 <div className="text-center p-2">
                                                                     <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-2 text-slate-400">
@@ -242,8 +247,13 @@ export function EditorSteps({
                                                     <div className="col-span-1">
                                                         <span className="text-xs font-bold text-slate-700 mb-2 block uppercase">Portada</span>
                                                         <label className="relative aspect-square rounded-2xl border-2 border-dashed border-slate-300 bg-white hover:border-purple-500 transition-all flex flex-col items-center justify-center cursor-pointer overflow-hidden group/upload">
-                                                            {profile.banner_url ? (
-                                                                <img src={profile.banner_url} className="w-full h-full object-cover" />
+                                                            {uploadingImage === 'banner' ? (
+                                                                <div className="flex flex-col items-center justify-center">
+                                                                    <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-500 rounded-full animate-spin mb-2" />
+                                                                    <span className="text-[10px] font-bold text-purple-500">Subiendo...</span>
+                                                                </div>
+                                                            ) : (previews.banner || profile.banner_url) ? (
+                                                                <img src={previews.banner || profile.banner_url} className="w-full h-full object-cover" />
                                                             ) : (
                                                                 <div className="text-center p-2">
                                                                     <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-2 text-slate-400">
