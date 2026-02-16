@@ -99,11 +99,8 @@ export async function uploadBusinessImage(file: File, userId: string, type: 'log
         const fileExt = file.name.split('.').pop();
         const fileName = `${userId}/${type}-${Date.now()}.${fileExt}`;
 
-        // Use 'public-assets' bucket or 'business-media' or create one. 
-        // Let's assume 'business-media' exists or we'll error out.
-        // Actually, typically 'public' or 'images' is used.
-        // Let's use 'business-images'.
-        const bucketName = 'business-images';
+        // Use 'catalog-images' bucket which exists and is public
+        const bucketName = 'catalog-images';
 
         const { error: uploadError } = await supabase.storage
             .from(bucketName)
