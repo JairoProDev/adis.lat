@@ -8,6 +8,7 @@
 import { useState, useRef } from 'react';
 import { IconCamera, IconCheck, IconX, IconImage, IconUpload } from '@/components/Icons';
 import { supabase } from '@/lib/supabase';
+import { uploadProductImage } from '@/lib/business';
 
 type AddMethod = null | 'quick' | 'complete' | 'file';
 
@@ -72,19 +73,17 @@ export default function SimpleCatalogAdd({ businessProfileId, onSuccess, onClose
 
             let imageUrl = '';
             if (quickImage) {
+                // Get current user
                 if (!supabase) throw new Error('Supabase no está configurado');
-                const fileName = `${Date.now()}-${quickImage.name}`;
-                const { error: uploadError } = await supabase.storage
-                    .from('catalog-images')
-                    .upload(fileName, quickImage);
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) throw new Error('Usuario no autenticado');
 
-                if (!uploadError) {
-                    if (!supabase) throw new Error('Supabase no está configurado');
-                    const { data: urlData } = supabase.storage
-                        .from('catalog-images')
-                        .getPublicUrl(fileName);
-                    imageUrl = urlData.publicUrl;
+                // Use the proper upload function
+                const url = await uploadProductImage(quickImage, user.id);
+                if (!url) {
+                    throw new Error('Error al subir la imagen');
                 }
+                imageUrl = url;
             }
 
             if (!supabase) throw new Error('Supabase no está configurado');
@@ -103,6 +102,7 @@ export default function SimpleCatalogAdd({ businessProfileId, onSuccess, onClose
             onSuccess?.();
             onClose();
         } catch (err: any) {
+            console.error('Error creating product:', err);
             alert('Error: ' + err.message);
         } finally {
             setLoading(false);
@@ -120,19 +120,17 @@ export default function SimpleCatalogAdd({ businessProfileId, onSuccess, onClose
 
             let imageUrl = '';
             if (form.image) {
+                // Get current user
                 if (!supabase) throw new Error('Supabase no está configurado');
-                const fileName = `${Date.now()}-${form.image.name}`;
-                const { error: uploadError } = await supabase.storage
-                    .from('catalog-images')
-                    .upload(fileName, form.image);
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) throw new Error('Usuario no autenticado');
 
-                if (!uploadError) {
-                    if (!supabase) throw new Error('Supabase no está configurado');
-                    const { data: urlData } = supabase.storage
-                        .from('catalog-images')
-                        .getPublicUrl(fileName);
-                    imageUrl = urlData.publicUrl;
+                // Use the proper upload function
+                const url = await uploadProductImage(form.image, user.id);
+                if (!url) {
+                    throw new Error('Error al subir la imagen');
                 }
+                imageUrl = url;
             }
 
             if (!supabase) throw new Error('Supabase no está configurado');
@@ -153,6 +151,7 @@ export default function SimpleCatalogAdd({ businessProfileId, onSuccess, onClose
             onSuccess?.();
             onClose();
         } catch (err: any) {
+            console.error('Error creating product:', err);
             alert('Error: ' + err.message);
         } finally {
             setLoading(false);
