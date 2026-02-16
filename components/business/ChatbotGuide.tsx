@@ -110,15 +110,45 @@ export default function ChatbotGuide({ profile, onUpdate, onComplete, isMinimize
     const currentStep = ONBOARDING_STEPS[currentStepIndex];
     const isComplete = currentStepIndex >= ONBOARDING_STEPS.length;
 
+    // Intelligent Start Logic
     useEffect(() => {
-        // Mostrar primer mensaje automáticamente solo una vez
-        if (!initialized.current && messages.length === 0 && currentStep) {
+        if (!initialized.current && profile) {
+            let startIndex = 0;
+            // Iterate through steps to find the first missing required field
+            // or continue from where we left off (simplified logic)
+            for (let i = 0; i < ONBOARDING_STEPS.length; i++) {
+                const step = ONBOARDING_STEPS[i];
+                const fieldVal = profile[step.field as keyof BusinessProfile];
+
+                // If field has value, we might skip, but let's be careful.
+                // We basically want to find the first *empty* field to ask about.
+                if (step.field !== 'skip' && fieldVal && fieldVal.toString().length > 0) {
+                    startIndex = i + 1;
+                } else {
+                    // Found an empty field, stop here
+                    break;
+                }
+            }
+
+            // Ensure we don't go out of bounds
+            startIndex = Math.min(startIndex, ONBOARDING_STEPS.length - 1);
+
+            // If all done, maybe show a "Can I help you edit?" message instead of step 0
+            setCurrentStepIndex(startIndex);
             initialized.current = true;
-            setTimeout(() => {
-                addBotMessage(currentStep.question);
-            }, 500);
+
+            const startStep = ONBOARDING_STEPS[startIndex];
+            if (startStep) {
+                setTimeout(() => {
+                    // Custom greeting if skipping
+                    const text = startIndex > 0
+                        ? `¡Hola de nuevo! 👋 Continuemos. ${startStep.question}`
+                        : startStep.question;
+                    addBotMessage(text);
+                }, 500);
+            }
         }
-    }, [currentStep, messages.length]);
+    }, [profile]); // Remove messages dependency to avoid loop
 
     useEffect(() => {
         scrollToBottom();
@@ -228,8 +258,9 @@ export default function ChatbotGuide({ profile, onUpdate, onComplete, isMinimize
         return (
             <button
                 onClick={onToggleMinimize}
-                className="fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center z-50 animate-bounce"
+                className="fixed bottom-6 left-6 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center z-50 animate-bounce hover:scale-110 transition-transform"
                 style={{ backgroundColor: 'var(--brand-blue)' }}
+                title="Abrir Asistente"
             >
                 <IconSparkles size={24} color="white" />
             </button>

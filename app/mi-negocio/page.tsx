@@ -365,7 +365,7 @@ function BusinessBuilderPageContent() {
                 {!isFirstTime && chatbotMinimized && viewMode === 'preview' && (
                     <button
                         onClick={() => setChatbotMinimized(false)}
-                        className="fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center z-50 hover:scale-110 transition-transform bg-white text-blue-600 border border-blue-100"
+                        className="fixed bottom-6 left-6 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center z-50 hover:scale-110 transition-transform bg-white text-blue-600 border border-blue-100"
                     >
                         <span className="text-2xl">💬</span>
                     </button>
