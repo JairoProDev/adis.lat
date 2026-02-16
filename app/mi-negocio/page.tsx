@@ -12,10 +12,11 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { createBusinessProfile, getBusinessProfile, updateBusinessProfile } from '@/lib/business';
 import { BusinessProfile } from '@/types/business';
-import { IconEye, IconEdit, IconX, IconCheck } from '@/components/Icons';
+import { IconEye, IconEdit, IconX, IconCheck, IconSettings } from '@/components/Icons';
 import AuthModal from '@/components/AuthModal';
 import BusinessPublicView from '@/components/business/BusinessPublicView';
 import ChatbotGuide from '@/components/business/ChatbotGuide';
+import { EditorSteps } from './components/EditorSteps';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/hooks/useToast';
 
@@ -27,7 +28,11 @@ function BusinessBuilderPageContent() {
     const [profileLoading, setProfileLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [showAuthModal, setShowAuthModal] = useState(false);
-    const [editMode, setEditMode] = useState(false);
+
+    // View State
+    const [viewMode, setViewMode] = useState<'preview' | 'editor'>('preview');
+    const [activeStep, setActiveStep] = useState(0);
+
     const [chatbotMinimized, setChatbotMinimized] = useState(false);
     const [isFirstTime, setIsFirstTime] = useState(false);
 
@@ -161,6 +166,28 @@ function BusinessBuilderPageContent() {
         success('¡Tu página está lista! 🎉');
     };
 
+    const handleEditPart = (part: string) => {
+        // Switch to editor and set step
+        const partToStep: Record<string, number> = {
+            'identity': 0,
+            'logo': 1,
+            'visual': 1,
+            'banner': 1,
+            'catalog': 2,
+            'add-product': 2,
+            'contact': 3,
+            'hours': 4,
+            'social': 5,
+            'marketing': 6
+        };
+
+        if (partToStep[part] !== undefined) {
+            setActiveStep(partToStep[part]);
+        }
+
+        setViewMode('editor');
+    };
+
     const handlePublish = async () => {
         if (!user || !profile.id) {
             error('Guarda los cambios primero');
@@ -225,8 +252,8 @@ function BusinessBuilderPageContent() {
     return (
         <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--bg-secondary)' }}>
             {/* Top Bar */}
-            <div className="sticky top-0 z-30 bg-white border-b shadow-sm h-16" style={{ borderColor: 'var(--border-color)' }}>
-                <div className="max-w-7xl mx-auto px-4 h-full flex justify-between items-center">
+            <div className="sticky top-0 z-50 bg-white border-b shadow-sm h-16" style={{ borderColor: 'var(--border-color)' }}>
+                <div className="max-w-[1920px] mx-auto px-4 h-full flex justify-between items-center">
                     <div className="flex items-center gap-3">
                         <button
                             onClick={() => router.push('/')}
@@ -235,19 +262,21 @@ function BusinessBuilderPageContent() {
                             <IconX size={20} color="var(--text-secondary)" />
                         </button>
                         <div className="flex items-center gap-2">
-                            <h1 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
-                                {profile.name || 'Tu Página de Negocio'}
-                            </h1>
+                            {/* Name removed as requested */}
 
                             {/* Improved Auto-save Indicator */}
-                            <div className="w-6 h-6 flex items-center justify-center">
+                            <div className="flex items-center gap-2">
                                 {saving ? (
-                                    <div className="w-4 h-4 border-2 border-[var(--text-tertiary)] border-t-transparent rounded-full animate-spin"></div>
+                                    <span className="text-xs text-slate-400 flex items-center gap-1">
+                                        <div className="w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
+                                        Guardando...
+                                    </span>
                                 ) : (
                                     lastSavedTime && (
-                                        <div className="text-green-500 animate-fade-in tooltip-container cursor-help" title={`Guardado ${lastSavedTime.toLocaleTimeString()}`}>
-                                            <IconCheck size={16} />
-                                        </div>
+                                        <span className="text-xs text-green-600 flex items-center gap-1">
+                                            <IconCheck size={12} />
+                                            Guardado
+                                        </span>
                                     )
                                 )}
                             </div>
@@ -256,79 +285,93 @@ function BusinessBuilderPageContent() {
 
                     <div className="flex items-center gap-3">
                         {!isFirstTime && (
-                            <button
-                                onClick={() => setEditMode(!editMode)}
-                                className="px-3 md:px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all whitespace-nowrap"
-                                style={{
-                                    backgroundColor: editMode ? 'var(--brand-yellow)' : 'var(--bg-secondary)',
-                                    color: editMode ? '#fff' : 'var(--text-primary)'
-                                }}
-                            >
-                                {editMode ? <IconCheck size={16} /> : <IconEdit size={16} />}
-                                <span className={editMode ? "hidden sm:inline" : "hidden sm:inline"}>
-                                    {editMode ? 'Vista Normal' : 'Editar'}
-                                </span>
-                            </button>
-                        )}
-
-                        {profile.slug && (
-                            <a
-                                href={`/${profile.slug}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="px-3 md:px-4 py-2 rounded-lg font-medium flex items-center gap-2 hover:shadow-md transition-all whitespace-nowrap"
-                                style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
-                            >
-                                <IconEye size={16} />
-                                <span className="hidden sm:inline">Ver Página</span>
-                            </a>
+                            <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
+                                <button
+                                    onClick={() => setViewMode('preview')}
+                                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${viewMode === 'preview' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                                >
+                                    <IconEye size={16} />
+                                    <span className="hidden sm:inline">Ver Página</span>
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('editor')}
+                                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${viewMode === 'editor' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                                >
+                                    <IconEdit size={16} />
+                                    <span className="hidden sm:inline">Editar</span>
+                                </button>
+                            </div>
                         )}
 
                         <button
                             onClick={handlePublish}
                             disabled={saving || !profile.id}
-                            className="px-6 py-2 rounded-lg font-bold text-white flex items-center gap-2 hover:shadow-lg transition-all disabled:opacity-50"
-                            style={{ backgroundColor: 'var(--brand-blue)' }}
+                            className="px-4 md:px-6 py-2 rounded-lg font-bold text-white flex items-center gap-2 hover:shadow-lg transition-all disabled:opacity-50 text-sm"
+                            style={{ backgroundColor: profile.is_published ? '#10b981' : 'var(--brand-blue)' }}
                         >
-                            {profile.is_published ? 'Despublicar' : 'Publicar'}
+                            {profile.is_published ? 'Publicado' : 'Publicar'}
                         </button>
                     </div>
                 </div>
             </div>
 
-            {/* Main Content - Vista en Tiempo Real */}
-            <div className="flex-1 overflow-auto pb-[42vh]">
-                <div className="max-w-4xl mx-auto py-8 px-4">
-                    <BusinessPublicView
-                        profile={profile}
-                        isPreview
-                        editMode={editMode}
-                        onUpdate={handleChatbotUpdate}
-                    />
+            {/* Main Content Layout */}
+            <div className="flex-1 flex overflow-hidden relative">
+
+                {/* Editor Panel (Only in Editor Mode) */}
+                <div className={`
+                    bg-white border-r border-slate-200 z-20 transition-all duration-300
+                    ${viewMode === 'editor' ? 'w-full md:w-[400px] lg:w-[450px] translate-x-0' : 'w-0 -translate-x-full opacity-0 overflow-hidden'}
+                `}>
+                    <div className="h-full overflow-hidden w-full md:w-[400px] lg:w-[450px]">
+                        <EditorSteps
+                            profile={profile as any}
+                            setProfile={setProfile}
+                            saving={saving}
+                            activeStep={activeStep}
+                            setActiveStep={setActiveStep}
+                            onAddProduct={() => { }} // TODO: Implement add product modal
+                        />
+                    </div>
                 </div>
+
+                {/* Preview Area */}
+                <div className="flex-1 overflow-auto bg-slate-100 relative">
+                    <div className={`mx-auto h-full ${viewMode === 'editor' ? 'p-4 md:p-8 max-w-[1200px]' : ''}`}>
+                        <div className={`bg-white min-h-full ${viewMode === 'editor' ? 'rounded-xl shadow-xl border border-slate-200 overflow-hidden' : ''}`}>
+                            <BusinessPublicView
+                                profile={profile}
+                                isPreview
+                                editMode={true} // Always show edit controls, let them trigger the editor
+                                onUpdate={handleChatbotUpdate}
+                                onEditPart={handleEditPart}
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Chatbot (Only showing when appropriate) */}
+                {(isFirstTime || (!chatbotMinimized && viewMode === 'preview')) && (
+                    <ChatbotGuide
+                        profile={profile}
+                        onUpdate={handleChatbotUpdate}
+                        onComplete={handleChatbotComplete}
+                        isMinimized={chatbotMinimized}
+                        onToggleMinimize={() => setChatbotMinimized(!chatbotMinimized)}
+                    />
+                )}
+
+                {/* Floating Chat Button (to re-open) */}
+                {!isFirstTime && chatbotMinimized && viewMode === 'preview' && (
+                    <button
+                        onClick={() => setChatbotMinimized(false)}
+                        className="fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center z-50 hover:scale-110 transition-transform bg-white text-blue-600 border border-blue-100"
+                    >
+                        <span className="text-2xl">💬</span>
+                    </button>
+                )}
             </div>
 
-            {/* Chatbot Guiado */}
-            {(isFirstTime || !chatbotMinimized) && (
-                <ChatbotGuide
-                    profile={profile}
-                    onUpdate={handleChatbotUpdate}
-                    onComplete={handleChatbotComplete}
-                    isMinimized={chatbotMinimized}
-                    onToggleMinimize={() => setChatbotMinimized(!chatbotMinimized)}
-                />
-            )}
-
-            {/* Botón para reabrir chatbot si está minimizado */}
-            {!isFirstTime && chatbotMinimized && (
-                <button
-                    onClick={() => setChatbotMinimized(false)}
-                    className="fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center z-50 hover:scale-110 transition-transform"
-                    style={{ backgroundColor: 'var(--brand-blue)' }}
-                >
-                    <span className="text-2xl">💬</span>
-                </button>
-            )}
         </div>
     );
 }

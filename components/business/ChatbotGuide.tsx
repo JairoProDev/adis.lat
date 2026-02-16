@@ -105,18 +105,20 @@ export default function ChatbotGuide({ profile, onUpdate, onComplete, isMinimize
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const initialized = useRef(false);
 
     const currentStep = ONBOARDING_STEPS[currentStepIndex];
     const isComplete = currentStepIndex >= ONBOARDING_STEPS.length;
 
     useEffect(() => {
-        // Mostrar primer mensaje automáticamente
-        if (messages.length === 0 && currentStep) {
+        // Mostrar primer mensaje automáticamente solo una vez
+        if (!initialized.current && messages.length === 0 && currentStep) {
+            initialized.current = true;
             setTimeout(() => {
                 addBotMessage(currentStep.question);
             }, 500);
         }
-    }, []);
+    }, [currentStep, messages.length]);
 
     useEffect(() => {
         scrollToBottom();
@@ -129,12 +131,18 @@ export default function ChatbotGuide({ profile, onUpdate, onComplete, isMinimize
     const addBotMessage = (text: string) => {
         setIsTyping(true);
         setTimeout(() => {
-            setMessages(prev => [...prev, {
-                id: Date.now().toString(),
-                type: 'bot',
-                text,
-                timestamp: new Date()
-            }]);
+            setMessages(prev => {
+                // Prevent duplicates based on text and recent timestamp
+                const isDuplicate = prev.some(m => m.text === text && Date.now() - m.timestamp.getTime() < 1000);
+                if (isDuplicate) return prev;
+
+                return [...prev, {
+                    id: Date.now().toString(),
+                    type: 'bot',
+                    text,
+                    timestamp: new Date()
+                }];
+            });
             setIsTyping(false);
         }, 600);
     };
@@ -230,10 +238,8 @@ export default function ChatbotGuide({ profile, onUpdate, onComplete, isMinimize
 
     return (
         <div
-            className="fixed bottom-0 left-0 right-0 bg-white border-t-2 shadow-2xl z-40 flex flex-col"
+            className="fixed z-40 bg-white shadow-2xl flex flex-col transition-all duration-300 bottom-0 left-0 right-0 h-[45vh] border-t-2 md:top-[64px] md:bottom-0 md:right-0 md:left-auto md:h-[calc(100vh-64px)] md:w-[400px] md:border-t-0 md:border-l-2"
             style={{
-                height: '40vh',
-                maxHeight: '500px',
                 borderColor: 'var(--brand-blue)',
                 paddingBottom: 'env(safe-area-inset-bottom)'
             }}
@@ -256,139 +262,145 @@ export default function ChatbotGuide({ profile, onUpdate, onComplete, isMinimize
                 >
                     <IconX size={20} color="white" />
                 </button>
-            </div>
+            </div >
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                {messages.map((message) => (
-                    <div
-                        key={message.id}
-                        className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-                    >
+            < div className="flex-1 overflow-y-auto p-4 space-y-3" >
+                {
+                    messages.map((message) => (
                         <div
-                            className={`max-w-[80%] px-4 py-2 rounded-2xl ${message.type === 'user'
-                                ? 'bg-gradient-to-r text-white'
-                                : 'bg-slate-100'
-                                }`}
-                            style={{
-                                backgroundColor: message.type === 'user' ? 'var(--brand-blue)' : undefined,
-                                color: message.type === 'user' ? 'white' : 'var(--text-primary)'
-                            }}
+                            key={message.id}
+                            className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
                         >
-                            {message.text}
-                        </div>
-                    </div>
-                ))}
-
-                {isTyping && (
-                    <div className="flex justify-start">
-                        <div className="max-w-[80%] px-4 py-2 rounded-2xl bg-slate-100">
-                            <div className="flex gap-1">
-                                <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                                <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                                <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                            <div
+                                className={`max-w-[80%] px-4 py-2 rounded-2xl ${message.type === 'user'
+                                    ? 'bg-gradient-to-r text-white'
+                                    : 'bg-slate-100'
+                                    }`}
+                                style={{
+                                    backgroundColor: message.type === 'user' ? 'var(--brand-blue)' : undefined,
+                                    color: message.type === 'user' ? 'white' : 'var(--text-primary)'
+                                }}
+                            >
+                                {message.text}
                             </div>
                         </div>
-                    </div>
-                )}
+                    ))
+                }
+
+                {
+                    isTyping && (
+                        <div className="flex justify-start">
+                            <div className="max-w-[80%] px-4 py-2 rounded-2xl bg-slate-100">
+                                <div className="flex gap-1">
+                                    <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                                    <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                                    <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                                </div>
+                            </div>
+                        </div>
+                    )
+                }
 
                 <div ref={messagesEndRef} />
-            </div>
+            </div >
 
             {/* Input Area */}
-            {!isComplete && currentStep && (
-                <div className="p-4 border-t" style={{ borderColor: 'var(--border-color)' }}>
-                    {currentStep.type === 'text' && (
-                        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="flex gap-2">
-                            <input
-                                ref={inputRef}
-                                type="text"
-                                value={inputValue}
-                                onChange={(e) => setInputValue(e.target.value)}
-                                placeholder={currentStep.placeholder}
-                                className="flex-1 px-4 py-3 border-2 rounded-xl outline-none focus:border-[var(--brand-blue)] transition-colors"
-                                style={{ borderColor: 'var(--border-color)' }}
-                                autoFocus
-                            />
-                            <button
-                                type="submit"
-                                disabled={!inputValue.trim() && !currentStep.optional}
-                                className="px-6 py-3 rounded-xl font-bold text-white transition-all disabled:opacity-50 flex items-center gap-2"
-                                style={{ backgroundColor: 'var(--brand-blue)' }}
-                            >
-                                <IconArrowRight size={18} />
-                            </button>
-                            {currentStep.optional && (
-                                <button
-                                    type="button"
-                                    onClick={handleSkip}
-                                    className="px-4 py-3 rounded-xl font-medium transition-colors hover:bg-slate-100"
-                                    style={{ color: 'var(--text-secondary)' }}
-                                >
-                                    Saltar
-                                </button>
-                            )}
-                        </form>
-                    )}
-
-                    {currentStep.type === 'choice' && currentStep.options && (
-                        <div className="grid grid-cols-2 gap-3">
-                            {currentStep.options.map((option, idx) => (
-                                <button
-                                    key={idx}
-                                    onClick={() => handleChoiceSelect(option)}
-                                    className="px-4 py-3 rounded-xl font-bold text-white transition-all hover:shadow-lg"
-                                    style={{ backgroundColor: idx === 0 ? 'var(--brand-blue)' : 'var(--brand-yellow)' }}
-                                >
-                                    {option}
-                                </button>
-                            ))}
-                        </div>
-                    )}
-
-                    {currentStep.type === 'image' && (
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => fileInputRef.current?.click()}
-                                className="flex-1 px-4 py-3 rounded-xl font-bold text-white transition-all flex items-center justify-center gap-2"
-                                style={{ backgroundColor: 'var(--brand-blue)' }}
-                            >
-                                <IconCamera size={18} />
-                                Subir Imagen
-                            </button>
-                            {currentStep.optional && (
-                                <button
-                                    onClick={handleSkip}
-                                    className="px-4 py-3 rounded-xl font-medium transition-colors hover:bg-slate-100"
-                                    style={{ color: 'var(--text-secondary)' }}
-                                >
-                                    Lo haré después
-                                </button>
-                            )}
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/*"
-                                onChange={handleImageUpload}
-                                className="hidden"
-                            />
-                        </div>
-                    )}
-
-                    {currentStep.type === 'color' && currentStep.options && (
-                        <div className="flex gap-3 justify-center">
-                            {currentStep.options.map((color) => (
-                                <button
-                                    key={color}
-                                    onClick={() => handleColorSelect(color)}
-                                    className="w-12 h-12 rounded-full border-4 border-white shadow-lg hover:scale-110 transition-transform"
-                                    style={{ backgroundColor: color }}
+            {
+                !isComplete && currentStep && (
+                    <div className="p-4 border-t" style={{ borderColor: 'var(--border-color)' }}>
+                        {currentStep.type === 'text' && (
+                            <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="flex gap-2">
+                                <input
+                                    ref={inputRef}
+                                    type="text"
+                                    value={inputValue}
+                                    onChange={(e) => setInputValue(e.target.value)}
+                                    placeholder={currentStep.placeholder}
+                                    className="flex-1 px-4 py-3 border-2 rounded-xl outline-none focus:border-[var(--brand-blue)] transition-colors"
+                                    style={{ borderColor: 'var(--border-color)' }}
+                                    autoFocus
                                 />
-                            ))}
-                        </div>
-                    )}
-                </div>
-            )}
-        </div>
+                                <button
+                                    type="submit"
+                                    disabled={!inputValue.trim() && !currentStep.optional}
+                                    className="px-6 py-3 rounded-xl font-bold text-white transition-all disabled:opacity-50 flex items-center gap-2"
+                                    style={{ backgroundColor: 'var(--brand-blue)' }}
+                                >
+                                    <IconArrowRight size={18} />
+                                </button>
+                                {currentStep.optional && (
+                                    <button
+                                        type="button"
+                                        onClick={handleSkip}
+                                        className="px-4 py-3 rounded-xl font-medium transition-colors hover:bg-slate-100"
+                                        style={{ color: 'var(--text-secondary)' }}
+                                    >
+                                        Saltar
+                                    </button>
+                                )}
+                            </form>
+                        )}
+
+                        {currentStep.type === 'choice' && currentStep.options && (
+                            <div className="grid grid-cols-2 gap-3">
+                                {currentStep.options.map((option, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => handleChoiceSelect(option)}
+                                        className="px-4 py-3 rounded-xl font-bold text-white transition-all hover:shadow-lg"
+                                        style={{ backgroundColor: idx === 0 ? 'var(--brand-blue)' : 'var(--brand-yellow)' }}
+                                    >
+                                        {option}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
+                        {currentStep.type === 'image' && (
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="flex-1 px-4 py-3 rounded-xl font-bold text-white transition-all flex items-center justify-center gap-2"
+                                    style={{ backgroundColor: 'var(--brand-blue)' }}
+                                >
+                                    <IconCamera size={18} />
+                                    Subir Imagen
+                                </button>
+                                {currentStep.optional && (
+                                    <button
+                                        onClick={handleSkip}
+                                        className="px-4 py-3 rounded-xl font-medium transition-colors hover:bg-slate-100"
+                                        style={{ color: 'var(--text-secondary)' }}
+                                    >
+                                        Lo haré después
+                                    </button>
+                                )}
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleImageUpload}
+                                    className="hidden"
+                                />
+                            </div>
+                        )}
+
+                        {currentStep.type === 'color' && currentStep.options && (
+                            <div className="flex gap-3 justify-center">
+                                {currentStep.options.map((color) => (
+                                    <button
+                                        key={color}
+                                        onClick={() => handleColorSelect(color)}
+                                        className="w-12 h-12 rounded-full border-4 border-white shadow-lg hover:scale-110 transition-transform"
+                                        style={{ backgroundColor: color }}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )
+            }
+        </div >
     );
 }
