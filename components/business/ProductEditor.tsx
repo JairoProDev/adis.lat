@@ -79,19 +79,19 @@ export function ProductEditor({ product, businessProfileId, userId, onSave, onCa
             if (product?.id) {
                 // Update
                 savedProduct = await updateCatalogProduct(product.id, productData);
+                if (!savedProduct) throw new Error('No se pudo actualizar el producto');
                 success('Producto actualizado');
             } else {
                 // Create
                 savedProduct = await createCatalogProduct(productData);
+                if (!savedProduct) throw new Error('No se pudo crear el producto');
                 success('Producto creado');
             }
 
-            if (savedProduct) {
-                onSave(savedProduct);
-            }
-        } catch (e) {
+            onSave(savedProduct);
+        } catch (e: any) {
             console.error(e);
-            error('Error al guardar producto');
+            error(e.message || 'Error al guardar producto');
         } finally {
             setLoading(false);
         }

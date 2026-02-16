@@ -10,7 +10,8 @@ import {
     IconInstagram, IconFacebook, IconTiktok,
     IconVerified, IconShareAlt, IconGlobe, IconPhone, IconClock, IconChevronDown,
     IconLinkedin, IconYoutube, IconSearch, IconArrowRight, IconHeart,
-    IconFileAlt, IconEdit, IconPlus, IconBox, IconCheck, IconX
+    IconFileAlt, IconEdit, IconPlus, IconBox, IconCheck, IconX,
+    IconGrid, IconList, IconFilter
 } from '@/components/Icons';
 import BentoCard from '@/components/BentoCard';
 import { useRouter } from 'next/navigation';
@@ -62,21 +63,46 @@ export default function BusinessPublicView({
     // Ownership check
     const isOwner = user?.id === profile.user_id || isPreview;
 
-    // Catalog State
+    // Catalog State & Filters
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [filteredAdisos, setFilteredAdisos] = useState(adisos);
 
     // Pagination
-    const ITEMS_PER_PAGE = 24;
+    const ITEMS_PER_PAGE = viewMode === 'list' ? 12 : 24;
     const [currentPage, setCurrentPage] = useState(1);
+
+    // Derived Categories
+    const categories = Array.from(new Set(adisos.map(a => a.categoria || 'Otros').filter(Boolean)));
+
+    // Update filtering effect
+    useEffect(() => {
+        let result = adisos;
+
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase();
+            result = result.filter(a =>
+                a.titulo.toLowerCase().includes(query) ||
+                a.descripcion.toLowerCase().includes(query)
+            );
+        }
+
+        if (selectedCategory) {
+            result = result.filter(a => (a.categoria || 'Otros') === selectedCategory);
+        }
+
+        setFilteredAdisos(result);
+        setCurrentPage(1); // Reset page
+    }, [searchQuery, selectedCategory, adisos]);
 
     // Calculate pagination
     const totalPages = Math.ceil(filteredAdisos.length / ITEMS_PER_PAGE);
     const displayedAdisos = filteredAdisos.slice(
-        (currentPage - 1) * ITEMS_PER_PAGE,
         currentPage * ITEMS_PER_PAGE
     );
 
+    // Editing State
     const [editingField, setEditingField] = useState<string | null>(null);
     const [tempValue, setTempValue] = useState('');
 
@@ -94,19 +120,6 @@ export default function BusinessPublicView({
         setEditingField(null);
         setTempValue('');
     };
-
-    useEffect(() => {
-        if (!searchQuery) {
-            setFilteredAdisos(adisos);
-        } else {
-            const query = searchQuery.toLowerCase();
-            setFilteredAdisos(adisos.filter(a =>
-                a.titulo.toLowerCase().includes(query) ||
-                a.descripcion.toLowerCase().includes(query)
-            ));
-        }
-        setCurrentPage(1); // Reset page on search
-    }, [searchQuery, adisos]);
 
     // Derived State
     const hasSocials = profile.social_links && profile.social_links.length > 0;
@@ -156,13 +169,13 @@ export default function BusinessPublicView({
         >
             {/* --- Sticky Announcement Bar --- */}
             {profile.announcement_active !== false && profile.announcement_text && (
-                <div className="bg-yellow-300 text-yellow-900 text-center text-xs md:text-sm font-bold py-2 px-4 sticky top-0 z-50 animate-fade-in-down shadow-sm">
+                <div className="bg-yellow-300 text-yellow-900 text-center text-xs md:text-sm font-bold py-2 px-4 sticky top-0 z-50 animate-fade-in-down shadow-sm print:hidden">
                     📢 {profile.announcement_text}
                 </div>
             )}
 
             {/* --- HERO SECTION --- */}
-            <div className="relative w-full h-[25vh] md:h-[30vh] max-h-[350px] min-h-[180px] overflow-hidden group">
+            <div className="relative w-full h-[25vh] md:h-[30vh] max-h-[350px] min-h-[180px] overflow-hidden group print:hidden">
                 {/* Banner Image */}
                 <div className="absolute inset-0 bg-gray-900">
                     {profile.banner_url ? (
@@ -381,7 +394,7 @@ export default function BusinessPublicView({
             </div>
 
             {/* --- NAVIGATION TABS (Sticky) --- */}
-            <div className="sticky top-0 z-40 bg-[var(--bg-secondary)]/80 backdrop-blur-lg border-b border-[var(--border-subtle)]">
+            <div className="sticky top-0 z-40 bg-[var(--bg-secondary)]/80 backdrop-blur-lg border-b border-[var(--border-subtle)] print:hidden">
                 <div className="max-w-6xl mx-auto px-4">
                     <div className="flex items-center justify-center md:items-center md:justify-start gap-8 overflow-x-auto no-scrollbar">
                         {[
@@ -553,55 +566,152 @@ export default function BusinessPublicView({
                             className="max-w-7xl mx-auto space-y-12"
                         >
                             {/* Catalog Header & Search */}
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                                <div>
-                                    <h2 className="text-4xl font-black text-slate-800 dark:text-zinc-100 flex items-center gap-3">
-                                        Catálogo <span className="bg-[var(--brand-color)]/10 text-[var(--brand-color)] text-xs px-3 py-1 rounded-full">{filteredAdisos.length}</span>
-                                    </h2>
-                                    <p className="text-slate-500 font-medium italic">Selección premium exclusiva</p>
+                            <div className="flex flex-col gap-6">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                    <div>
+                                        <h2 className="text-4xl font-black text-slate-800 dark:text-zinc-100 flex items-center gap-3">
+                                            Catálogo <span className="bg-[var(--brand-color)]/10 text-[var(--brand-color)] text-xs px-3 py-1 rounded-full">{filteredAdisos.length}</span>
+                                        </h2>
+                                        <p className="text-slate-500 font-medium italic">Selección premium exclusiva</p>
+                                    </div>
+
+                                    <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                                        <div className="relative w-full sm:w-64 group">
+                                            <IconSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[var(--brand-color)] transition-colors" size={18} />
+                                            <input
+                                                type="text"
+                                                placeholder="Buscar..."
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                                className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-800 border-2 border-slate-100 dark:border-zinc-800 rounded-xl shadow-sm focus:outline-none focus:border-[var(--brand-color)] focus:ring-4 focus:ring-[var(--brand-color)]/10 transition-all font-medium text-sm"
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-slate-100 shadow-sm">
+                                            <button
+                                                onClick={() => setViewMode('grid')}
+                                                className={cn("p-2.5 rounded-lg transition-all", viewMode === 'grid' ? "bg-[var(--brand-color)] text-white shadow-md" : "text-slate-400 hover:bg-slate-50")}
+                                            >
+                                                <IconGrid size={18} />
+                                            </button>
+                                            <button
+                                                onClick={() => setViewMode('list')}
+                                                className={cn("p-2.5 rounded-lg transition-all", viewMode === 'list' ? "bg-[var(--brand-color)] text-white shadow-md" : "text-slate-400 hover:bg-slate-50")}
+                                            >
+                                                <IconList size={18} />
+                                            </button>
+                                        </div>
+
+                                        <button
+                                            onClick={() => window.print()}
+                                            className="hidden md:flex items-center justify-center gap-2 px-5 py-3 bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-900 active:scale-95 transition-all shadow-lg text-sm"
+                                        >
+                                            <IconFileAlt size={16} />
+                                            <span>PDF</span>
+                                        </button>
+                                    </div>
                                 </div>
 
-                                <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
-                                    <div className="relative w-full sm:w-80 group">
-                                        <IconSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[var(--brand-color)] transition-colors" size={20} />
-                                        <input
-                                            type="text"
-                                            placeholder="¿Qué buscas hoy?..."
-                                            value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
-                                            className="w-full pl-14 pr-6 py-4 bg-white dark:bg-zinc-800 border-2 border-slate-100 dark:border-zinc-800 rounded-2xl shadow-sm focus:outline-none focus:border-[var(--brand-color)] focus:ring-4 focus:ring-[var(--brand-color)]/10 transition-all font-medium"
-                                        />
+                                {/* Categories Filter */}
+                                {categories.length > 0 && (
+                                    <div className="flex flex-wrap gap-2 pb-4 border-b border-slate-100/50">
+                                        <button
+                                            onClick={() => setSelectedCategory(null)}
+                                            className={cn(
+                                                "px-4 py-1.5 rounded-full text-sm font-bold transition-all border",
+                                                !selectedCategory
+                                                    ? "bg-[var(--brand-color)] text-white border-[var(--brand-color)] shadow-md shadow-[var(--brand-color)]/20"
+                                                    : "bg-white text-slate-500 border-slate-200 hover:border-[var(--brand-color)] hover:text-[var(--brand-color)]"
+                                            )}
+                                        >
+                                            Todos
+                                        </button>
+                                        {categories.map(cat => (
+                                            <button
+                                                key={cat}
+                                                onClick={() => setSelectedCategory(cat)}
+                                                className={cn(
+                                                    "px-4 py-1.5 rounded-full text-sm font-bold transition-all border",
+                                                    selectedCategory === cat
+                                                        ? "bg-[var(--brand-color)] text-white border-[var(--brand-color)] shadow-md shadow-[var(--brand-color)]/20"
+                                                        : "bg-white text-slate-500 border-slate-200 hover:border-[var(--brand-color)] hover:text-[var(--brand-color)]"
+                                                )}
+                                            >
+                                                {cat}
+                                            </button>
+                                        ))}
                                     </div>
-                                    <button
-                                        onClick={() => window.print()}
-                                        className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 bg-[var(--brand-blue)] text-white rounded-2xl font-bold hover:brightness-110 active:scale-95 transition-all shadow-xl"
-                                    >
-                                        <IconFileAlt size={20} />
-                                        <span>PDF</span>
-                                    </button>
-                                </div>
+                                )}
                             </div>
 
-                            {/* Products Grid */}
+                            {/* Products Grid / List */}
                             {displayedAdisos.length > 0 ? (
                                 <>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+                                    <div className={cn(
+                                        "grid gap-4 md:gap-6",
+                                        viewMode === 'grid'
+                                            ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+                                            : "grid-cols-1"
+                                    )}>
                                         {displayedAdisos.map((adiso) => (
-                                            <BentoCard
-                                                key={adiso.id}
-                                                adiso={adiso}
-                                                icon={<IconBox size={14} className="text-[var(--brand-color)]" />}
-                                                onClick={() => router.push(`/adiso/${(adiso as any).slug || adiso.id}`)}
-                                                className="!rounded-2xl"
-                                                onEdit={isOwner ? (e) => {
-                                                    e.stopPropagation();
-                                                    if (onEditProduct) {
-                                                        onEditProduct(adiso);
-                                                    } else {
-                                                        onEditPart?.('catalog');
-                                                    }
-                                                } : undefined}
-                                            />
+                                            viewMode === 'grid' ? (
+                                                <BentoCard
+                                                    key={adiso.id}
+                                                    adiso={adiso}
+                                                    icon={<IconBox size={14} className="text-[var(--brand-color)]" />}
+                                                    onClick={() => router.push(`/adiso/${(adiso as any).slug || adiso.id}`)}
+                                                    className="!rounded-2xl"
+                                                    onEdit={isOwner ? (e) => {
+                                                        e.stopPropagation();
+                                                        if (onEditProduct) {
+                                                            onEditProduct(adiso);
+                                                        } else {
+                                                            onEditPart?.('catalog');
+                                                        }
+                                                    } : undefined}
+                                                />
+                                            ) : (
+                                                <div
+                                                    key={adiso.id}
+                                                    className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all flex gap-4 items-center group cursor-pointer"
+                                                    onClick={() => router.push(`/adiso/${(adiso as any).slug || adiso.id}`)}
+                                                >
+                                                    <div className="w-24 h-24 flex-shrink-0 bg-slate-100 rounded-lg overflow-hidden relative">
+                                                        {adiso.imagenUrl ? (
+                                                            <img src={adiso.imagenUrl} alt={adiso.titulo} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                                                <IconBox size={24} />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-start justify-between">
+                                                            <div>
+                                                                <span className="text-xs font-bold text-[var(--brand-color)] uppercase tracking-wider mb-1 block">{adiso.categoria || 'Sin categoría'}</span>
+                                                                <h3 className="font-bold text-lg text-slate-800 truncate mb-1 group-hover:text-[var(--brand-color)] transition-colors">{adiso.titulo}</h3>
+                                                                <p className="text-sm text-slate-500 line-clamp-2">{adiso.descripcion}</p>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <span className="text-xl font-black text-slate-900 block">
+                                                                    {adiso.precio ? `S/ ${adiso.precio}` : 'Consultar'}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {isOwner && (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                if (onEditProduct) onEditProduct(adiso);
+                                                            }}
+                                                            className="p-2 bg-slate-100 text-slate-600 rounded-full hover:bg-[var(--brand-color)] hover:text-white transition-colors"
+                                                        >
+                                                            <IconEdit size={16} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            )
                                         ))}
                                     </div>
 
@@ -674,7 +784,7 @@ export default function BusinessPublicView({
             </div>
 
             {/* --- FLOATING ACTION BUTTON --- */}
-            <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
+            <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3 print:hidden">
                 {isOwner ? (
                     <button
                         onClick={() => onEditPart?.('add-product')}
@@ -704,8 +814,69 @@ export default function BusinessPublicView({
             </div>
 
             {/* Branding Footer */}
-            <div className="py-8 text-center text-xs text-[var(--text-tertiary)]">
+            <div className="py-8 text-center text-xs text-[var(--text-tertiary)] print:hidden">
                 <p>Hecho con <span className="font-bold text-[var(--brand-blue)]">Buscadis Store</span></p>
+            </div>
+
+            {/* --- PRINTABLE CATALOG (Hidden on Screen) --- */}
+            <div className="hidden print:block fixed inset-0 bg-white z-[9999] p-8 overflow-y-auto w-full h-full">
+                <div className="max-w-4xl mx-auto">
+                    <PrintableCatalog profile={profile} adisos={filteredAdisos} />
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// Separate component for clean printing
+function PrintableCatalog({ profile, adisos }: { profile: Partial<BusinessProfile>, adisos: Adiso[] }) {
+    return (
+        <div className="w-full text-black bg-white">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b-2 border-black pb-6 mb-8">
+                <div className="flex items-center gap-6">
+                    {profile.logo_url && (
+                        <img src={profile.logo_url} alt="Logo" className="w-24 h-24 object-cover rounded-xl border border-gray-200" />
+                    )}
+                    <div>
+                        <h1 className="text-4xl font-black mb-2">{profile.name}</h1>
+                        <div className="text-sm font-medium space-y-1 text-gray-600">
+                            {profile.contact_address && <p className="flex items-center gap-2">📍 {profile.contact_address}</p>}
+                            {profile.contact_phone && <p className="flex items-center gap-2">📞 {profile.contact_phone}</p>}
+                            {profile.contact_email && <p className="flex items-center gap-2">✉️ {profile.contact_email}</p>}
+                        </div>
+                    </div>
+                </div>
+                <div className="text-right">
+                    <div className="bg-black text-white text-xs font-bold px-3 py-1 rounded mb-2 inline-block">CATÁLOGO</div>
+                    <p className="text-xs text-gray-500">Generado el {new Date().toLocaleDateString()}</p>
+                </div>
+            </div>
+
+            {/* Grid */}
+            <div className="grid grid-cols-3 gap-6">
+                {adisos.map((product) => (
+                    <div key={product.id} className="border border-gray-200 rounded-lg p-3 break-inside-avoid page-break-inside-avoid">
+                        <div className="w-full h-40 bg-gray-100 rounded-md mb-3 overflow-hidden relative">
+                            {product.imagenUrl ? (
+                                <img src={product.imagenUrl} className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-gray-300 font-bold text-xs uppercase">Sin Foto</div>
+                            )}
+                        </div>
+                        <h3 className="font-bold text-sm mb-1 line-clamp-2 h-10">{product.titulo}</h3>
+                        <p className="text-xs text-gray-500 mb-2 line-clamp-2 h-8">{product.descripcion}</p>
+                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
+                            <span className="text-xs font-bold text-gray-400 uppercase">{product.categoria || 'Producto'}</span>
+                            <span className="font-black text-lg">{product.precio ? `S/ ${product.precio}` : '-'}</span>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Footer */}
+            <div className="mt-12 pt-6 border-t border-gray-200 text-center text-xs text-gray-400">
+                <p>Catálogo generado por {profile.name} - Precios sujetos a cambios.</p>
             </div>
         </div>
     );

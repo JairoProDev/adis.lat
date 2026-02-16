@@ -130,7 +130,7 @@ function BusinessBuilderPageContent() {
         }
 
         loadProfile();
-    }, [user, authLoading]);
+    }, [user?.id, authLoading]);
 
     // Auto-save on debounced profile change
     useEffect(() => {
