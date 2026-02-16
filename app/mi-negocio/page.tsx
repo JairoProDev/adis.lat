@@ -10,8 +10,9 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { createBusinessProfile, getBusinessProfile, updateBusinessProfile } from '@/lib/business';
+import { createBusinessProfile, getBusinessProfile, updateBusinessProfile, getBusinessCatalog } from '@/lib/business';
 import { BusinessProfile } from '@/types/business';
+import { Adiso } from '@/types';
 import { IconEye, IconEdit, IconX, IconCheck, IconSettings } from '@/components/Icons';
 import AuthModal from '@/components/AuthModal';
 import BusinessPublicView from '@/components/business/BusinessPublicView';
@@ -64,6 +65,9 @@ function BusinessBuilderPageContent() {
         is_published: false
     });
 
+    const [catalogProducts, setCatalogProducts] = useState<any[]>([]);
+    const [adisos, setAdisos] = useState<Adiso[]>([]);
+
     const debouncedProfile = useDebounce(profile, 1000);
 
     // Load profile on mount
@@ -101,6 +105,26 @@ function BusinessBuilderPageContent() {
                 lastSavedProfileStr.current = JSON.stringify(existingProfile);
                 setIsFirstTime(false);
                 setChatbotMinimized(true); // Usuario existente: chatbot minimizado
+
+                // Load Catalog
+                if (existingProfile.id) {
+                    const products = await getBusinessCatalog(existingProfile.id);
+                    setCatalogProducts(products);
+
+                    // Map to Adiso for View
+                    const mappedAdisos: Adiso[] = products.map(p => ({
+                        id: p.id,
+                        titulo: p.title,
+                        descripcion: p.description,
+                        precio: p.price,
+                        imagenesUrls: p.images || [],
+                        imagenUrl: p.images?.[0] || '',
+                        slug: p.id,
+                        categoria: p.category,
+                        usuarioId: user.id
+                    }));
+                    setAdisos(mappedAdisos);
+                }
             } else {
                 // Primera vez: mostrar chatbot
                 setIsFirstTime(true);
@@ -330,6 +354,8 @@ function BusinessBuilderPageContent() {
                             saving={saving}
                             activeStep={activeStep}
                             setActiveStep={setActiveStep}
+                            setActiveStep={setActiveStep}
+                            catalogProducts={catalogProducts}
                             onAddProduct={() => { }} // TODO: Implement add product modal
                         />
                     </div>
@@ -345,6 +371,7 @@ function BusinessBuilderPageContent() {
                                 editMode={true} // Always show edit controls, let them trigger the editor
                                 onUpdate={handleChatbotUpdate}
                                 onEditPart={handleEditPart}
+                                adisos={adisos}
                             />
                         </div>
                     </div>
@@ -365,7 +392,7 @@ function BusinessBuilderPageContent() {
                 {!isFirstTime && chatbotMinimized && viewMode === 'preview' && (
                     <button
                         onClick={() => setChatbotMinimized(false)}
-                        className="fixed bottom-6 left-6 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center z-50 hover:scale-110 transition-transform bg-white text-blue-600 border border-blue-100"
+                        className="fixed bottom-24 right-6 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center z-50 hover:scale-110 transition-transform bg-white text-blue-600 border border-blue-100"
                     >
                         <span className="text-2xl">💬</span>
                     </button>

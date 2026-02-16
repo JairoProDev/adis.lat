@@ -34,12 +34,81 @@ export class DuplicateDetector {
     /**
      * Detect duplicates for a batch of products
      */
+    /**
+     * Detect duplicates for a batch of products (Optimized)
+     */
     async detectBatch(products: any[], businessProfileId: string): Promise<DuplicateResult[]> {
-        const results: DuplicateResult[] = [];
+        // 1. Bulk check for exact matches (SKU/Barcode) to avoid DB hits
+        const skus = products.filter(p => p.sku).map(p => p.sku);
+        const barcodes = products.filter(p => p.barcode).map(p => p.barcode);
 
-        for (const product of products) {
-            const result = await this.detect(product, businessProfileId);
-            results.push(result);
+        const existingSkus = new Set<string>();
+        const existingBarcodes = new Set<string>();
+
+        if (skus.length > 0) {
+            const { data } = await this.supabase
+                .from('catalog_products')
+                .select('sku')
+                .eq('business_profile_id', businessProfileId)
+                .in('sku', skus);
+            data?.forEach((r: any) => existingSkus.add(r.sku));
+        }
+
+        if (barcodes.length > 0) {
+            const { data } = await this.supabase
+                .from('catalog_products')
+                .select('barcode')
+                .eq('business_profile_id', businessProfileId)
+                .in('barcode', barcodes);
+            data?.forEach((r: any) => existingBarcodes.add(r.barcode));
+        }
+
+        // 2. Process with concurrency limit for Title Fuzzy Search (expensive)
+        const results: DuplicateResult[] = new Array(products.length);
+        const CONCURRENCY = 5;
+        const chunks = [];
+
+        for (let i = 0; i < products.length; i += CONCURRENCY) {
+            chunks.push(products.slice(i, i + CONCURRENCY).map((p, idx) => ({ product: p, originalIndex: i + idx })));
+        }
+
+        for (const chunk of chunks) {
+            await Promise.all(chunk.map(async ({ product, originalIndex }) => {
+                // Pre-check exact matches locally
+                if (product.sku && existingSkus.has(product.sku)) {
+                    results[originalIndex] = {
+                        product,
+                        isDuplicate: true,
+                        score: 1.0,
+                        reasons: ['exact_sku_match']
+                    };
+                    return;
+                }
+                if (product.barcode && existingBarcodes.has(product.barcode)) {
+                    results[originalIndex] = {
+                        product,
+                        isDuplicate: true,
+                        score: 1.0,
+                        reasons: ['exact_barcode_match']
+                    };
+                    return;
+                }
+
+                // If no exact match, do the expensive check (Title Fuzzy)
+                // Only if title exists
+                if (product.title) {
+                    try {
+                        const result = await this.detect(product, businessProfileId, true); // true = skip exact checks
+                        results[originalIndex] = result;
+                    } catch (e) {
+                        console.error(`Error checking duplicate for ${product.title}:`, e);
+                        // Fallback to non-duplicate on error
+                        results[originalIndex] = { product, isDuplicate: false, score: 0, reasons: [] };
+                    }
+                } else {
+                    results[originalIndex] = { product, isDuplicate: false, score: 0, reasons: [] };
+                }
+            }));
         }
 
         return results;
@@ -48,13 +117,17 @@ export class DuplicateDetector {
     /**
      * Detect if a single product is a duplicate
      */
-    async detect(newProduct: any, businessProfileId: string): Promise<DuplicateResult> {
+    /**
+     * Detect if a single product is a duplicate
+     * @param skipExactChecks If true, skips DB queries for SKU/Barcode (assumes checked externally)
+     */
+    async detect(newProduct: any, businessProfileId: string, skipExactChecks = false): Promise<DuplicateResult> {
         const reasons: string[] = [];
         let maxScore = 0;
         let bestMatch: any = null;
 
         // Strategy 1: Exact SKU Match (100% confidence)
-        if (newProduct.sku) {
+        if (!skipExactChecks && newProduct.sku) {
             const { data: skuMatches } = await this.supabase
                 .from('catalog_products')
                 .select('*')
@@ -93,9 +166,18 @@ export class DuplicateDetector {
 
                 // Attribute similarity (if available)
                 if (newProduct.attributes && similar.attributes) {
+                    let similarAttrs = similar.attributes;
+                    if (typeof similarAttrs === 'string') {
+                        try {
+                            similarAttrs = JSON.parse(similarAttrs);
+                        } catch (e) {
+                            similarAttrs = {};
+                        }
+                    }
+
                     const attrScore = this.compareAttributes(
                         newProduct.attributes,
-                        JSON.parse(similar.attributes || '{}')
+                        similarAttrs || {}
                     );
                     score += attrScore * 0.1;
                 }
@@ -113,7 +195,7 @@ export class DuplicateDetector {
         }
 
         // Strategy 3: Barcode Match
-        if (newProduct.barcode) {
+        if (!skipExactChecks && newProduct.barcode) {
             const { data: barcodeMatches } = await this.supabase
                 .from('catalog_products')
                 .select('*')

@@ -578,6 +578,10 @@ export default function BusinessPublicView({
                                             icon={<IconBox size={14} className="text-[var(--brand-color)]" />}
                                             onClick={() => router.push(`/adiso/${(adiso as any).slug || adiso.id}`)}
                                             className="!rounded-2xl"
+                                            onEdit={isOwner ? (e) => {
+                                                e.stopPropagation();
+                                                onEditPart?.('catalog');
+                                            } : undefined}
                                         />
                                     ))}
                                 </div>

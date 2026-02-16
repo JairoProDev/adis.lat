@@ -191,6 +191,13 @@ export default function SimpleCatalogAdd({ businessProfileId, onSuccess, onClose
             const result = await response.json();
 
             if (result.success) {
+                const { stats } = result;
+                let message = `Proceso completado.\n`;
+                if (stats?.productsToCreate > 0) message += `✅ ${stats.productsToCreate} productos creados.\n`;
+                if (stats?.duplicatesFound > 0) message += `⚠️ ${stats.duplicatesFound} duplicados encontrados (requieren revisión).\n`;
+                if (stats?.errors > 0) message += `❌ ${stats.errors} errores en filas.\n`;
+
+                alert(message);
                 onSuccess?.();
                 onClose();
             } else {
@@ -200,6 +207,7 @@ export default function SimpleCatalogAdd({ businessProfileId, onSuccess, onClose
             alert('Error: ' + err.message);
         } finally {
             setProcessing(false);
+            setExcelFile(null); // Reset file input
         }
     };
 

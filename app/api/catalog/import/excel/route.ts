@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
         // We process rows using the proper normalizer but skip the AI enrichment per row
         for (let i = 0; i < parsedData.rows.length; i++) {
             try {
-                const normalized = await normalizer.normalize(parsedData.rows[i], columnMapping, {
+                const normalized = await normalizer.normalize(parsedData.rows[i], columnMapping, parsedData.headers, {
                     skipEnrichment: true
                 });
 
@@ -218,21 +218,31 @@ export async function POST(request: NextRequest) {
             ];
 
             const productsToInsert = autoCreate.map(r => {
+                const pSource = r.product; // This is the normalized product
                 const cleanProduct: any = {};
 
-                // Only keep allowed columns
-                allowedColumns.forEach(col => {
-                    // Map 'stock' to 'stock' (it was previously 'inventory_quantity' in some contexts)
-                    // Ensure the column name matches the database schema
-                    const mappedCol = col === 'stock' ? 'stock' : col;
-                    if (r.product[mappedCol] !== undefined) {
-                        cleanProduct[mappedCol] = r.product[mappedCol];
-                    }
-                });
+                // Map standard fields
+                if (pSource.title) cleanProduct.title = pSource.title;
+                if (pSource.description) cleanProduct.description = pSource.description;
+                if (pSource.sku) cleanProduct.sku = pSource.sku;
+                if (pSource.barcode) cleanProduct.barcode = pSource.barcode;
+
+                // Price handling
+                if (pSource.price !== undefined && pSource.price !== null) cleanProduct.price = parseFloat(pSource.price);
+
+                if (pSource.category) cleanProduct.category = pSource.category;
+                if (pSource.brand) cleanProduct.brand = pSource.brand;
+                if (pSource.supplier) cleanProduct.supplier = pSource.supplier;
+                if (pSource.stock !== undefined) cleanProduct.stock = parseInt(pSource.stock);
+
+                // Attributes and Images
+                if (pSource.attributes) cleanProduct.attributes = pSource.attributes; // Supabase handles object -> jsonb
+                if (pSource.images) cleanProduct.images = pSource.images;
 
                 // Set required/system fields
                 cleanProduct.business_profile_id = profile.id;
-                cleanProduct.status = 'published'; // Let's make them published by default to be sure they show up
+                cleanProduct.user_id = user.id; // Critical for RLS
+                cleanProduct.status = 'published';
                 cleanProduct.import_source = 'excel';
                 cleanProduct.import_source_file = file.name;
                 cleanProduct.import_confidence = 1 - (r.score || 0);

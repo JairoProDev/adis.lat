@@ -127,3 +127,20 @@ export async function uploadBusinessImage(file: File, userId: string, type: 'log
         return null;
     }
 }
+
+export async function getBusinessCatalog(businessProfileId: string): Promise<any[]> {
+    if (!supabase) return [];
+
+    const { data, error } = await supabase
+        .from('catalog_products')
+        .select('*')
+        .eq('business_profile_id', businessProfileId)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Error fetching catalog:', error);
+        return [];
+    }
+
+    return data || [];
+}

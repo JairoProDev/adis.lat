@@ -129,24 +129,23 @@ Example response:
     /**
      * Normalize a product row using the column mapping
      */
-    async normalize(row: any[], mapping: ColumnMapping, options: { skipEnrichment?: boolean } = {}): Promise<NormalizedProduct> {
+    async normalize(row: any[], mapping: ColumnMapping, originalHeaders: string[], options: { skipEnrichment?: boolean } = {}): Promise<NormalizedProduct> {
         const product: NormalizedProduct = {
             title: '',
             attributes: {}
         };
 
-        const headers = Object.keys(mapping);
-
-        headers.forEach((header, index) => {
+        originalHeaders.forEach((header, index) => {
             const value = row[index];
             const targetField = mapping[header];
 
-            if (!value || value === '') return;
+            if (!targetField || value === null || value === undefined || value === '') return;
 
             // Handle nested attributes
             if (targetField.startsWith('attributes.')) {
                 const attrKey = targetField.replace('attributes.', '');
-                product.attributes![attrKey] = this.parseValue(value);
+                if (!product.attributes) product.attributes = {};
+                product.attributes[attrKey] = this.parseValue(value);
             } else {
                 // Direct field mapping
                 product[targetField] = this.parseValue(value, targetField);

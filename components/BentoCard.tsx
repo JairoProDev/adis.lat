@@ -12,6 +12,7 @@ interface BentoCardProps {
   onClick: () => void;
   icon: ReactNode;
   className?: string;
+  onEdit?: (e: React.MouseEvent) => void;
 }
 
 /**
@@ -24,7 +25,7 @@ interface BentoCardProps {
  * - Tabular numbers for prices
  * - Micro-bordered badges
  */
-export default function BentoCard({ adiso, isSelected, onClick, icon, className }: BentoCardProps) {
+export default function BentoCard({ adiso, isSelected, onClick, icon, className, onEdit }: BentoCardProps) {
   const tamaño = adiso.tamaño || 'miniatura';
   const paquete = PAQUETES[tamaño];
   const imagenUrl = adiso.imagenesUrls?.[0] || adiso.imagenUrl;
@@ -73,6 +74,16 @@ export default function BentoCard({ adiso, isSelected, onClick, icon, className 
       }}
       aria-label={`Ver detalles del adiso: ${adiso.titulo}`}
     >
+      {/* Edit Button */}
+      {onEdit && (
+        <div
+          onClick={onEdit}
+          className="absolute top-2 right-2 z-20 bg-white/80 hover:bg-white backdrop-blur-sm p-1.5 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-600"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+        </div>
+      )}
+
       {/* Glow highlight */}
       <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
 
