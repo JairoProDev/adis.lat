@@ -229,7 +229,9 @@ function getExtensionFromMime(mime: string): string {
 
 export async function uploadProductImage(file: File, userId: string): Promise<string> {
     if (!supabase) throw new Error('Supabase no inicializado');
-    const bucketName = 'business-images';
+
+    // Use the bucket that exists in the project (catalog-images based on prevalence in codebase)
+    const bucketName = 'catalog-images';
 
     // Validate file size (e.g. 10MB limit)
     const MAX_SIZE = 10 * 1024 * 1024;
@@ -257,6 +259,12 @@ export async function uploadProductImage(file: File, userId: string): Promise<st
 
         if (uploadError) {
             console.error('Supabase upload error:', uploadError);
+
+            // Helpful message for missing bucket
+            if ((uploadError as any).message?.includes('Bucket not found') || (uploadError as any).error === 'Bucket not found') {
+                throw new Error(`El bucket '${bucketName}' no existe en Supabase. Por favor ve a Storage y crea un bucket público llamado '${bucketName}'.`);
+            }
+
             throw new Error(uploadError.message || 'Error al subir imagen a Supabase');
         }
 
