@@ -25,7 +25,7 @@ import { ToastContainer } from '@/components/Toast';
 import { supabase } from '@/lib/supabase';
 import type { CatalogProduct } from '@/types/catalog';
 import Link from 'next/link';
-import SimpleCatalogAdd from '@/components/business/SimpleCatalogAdd';
+import SimpleCatalogAddButton from '@/components/business/SimpleCatalogAddButton';
 
 export default function CatalogTablePage() {
     const router = useRouter();
@@ -290,10 +290,11 @@ export default function CatalogTablePage() {
                             </div>
 
                             <div className="flex gap-2">
-                                <SimpleCatalogAdd
+                                <SimpleCatalogAddButton
                                     businessProfileId={businessProfileId}
                                     onSuccess={fetchProducts}
-                                    onClose={() => { }}
+                                    variant="secondary"
+                                    compact={true}
                                 />
                                 <button
                                     onClick={() => router.push('/mi-negocio/catalogo')}
