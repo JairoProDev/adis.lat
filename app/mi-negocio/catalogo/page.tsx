@@ -11,6 +11,8 @@ import { supabase } from '@/lib/supabase';
 import type { CatalogProduct, ProductFilters } from '@/types/catalog';
 import AddProductModal from '@/components/catalog/AddProductModal';
 import { groupProducts, getFilterOptions, type GroupedProduct } from '@/lib/catalog/product-grouping';
+import { ProductEditor } from '@/components/business/ProductEditor';
+import { IconEdit, IconTrash } from '@/components/Icons';
 
 export default function CatalogPage() {
     const router = useRouter();
@@ -23,7 +25,10 @@ export default function CatalogPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [filters, setFilters] = useState<ProductFilters>({});
     const [businessProfileId, setBusinessProfileId] = useState<string | null>(null);
+    const [userId, setUserId] = useState<string | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
+    const [editingProduct, setEditingProduct] = useState<CatalogProduct | null>(null);
+    const [showEditModal, setShowEditModal] = useState(false);
 
     // Advanced filters
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -69,6 +74,7 @@ export default function CatalogPage() {
                 return;
             }
 
+            setUserId(user.id);
             setBusinessProfileId(profile.id);
         } catch (err: any) {
             showError('Error al cargar perfil: ' + err.message);
@@ -285,7 +291,16 @@ export default function CatalogPage() {
                             : 'space-y-3'
                         }>
                             {groupedProducts.map(group => (
-                                <GroupedProductCard key={group.baseId} group={group} viewMode={viewMode} onRefresh={loadProducts} />
+                                <GroupedProductCard
+                                    key={group.baseId}
+                                    group={group}
+                                    viewMode={viewMode}
+                                    onRefresh={loadProducts}
+                                    onEdit={(product) => {
+                                        setEditingProduct(product);
+                                        setShowEditModal(true);
+                                    }}
+                                />
                             ))}
                         </div>
                     )}
@@ -300,6 +315,28 @@ export default function CatalogPage() {
                     businessProfileId={businessProfileId}
                     onSuccess={loadProducts}
                 />
+            )}
+
+            {/* Edit Product Modal */}
+            {showEditModal && editingProduct && businessProfileId && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                        <ProductEditor
+                            product={editingProduct}
+                            businessProfileId={businessProfileId}
+                            userId={userId || ""}
+                            onSave={() => {
+                                setShowEditModal(false);
+                                setEditingProduct(null);
+                                loadProducts();
+                            }}
+                            onCancel={() => {
+                                setShowEditModal(false);
+                                setEditingProduct(null);
+                            }}
+                        />
+                    </div>
+                </div>
             )}
         </div>
     );
@@ -370,9 +407,10 @@ interface GroupedProductCardProps {
     group: GroupedProduct;
     viewMode: 'grid' | 'list';
     onRefresh: () => void;
+    onEdit: (product: CatalogProduct) => void;
 }
 
-function GroupedProductCard({ group, viewMode, onRefresh }: GroupedProductCardProps) {
+function GroupedProductCard({ group, viewMode, onRefresh, onEdit }: GroupedProductCardProps) {
     const [selectedVariant, setSelectedVariant] = useState(0);
     const currentVariant = group.variants[selectedVariant];
     const imageUrl = currentVariant.images?.[0]?.url || group.baseImage || '/placeholder-product.png';
@@ -410,6 +448,12 @@ function GroupedProductCard({ group, viewMode, onRefresh }: GroupedProductCardPr
                 <p className="text-sm font-bold whitespace-nowrap" style={{ color: 'var(--brand-blue)' }}>
                     S/ {currentVariant.price.toFixed(2)}
                 </p>
+                <button
+                    onClick={() => onEdit(currentVariant as any)}
+                    className="p-2 text-[var(--brand-blue)] hover:bg-sky-50 rounded-lg transition-colors"
+                >
+                    <IconEdit size={16} />
+                </button>
             </div>
         );
     }
@@ -469,6 +513,15 @@ function GroupedProductCard({ group, viewMode, onRefresh }: GroupedProductCardPr
                             {currentVariant.stock > 0 ? `Stock: ${currentVariant.stock}` : 'Sin stock'}
                         </p>
                     )}
+                </div>
+                <div className="mt-3 pt-3 border-t border-slate-50 flex gap-2">
+                    <button
+                        onClick={() => onEdit(currentVariant as any)}
+                        className="flex-1 flex items-center justify-center gap-2 py-2 bg-sky-50 text-[var(--brand-blue)] rounded-lg font-bold text-xs hover:bg-sky-100 transition-colors"
+                    >
+                        <IconEdit size={14} />
+                        Editar
+                    </button>
                 </div>
             </div>
         </div>

@@ -20,6 +20,7 @@ import ChatbotGuide from '@/components/business/ChatbotGuide';
 import { EditorSteps } from './components/EditorSteps';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/hooks/useToast';
+import { ProductEditor } from '@/components/business/ProductEditor';
 
 function BusinessBuilderPageContent() {
     const { user, loading: authLoading } = useAuth();
@@ -68,6 +69,7 @@ function BusinessBuilderPageContent() {
     const [catalogProducts, setCatalogProducts] = useState<any[]>([]);
     const [adisos, setAdisos] = useState<Adiso[]>([]);
     const [editingProduct, setEditingProduct] = useState<any | null>(null);
+    const [showProductModal, setShowProductModal] = useState(false);
 
     const debouncedProfile = useDebounce(profile, 1000);
 
@@ -77,14 +79,40 @@ function BusinessBuilderPageContent() {
         const original = catalogProducts.find(p => p.id === product.id);
         if (original) {
             setEditingProduct(original);
-            setActiveStep(2); // Catalog step
-            setViewMode('editor');
+            setShowProductModal(true);
         } else {
             // New product or fallback
             setEditingProduct(null);
-            setActiveStep(2);
-            setViewMode('editor');
+            setShowProductModal(true);
         }
+    };
+
+    const handleProductSave = async (updatedProduct: any) => {
+        // Refresh catalog after saving
+        if (profile.id) {
+            const products = await getBusinessCatalog(profile.id);
+            setCatalogProducts(products);
+
+            // Update Adisos map
+            const mappedAdisos: Adiso[] = products.map(p => ({
+                id: p.id,
+                titulo: p.title || '',
+                descripcion: p.description || '',
+                precio: p.price,
+                imagenesUrls: Array.isArray(p.images) ? p.images.map((img: any) => typeof img === 'string' ? img : img.url) : [],
+                imagenUrl: Array.isArray(p.images) && p.images.length > 0 ? (typeof p.images[0] === 'string' ? p.images[0] : p.images[0].url) : '',
+                slug: p.id,
+                categoria: (p.category as any) || 'productos',
+                user_id: user?.id || '',
+                contacto: profile.contact_phone || '',
+                ubicacion: profile.contact_address || '',
+                fechaPublicacion: p.created_at ? new Date(p.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                horaPublicacion: p.created_at ? new Date(p.created_at).toLocaleTimeString() : new Date().toLocaleTimeString()
+            }));
+            setAdisos(mappedAdisos);
+        }
+        setShowProductModal(false);
+        setEditingProduct(null);
     };
 
     // Load profile on mount
@@ -391,6 +419,7 @@ function BusinessBuilderPageContent() {
                                 editMode={true} // Always show edit controls, let them trigger the editor
                                 onUpdate={handleChatbotUpdate}
                                 onEditPart={handleEditPart}
+                                onEditProduct={handleEditProduct}
                                 adisos={adisos}
                             />
                         </div>
@@ -419,6 +448,23 @@ function BusinessBuilderPageContent() {
                 )}
             </div>
 
+            {/* Product Edit Modal Overlay */}
+            {showProductModal && user && profile.id && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                        <ProductEditor
+                            product={editingProduct}
+                            businessProfileId={profile.id}
+                            userId={user.id}
+                            onSave={handleProductSave}
+                            onCancel={() => {
+                                setShowProductModal(false);
+                                setEditingProduct(null);
+                            }}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

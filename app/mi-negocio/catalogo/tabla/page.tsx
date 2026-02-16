@@ -26,6 +26,7 @@ import { supabase } from '@/lib/supabase';
 import type { CatalogProduct } from '@/types/catalog';
 import Link from 'next/link';
 import SimpleCatalogAddButton from '@/components/business/SimpleCatalogAddButton';
+import { ProductEditor } from '@/components/business/ProductEditor';
 
 export default function CatalogTablePage() {
     const router = useRouter();
@@ -36,11 +37,13 @@ export default function CatalogTablePage() {
     const [filteredProducts, setFilteredProducts] = useState<CatalogProduct[]>([]);
     const [loading, setLoading] = useState(true);
     const [businessProfileId, setBusinessProfileId] = useState<string>('');
+    const [userId, setUserId] = useState<string>('');
 
     // UI state
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
-    const [editingProduct, setEditingProduct] = useState<string | null>(null);
+    const [editingProduct, setEditingProduct] = useState<CatalogProduct | null>(null);
+    const [showEditModal, setShowEditModal] = useState(false);
     const [showBulkActions, setShowBulkActions] = useState(false);
 
     // Filters
@@ -82,6 +85,7 @@ export default function CatalogTablePage() {
                 .single();
 
             if (profileError) throw profileError;
+            setUserId(user.id);
             setBusinessProfileId(profile.id);
         } catch (err: any) {
             showError('Error al cargar perfil: ' + err.message);
@@ -509,7 +513,10 @@ export default function CatalogTablePage() {
                                                     <td className="p-3">
                                                         <div className="flex items-center gap-2">
                                                             <button
-                                                                onClick={() => router.push(`/mi-negocio/catalogo/${product.id}`)}
+                                                                onClick={() => {
+                                                                    setEditingProduct(product);
+                                                                    setShowEditModal(true);
+                                                                }}
                                                                 className="p-2 text-[var(--brand-blue)] hover:bg-sky-50 rounded-lg transition-colors"
                                                                 title="Editar"
                                                             >
@@ -583,7 +590,10 @@ export default function CatalogTablePage() {
 
                                             <div className="flex items-center gap-2">
                                                 <button
-                                                    onClick={() => router.push(`/mi-negocio/catalogo/${product.id}`)}
+                                                    onClick={() => {
+                                                        setEditingProduct(product);
+                                                        setShowEditModal(true);
+                                                    }}
                                                     className="p-3 text-[var(--brand-blue)] bg-sky-50 rounded-xl"
                                                 >
                                                     <IconEdit size={18} />
@@ -603,6 +613,28 @@ export default function CatalogTablePage() {
                     )}
                 </div>
             </div>
+
+            {/* Edit Product Modal */}
+            {showEditModal && editingProduct && businessProfileId && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                        <ProductEditor
+                            product={editingProduct}
+                            businessProfileId={businessProfileId}
+                            userId={userId}
+                            onSave={() => {
+                                setShowEditModal(false);
+                                setEditingProduct(null);
+                                fetchProducts();
+                            }}
+                            onCancel={() => {
+                                setShowEditModal(false);
+                                setEditingProduct(null);
+                            }}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
