@@ -13,7 +13,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { createBusinessProfile, getBusinessProfile, updateBusinessProfile, getBusinessCatalog } from '@/lib/business';
 import { BusinessProfile } from '@/types/business';
 import { Adiso } from '@/types';
-import { IconEye, IconEdit, IconX, IconCheck, IconSettings } from '@/components/Icons';
+import { IconEye, IconEdit, IconX, IconCheck } from '@/components/Icons';
 import AuthModal from '@/components/AuthModal';
 import BusinessPublicView from '@/components/business/BusinessPublicView';
 import ChatbotGuide from '@/components/business/ChatbotGuide';
@@ -131,14 +131,18 @@ function BusinessBuilderPageContent() {
                     // Map to Adiso for View
                     const mappedAdisos: Adiso[] = products.map(p => ({
                         id: p.id,
-                        titulo: p.title,
-                        descripcion: p.description,
+                        titulo: p.title || '',
+                        descripcion: p.description || '',
                         precio: p.price,
-                        imagenesUrls: p.images || [],
-                        imagenUrl: p.images?.[0] || '',
+                        imagenesUrls: Array.isArray(p.images) ? p.images.map((img: any) => typeof img === 'string' ? img : img.url) : [],
+                        imagenUrl: Array.isArray(p.images) && p.images.length > 0 ? (typeof p.images[0] === 'string' ? p.images[0] : p.images[0].url) : '',
                         slug: p.id,
-                        categoria: p.category,
-                        usuarioId: user.id
+                        categoria: (p.category as any) || 'productos',
+                        user_id: user.id,
+                        contacto: existingProfile.contact_phone || '',
+                        ubicacion: existingProfile.contact_address || '',
+                        fechaPublicacion: p.created_at ? new Date(p.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                        horaPublicacion: p.created_at ? new Date(p.created_at).toLocaleTimeString() : new Date().toLocaleTimeString()
                     }));
                     setAdisos(mappedAdisos);
                 }
@@ -370,7 +374,6 @@ function BusinessBuilderPageContent() {
                             setProfile={setProfile}
                             saving={saving}
                             activeStep={activeStep}
-                            setActiveStep={setActiveStep}
                             setActiveStep={setActiveStep}
                             catalogProducts={catalogProducts}
                             onAddProduct={() => { }} // TODO: Implement add product modal

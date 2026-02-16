@@ -5,7 +5,8 @@ import { uploadBusinessImage, deleteAllBusinessProducts } from '@/lib/business';
 import {
     IconStore, IconPhone, IconClock, IconShare, IconArrowRight, IconCheck,
     IconStar, IconMegaphone, IconEdit, IconMapMarkerAlt, IconEnvelope,
-    IconInstagram, IconFacebook, IconTiktok, IconGlobe, IconBox, IconPlus, IconSparkles, IconTrash
+    IconInstagram, IconFacebook, IconTiktok, IconGlobe, IconBox, IconPlus, IconSparkles, IconTrash,
+    IconSearch
 } from '@/components/Icons';
 import { cn } from '@/lib/utils';
 import { Adiso } from '@/types';

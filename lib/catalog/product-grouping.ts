@@ -57,18 +57,22 @@ function extractVariantSpecs(product: CatalogProduct): string {
 
     // Get specs from attributes
     if (product.attributes) {
-        if (product.attributes.specs) {
-            specs.push(String(product.attributes.specs));
-        }
-        if (product.attributes.medida) {
-            specs.push(String(product.attributes.medida));
-        }
-        if (product.attributes.tamaño) {
-            specs.push(String(product.attributes.tamaño));
-        }
-        if (product.attributes.color) {
-            specs.push(String(product.attributes.color));
-        }
+        const getAttr = (name: string) => {
+            if (Array.isArray(product.attributes)) {
+                return product.attributes.find(a => a.name === name)?.value;
+            }
+            return (product.attributes as Record<string, any>)[name];
+        };
+
+        const valSpecs = getAttr('specs');
+        const valMedida = getAttr('medida');
+        const valTamaño = getAttr('tamaño');
+        const valColor = getAttr('color');
+
+        if (valSpecs) specs.push(String(valSpecs));
+        if (valMedida) specs.push(String(valMedida));
+        if (valTamaño) specs.push(String(valTamaño));
+        if (valColor) specs.push(String(valColor));
     }
 
     // If no specs found, try to extract from title

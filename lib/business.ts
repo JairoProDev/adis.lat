@@ -216,6 +216,7 @@ export async function getBusinessProductAsAdiso(productId: string): Promise<any 
 }
 
 export async function uploadProductImage(file: File, userId: string): Promise<string | null> {
+    if (!supabase) return null;
     const bucketName = 'business-images';
     try {
         const fileExt = file.name.split('.').pop();
@@ -245,6 +246,7 @@ export async function uploadProductImage(file: File, userId: string): Promise<st
 }
 
 export async function updateCatalogProduct(productId: string, updates: any): Promise<any | null> {
+    if (!supabase) return null;
     // updates should match catalog_products schema
     // e.g. { title, price, images, description, category }
     const { data, error } = await supabase
@@ -263,6 +265,7 @@ export async function updateCatalogProduct(productId: string, updates: any): Pro
 }
 
 export async function createCatalogProduct(product: any): Promise<any | null> {
+    if (!supabase) return null;
     // product should include business_profile_id and user_id
     const { data, error } = await supabase
         .from('catalog_products')
@@ -279,6 +282,7 @@ export async function createCatalogProduct(product: any): Promise<any | null> {
 }
 
 export async function deleteCatalogProduct(productId: string): Promise<boolean> {
+    if (!supabase) return false;
     const { error } = await supabase
         .from('catalog_products')
         .delete()
