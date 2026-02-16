@@ -215,12 +215,38 @@ export async function getBusinessProductAsAdiso(productId: string): Promise<any 
     }
 }
 
-export async function uploadProductImage(file: File, userId: string): Promise<string | null> {
-    if (!supabase) return null;
+// Helper to get extension from mime type
+function getExtensionFromMime(mime: string): string {
+    const types: Record<string, string> = {
+        'image/jpeg': 'jpg',
+        'image/png': 'png',
+        'image/gif': 'gif',
+        'image/webp': 'webp',
+        'image/svg+xml': 'svg'
+    };
+    return types[mime] || 'jpg';
+}
+
+export async function uploadProductImage(file: File, userId: string): Promise<string> {
+    if (!supabase) throw new Error('Supabase no inicializado');
     const bucketName = 'business-images';
+
+    // Validate file size (e.g. 10MB limit)
+    const MAX_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+        throw new Error('La imagen es muy pesada (máx 10MB). Intenta con una más ligera.');
+    }
+
     try {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${userId}/products/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        // Robust extension detection
+        let fileExt = file.name.split('.').pop()?.toLowerCase();
+        if (!fileExt || fileExt === file.name || fileExt.length > 5) {
+            fileExt = getExtensionFromMime(file.type);
+        }
+
+        // Remove special chars from random string
+        const cleanRandom = Math.random().toString(36).substring(7).replace(/[^a-z0-9]/g, '');
+        const fileName = `${userId}/products/${Date.now()}-${cleanRandom}.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
             .from(bucketName)
@@ -230,8 +256,8 @@ export async function uploadProductImage(file: File, userId: string): Promise<st
             });
 
         if (uploadError) {
-            console.error('Error uploading product image:', uploadError);
-            return null;
+            console.error('Supabase upload error:', uploadError);
+            throw new Error(uploadError.message || 'Error al subir imagen a Supabase');
         }
 
         const { data } = supabase.storage
@@ -239,9 +265,9 @@ export async function uploadProductImage(file: File, userId: string): Promise<st
             .getPublicUrl(fileName);
 
         return data.publicUrl;
-    } catch (e) {
-        console.error("Exception uploading product image:", e);
-        return null;
+    } catch (e: any) {
+        console.error("Exception in uploadProductImage:", e);
+        throw new Error(e.message || 'Error inesperado al subir imagen');
     }
 }
 
