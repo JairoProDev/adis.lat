@@ -71,7 +71,6 @@ export function ProductEditor({ product, businessProfileId, userId, onSave, onCa
                 category: formData.category,
                 images: formData.images,
                 business_profile_id: businessProfileId,
-                user_id: userId,
                 status: 'published' // Default to published
             };
 

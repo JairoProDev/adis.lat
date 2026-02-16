@@ -279,10 +279,10 @@ export async function uploadProductImage(file: File, userId: string): Promise<st
     }
 }
 
-export async function updateCatalogProduct(productId: string, updates: any): Promise<any | null> {
-    if (!supabase) return null;
-    // updates should match catalog_products schema
-    // e.g. { title, price, images, description, category }
+export async function updateCatalogProduct(productId: string, updates: any): Promise<any> {
+    if (!supabase) throw new Error('Supabase no inicializado');
+
+    // updates should match catalog_products schema including updated_at
     const { data, error } = await supabase
         .from('catalog_products')
         .update({ ...updates, updated_at: new Date().toISOString() })
@@ -292,24 +292,25 @@ export async function updateCatalogProduct(productId: string, updates: any): Pro
 
     if (error) {
         console.error('Error updating product:', error);
-        return null;
+        throw new Error(error.message || 'Error al actualizar producto');
     }
 
     return data;
 }
 
-export async function createCatalogProduct(product: any): Promise<any | null> {
-    if (!supabase) return null;
+export async function createCatalogProduct(product: any): Promise<any> {
+    if (!supabase) throw new Error('Supabase no inicializado');
+
     // product should include business_profile_id and user_id
     const { data, error } = await supabase
         .from('catalog_products')
-        .insert([{ ...product }]) // created_at defaults to now()
+        .insert([{ ...product }])
         .select()
         .single();
 
     if (error) {
         console.error('Error creating product:', error);
-        return null;
+        throw new Error(error.message || 'Error al crear producto');
     }
 
     return data;
