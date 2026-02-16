@@ -28,6 +28,21 @@ export interface NormalizedProduct {
     [key: string]: any;
 }
 
+// Helper to fix encoding issues (Mojibake)
+function fixMojibake(str: string): string {
+    try {
+        // Detect common UTF-8 interpreted as ISO-8859-1/Windows-1252 artifacts
+        // Ã = \u00C3
+        if (/[\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]/.test(str)) {
+            const fixed = Buffer.from(str, 'binary').toString('utf-8');
+            if (fixed.length < str.length) return fixed;
+        }
+        return str;
+    } catch (e) {
+        return str;
+    }
+}
+
 export class ProductNormalizer {
     /**
      * AI-powered column detection
@@ -43,18 +58,25 @@ Standard fields:
 - title: Product name
 - price: Price
 - sku: SKU/Code
-- brand: Brand/Manufacturer (e.g. "Marca/Línea")
+- brand: Brand/Manufacturer
 - category: Category
 - stock: Stock
-- attributes.specs: distinguishing details (size, color, measurements, "Detalles Adicionales")
+- description: Description
+- attributes.specs: Any specific variant detail (size, color, dimension, etc)
 
-Return JSON mapping.
+RULES:
+1. Map EVERY column. Do not ignore any column.
+2. If a column is "color", "size", "medida", map it to "attributes.specs".
+3. If a column is generic detail, map to "attributes.[ColumnName]".
+4. Return JSON only.
+
 Example:
 {
   "Producto": "title",
   "Precio": "price",
-  "Marca/Línea": "brand",
-  "Detalles": "attributes.specs"
+  "Marca": "brand",
+  "Medida": "attributes.specs",
+  "Color": "attributes.color"
 }`;
 
         try {
@@ -127,11 +149,18 @@ Example:
             attributes: {}
         };
 
-        originalHeaders.forEach((header, index) => {
+        originalHeaders.forEach((originalHeader, index) => {
+            const header = fixMojibake(originalHeader);
             const value = row[index];
-            const targetField = mapping[header];
+            if (value === null || value === undefined || value === '') return;
 
-            if (!targetField || value === null || value === undefined || value === '') return;
+            let targetField = mapping[originalHeader] || mapping[header];
+
+            // If no mapping found, treat as attribute
+            if (!targetField) {
+                const attrKey = header.toLowerCase().replace(/\s+/g, '_').replace(/[^\w_]/g, '');
+                targetField = `attributes.${attrKey}`;
+            }
 
             // Handle nested attributes
             if (targetField.startsWith('attributes.')) {
@@ -150,24 +179,27 @@ Example:
         }
 
         // --- ENHANCEMENT: COMPOSITE TITLE ---
-        // Combine Title + Specs/Details to create a unique display name
-        const specs = product.attributes?.['specs'] ||
-            product.attributes?.['detalles'] ||
-            product.attributes?.['details'] ||
-            product.attributes?.['medida'] ||
-            product.attributes?.['tamaño'] ||
-            product.attributes?.['color'] || ''; // Catch-all from fallback
+        // Construct composite title for better uniqueness by appending distinct attributes
+        if (product.attributes) {
+            // Find all attribute values that are short enough to be part of a title
+            const attrsToAdd = Object.values(product.attributes)
+                .filter(val => (typeof val === 'string' || typeof val === 'number') && val !== null)
+                .map(val => String(val).trim())
+                .filter(val => val.length > 0 && val.length < 30) // Only short specs
+                .filter(val => !product.title.toLowerCase().includes(val.toLowerCase())); // Distinct
 
-        // If we found specs and they aren't already in the title
-        if (specs && typeof specs === 'string' && !product.title.toLowerCase().includes(specs.toLowerCase())) {
-            product.title = `${product.title} ${specs}`.trim();
+            // Add brand if not present
+            if (product.brand && !product.title.toLowerCase().includes(product.brand.toLowerCase())) {
+                attrsToAdd.push(product.brand);
+            }
+
+            // Unique deduplication of additions
+            const uniqueAdditions = Array.from(new Set(attrsToAdd));
+
+            if (uniqueAdditions.length > 0) {
+                product.title = `${product.title} ${uniqueAdditions.join(' ')}`.trim();
+            }
         }
-
-        // Also append brand if useful for disambiguation (optional)
-        // const brand = product.brand;
-        // if (brand && !product.title.toLowerCase().includes(brand.toLowerCase())) {
-        //      product.title = `${product.title} - ${brand}`;
-        // }
         // ------------------------------------
 
         // AI Enhancement: Extract more info from title/description if sparse
@@ -188,28 +220,31 @@ Example:
 
         const str = String(value).trim();
 
+        // Fix encoding artifacts
+        const fixedStr = fixMojibake(str);
+
         // Price parsing
-        if (expectedType === 'price' || /^[S\/\$]?\s*[\d,\.]+$/.test(str)) {
-            const numStr = str.replace(/[^\d.]/g, '');
+        if (expectedType === 'price' || /^[S\/\$]?\s*[\d,\.]+$/.test(fixedStr)) {
+            const numStr = fixedStr.replace(/[^\d.]/g, '');
             const num = parseFloat(numStr);
             return isNaN(num) ? null : num;
         }
 
         // Number parsing
-        if (/^\d+$/.test(str)) {
-            return parseInt(str, 10);
+        if (/^\d+$/.test(fixedStr)) {
+            return parseInt(fixedStr, 10);
         }
 
-        if (/^\d+\.\d+$/.test(str)) {
-            return parseFloat(str);
+        if (/^\d+\.\d+$/.test(fixedStr)) {
+            return parseFloat(fixedStr);
         }
 
         // Boolean
-        if (/^(true|false|yes|no|sí|no)$/i.test(str)) {
-            return /^(true|yes|sí)$/i.test(str);
+        if (/^(true|false|yes|no|sí|no)$/i.test(fixedStr)) {
+            return /^(true|yes|sí)$/i.test(fixedStr);
         }
 
-        return str;
+        return fixedStr;
     }
 
     /**

@@ -25,6 +25,7 @@ import { ToastContainer } from '@/components/Toast';
 import { supabase } from '@/lib/supabase';
 import type { CatalogProduct } from '@/types/catalog';
 import Link from 'next/link';
+import SimpleCatalogAdd from '@/components/business/SimpleCatalogAdd';
 
 export default function CatalogTablePage() {
     const router = useRouter();
@@ -34,6 +35,7 @@ export default function CatalogTablePage() {
     const [products, setProducts] = useState<CatalogProduct[]>([]);
     const [filteredProducts, setFilteredProducts] = useState<CatalogProduct[]>([]);
     const [loading, setLoading] = useState(true);
+    const [businessProfileId, setBusinessProfileId] = useState<string>('');
 
     // UI state
     const [searchQuery, setSearchQuery] = useState('');
@@ -54,12 +56,37 @@ export default function CatalogTablePage() {
     });
 
     useEffect(() => {
-        fetchProducts();
+        fetchBusinessProfile();
     }, []);
+
+    useEffect(() => {
+        if (businessProfileId) {
+            fetchProducts();
+        }
+    }, [businessProfileId]);
 
     useEffect(() => {
         filterProducts();
     }, [products, searchQuery, statusFilter, categoryFilter]);
+
+    const fetchBusinessProfile = async () => {
+        try {
+            if (!supabase) throw new Error('Supabase no está configurado');
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error('Usuario no autenticado');
+
+            const { data: profile, error: profileError } = await supabase
+                .from('business_profiles')
+                .select('id')
+                .eq('user_id', user.id)
+                .single();
+
+            if (profileError) throw profileError;
+            setBusinessProfileId(profile.id);
+        } catch (err: any) {
+            showError('Error al cargar perfil: ' + err.message);
+        }
+    };
 
     const fetchProducts = async () => {
         try {
@@ -69,6 +96,7 @@ export default function CatalogTablePage() {
             const { data, error: fetchError } = await supabase
                 .from('catalog_products')
                 .select('*')
+                .eq('business_profile_id', businessProfileId)
                 .order('created_at', { ascending: false });
 
             if (fetchError) throw fetchError;
@@ -262,6 +290,11 @@ export default function CatalogTablePage() {
                             </div>
 
                             <div className="flex gap-2">
+                                <SimpleCatalogAdd
+                                    businessProfileId={businessProfileId}
+                                    onSuccess={fetchProducts}
+                                    onClose={() => { }}
+                                />
                                 <button
                                     onClick={() => router.push('/mi-negocio/catalogo')}
                                     className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"

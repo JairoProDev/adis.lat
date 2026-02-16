@@ -241,7 +241,6 @@ export async function POST(request: NextRequest) {
 
                 // Set required/system fields
                 cleanProduct.business_profile_id = profile.id;
-                cleanProduct.user_id = user.id; // Critical for RLS
                 cleanProduct.status = 'published';
                 cleanProduct.import_source = 'excel';
                 cleanProduct.import_source_file = file.name;
