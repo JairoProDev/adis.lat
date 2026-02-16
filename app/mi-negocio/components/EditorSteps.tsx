@@ -11,6 +11,8 @@ import { cn } from '@/lib/utils';
 import { Adiso } from '@/types';
 import { EditorHeader } from './EditorHeader';
 import SimpleCatalogAdd from '@/components/business/SimpleCatalogAdd';
+import { ProductEditor } from '@/components/business/ProductEditor';
+import { IconArrowLeft } from '@/components/Icons';
 
 // Icons mapping for steps
 const STEPS = [
@@ -32,6 +34,9 @@ interface EditorStepsProps {
     activeStep: number;
     setActiveStep: (step: number) => void;
     onAddProduct?: () => void;
+    editingProduct?: any;
+    setEditingProduct?: (product: any) => void;
+    onRefreshCatalog?: () => void;
 }
 
 export function EditorSteps({
@@ -42,9 +47,23 @@ export function EditorSteps({
     catalogProducts = [],
     activeStep,
     setActiveStep,
-    onAddProduct
+    onAddProduct,
+    editingProduct,
+    setEditingProduct,
+    onRefreshCatalog
 }: EditorStepsProps) {
     const [uploadingImage, setUploadingImage] = useState<string | null>(null);
+    const [catalogSearch, setCatalogSearch] = useState('');
+
+    const filteredCatalog = catalogProducts.filter((p: any) =>
+        (p.title || '').toLowerCase().includes(catalogSearch.toLowerCase()) ||
+        (p.category || '').toLowerCase().includes(catalogSearch.toLowerCase())
+    );
+
+    const handleRefresh = () => {
+        if (onRefreshCatalog) onRefreshCatalog();
+        else window.location.reload();
+    };
 
     const handleNext = () => {
         if (activeStep < STEPS.length - 1) setActiveStep(activeStep + 1);
@@ -266,64 +285,103 @@ export function EditorSteps({
                                             </div>
                                         )}
 
-                                        {/* Step 2: Catalog */}
+
+
                                         {activeStep === 2 && (
                                             <div className="space-y-4">
-                                                <SimpleCatalogAdd
-                                                    businessProfileId={profile.id || ''}
-                                                    onSuccess={() => {
-                                                        // Reload catalog products or trigger refresh
-                                                        window.location.reload();
-                                                    }}
-                                                    onClose={() => {
-                                                        // Do nothing, just close
-                                                    }}
-                                                />
+                                                {editingProduct ? (
+                                                    <div className="animate-in slide-in-from-right-4 duration-300">
+                                                        <button
+                                                            onClick={() => setEditingProduct?.(null)}
+                                                            className="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1 mb-2 font-bold"
+                                                        >
+                                                            <IconArrowLeft size={10} /> Volver al catálogo
+                                                        </button>
+                                                        <ProductEditor
+                                                            product={editingProduct === 'new' ? undefined : editingProduct}
+                                                            businessProfileId={profile.id || ''}
+                                                            userId={profile.user_id || ''}
+                                                            onSave={() => {
+                                                                setEditingProduct?.(null);
+                                                                handleRefresh();
+                                                            }}
+                                                            onCancel={() => setEditingProduct?.(null)}
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <div className="flex gap-2">
+                                                            <SimpleCatalogAdd
+                                                                businessProfileId={profile.id || ''}
+                                                                onSuccess={handleRefresh}
+                                                                onClose={() => { }}
+                                                            />
+                                                            <button
+                                                                onClick={() => setEditingProduct?.('new')}
+                                                                className="flex items-center gap-2 px-3 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-slate-700 transition-colors"
+                                                            >
+                                                                <IconPlus size={14} />
+                                                                Manual
+                                                            </button>
+                                                        </div>
 
-                                                <div className="space-y-2 max-h-80 overflow-y-auto pr-1 custom-scrollbar">
-                                                    {/* AI Catalog Products */}
-                                                    {catalogProducts.map((p) => (
-                                                        <div key={p.id} className="flex items-center gap-3 p-2 bg-blue-50/50 rounded-lg border border-blue-100/50">
-                                                            <div className="w-10 h-10 rounded bg-white overflow-hidden flex-shrink-0 border border-blue-100">
-                                                                {p.images?.[0]?.url && (
-                                                                    <img src={p.images[0].url} className="w-full h-full object-cover" />
-                                                                )}
-                                                            </div>
-                                                            <div className="flex-1 min-w-0">
-                                                                <div className="flex items-center gap-1">
-                                                                    <h4 className="font-bold text-xs text-blue-900 truncate">{p.title}</h4>
-                                                                    <IconSparkles size={10} className="text-blue-400 shrink-0" />
+                                                        {/* Search */}
+                                                        <div className="relative">
+                                                            <IconSearch size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                                            <input
+                                                                type="text"
+                                                                value={catalogSearch}
+                                                                onChange={e => setCatalogSearch(e.target.value)}
+                                                                placeholder="Buscar producto..."
+                                                                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500"
+                                                            />
+                                                        </div>
+
+                                                        <div className="space-y-2 max-h-80 overflow-y-auto pr-1 custom-scrollbar">
+                                                            {/* AI Catalog Products */}
+                                                            {filteredCatalog.map((p) => (
+                                                                <div key={p.id} className="flex items-center gap-3 p-2 bg-blue-50/50 rounded-lg border border-blue-100/50 group">
+                                                                    <div className="w-10 h-10 rounded bg-white overflow-hidden flex-shrink-0 border border-blue-100 relative">
+                                                                        {p.images?.[0]?.url ? (
+                                                                            <img src={p.images[0].url} className="w-full h-full object-cover" />
+                                                                        ) : (
+                                                                            <div className="w-full h-full flex items-center justify-center text-blue-200">
+                                                                                <IconBox size={16} />
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <div className="flex items-center gap-1">
+                                                                            <h4 className="font-bold text-xs text-blue-900 truncate">{p.title}</h4>
+                                                                            <IconSparkles size={10} className="text-blue-400 shrink-0" />
+                                                                        </div>
+                                                                        <p className="text-[10px] text-blue-600 truncate">S/ {p.price?.toFixed(2)}</p>
+                                                                    </div>
+
+                                                                    {/* Actions */}
+                                                                    <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                        <button
+                                                                            onClick={() => setEditingProduct?.(p)}
+                                                                            className="p-1.5 bg-white text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded shadow-sm border border-slate-100"
+                                                                            title="Editar"
+                                                                        >
+                                                                            <IconEdit size={12} />
+                                                                        </button>
+                                                                        <Link href={`/negocio/${profile.slug}?product=${p.id}`} target="_blank" className="p-1.5 bg-white text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded shadow-sm border border-slate-100">
+                                                                            <IconArrowRight size={12} />
+                                                                        </Link>
+                                                                    </div>
                                                                 </div>
-                                                                <p className="text-[10px] text-blue-600 truncate">S/ {p.price?.toFixed(2)}</p>
-                                                            </div>
-                                                            <Link href={`/negocio/${profile.slug}?product=${p.id}`} target="_blank" className="p-1.5 text-blue-400 hover:text-blue-600 hover:bg-white rounded">
-                                                                <IconArrowRight size={14} />
-                                                            </Link>
-                                                        </div>
-                                                    ))}
+                                                            ))}
 
-                                                    {/* Legacy Adisos */}
-                                                    {userAdisos.map((ad) => (
-                                                        <div key={ad.id} className="flex items-center gap-3 p-2 bg-white rounded-lg border border-slate-100">
-                                                            <div className="w-10 h-10 rounded bg-slate-100 overflow-hidden flex-shrink-0">
-                                                                {(ad.imagenUrl || ad.imagenesUrls?.[0]) && (
-                                                                    <img src={ad.imagenUrl || ad.imagenesUrls?.[0]} className="w-full h-full object-cover" />
-                                                                )}
-                                                            </div>
-                                                            <div className="flex-1 min-w-0">
-                                                                <h4 className="font-bold text-xs text-slate-800 truncate">{ad.titulo}</h4>
-                                                                <p className="text-[10px] text-slate-500 truncate">{ad.descripcion}</p>
-                                                            </div>
-                                                            <Link href={`/adiso/${(ad as any).slug || ad.id}`} target="_blank" className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded">
-                                                                <IconArrowRight size={14} />
-                                                            </Link>
+                                                            {filteredCatalog.length === 0 && (
+                                                                <p className="text-center text-xs text-slate-400 py-4">
+                                                                    {catalogSearch ? 'No encontrado' : 'Sin productos'}
+                                                                </p>
+                                                            )}
                                                         </div>
-                                                    ))}
-
-                                                    {userAdisos.length === 0 && catalogProducts.length === 0 && (
-                                                        <p className="text-center text-xs text-slate-400 py-4">Sin productos aún</p>
-                                                    )}
-                                                </div>
+                                                    </>
+                                                )}
                                             </div>
                                         )}
 

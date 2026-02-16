@@ -40,6 +40,7 @@ interface BusinessPublicViewProps {
     onEditPart?: (part: string) => void;
     editMode?: boolean;
     onUpdate?: (field: keyof BusinessProfile, value: any) => void;
+    onEditProduct?: (product: Adiso) => void;
 }
 
 const DEFAULT_ADISOS: Adiso[] = [];
@@ -50,7 +51,8 @@ export default function BusinessPublicView({
     isPreview = false,
     onEditPart,
     editMode = false,
-    onUpdate
+    onUpdate,
+    onEditProduct
 }: BusinessPublicViewProps) {
     const { user } = useAuth();
     const router = useRouter();
@@ -63,6 +65,17 @@ export default function BusinessPublicView({
     // Catalog State
     const [searchQuery, setSearchQuery] = useState('');
     const [filteredAdisos, setFilteredAdisos] = useState(adisos);
+
+    // Pagination
+    const ITEMS_PER_PAGE = 24;
+    const [currentPage, setCurrentPage] = useState(1);
+
+    // Calculate pagination
+    const totalPages = Math.ceil(filteredAdisos.length / ITEMS_PER_PAGE);
+    const displayedAdisos = filteredAdisos.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+    );
 
     const [editingField, setEditingField] = useState<string | null>(null);
     const [tempValue, setTempValue] = useState('');
@@ -92,6 +105,7 @@ export default function BusinessPublicView({
                 a.descripcion.toLowerCase().includes(query)
             ));
         }
+        setCurrentPage(1); // Reset page on search
     }, [searchQuery, adisos]);
 
     // Derived State
@@ -569,22 +583,51 @@ export default function BusinessPublicView({
                             </div>
 
                             {/* Products Grid */}
-                            {filteredAdisos.length > 0 ? (
-                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-                                    {filteredAdisos.map((adiso) => (
-                                        <BentoCard
-                                            key={adiso.id}
-                                            adiso={adiso}
-                                            icon={<IconBox size={14} className="text-[var(--brand-color)]" />}
-                                            onClick={() => router.push(`/adiso/${(adiso as any).slug || adiso.id}`)}
-                                            className="!rounded-2xl"
-                                            onEdit={isOwner ? (e) => {
-                                                e.stopPropagation();
-                                                onEditPart?.('catalog');
-                                            } : undefined}
-                                        />
-                                    ))}
-                                </div>
+                            {displayedAdisos.length > 0 ? (
+                                <>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+                                        {displayedAdisos.map((adiso) => (
+                                            <BentoCard
+                                                key={adiso.id}
+                                                adiso={adiso}
+                                                icon={<IconBox size={14} className="text-[var(--brand-color)]" />}
+                                                onClick={() => router.push(`/adiso/${(adiso as any).slug || adiso.id}`)}
+                                                className="!rounded-2xl"
+                                                onEdit={isOwner ? (e) => {
+                                                    e.stopPropagation();
+                                                    if (onEditProduct) {
+                                                        onEditProduct(adiso);
+                                                    } else {
+                                                        onEditPart?.('catalog');
+                                                    }
+                                                } : undefined}
+                                            />
+                                        ))}
+                                    </div>
+
+                                    {/* Pagination Controls */}
+                                    {totalPages > 1 && (
+                                        <div className="flex justify-center items-center gap-4 mt-8 py-4">
+                                            <button
+                                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                                disabled={currentPage === 1}
+                                                className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                            >
+                                                Anterior
+                                            </button>
+                                            <span className="text-sm font-medium text-slate-600">
+                                                Página {currentPage} de {totalPages}
+                                            </span>
+                                            <button
+                                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                                disabled={currentPage === totalPages}
+                                                className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                            >
+                                                Siguiente
+                                            </button>
+                                        </div>
+                                    )}
+                                </>
                             ) : (
                                 <div className="py-24 text-center">
                                     <div className="w-24 h-24 bg-slate-50 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-200 dark:text-zinc-700">

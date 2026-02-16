@@ -67,8 +67,25 @@ function BusinessBuilderPageContent() {
 
     const [catalogProducts, setCatalogProducts] = useState<any[]>([]);
     const [adisos, setAdisos] = useState<Adiso[]>([]);
+    const [editingProduct, setEditingProduct] = useState<any | null>(null);
 
     const debouncedProfile = useDebounce(profile, 1000);
+
+
+
+    const handleEditProduct = (product: Adiso) => {
+        const original = catalogProducts.find(p => p.id === product.id);
+        if (original) {
+            setEditingProduct(original);
+            setActiveStep(2); // Catalog step
+            setViewMode('editor');
+        } else {
+            // New product or fallback
+            setEditingProduct(null);
+            setActiveStep(2);
+            setViewMode('editor');
+        }
+    };
 
     // Load profile on mount
     useEffect(() => {

@@ -144,3 +144,150 @@ export async function getBusinessCatalog(businessProfileId: string): Promise<any
 
     return data || [];
 }
+
+export async function getBusinessProductAsAdiso(productId: string): Promise<any | null> {
+    if (!supabase) return null;
+
+    try {
+        // Fetch product and business profile
+        const { data: product, error } = await supabase
+            .from('catalog_products')
+            .select(`
+                *,
+                business_profiles (
+                    id,
+                    name,
+                    slug,
+                    contact_phone,
+                    contact_whatsapp,
+                    contact_address,
+                    contact_email,
+                    logo_url
+                )
+            `)
+            .eq('id', productId)
+            .single();
+
+        if (error || !product) {
+            // Try fetching by slug if not UUID
+            if (error?.code === '22P02') return null; // Invalid UUID
+            return null;
+        }
+
+        const business = product.business_profiles;
+
+        // Map to Adiso
+        // Note: Using 'any' return type temporarily to match Adiso interface looseness or just return mapped object
+        // The consumer expects Adiso-like object
+        return {
+            id: product.id,
+            titulo: product.title,
+            descripcion: product.description,
+            precio: product.price,
+            imagenesUrls: product.images || [],
+            imagenUrl: product.images?.[0] || '',
+            categoria: product.category || 'Otros',
+            ubicacion: business?.contact_address || 'Ubicación no especificada',
+            usuarioId: product.user_id,
+            slug: product.id, // Or product.slug if exists
+
+            // Extra context for UI
+            business: {
+                id: business?.id,
+                name: business?.name,
+                slug: business?.slug,
+                logoUrl: business?.logo_url,
+                whatsapp: business?.contact_whatsapp
+            },
+
+            // Required Adiso fields (mocked/default)
+            fechaPublicacion: product.created_at,
+            horaPublicacion: new Date(product.created_at).toLocaleTimeString(),
+            contacto: business?.contact_whatsapp || business?.contact_phone || '',
+            vistas: product.view_count || 0,
+            contactos: product.click_count || 0,
+            estaActivo: product.status === 'published'
+        };
+
+    } catch (e) {
+        console.error('Error fetching business product:', e);
+        return null;
+    }
+}
+
+export async function uploadProductImage(file: File, userId: string): Promise<string | null> {
+    const bucketName = 'business-images';
+    try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${userId}/products/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from(bucketName)
+            .upload(fileName, file, {
+                cacheControl: '3600',
+                upsert: false
+            });
+
+        if (uploadError) {
+            console.error('Error uploading product image:', uploadError);
+            return null;
+        }
+
+        const { data } = supabase.storage
+            .from(bucketName)
+            .getPublicUrl(fileName);
+
+        return data.publicUrl;
+    } catch (e) {
+        console.error("Exception uploading product image:", e);
+        return null;
+    }
+}
+
+export async function updateCatalogProduct(productId: string, updates: any): Promise<any | null> {
+    // updates should match catalog_products schema
+    // e.g. { title, price, images, description, category }
+    const { data, error } = await supabase
+        .from('catalog_products')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', productId)
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error updating product:', error);
+        return null;
+    }
+
+    return data;
+}
+
+export async function createCatalogProduct(product: any): Promise<any | null> {
+    // product should include business_profile_id and user_id
+    const { data, error } = await supabase
+        .from('catalog_products')
+        .insert([{ ...product }]) // created_at defaults to now()
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error creating product:', error);
+        return null;
+    }
+
+    return data;
+}
+
+export async function deleteCatalogProduct(productId: string): Promise<boolean> {
+    const { error } = await supabase
+        .from('catalog_products')
+        .delete()
+        .eq('id', productId);
+
+    if (error) {
+        console.error('Error deleting product:', error);
+        return false;
+    }
+
+    return true;
+}

@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import { getAdisoByIdFromSupabase } from '@/lib/supabase';
+import { getBusinessProductAsAdiso } from '@/lib/business';
 import { getIdFromSlug } from '@/lib/url';
 import ClientAdisoWrapper from '@/components/ClientAdisoWrapper';
 import { Categoria, Adiso } from '@/types';
@@ -25,7 +26,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         if (!id) return { title: 'Adiso no encontrado' };
 
         try {
-            const adiso = await getAdisoByIdFromSupabase(id);
+            let adiso = await getAdisoByIdFromSupabase(id);
+            if (!adiso) {
+                adiso = await getBusinessProductAsAdiso(id);
+            }
+
             if (!adiso) return { title: 'Adiso no encontrado' };
 
             const title = `${adiso.titulo} en ${ubicacion} | Buscadis`;
@@ -50,12 +55,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
     } else if (slug.length === 2) {
         const [categoria, id] = slug;
-        // Legacy Metadata Logic
-        const categoriasValidas: Categoria[] = ['empleos', 'inmuebles', 'vehiculos', 'servicios', 'productos', 'eventos', 'negocios', 'comunidad'];
-        if (!categoriasValidas.includes(categoria as Categoria)) return { title: 'No encontrado' };
+
+        // Check if category is valid or 'adiso' (special route for catalog products)
+        const categoriasValidas: string[] = ['empleos', 'inmuebles', 'vehiculos', 'servicios', 'productos', 'eventos', 'negocios', 'comunidad', 'adiso'];
+        if (!categoriasValidas.includes(categoria)) return { title: 'No encontrado' };
 
         try {
-            const adiso = await getAdisoByIdFromSupabase(id);
+            let adiso = await getAdisoByIdFromSupabase(id);
+            if (!adiso) {
+                adiso = await getBusinessProductAsAdiso(id);
+            }
+
             if (!adiso) return { title: 'Adiso no encontrado' };
 
             const title = `${adiso.titulo} - ${adiso.categoria} | Buscadis`;
@@ -100,23 +110,16 @@ export default async function Page({ params }: PageProps) {
     let adiso: Adiso | null = null;
     try {
         adiso = await getAdisoByIdFromSupabase(targetId);
+        if (!adiso) {
+            // Try fetching from catalog_products if not found in adisos
+            adiso = await getBusinessProductAsAdiso(targetId);
+        }
     } catch (err) {
         console.error('Error fetching adiso:', err);
     }
-
-    // Redirect Logic for Legacy?
-    // If use visits legacy URL, should we redirect to SEO?
-    // For now, keep it working. User asked to FIX 404, not force redirect yet (though intended).
-    // If we have the adiso, we could redirect using `getAdisoUrl`.
-    /*
-    if (isLegacy && adiso) {
-        const seoUrl = getAdisoUrl(adiso); 
-        // Need to import getAdisoUrl, strict redirect
-        // return redirect(seoUrl);
-    }
-    */
 
     // Render Wrapper
     // Wrapper handles "loading..." or "storage fallback" if server adiso is null
     return <ClientAdisoWrapper id={targetId} initialAdiso={adiso} />;
 }
+
