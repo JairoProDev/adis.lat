@@ -291,3 +291,19 @@ export async function deleteCatalogProduct(productId: string): Promise<boolean> 
 
     return true;
 }
+
+export async function deleteAllBusinessProducts(businessProfileId: string): Promise<boolean> {
+    if (!supabase) return false;
+
+    const { error } = await supabase
+        .from('catalog_products')
+        .delete()
+        .eq('business_profile_id', businessProfileId);
+
+    if (error) {
+        console.error('Error deleting all products:', error);
+        return false;
+    }
+
+    return true;
+}

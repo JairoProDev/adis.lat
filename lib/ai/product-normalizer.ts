@@ -34,34 +34,27 @@ export class ProductNormalizer {
      * Detects what each column in the Excel means
      */
     async detectColumns(headers: string[], sampleRow: any[]): Promise<ColumnMapping> {
-        const prompt = `You are a data mapping assistant. Given these column headers from a product catalog spreadsheet, map them to standard fields.
+        const prompt = `You are a data mapping assistant. Map these product catalog headers to standard fields.
 
 Headers: ${JSON.stringify(headers)}
 Sample Data: ${JSON.stringify(sampleRow)}
 
-Standard fields available:
-- title: Product name/title
-- description: Product description
-- sku: SKU/product code
-- price: Price (numeric)
-- category: Product category
-- brand: Brand name
-- barcode: Barcode/EAN
-- supplier: Supplier name
-- stock: Stock amount
-- attributes: Any other specifications (color, size, voltage, etc.)
+Standard fields:
+- title: Product name
+- price: Price
+- sku: SKU/Code
+- brand: Brand/Manufacturer (e.g. "Marca/Línea")
+- category: Category
+- stock: Stock
+- attributes.specs: distinguishing details (size, color, measurements, "Detalles Adicionales")
 
-Return a JSON object mapping each header to its standard field. If a header doesn't match any standard field but contains useful info, map it to "attributes".
-
-Example response:
+Return JSON mapping.
+Example:
 {
-  "Nombre Producto": "title",
-  "Precio S/": "price",
-  "Código": "sku",
-  "Marca": "brand",
-  "Category": "title",
-  "Diámetro": "attributes.diameter",
-  "Material": "attributes.material"
+  "Producto": "title",
+  "Precio": "price",
+  "Marca/Línea": "brand",
+  "Detalles": "attributes.specs"
 }`;
 
         try {
@@ -77,7 +70,6 @@ Example response:
 
         } catch (error: any) {
             console.error('AI column detection failed:', error.message);
-            // Fallback: simple keyword matching
             return this.fallbackColumnDetection(headers);
         }
     }
@@ -89,14 +81,15 @@ Example response:
         const mapping: ColumnMapping = {};
 
         const patterns: Record<string, RegExp[]> = {
-            title: [/nombre/i, /producto/i, /title/i, /descripci[oó]n/i, /item/i],
-            sku: [/sku/i, /c[oó]digo/i, /code/i, /ref/i, /art[ií]culo/i],
-            price: [/precio/i, /price/i, /costo/i, /valor/i, /s\//i, /\$/i],
-            category: [/categor[ií]a/i, /category/i, /tipo/i, /type/i, /grupo/i],
-            brand: [/marca/i, /brand/i, /fabricante/i],
-            barcode: [/barcode/i, /ean/i, /c[oó]digo de barras/i],
-            stock: [/stock/i, /cantidad/i, /inventory/i, /existencia/i],
-            supplier: [/proveedor/i, /supplier/i, /distribuidor/i]
+            title: [/nombre/i, /producto/i, /title/i, /descripci/i, /item/i],
+            sku: [/sku/i, /c[oó]digo/i, /ref/i, /id/i],
+            price: [/precio/i, /price/i, /costo/i, /s\//i, /\$/i],
+            category: [/categor/i, /tipo/i, /grupo/i, /familia/i],
+            brand: [/marca/i, /brand/i, /fabricante/i, /línea/i, /linea/i],
+            barcode: [/barcode/i, /ean/i],
+            stock: [/stock/i, /cantidad/i, /existencia/i],
+            supplier: [/proveedor/i, /supplier/i],
+            'attributes.specs': [/detalle/i, /spec/i, /medida/i, /tamaño/i, /color/i, /característica/i]
         };
 
         headers.forEach(header => {
@@ -114,7 +107,6 @@ Example response:
                 if (matched) break;
             }
 
-            // Si no matched, es un atributo custom
             if (!matched && normalizedHeader.length > 0) {
                 const attrKey = normalizedHeader.toLowerCase()
                     .replace(/\s+/g, '_')
@@ -156,6 +148,27 @@ Example response:
         if (!product.title || product.title.trim() === '') {
             throw new Error('Product title is required');
         }
+
+        // --- ENHANCEMENT: COMPOSITE TITLE ---
+        // Combine Title + Specs/Details to create a unique display name
+        const specs = product.attributes?.['specs'] ||
+            product.attributes?.['detalles'] ||
+            product.attributes?.['details'] ||
+            product.attributes?.['medida'] ||
+            product.attributes?.['tamaño'] ||
+            product.attributes?.['color'] || ''; // Catch-all from fallback
+
+        // If we found specs and they aren't already in the title
+        if (specs && typeof specs === 'string' && !product.title.toLowerCase().includes(specs.toLowerCase())) {
+            product.title = `${product.title} ${specs}`.trim();
+        }
+
+        // Also append brand if useful for disambiguation (optional)
+        // const brand = product.brand;
+        // if (brand && !product.title.toLowerCase().includes(brand.toLowerCase())) {
+        //      product.title = `${product.title} - ${brand}`;
+        // }
+        // ------------------------------------
 
         // AI Enhancement: Extract more info from title/description if sparse
         if (product.title && !options.skipEnrichment && (!product.category || Object.keys(product.attributes || {}).length < 2)) {

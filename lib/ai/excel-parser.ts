@@ -21,8 +21,8 @@ export class ExcelParser {
      */
     async parse(buffer: Buffer): Promise<ParsedExcelData> {
         try {
-            // Read workbook
-            const workbook = XLSX.read(buffer, { type: 'buffer' });
+            // Read workbook with forced UTF-8 for CSVs without BOM
+            const workbook = XLSX.read(buffer, { type: 'buffer', codepage: 65001 });
 
             // Get first sheet
             const sheetName = workbook.SheetNames[0];

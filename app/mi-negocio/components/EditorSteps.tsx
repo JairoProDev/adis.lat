@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { BusinessProfile, SocialLink, BusinessHours } from '@/types/business';
-import { uploadBusinessImage } from '@/lib/business';
+import { uploadBusinessImage, deleteAllBusinessProducts } from '@/lib/business';
 import {
     IconStore, IconPhone, IconClock, IconShare, IconArrowRight, IconCheck,
     IconStar, IconMegaphone, IconEdit, IconMapMarkerAlt, IconEnvelope,
-    IconInstagram, IconFacebook, IconTiktok, IconGlobe, IconBox, IconPlus, IconSparkles
+    IconInstagram, IconFacebook, IconTiktok, IconGlobe, IconBox, IconPlus, IconSparkles, IconTrash
 } from '@/components/Icons';
 import { cn } from '@/lib/utils';
 import { Adiso } from '@/types';
@@ -310,7 +310,7 @@ export function EditorSteps({
                                                     </div>
                                                 ) : (
                                                     <>
-                                                        <div className="flex gap-2">
+                                                        <div className="flex gap-2 items-center">
                                                             <SimpleCatalogAdd
                                                                 businessProfileId={profile.id || ''}
                                                                 onSuccess={handleRefresh}
@@ -323,6 +323,22 @@ export function EditorSteps({
                                                                 <IconPlus size={14} />
                                                                 Manual
                                                             </button>
+
+                                                            {/* Delete All Button */}
+                                                            {catalogProducts.length > 0 && (
+                                                                <button
+                                                                    onClick={async () => {
+                                                                        if (!confirm("⚠️ ¿ESTÁS SEGURO? \n\nSe eliminarán TODOS los productos del catálogo. Esta acción no se puede deshacer.\n\nÚsalo para limpiar imports fallidos.")) return;
+                                                                        const ok = await deleteAllBusinessProducts(profile.id || '');
+                                                                        if (ok) handleRefresh();
+                                                                        else alert("Error al eliminar.");
+                                                                    }}
+                                                                    className="ml-auto text-red-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-full transition-colors"
+                                                                    title="Eliminar todo el catálogo"
+                                                                >
+                                                                    <IconTrash size={16} />
+                                                                </button>
+                                                            )}
                                                         </div>
 
                                                         {/* Search */}

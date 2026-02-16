@@ -164,12 +164,20 @@ export default function CatalogTablePage() {
 
         try {
             if (!supabase) throw new Error('Supabase no está configurado');
-            const { error: deleteError } = await supabase
-                .from('catalog_products')
-                .delete()
-                .in('id', Array.from(selectedProducts));
 
-            if (deleteError) throw deleteError;
+            const ids = Array.from(selectedProducts);
+            const BATCH_SIZE = 50;
+
+            // Process in batches
+            for (let i = 0; i < ids.length; i += BATCH_SIZE) {
+                const batch = ids.slice(i, i + BATCH_SIZE);
+                const { error: deleteError } = await supabase
+                    .from('catalog_products')
+                    .delete()
+                    .in('id', batch);
+
+                if (deleteError) throw deleteError;
+            }
 
             success(`${selectedProducts.size} productos eliminados`);
             setSelectedProducts(new Set());
@@ -184,12 +192,19 @@ export default function CatalogTablePage() {
 
         try {
             if (!supabase) throw new Error('Supabase no está configurado');
-            const { error: updateError } = await supabase
-                .from('catalog_products')
-                .update({ status: newStatus })
-                .in('id', Array.from(selectedProducts));
 
-            if (updateError) throw updateError;
+            const ids = Array.from(selectedProducts);
+            const BATCH_SIZE = 50;
+
+            for (let i = 0; i < ids.length; i += BATCH_SIZE) {
+                const batch = ids.slice(i, i + BATCH_SIZE);
+                const { error: updateError } = await supabase
+                    .from('catalog_products')
+                    .update({ status: newStatus })
+                    .in('id', batch);
+
+                if (updateError) throw updateError;
+            }
 
             success(`${selectedProducts.size} productos actualizados a "${newStatus}"`);
             setSelectedProducts(new Set());
@@ -198,6 +213,7 @@ export default function CatalogTablePage() {
             showError('Error al actualizar: ' + err.message);
         }
     };
+
 
     const handleQuickEdit = async (productId: string, field: string, value: any) => {
         try {
