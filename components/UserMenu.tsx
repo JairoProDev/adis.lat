@@ -18,9 +18,10 @@ import LanguageSelector from './LanguageSelector';
 
 interface UserMenuProps {
   onProgressClick?: () => void;
+  onSidebarToggle?: () => void;
 }
 
-export default function UserMenu({ onProgressClick }: UserMenuProps) {
+export default function UserMenu({ onProgressClick, onSidebarToggle }: UserMenuProps) {
   const router = useRouter();
   const { user, signOut, refreshProfile } = useAuth();
   const { profile, isAnunciante, isVerificado } = useUser();
@@ -95,7 +96,13 @@ export default function UserMenu({ onProgressClick }: UserMenuProps) {
   return (
     <div style={{ position: 'relative' }} ref={menuRef}>
       <button
-        onClick={() => setMostrarMenu(!mostrarMenu)}
+        onClick={() => {
+          if (onSidebarToggle) {
+            onSidebarToggle();
+          } else {
+            setMostrarMenu(!mostrarMenu);
+          }
+        }}
         style={{
           display: 'flex',
           alignItems: 'center',

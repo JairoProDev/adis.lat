@@ -383,31 +383,11 @@ export default function Header({
           </>
         )}
 
-        {/* User Profile (Desktop) */}
-        {isDesktop && (
-          <UserMenu onProgressClick={onChangelogClick} />
-        )}
-
-        {/* Sidebar Toggle (Mobile & Desktop) */}
-        <button
-          onClick={onToggleLeftSidebar}
-          style={{
-            width: '40px',
-            height: '40px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRadius: '50%',
-            background: 'transparent',
-            color: 'var(--text-primary)',
-            border: 'none',
-            cursor: 'pointer',
-            marginLeft: isDesktop ? '4px' : '0'
-          }}
-          aria-label="Menú Principal"
-        >
-          <FaBars size={24} />
-        </button>
+        {/* User Profile (Desktop & Mobile) */}
+        <UserMenu
+          onProgressClick={onChangelogClick}
+          onSidebarToggle={onToggleLeftSidebar}
+        />
       </div>
     </header>
   );

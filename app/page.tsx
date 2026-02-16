@@ -171,9 +171,11 @@ function HomeContent() {
           if (adisoCache) {
             setAdisoAbierto(adisoCache);
             // En mobile, abrir sección de adiso si no es desktop
+            /*
             if (!isDesktop) {
               setSeccionMobileActiva('adiso');
             }
+            */
           } else {
             // Si no está en cache, cargarlo primero
             const adisoEspecifico = await getAdisoById(adisoId);
@@ -181,9 +183,11 @@ function HomeContent() {
               setAdisoAbierto(adisoEspecifico);
               setAdisos(prev => [adisoEspecifico, ...prev]);
               // En mobile, abrir sección de adiso si no es desktop
+              /*
               if (!isDesktop) {
                 setSeccionMobileActiva('adiso');
               }
+              */
             }
           }
         }
@@ -258,9 +262,11 @@ function HomeContent() {
     if (adisoLocal) {
       setAdisoAbierto(adisoLocal);
       // En mobile, abrir sección de adiso
+      /*
       if (!isDesktop) {
         setSeccionMobileActiva('adiso');
       }
+      */
       return;
     }
 
@@ -276,9 +282,11 @@ function HomeContent() {
           return prev;
         });
         // En mobile, abrir sección de adiso si no es desktop
+        /*
         if (!isDesktop) {
           setSeccionMobileActiva('adiso');
         }
+        */
       }
     }).catch(console.error);
   }, [adisoId, adisos, cargando, isDesktop]);
@@ -505,9 +513,11 @@ function HomeContent() {
       setAdisoAbierto(nuevoAdiso);
       setIndiceAdisoActual(0);
       // En mobile, abrir sección de adiso automáticamente
+      /*
       if (!isDesktop) {
         setSeccionMobileActiva('adiso');
       }
+      */
       // Actualizar URL sin recargar la página
       const params = new URLSearchParams(searchParams.toString());
       params.set('adiso', nuevoAdiso.id);
@@ -529,9 +539,11 @@ function HomeContent() {
     setAdisoAbierto(adiso);
 
     // En mobile, abrir sección de adiso automáticamente
+    /*
     if (!isDesktop) {
       setSeccionMobileActiva('adiso');
     }
+    */
 
     // Actualizar URL sin recargar la página
     const params = new URLSearchParams(searchParams.toString());
@@ -567,6 +579,12 @@ function HomeContent() {
       return;
     }
 
+    // Si selecciona adiso, cerrar el menú para ver el adiso abierto (slide-up)
+    if (seccion === 'adiso') {
+      setSeccionMobileActiva(null);
+      return;
+    }
+
     // Cambiar a la nueva sección
     setSeccionMobileActiva(seccion);
 
@@ -583,9 +601,11 @@ function HomeContent() {
   const handleCerrarAdiso = () => {
     setAdisoAbierto(null);
     // En mobile, si estaba en sección de adiso, cerrarla también
+    /*
     if (!isDesktop && seccionMobileActiva === 'adiso') {
       setSeccionMobileActiva(null);
     }
+    */
     router.push('/', { scroll: false });
   };
 
@@ -1076,8 +1096,23 @@ function HomeContent() {
         />
       )}
 
-      {/* Modal Mobile Overlay - solo cuando hay sección activa */}
-      {!isDesktop && seccionMobileActiva && (
+      {/* Modal Adiso Mobile - Standalone Slide Up */}
+      {!isDesktop && adisoAbierto && !seccionMobileActiva && (
+        <ModalAdiso
+          adiso={adisoAbierto}
+          onCerrar={handleCerrarAdiso}
+          onAnterior={handleAnterior}
+          onSiguiente={handleSiguiente}
+          puedeAnterior={indiceAdisoActual > 0}
+          puedeSiguiente={indiceAdisoActual < adisosFiltrados.length - 1}
+          onSuccess={(msg) => success(msg)}
+          onError={(msg) => error(msg)}
+          dentroSidebar={false}
+        />
+      )}
+
+      {/* Modal Mobile Overlay - solo cuando hay sección activa (EXCEPTO ADISO que va standalone) */}
+      {!isDesktop && seccionMobileActiva && seccionMobileActiva !== 'adiso' && (
         <ModalNavegacionMobile
           abierto={!!seccionMobileActiva}
           onCerrar={handleCerrarSeccionMobile}

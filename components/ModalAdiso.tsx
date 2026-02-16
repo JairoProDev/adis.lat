@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
+import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { Adiso } from '@/types';
 import { formatFecha, getWhatsAppUrl, copiarLink, compartirNativo } from '@/lib/utils';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
@@ -330,1500 +331,438 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
     setEliminando(false);
   };
 
-  const overlayStyle: React.CSSProperties = {
-    position: 'fixed',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: isDesktop ? 'auto' : 0,
-    width: isDesktop ? '420px' : '100%',
-    backgroundColor: isDesktop ? 'transparent' : 'rgba(0, 0, 0, 0.3)',
-    zIndex: 1500,
-    display: 'flex',
-    alignItems: isDesktop ? 'stretch' : 'flex-end',
-    justifyContent: isDesktop ? 'flex-end' : 'center',
-    pointerEvents: 'none'
-  };
+  // --- RENDER LOGIC ---
 
-  const modalContentStyle: React.CSSProperties = {
-    backgroundColor: 'var(--bg-primary)',
-    borderRadius: isDesktop ? '0' : '16px 16px 0 0',
-    padding: '2.5rem', // Increased from 1.5rem for more whitespace
-    paddingBottom: (puedeAnterior || puedeSiguiente) ? '5rem' : '2.5rem',
-    width: isDesktop ? '420px' : '100%',
-    maxWidth: isDesktop ? '90vw' : '100%',
-    maxHeight: isDesktop ? '100vh' : '85vh',
-    overflowY: 'auto' as const,
-    position: 'relative',
-    boxShadow: isDesktop ? '-4px 0 20px var(--shadow)' : '0 -4px 20px var(--shadow)',
-    // Usar borderTop, borderRight, borderBottom explícitamente para evitar conflicto con borderLeft
-    borderTop: 'none',
-    borderRight: 'none',
-    borderBottom: 'none',
-    ...(isDesktop && { borderLeft: '1px solid var(--border-color)' })
-  };
+  // Botones de acción (Links, Share, Fav) - Reutilizables
+  const ActionButtons = ({ mobile = false }) => (
+    <div style={{ display: 'flex', gap: '8px' }}>
+      <button
+        onClick={handleCompartir}
+        style={{
+          width: '40px',
+          height: '40px',
+          borderRadius: '50%',
+          border: '1px solid var(--border-color)',
+          backgroundColor: 'var(--bg-secondary)',
+          color: 'var(--text-secondary)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer'
+        }}
+        title="Compartir"
+      >
+        <IconShare size={18} />
+      </button>
+      <button
+        onClick={handleCopiarLink}
+        style={{
+          width: '40px',
+          height: '40px',
+          borderRadius: '50%',
+          border: '1px solid var(--border-color)',
+          backgroundColor: copiado ? '#22c55e' : 'var(--bg-secondary)',
+          color: copiado ? 'white' : 'var(--text-secondary)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          transition: 'all 0.2s'
+        }}
+        title="Copiar Link"
+      >
+        {copiado ? <IconCheck size={18} /> : <IconCopy size={18} />}
+      </button>
+      <button
+        onClick={handleToggleFavorito}
+        disabled={cargandoFavorito}
+        style={{
+          width: '40px',
+          height: '40px',
+          borderRadius: '50%',
+          border: '1px solid var(--border-color)',
+          backgroundColor: esFavoritoState ? 'var(--bg-secondary)' : 'var(--bg-secondary)',
+          color: esFavoritoState ? '#fbbf24' : 'var(--text-secondary)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer'
+        }}
+        title="Guardar en favoritos"
+      >
+        {cargandoFavorito ? (
+          <div style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid var(--text-tertiary)', borderTopColor: 'transparent', animation: 'spin 1s linear infinite' }} />
+        ) : (
+          esFavoritoState ? <span style={{ fontSize: '1.2rem' }}>⭐</span> : <span style={{ fontSize: '1.2rem' }}>☆</span>
+        )}
+      </button>
+    </div>
+  );
 
-  // Si está dentro del sidebar, no mostrar overlay
-  if (dentroSidebar) {
-    return (
-      <>
-        <div
-          ref={modalRef}
+  // Botón Principal de Contacto - Reutilizable
+  const ContactButton = ({ fullWidth = false }) => {
+    // Lógica para determinar el botón de contacto
+    const contactosMultiples = adiso.contactosMultiples && adiso.contactosMultiples.length > 0
+      ? adiso.contactosMultiples
+      : null;
+
+    const ahora = new Date();
+    const esHistorico = adiso.esHistorico === true;
+    const estaCaducado =
+      adiso.estaActivo === false ||
+      esHistorico ||
+      (adiso.fechaExpiracion && new Date(adiso.fechaExpiracion) < ahora);
+
+    if (estaCaducado || esHistorico) {
+      return (
+        <button
+          onClick={() => handleContactar()}
           style={{
-            ...modalContentStyle,
-            width: '100%',
-            maxWidth: '100%',
-            height: 'auto',
-            minHeight: '100%',
-            padding: '1rem',
-            paddingBottom: (puedeAnterior || puedeSiguiente) ? '5.5rem' : '1rem', // Espacio extra para botones de navegación
-            borderRadius: 0,
-            boxShadow: 'none',
-            overflowY: 'visible', // Sin scroll propio, usa el del contenedor padre
-            position: 'relative',
-            // Usar borderTop, borderRight, borderBottom, borderLeft explícitamente para evitar conflicto
-            borderTop: 'none',
-            borderRight: 'none',
-            borderBottom: 'none',
-            borderLeft: 'none'
+            width: fullWidth ? '100%' : 'auto',
+            padding: '0.875rem 1.5rem',
+            fontSize: '1rem',
+            fontWeight: 700,
+            backgroundColor: 'var(--brand-blue)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '12px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.5rem',
+            boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
           }}
         >
-          {/* No mostrar botón de cerrar cuando está dentro del sidebar (desktop o mobile) */}
-          {/* En desktop: el usuario puede colapsar el sidebar o cambiar de sección */}
-          {/* En mobile: ya hay un botón de cerrar en el header del ModalNavegacionMobile */}
+          <IconWhatsApp /> Consultar disponibilidad
+        </button>
+      )
+    }
 
-          <div style={{ marginBottom: '1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              {/* Hero Identity Badge - Brand awareness */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                marginBottom: '1rem',
-                padding: '0.5rem',
-                borderRadius: '12px',
-                backgroundColor: 'var(--bg-secondary)',
-                border: '1px solid var(--border-color)',
-                width: 'fit-content'
-              }}>
-                <div style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '8px',
-                  overflow: 'hidden',
-                  position: 'relative',
-                  backgroundColor: 'var(--bg-primary)',
-                  border: '1px solid var(--border-color)'
-                }}>
-                  {adiso.vendedor?.avatarUrl ? (
-                    <Image
-                      src={adiso.vendedor.avatarUrl}
-                      alt={adiso.vendedor.nombre}
-                      fill
-                      style={{ objectFit: 'cover' }}
-                    />
-                  ) : (
-                    <div style={{
-                      width: '100%',
-                      height: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'var(--brand-blue)',
-                      backgroundColor: 'rgba(83, 172, 197, 0.1)'
-                    }}>
-                      {(() => {
-                        const IconComponent = getCategoriaIcon(adiso.categoria);
-                        return <IconComponent size={20} />;
-                      })()}
-                    </div>
-                  )}
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{
-                    fontSize: '0.65rem',
-                    textTransform: 'uppercase',
-                    fontWeight: 800,
-                    letterSpacing: '0.05em',
-                    color: 'var(--text-tertiary)',
-                    lineHeight: '1'
-                  }}>
-                    Publicado por
-                  </span>
-                  <span style={{
-                    fontSize: '0.95rem',
-                    fontWeight: 700,
-                    color: 'var(--text-primary)',
-                    lineHeight: '1.2'
-                  }}>
-                    {adiso.vendedor?.nombre || 'Anunciante de Buscadis'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Expand Button */}
-              <button
-                onClick={() => {
-                  window.location.href = getAdisoUrl(adiso);
-                }}
-                style={{
-                  padding: '0.5rem',
-                  borderRadius: '50%',
-                  border: '1px solid var(--border-color)',
-                  backgroundColor: 'var(--bg-secondary)',
-                  color: 'var(--text-secondary)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'all 0.2s',
-                  marginTop: '-0.25rem'
-                }}
-                title="Abrir en página completa"
-                aria-label="Abrir en página completa"
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-                  e.currentTarget.style.color = 'var(--text-primary)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
-                  e.currentTarget.style.color = 'var(--text-secondary)';
-                }}
-              >
-                <IconExternalLink size={14} />
-              </button>
-            </div>
-            <h2 style={{
-              fontSize: '1.5rem',
-              fontWeight: 600,
-              color: 'var(--text-primary)',
-              marginBottom: '1rem',
-              lineHeight: 1.3
-              // paddingRight removido ya que no hay botón de cerrar dentro del sidebar
-            }}>
-              {adiso.titulo}
-            </h2>
-            {(() => {
-              // Mostrar todas las imágenes si hay múltiples, o imagen única
-              const imagenes = adiso.imagenesUrls && adiso.imagenesUrls.length > 0
-                ? adiso.imagenesUrls
-                : adiso.imagenUrl
-                  ? [adiso.imagenUrl]
-                  : [];
-
-              if (imagenes.length === 0) return null;
-
-              return (
-                <div style={{ marginBottom: '1rem' }}>
-                  {imagenes.length === 1 ? (
-                    // Una sola imagen: mostrar grande
-                    <div
-                      style={{
-                        borderRadius: '8px',
-                        overflow: 'hidden',
-                        border: '1px solid var(--border-color)',
-                        position: 'relative',
-                        width: '100%',
-                        height: '400px',
-                        cursor: 'pointer',
-                      }}
-                      onClick={() => setImagenAmpliada({ url: imagenes[0], index: 0 })}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          setImagenAmpliada({ url: imagenes[0], index: 0 });
-                        }
-                      }}
-                      aria-label="Ampliar imagen"
-                    >
-                      <Image
-                        src={imagenes[0]}
-                        alt={adiso.titulo}
-                        fill
-                        sizes="(max-width: 768px) 100vw, 50vw"
-                        style={{
-                          objectFit: 'cover',
-                          transition: 'opacity 0.2s'
-                        }}
-                        loading="lazy"
-                      />
-                    </div>
-                  ) : (
-                    // Múltiples imágenes: mostrar en grid
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: imagenes.length === 2 ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
-                      gap: '0.5rem',
-                      borderRadius: '8px',
-                      overflow: 'hidden'
-                    }}>
-                      {imagenes.map((url, index) => (
-                        <div
-                          key={index}
-                          style={{
-                            aspectRatio: '1',
-                            overflow: 'hidden',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: '4px',
-                            position: 'relative',
-                            cursor: 'pointer'
-                          }}
-                          onClick={() => setImagenAmpliada({ url, index })}
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              setImagenAmpliada({ url, index });
-                            }
-                          }}
-                          aria-label={`Ampliar imagen ${index + 1} de ${imagenes.length}`}
-                        >
-                          <Image
-                            src={url}
-                            alt={`${adiso.titulo} - Imagen ${index + 1}`}
-                            fill
-                            sizes="(max-width: 768px) 33vw, 20vw"
-                            style={{
-                              objectFit: 'cover',
-                              transition: 'opacity 0.2s'
-                            }}
-                            loading={index < 3 ? 'eager' : 'lazy'}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-            <div style={{
-              fontSize: '0.875rem',
-              color: 'var(--text-secondary)',
-              marginBottom: '1rem',
-              lineHeight: 1.6,
-              whiteSpace: 'pre-wrap'
-            }}>
-              {adiso.descripcion}
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.5rem',
-                fontSize: '0.875rem',
-                color: 'var(--text-secondary)',
-                marginBottom: '1.5rem',
-                paddingTop: '1rem',
-                borderTop: '1px solid var(--border-color)'
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem'
-                }}
-              >
-                <IconLocation aria-hidden="true" />
-                <span>
-                  <strong style={{ color: 'var(--text-primary)' }}>Ubicación:</strong> {formatearUbicacion(adiso.ubicacion).texto}
-                </span>
-              </div>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem'
-                }}
-              >
-                <IconCalendar aria-hidden="true" />
-                <span>
-                  <strong style={{ color: 'var(--text-primary)' }}>Publicado:</strong>{' '}
-                  {formatFecha(adiso.fechaPublicacion, adiso.horaPublicacion)}
-                </span>
-              </div>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '1.5rem',
-                  marginTop: '0.5rem'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-secondary)' }}>
-                  <span style={{ fontSize: '1.1rem' }}>👁️</span>
-                  <span style={{ fontWeight: 600 }}>{vistasLocales}</span>
-                  <span style={{ fontSize: '0.75rem' }}>Vistas</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-secondary)' }}>
-                  <span style={{ fontSize: '1.1rem' }}>💬</span>
-                  <span style={{ fontWeight: 600 }}>{contactosLocales}</span>
-                  <span style={{ fontSize: '0.75rem' }}>Interesados</span>
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          <div style={{
+    if (contactosMultiples && contactosMultiples.length > 1) {
+      // Si hay múltiples contactos, mostramos el primero o un botón genérico que abre opciones
+      // Por simplicidad en el sticky footer, mostraremos el principal (o un menú si se complica, 
+      // pero el usuario pidió "solo cta más importante").
+      // Mostraremos el botón del PRIMER contacto como principal CTA
+      const contactoPrincipal = contactosMultiples[0];
+      return (
+        <button
+          onClick={() => handleContactar(contactoPrincipal.valor)}
+          style={{
+            width: fullWidth ? '100%' : 'auto',
+            padding: '0.875rem 1.5rem',
+            fontSize: '1rem',
+            fontWeight: 700,
+            backgroundColor: contactoPrincipal.tipo === 'whatsapp' ? '#25D366' : '#3b82f6',
+            color: 'white',
+            border: 'none',
+            borderRadius: '12px',
+            cursor: 'pointer',
             display: 'flex',
-            flexDirection: 'column',
-            gap: '0.75rem'
-          }}>
-            {/* Botones de contacto - múltiples o único */}
-            {(() => {
-              const contactosMultiples = adiso.contactosMultiples && adiso.contactosMultiples.length > 0
-                ? adiso.contactosMultiples
-                : null;
-
-              // Verificar si está caducado o es histórico
-              const ahora = new Date();
-              const esHistorico = adiso.esHistorico === true;
-              const estaCaducado =
-                adiso.estaActivo === false ||
-                esHistorico ||
-                (adiso.fechaExpiracion && new Date(adiso.fechaExpiracion) < ahora);
-
-              if (contactosMultiples && contactosMultiples.length > 1) {
-                // Múltiples contactos
-                return (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    {contactosMultiples.map((contacto, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleContactar(contacto.valor)}
-                        aria-label={`Contactar por ${contacto.tipo}`}
-                        style={{
-                          width: '100%',
-                          padding: '0.875rem',
-                          fontSize: '0.9rem',
-                          fontWeight: 600,
-                          backgroundColor: contacto.tipo === 'whatsapp' ? '#25D366' : contacto.tipo === 'email' ? '#3b82f6' : '#10b981',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '8px',
-                          cursor: 'pointer',
-                          transition: 'opacity 0.2s',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '0.5rem'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.opacity = '0.9';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.opacity = '1';
-                        }}
-                      >
-                        {contacto.tipo === 'whatsapp' && <IconWhatsApp aria-hidden="true" />}
-                        {contacto.tipo === 'email' && '✉️'}
-                        {contacto.tipo === 'telefono' && '📞'}
-                        {contacto.etiqueta || `Contactar por ${contacto.tipo}`}
-                      </button>
-                    ))}
-                  </div>
-                );
-              } else {
-                // Contacto único
-                return (
-                  <button
-                    onClick={() => handleContactar()}
-                    aria-label={`Contactar al publicador de ${adiso.titulo} por WhatsApp`}
-                    style={{
-                      width: '100%',
-                      padding: '0.875rem',
-                      fontSize: '1rem',
-                      fontWeight: 600,
-                      backgroundColor: '#25D366',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      transition: 'opacity 0.2s',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.5rem'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.opacity = '0.9';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.opacity = '1';
-                    }}
-                  >
-                    <IconWhatsApp aria-hidden="true" />
-                    Contactar por WhatsApp
-                  </button>
-                );
-              }
-            })()}
-
-            {/* Botones de acción y navegación en la misma línea */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              width: '100%'
-            }}>
-              {/* Flecha izquierda */}
-              {(puedeAnterior || puedeSiguiente) && (
-                <button
-                  onClick={onAnterior}
-                  disabled={!puedeAnterior}
-                  style={{
-                    padding: '0.75rem',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '50%',
-                    backgroundColor: puedeAnterior ? 'var(--bg-primary)' : 'var(--bg-secondary)',
-                    color: puedeAnterior ? 'var(--text-primary)' : 'var(--text-tertiary)',
-                    cursor: puedeAnterior ? 'pointer' : 'not-allowed',
-                    opacity: puedeAnterior ? 1 : 0.5,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '44px',
-                    height: '44px',
-                    flexShrink: 0,
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (puedeAnterior) {
-                      e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (puedeAnterior) {
-                      e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-                    }
-                  }}
-                >
-                  <IconArrowLeft aria-hidden="true" />
-                </button>
-              )}
-
-              {/* Botones de acción centrados */}
-              <div style={{
-                display: 'flex',
-                gap: '0.5rem',
-                flex: 1,
-                justifyContent: 'center'
-              }}>
-                <button
-                  onClick={handleCopiarLink}
-                  style={{
-                    padding: '0.75rem 1rem',
-                    fontSize: '0.875rem',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '8px',
-                    backgroundColor: 'var(--bg-primary)',
-                    color: 'var(--text-primary)',
-                    cursor: 'pointer',
-                    transition: 'background-color 0.2s',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    whiteSpace: 'nowrap'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-                  }}
-                >
-                  {copiado ? <IconCheck aria-hidden="true" /> : <IconCopy aria-hidden="true" />}
-                  {copiado ? 'Copiado' : 'Copiar link'}
-                </button>
-                <button
-                  onClick={handleCompartir}
-                  style={{
-                    padding: '0.75rem 1rem',
-                    fontSize: '0.875rem',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '8px',
-                    backgroundColor: 'var(--bg-primary)',
-                    color: 'var(--text-primary)',
-                    cursor: 'pointer',
-                    transition: 'background-color 0.2s',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    whiteSpace: 'nowrap'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-                  }}
-                >
-                  <IconShare aria-hidden="true" />
-                  Compartir
-                </button>
-                {user && (
-                  <button
-                    onClick={handleToggleFavorito}
-                    disabled={cargandoFavorito}
-                    style={{
-                      padding: '0.75rem 1rem',
-                      fontSize: '0.875rem',
-                      border: `1px solid ${esFavoritoState ? '#fbbf24' : 'var(--border-color)'}`,
-                      borderRadius: '8px',
-                      backgroundColor: esFavoritoState ? 'rgba(251, 191, 36, 0.2)' : 'var(--bg-primary)',
-                      color: esFavoritoState ? '#fbbf24' : 'var(--text-primary)',
-                      cursor: cargandoFavorito ? 'not-allowed' : 'pointer',
-                      transition: 'background-color 0.2s',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.5rem',
-                      whiteSpace: 'nowrap',
-                      opacity: cargandoFavorito ? 0.6 : 1
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!cargandoFavorito) {
-                        e.currentTarget.style.backgroundColor = esFavoritoState ? 'rgba(251, 191, 36, 0.3)' : 'var(--hover-bg)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!cargandoFavorito) {
-                        e.currentTarget.style.backgroundColor = esFavoritoState ? 'rgba(251, 191, 36, 0.2)' : 'var(--bg-primary)';
-                      }
-                    }}
-                  >
-                    {cargandoFavorito ? '...' : esFavoritoState ? '⭐' : '☆'}
-                    {esFavoritoState ? 'Favorito' : 'Favorito'}
-                  </button>
-                )}
-              </div>
-
-              {/* Flecha derecha */}
-              {(puedeAnterior || puedeSiguiente) && (
-                <button
-                  onClick={onSiguiente}
-                  disabled={!puedeSiguiente}
-                  style={{
-                    padding: '0.75rem',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '50%',
-                    backgroundColor: puedeSiguiente ? 'var(--bg-primary)' : 'var(--bg-secondary)',
-                    color: puedeSiguiente ? 'var(--text-primary)' : 'var(--text-tertiary)',
-                    cursor: puedeSiguiente ? 'pointer' : 'not-allowed',
-                    opacity: puedeSiguiente ? 1 : 0.5,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '44px',
-                    height: '44px',
-                    flexShrink: 0,
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (puedeSiguiente) {
-                      e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (puedeSiguiente) {
-                      e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-                    }
-                  }}
-                >
-                  <IconArrowRight />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Modal de imagen ampliada - fuera del modal principal para evitar conflictos */}
-          {imagenAmpliada && (() => {
-            const imagenes = adiso.imagenesUrls && adiso.imagenesUrls.length > 0
-              ? adiso.imagenesUrls
-              : adiso.imagenUrl ? [adiso.imagenUrl] : [];
-            const puedeAnteriorImg = imagenAmpliada.index > 0;
-            const puedeSiguienteImg = imagenAmpliada.index < imagenes.length - 1;
-
-            return (
-              <div
-                style={{
-                  position: 'fixed',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  backgroundColor: 'rgba(0, 0, 0, 0.95)',
-                  zIndex: 3000,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '2rem',
-                  cursor: 'pointer'
-                }}
-                onClick={(e) => {
-                  // Solo cerrar si se hace click directamente en el fondo (no en el contenido)
-                  if (e.target === e.currentTarget) {
-                    setImagenAmpliada(null);
-                  }
-                }}
-              >
-                <div
-                  style={{
-                    position: 'relative',
-                    maxWidth: '90vw',
-                    maxHeight: '90vh',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setImagenAmpliada(null);
-                    }}
-                    style={{
-                      position: 'absolute',
-                      top: '-3rem',
-                      right: 0,
-                      background: 'rgba(255, 255, 255, 0.2)',
-                      border: 'none',
-                      borderRadius: '50%',
-                      width: '40px',
-                      height: '40px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      color: 'white',
-                      fontSize: '1.5rem',
-                      zIndex: 10,
-                      transition: 'background 0.2s'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-                    }}
-                  >
-                    <IconClose aria-hidden="true" />
-                  </button>
-
-                  {puedeAnteriorImg && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setImagenAmpliada({ url: imagenes[imagenAmpliada.index - 1], index: imagenAmpliada.index - 1 });
-                      }}
-                      style={{
-                        position: 'absolute',
-                        left: isDesktop ? '-3rem' : '-1rem',
-                        background: 'rgba(255, 255, 255, 0.2)',
-                        border: 'none',
-                        borderRadius: '50%',
-                        width: '50px',
-                        height: '50px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        color: 'white',
-                        zIndex: 10,
-                        transition: 'background 0.2s'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-                      }}
-                    >
-                      <IconArrowLeft size={24} />
-                    </button>
-                  )}
-
-                  <img
-                    src={imagenAmpliada.url}
-                    alt={`${adiso.titulo} - Imagen ${imagenAmpliada.index + 1}`}
-                    onClick={(e) => e.stopPropagation()}
-                    style={{
-                      maxWidth: '100%',
-                      maxHeight: '90vh',
-                      objectFit: 'contain',
-                      borderRadius: '8px',
-                      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
-                      cursor: 'default'
-                    }}
-                  />
-
-                  {puedeSiguienteImg && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setImagenAmpliada({ url: imagenes[imagenAmpliada.index + 1], index: imagenAmpliada.index + 1 });
-                      }}
-                      style={{
-                        position: 'absolute',
-                        right: isDesktop ? '-3rem' : '-1rem',
-                        background: 'rgba(255, 255, 255, 0.2)',
-                        border: 'none',
-                        borderRadius: '50%',
-                        width: '50px',
-                        height: '50px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        color: 'white',
-                        zIndex: 10,
-                        transition: 'background 0.2s'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-                      }}
-                    >
-                      <IconArrowRight size={24} aria-hidden="true" />
-                    </button>
-                  )}
-
-                  {imagenes.length > 1 && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        bottom: '-3rem',
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        background: 'rgba(255, 255, 255, 0.2)',
-                        padding: '0.5rem 1rem',
-                        borderRadius: '20px',
-                        color: 'white',
-                        fontSize: '0.875rem',
-                        whiteSpace: 'nowrap'
-                      }}
-                    >
-                      {imagenAmpliada.index + 1} / {imagenes.length}
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })()}
-        </div>
-      </>
-    );
-  }
-
-  // Renderizado normal con overlay
-  return (
-    <>
-      <div
-        style={overlayStyle}
-        onClick={isDesktop ? undefined : onCerrar}
-      >
-        <div
-          ref={modalRef}
-          style={{ ...modalContentStyle, pointerEvents: 'auto' }}
-          onClick={(e) => e.stopPropagation()}
-          onTouchStart={onTouchStart}
-          onTouchMove={onTouchMove}
-          onTouchEnd={onTouchEnd}
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.5rem',
+            boxShadow: '0 4px 12px rgba(37, 211, 102, 0.3)'
+          }}
         >
-          <button
-            onClick={onCerrar}
-            aria-label="Cerrar adiso"
-            style={{
-              position: 'absolute',
-              top: '1rem',
-              right: '1rem',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-              background: 'none',
-              border: 'none',
-              padding: '0.5rem',
-              lineHeight: 1,
-              zIndex: 20,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: '4px',
-              transition: 'background-color 0.2s'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
-          >
-            <IconClose aria-hidden="true" />
-          </button>
+          {contactoPrincipal.tipo === 'whatsapp' ? <IconWhatsApp /> : '✉️'}
+          {contactoPrincipal.etiqueta || 'Contactar ahora'}
+        </button>
+      );
+    }
 
-          <div style={{ marginBottom: '1rem' }}>
-            <div
-              style={{
-                fontSize: '0.75rem',
-                color: 'var(--text-tertiary)',
-                textTransform: 'capitalize',
-                marginBottom: '0.5rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem'
-              }}
-            >
-              {(() => {
-                const IconComponent = getCategoriaIcon(adiso.categoria);
-                return <IconComponent size={14} />;
-              })()}
-              {adiso.categoria}
-            </div>
-            <h2 style={{
-              fontSize: '1.5rem',
-              fontWeight: 600,
-              color: 'var(--text-primary)',
-              marginBottom: '1rem',
-              lineHeight: 1.3,
-              paddingRight: '2.5rem'
-            }}>
-              {adiso.titulo}
-            </h2>
+    return (
+      <button
+        onClick={() => handleContactar()}
+        style={{
+          width: fullWidth ? '100%' : 'auto',
+          padding: '0.875rem 1.5rem',
+          fontSize: '1rem',
+          fontWeight: 700,
+          backgroundColor: '#25D366',
+          color: 'white',
+          border: 'none',
+          borderRadius: '12px',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '0.5rem',
+          boxShadow: '0 4px 12px rgba(37, 211, 102, 0.3)'
+        }}
+      >
+        <IconWhatsApp />
+        Contactar por WhatsApp
+      </button>
+    );
+  };
 
-            {/* Banner para anuncios históricos */}
-            {adiso.esHistorico && (
-              <div
-                style={{
-                  padding: '0.75rem 1rem',
-                  backgroundColor: '#f3f4f6',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '8px',
-                  marginBottom: '1rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  fontSize: '0.875rem',
-                  color: '#374151'
-                }}
-              >
-                <span style={{ fontSize: '1.2rem' }}>📜</span>
-                <div style={{ flex: 1 }}>
-                  <strong style={{ display: 'block', marginBottom: '0.25rem' }}>
-                    Anuncio Histórico
-                  </strong>
-                  <span>
-                    Este anuncio es de una edición antigua. Si te interesa, podemos notificar al anunciante para que pueda republicarlo oficialmente.
-                  </span>
-                </div>
+  const ContentBody = () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      {/* Vendedor Info Header within content */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{
+            width: '40px', height: '40px', borderRadius: '10px', overflow: 'hidden',
+            border: '1px solid var(--border-color)', position: 'relative'
+          }}>
+            {adiso.vendedor?.avatarUrl ? (
+              <Image src={adiso.vendedor.avatarUrl} alt={adiso.vendedor.nombre} fill style={{ objectFit: 'cover' }} />
+            ) : (
+              <div style={{ width: '100%', height: '100%', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {(() => { const Icon = getCategoriaIcon(adiso.categoria); return <Icon size={20} />; })()}
               </div>
             )}
-
-            {(() => {
-              // Mostrar todas las imágenes si hay múltiples, o imagen única
-              const imagenes = adiso.imagenesUrls && adiso.imagenesUrls.length > 0
-                ? adiso.imagenesUrls
-                : adiso.imagenUrl
-                  ? [adiso.imagenUrl]
-                  : [];
-
-              if (imagenes.length === 0) return null;
-
-              return (
-                <div style={{ marginBottom: '1rem' }}>
-                  {imagenes.length === 1 ? (
-                    // Una sola imagen: mostrar grande
-                    <div
-                      style={{
-                        borderRadius: '8px',
-                        overflow: 'hidden',
-                        border: '1px solid var(--border-color)',
-                        position: 'relative',
-                        width: '100%',
-                        height: '400px',
-                        cursor: 'pointer',
-                      }}
-                      onClick={() => setImagenAmpliada({ url: imagenes[0], index: 0 })}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          setImagenAmpliada({ url: imagenes[0], index: 0 });
-                        }
-                      }}
-                      aria-label="Ampliar imagen"
-                    >
-                      <Image
-                        src={imagenes[0]}
-                        alt={adiso.titulo}
-                        fill
-                        sizes="(max-width: 768px) 100vw, 50vw"
-                        style={{
-                          objectFit: 'cover',
-                          transition: 'opacity 0.2s'
-                        }}
-                        loading="lazy"
-                      />
-                    </div>
-                  ) : (
-                    // Múltiples imágenes: mostrar en grid
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: imagenes.length === 2 ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
-                      gap: '0.5rem',
-                      borderRadius: '8px',
-                      overflow: 'hidden'
-                    }}>
-                      {imagenes.map((url, index) => (
-                        <div
-                          key={index}
-                          style={{
-                            aspectRatio: '1',
-                            overflow: 'hidden',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: '4px',
-                            position: 'relative',
-                            cursor: 'pointer'
-                          }}
-                          onClick={() => setImagenAmpliada({ url, index })}
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              setImagenAmpliada({ url, index });
-                            }
-                          }}
-                          aria-label={`Ampliar imagen ${index + 1} de ${imagenes.length}`}
-                        >
-                          <Image
-                            src={url}
-                            alt={`${adiso.titulo} - Imagen ${index + 1}`}
-                            fill
-                            sizes="(max-width: 768px) 33vw, 20vw"
-                            style={{
-                              objectFit: 'cover',
-                              transition: 'opacity 0.2s'
-                            }}
-                            loading={index < 3 ? 'eager' : 'lazy'}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-            <div style={{
-              fontSize: '0.875rem',
-              color: 'var(--text-secondary)',
-              marginBottom: '1rem',
-              lineHeight: 1.6,
-              whiteSpace: 'pre-wrap'
-            }}>
-              {adiso.descripcion}
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.5rem',
-                fontSize: '0.875rem',
-                color: 'var(--text-secondary)',
-                marginBottom: '1.5rem',
-                paddingTop: '1rem',
-                borderTop: '1px solid var(--border-color)'
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem'
-                }}
-              >
-                <IconLocation aria-hidden="true" />
-                <span>
-                  <strong style={{ color: 'var(--text-primary)' }}>Ubicación:</strong> {formatearUbicacion(adiso.ubicacion).texto}
-                </span>
-              </div>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem'
-                }}
-              >
-                <IconCalendar aria-hidden="true" />
-                <span>
-                  <strong style={{ color: 'var(--text-primary)' }}>Publicado:</strong>{' '}
-                  {formatFecha(adiso.fechaPublicacion, adiso.horaPublicacion)}
-                </span>
-              </div>
-            </div>
           </div>
-
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.75rem'
-          }}>
-            {/* Botones de contacto - múltiples o único */}
-            {(() => {
-              const contactosMultiples = adiso.contactosMultiples && adiso.contactosMultiples.length > 0
-                ? adiso.contactosMultiples
-                : null;
-
-              // Verificar si está caducado o es histórico
-              const ahora = new Date();
-              const esHistorico = adiso.esHistorico === true;
-              const estaCaducado =
-                adiso.estaActivo === false ||
-                esHistorico ||
-                (adiso.fechaExpiracion && new Date(adiso.fechaExpiracion) < ahora);
-
-              if (contactosMultiples && contactosMultiples.length > 1) {
-                // Múltiples contactos
-                return (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    {contactosMultiples.map((contacto, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleContactar(contacto.valor)}
-                        aria-label={`Contactar por ${contacto.tipo}`}
-                        style={{
-                          width: '100%',
-                          padding: '0.875rem',
-                          fontSize: '0.9rem',
-                          fontWeight: 600,
-                          backgroundColor: contacto.tipo === 'whatsapp' ? '#25D366' : contacto.tipo === 'email' ? '#3b82f6' : '#10b981',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '8px',
-                          cursor: 'pointer',
-                          transition: 'opacity 0.2s',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '0.5rem'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.opacity = '0.9';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.opacity = '1';
-                        }}
-                      >
-                        {contacto.tipo === 'whatsapp' && <IconWhatsApp aria-hidden="true" />}
-                        {contacto.tipo === 'email' && '✉️'}
-                        {contacto.tipo === 'telefono' && '📞'}
-                        {contacto.etiqueta || `Contactar por ${contacto.tipo}`}
-                      </button>
-                    ))}
-                  </div>
-                );
-              } else {
-                // Contacto único
-                return (
-                  <button
-                    onClick={() => handleContactar()}
-                    aria-label={`Contactar al publicador de ${adiso.titulo} por WhatsApp`}
-                    style={{
-                      width: '100%',
-                      padding: '0.875rem',
-                      fontSize: '1rem',
-                      fontWeight: 600,
-                      backgroundColor: '#25D366',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      transition: 'opacity 0.2s',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.5rem'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.opacity = '0.9';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.opacity = '1';
-                    }}
-                  >
-                    <IconWhatsApp aria-hidden="true" />
-                    Contactar por WhatsApp
-                  </button>
-                );
-              }
-            })()}
-
-            {/* Botones de acción y navegación en la misma línea */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              width: '100%'
-            }}>
-              {/* Flecha izquierda */}
-              {(puedeAnterior || puedeSiguiente) && (
-                <button
-                  onClick={onAnterior}
-                  disabled={!puedeAnterior}
-                  style={{
-                    padding: '0.75rem',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '50%',
-                    backgroundColor: puedeAnterior ? 'var(--bg-primary)' : 'var(--bg-secondary)',
-                    color: puedeAnterior ? 'var(--text-primary)' : 'var(--text-tertiary)',
-                    cursor: puedeAnterior ? 'pointer' : 'not-allowed',
-                    opacity: puedeAnterior ? 1 : 0.5,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '44px',
-                    height: '44px',
-                    flexShrink: 0,
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (puedeAnterior) {
-                      e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (puedeAnterior) {
-                      e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-                    }
-                  }}
-                >
-                  <IconArrowLeft aria-hidden="true" />
-                </button>
-              )}
-
-              {/* Botones de acción centrados */}
-              <div style={{
-                display: 'flex',
-                gap: '0.5rem',
-                flex: 1,
-                justifyContent: 'center'
-              }}>
-                <button
-                  onClick={handleCopiarLink}
-                  style={{
-                    padding: '0.75rem 1rem',
-                    fontSize: '0.875rem',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '8px',
-                    backgroundColor: 'var(--bg-primary)',
-                    color: 'var(--text-primary)',
-                    cursor: 'pointer',
-                    transition: 'background-color 0.2s',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    whiteSpace: 'nowrap'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-                  }}
-                >
-                  {copiado ? <IconCheck aria-hidden="true" /> : <IconCopy aria-hidden="true" />}
-                  {copiado ? 'Copiado' : 'Copiar link'}
-                </button>
-                <button
-                  onClick={handleCompartir}
-                  style={{
-                    padding: '0.75rem 1rem',
-                    fontSize: '0.875rem',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '8px',
-                    backgroundColor: 'var(--bg-primary)',
-                    color: 'var(--text-primary)',
-                    cursor: 'pointer',
-                    transition: 'background-color 0.2s',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    whiteSpace: 'nowrap'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-                  }}
-                >
-                  <IconShare aria-hidden="true" />
-                  Compartir
-                </button>
-                {user && (
-                  <button
-                    onClick={handleToggleFavorito}
-                    disabled={cargandoFavorito}
-                    style={{
-                      padding: '0.75rem 1rem',
-                      fontSize: '0.875rem',
-                      border: `1px solid ${esFavoritoState ? '#fbbf24' : 'var(--border-color)'}`,
-                      borderRadius: '8px',
-                      backgroundColor: esFavoritoState ? 'rgba(251, 191, 36, 0.2)' : 'var(--bg-primary)',
-                      color: esFavoritoState ? '#fbbf24' : 'var(--text-primary)',
-                      cursor: cargandoFavorito ? 'not-allowed' : 'pointer',
-                      transition: 'background-color 0.2s',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.5rem',
-                      whiteSpace: 'nowrap',
-                      opacity: cargandoFavorito ? 0.6 : 1
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!cargandoFavorito) {
-                        e.currentTarget.style.backgroundColor = esFavoritoState ? 'rgba(251, 191, 36, 0.3)' : 'var(--hover-bg)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!cargandoFavorito) {
-                        e.currentTarget.style.backgroundColor = esFavoritoState ? 'rgba(251, 191, 36, 0.2)' : 'var(--bg-primary)';
-                      }
-                    }}
-                  >
-                    {cargandoFavorito ? '...' : esFavoritoState ? '⭐' : '☆'}
-                    {esFavoritoState ? 'Favorito' : 'Favorito'}
-                  </button>
-                )}
-              </div>
-
-              {/* Flecha derecha */}
-              {(puedeAnterior || puedeSiguiente) && (
-                <button
-                  onClick={onSiguiente}
-                  disabled={!puedeSiguiente}
-                  style={{
-                    padding: '0.75rem',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '50%',
-                    backgroundColor: puedeSiguiente ? 'var(--bg-primary)' : 'var(--bg-secondary)',
-                    color: puedeSiguiente ? 'var(--text-primary)' : 'var(--text-tertiary)',
-                    cursor: puedeSiguiente ? 'pointer' : 'not-allowed',
-                    opacity: puedeSiguiente ? 1 : 0.5,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '44px',
-                    height: '44px',
-                    flexShrink: 0,
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (puedeSiguiente) {
-                      e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (puedeSiguiente) {
-                      e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-                    }
-                  }}
-                >
-                  <IconArrowRight />
-                </button>
-              )}
-            </div>
+          <div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase' }}>Publicado por</div>
+            <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>{adiso.vendedor?.nombre || 'Anunciante'}</div>
           </div>
         </div>
       </div>
 
-      {/* Modal de imagen ampliada - fuera del modal principal para evitar conflictos */}
-      {imagenAmpliada && (() => {
-        const imagenes = adiso.imagenesUrls && adiso.imagenesUrls.length > 0
-          ? adiso.imagenesUrls
-          : adiso.imagenUrl ? [adiso.imagenUrl] : [];
-        const puedeAnteriorImg = imagenAmpliada.index > 0;
-        const puedeSiguienteImg = imagenAmpliada.index < imagenes.length - 1;
+      {/* Título */}
+      <h2 style={{ fontSize: '1.5rem', fontWeight: 700, lineHeight: 1.2, color: 'var(--text-primary)' }}>
+        {adiso.titulo}
+      </h2>
 
+      {/* Imágenes */}
+      {(() => {
+        const imagenes = adiso.imagenesUrls && adiso.imagenesUrls.length > 0 ? adiso.imagenesUrls : adiso.imagenUrl ? [adiso.imagenUrl] : [];
+        if (imagenes.length === 0) return null;
         return (
-          <div
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.95)',
-              zIndex: 3000,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '2rem',
-              cursor: 'pointer'
-            }}
-            onClick={(e) => {
-              // Solo cerrar si se hace click directamente en el fondo (no en el contenido)
-              if (e.target === e.currentTarget) {
-                setImagenAmpliada(null);
-              }
-            }}
-          >
-            <div
-              style={{
-                position: 'relative',
-                maxWidth: '90vw',
-                maxHeight: '90vh',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setImagenAmpliada(null);
-                }}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: imagenes.length === 1 ? '1fr' : 'repeat(auto-fill, minmax(140px, 1fr))',
+            gap: '8px',
+            borderRadius: '12px',
+            overflow: 'hidden'
+          }}>
+            {imagenes.map((url, idx) => (
+              <div key={idx}
+                onClick={() => setImagenAmpliada({ url, index: idx })}
                 style={{
-                  position: 'absolute',
-                  top: '-3rem',
-                  right: 0,
-                  background: 'rgba(255, 255, 255, 0.2)',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: '40px',
-                  height: '40px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  color: 'white',
-                  fontSize: '1.5rem',
-                  zIndex: 10,
-                  transition: 'background 0.2s'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-                }}
-              >
-                <IconClose aria-hidden="true" />
-              </button>
-
-              {puedeAnteriorImg && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setImagenAmpliada({ url: imagenes[imagenAmpliada.index - 1], index: imagenAmpliada.index - 1 });
-                  }}
-                  style={{
-                    position: 'absolute',
-                    left: isDesktop ? '-3rem' : '-1rem',
-                    background: 'rgba(255, 255, 255, 0.2)',
-                    border: 'none',
-                    borderRadius: '50%',
-                    width: '50px',
-                    height: '50px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    color: 'white',
-                    zIndex: 10,
-                    transition: 'background 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-                  }}
-                >
-                  <IconArrowLeft size={24} />
-                </button>
-              )}
-
-              <img
-                src={imagenAmpliada.url}
-                alt={`${adiso.titulo} - Imagen ${imagenAmpliada.index + 1}`}
-                onClick={(e) => e.stopPropagation()}
-                style={{
-                  maxWidth: '100%',
-                  maxHeight: '90vh',
-                  objectFit: 'contain',
-                  borderRadius: '8px',
-                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
-                  cursor: 'default'
-                }}
-              />
-
-              {puedeSiguienteImg && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setImagenAmpliada({ url: imagenes[imagenAmpliada.index + 1], index: imagenAmpliada.index + 1 });
-                  }}
-                  style={{
-                    position: 'absolute',
-                    right: isDesktop ? '-3rem' : '-1rem',
-                    background: 'rgba(255, 255, 255, 0.2)',
-                    border: 'none',
-                    borderRadius: '50%',
-                    width: '50px',
-                    height: '50px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    color: 'white',
-                    zIndex: 10,
-                    transition: 'background 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-                  }}
-                >
-                  <IconArrowRight size={24} aria-hidden="true" />
-                </button>
-              )}
-
-              {imagenes.length > 1 && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    bottom: '-3rem',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    background: 'rgba(255, 255, 255, 0.2)',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '20px',
-                    color: 'white',
-                    fontSize: '0.875rem',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  {imagenAmpliada.index + 1} / {imagenes.length}
-                </div>
-              )}
-            </div>
+                  aspectRatio: '1',
+                  position: 'relative',
+                  cursor: 'zoom-in',
+                  height: imagenes.length === 1 ? '300px' : 'auto'
+                }}>
+                <Image src={url} alt={`Imagen ${idx}`} fill style={{ objectFit: 'cover' }} />
+              </div>
+            ))}
           </div>
         );
       })()}
+
+      {/* Detalles e Info */}
+      <div style={{ padding: '1rem', backgroundColor: 'var(--bg-secondary)', borderRadius: '12px', gap: '8px', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <IconLocation color="var(--brand-blue)" />
+          <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>{formatearUbicacion(adiso.ubicacion).texto}</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <IconCalendar color="var(--brand-blue)" />
+          <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>{formatFecha(adiso.fechaPublicacion, adiso.horaPublicacion)}</span>
+        </div>
+        <div style={{ display: 'flex', gap: '1rem', marginTop: '4px' }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>👁️ {vistasLocales} Vistas</span>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>💬 {contactosLocales} Interesados</span>
+        </div>
+      </div>
+
+      {/* Descripción */}
+      <div style={{ fontSize: '1rem', lineHeight: 1.6, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap' }}>
+        {adiso.descripcion}
+      </div>
+    </div>
+  );
+
+  // --- MOBILE SHEET VIEW ---
+  if (!isDesktop && !dentroSidebar) {
+    return (
+      <>
+        <AnimatePresence>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 2000 }}>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(2px)' }}
+              onClick={onCerrar}
+            />
+
+            {/* Sheet */}
+            <motion.div
+              drag="y"
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={0.2}
+              onDragEnd={(e, { offset, velocity }) => {
+                if (offset.y > 100 || velocity.y > 500) {
+                  onCerrar();
+                }
+              }}
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 30, stiffness: 300, mass: 0.8 }}
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: '92vh',
+                backgroundColor: 'var(--bg-primary)',
+                borderRadius: '24px 24px 0 0',
+                display: 'flex',
+                flexDirection: 'column',
+                boxShadow: '0 -10px 40px rgba(0,0,0,0.2)',
+                overflow: 'hidden'
+              }}
+            >
+              {/* Header Fixed */}
+              <div style={{
+                padding: '12px 16px',
+                borderBottom: '1px solid var(--border-color)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+                backgroundColor: 'var(--bg-primary)',
+                zIndex: 10
+              }}>
+                {/* Handle */}
+                <div style={{ width: '100%', display: 'flex', justifyContent: 'center', padding: '4px 0' }}>
+                  <div style={{ width: '40px', height: '4px', borderRadius: '4px', backgroundColor: 'var(--border-color)' }} />
+                </div>
+
+                {/* Top Actions Row */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
+                    Detalle de Adiso
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <ActionButtons mobile={true} />
+                    <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-color)', margin: '0 4px' }} />
+                    <button
+                      onClick={onCerrar}
+                      style={{
+                        width: '40px', height: '40px', borderRadius: '50%', border: 'none',
+                        backgroundColor: '#f3f4f6', color: '#374151', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <IconClose size={20} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Scrollable Content */}
+              <div style={{ flex: 1, overflowY: 'auto', padding: '16px', paddingBottom: '32px' }}>
+                <ContentBody />
+              </div>
+
+              {/* Sticky Footer CTA */}
+              <div style={{
+                padding: '16px',
+                borderTop: '1px solid var(--border-color)',
+                backgroundColor: 'var(--bg-primary)',
+                boxShadow: '0 -4px 12px rgba(0,0,0,0.05)',
+                zIndex: 20
+              }}>
+                <ContactButton fullWidth={true} />
+              </div>
+            </motion.div>
+          </div>
+        </AnimatePresence>
+
+        {/* Image Viewer Component (Standalone) */}
+        {imagenAmpliada && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 3000, backgroundColor: 'black', display: 'flex', justifyContent: 'center', alignItems: 'center' }} onClick={() => setImagenAmpliada(null)}>
+            <button onClick={() => setImagenAmpliada(null)} style={{ position: 'absolute', top: '20px', right: '20px', color: 'white', background: 'none', border: 'none', zIndex: 3001 }}>
+              <IconClose size={32} />
+            </button>
+            <img src={imagenAmpliada.url} alt="Full screen" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+          </div>
+        )}
+      </>
+    );
+  }
+
+  // --- DESKTOP MODAL VIEW (OR SIDEBAR VIEW) ---
+  const isSidebar = dentroSidebar;
+
+  return (
+    <>
+      <div
+        ref={modalRef}
+        style={{
+          // Desktop Overlay or Sidebar Container logic
+          position: isSidebar ? 'relative' : 'fixed',
+          inset: isSidebar ? 'auto' : 0,
+          zIndex: isSidebar ? 'auto' : 1500,
+          backgroundColor: isSidebar ? 'transparent' : 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          justifyContent: 'flex-end',
+          pointerEvents: 'auto'
+        }}
+        onClick={(e) => {
+          if (!isSidebar && e.target === e.currentTarget) onCerrar();
+        }}
+      >
+        <div style={{
+          width: isSidebar ? '100%' : '480px',
+          maxWidth: '100%',
+          height: '100%',
+          backgroundColor: 'var(--bg-primary)',
+          boxShadow: isSidebar ? 'none' : '-10px 0 40px rgba(0,0,0,0.1)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          position: 'relative'
+        }} onClick={e => e.stopPropagation()}>
+
+          {/* Desktop Header */}
+          <div style={{
+            padding: '1.5rem',
+            borderBottom: '1px solid var(--border-color)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexShrink: 0
+          }}>
+            <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>Detalle de Adiso</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <ActionButtons />
+              {!isSidebar && (
+                <button onClick={onCerrar} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: 'var(--bg-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <IconClose />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Content */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
+            <ContentBody />
+          </div>
+
+          {/* Footer */}
+          <div style={{ padding: '1.5rem', borderTop: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}>
+            <ContactButton fullWidth={true} />
+          </div>
+        </div>
+      </div>
+
+      {/* Image Viewer Global */}
+      {imagenAmpliada && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 3000, backgroundColor: 'rgba(0,0,0,0.95)', display: 'flex', justifyContent: 'center', alignItems: 'center', backdropFilter: 'blur(10px)' }} onClick={() => setImagenAmpliada(null)}>
+          <button onClick={() => setImagenAmpliada(null)} style={{ position: 'absolute', top: '2rem', right: '2rem', color: 'white', background: 'rgba(255,255,255,0.2)', border: 'none', width: '48px', height: '48px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <IconClose size={24} />
+          </button>
+          <img src={imagenAmpliada.url} alt="Full screen" style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain', borderRadius: '8px', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }} />
+        </div>
+      )}
     </>
   );
 }
