@@ -18,6 +18,7 @@ import AuthModal from '@/components/AuthModal';
 import BusinessPublicView from '@/components/business/BusinessPublicView';
 import ChatbotGuide from '@/components/business/ChatbotGuide';
 import { EditorSteps } from './components/EditorSteps';
+import SimpleCatalogAdd from '@/components/business/SimpleCatalogAdd';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/hooks/useToast';
 import { ProductEditor } from '@/components/business/ProductEditor';
@@ -70,6 +71,7 @@ function BusinessBuilderPageContent() {
     const [adisos, setAdisos] = useState<Adiso[]>([]);
     const [editingProduct, setEditingProduct] = useState<any | null>(null);
     const [showProductModal, setShowProductModal] = useState(false);
+    const [showAddProductModal, setShowAddProductModal] = useState(false);
 
     const debouncedProfile = useDebounce(profile, 1000);
 
@@ -87,13 +89,11 @@ function BusinessBuilderPageContent() {
         }
     };
 
-    const handleProductSave = async (updatedProduct: any) => {
-        // Refresh catalog after saving
+    const handleRefreshCatalog = async () => {
         if (profile.id) {
             const products = await getBusinessCatalog(profile.id);
             setCatalogProducts(products);
 
-            // Update Adisos map
             const mappedAdisos: Adiso[] = products.map(p => ({
                 id: p.id,
                 titulo: p.title || '',
@@ -111,6 +111,10 @@ function BusinessBuilderPageContent() {
             }));
             setAdisos(mappedAdisos);
         }
+    };
+
+    const handleProductSave = async (updatedProduct: any) => {
+        await handleRefreshCatalog();
         setShowProductModal(false);
         setEditingProduct(null);
     };
@@ -240,6 +244,11 @@ function BusinessBuilderPageContent() {
     };
 
     const handleEditPart = (part: string) => {
+        if (part === 'add-product') {
+            setShowAddProductModal(true);
+            return;
+        }
+
         // Switch to editor and set step
         const partToStep: Record<string, number> = {
             'identity': 0,
@@ -404,7 +413,8 @@ function BusinessBuilderPageContent() {
                             activeStep={activeStep}
                             setActiveStep={setActiveStep}
                             catalogProducts={catalogProducts}
-                            onAddProduct={() => { }} // TODO: Implement add product modal
+                            onAddProduct={() => setShowAddProductModal(true)}
+                            onRefreshCatalog={handleRefreshCatalog}
                         />
                     </div>
                 </div>
@@ -466,6 +476,24 @@ function BusinessBuilderPageContent() {
                 </div>
             )}
         </div>
+    )
+}
+
+{/* Product Addition Method Modal */ }
+{
+    showAddProductModal && profile.id && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in zoom-in-95 duration-300">
+            <div className="w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl overflow-hidden">
+                <SimpleCatalogAdd
+                    businessProfileId={profile.id}
+                    onSuccess={handleRefreshCatalog}
+                    onClose={() => setShowAddProductModal(false)}
+                />
+            </div>
+        </div>
+    )
+}
+        </div >
     );
 }
 

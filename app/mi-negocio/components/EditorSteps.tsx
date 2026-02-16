@@ -312,32 +312,27 @@ export function EditorSteps({
                                                 ) : (
                                                     <>
                                                         <div className="flex gap-2 items-center">
-                                                            <SimpleCatalogAdd
-                                                                businessProfileId={profile.id || ''}
-                                                                onSuccess={handleRefresh}
-                                                                onClose={() => { }}
-                                                            />
                                                             <button
-                                                                onClick={() => setEditingProduct?.('new')}
-                                                                className="flex items-center gap-2 px-3 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-slate-700 transition-colors"
+                                                                onClick={onAddProduct}
+                                                                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[var(--brand-blue)] text-white rounded-2xl text-sm font-black shadow-md hover:brightness-110 active:scale-[0.98] transition-all"
                                                             >
-                                                                <IconPlus size={14} />
-                                                                Manual
+                                                                <IconPlus size={18} />
+                                                                Agregar Producto
                                                             </button>
 
-                                                            {/* Delete All Button */}
+                                                            {/* Delete All Button - Mini version */}
                                                             {catalogProducts.length > 0 && (
                                                                 <button
                                                                     onClick={async () => {
                                                                         if (!confirm("⚠️ ¿ESTÁS SEGURO? \n\nSe eliminarán TODOS los productos del catálogo. Esta acción no se puede deshacer.\n\nÚsalo para limpiar imports fallidos.")) return;
                                                                         const ok = await deleteAllBusinessProducts(profile.id || '');
-                                                                        if (ok) handleRefresh();
+                                                                        if (ok) onRefreshCatalog?.();
                                                                         else alert("Error al eliminar.");
                                                                     }}
-                                                                    className="ml-auto text-red-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-full transition-colors"
-                                                                    title="Eliminar todo el catálogo"
+                                                                    className="w-12 h-12 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-2xl border border-red-100 transition-colors shrink-0"
+                                                                    title="Liminar todo el catálogo"
                                                                 >
-                                                                    <IconTrash size={16} />
+                                                                    <IconTrash size={20} />
                                                                 </button>
                                                             )}
                                                         </div>
