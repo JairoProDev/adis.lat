@@ -475,25 +475,20 @@ function BusinessBuilderPageContent() {
                     </div>
                 </div>
             )}
-        </div>
-    )
-}
 
-{/* Product Addition Method Modal */ }
-{
-    showAddProductModal && profile.id && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in zoom-in-95 duration-300">
-            <div className="w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl overflow-hidden">
-                <SimpleCatalogAdd
-                    businessProfileId={profile.id}
-                    onSuccess={handleRefreshCatalog}
-                    onClose={() => setShowAddProductModal(false)}
-                />
-            </div>
+            {/* Product Addition Method Modal */}
+            {showAddProductModal && profile.id && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in zoom-in-95 duration-300">
+                    <div className="w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl overflow-hidden">
+                        <SimpleCatalogAdd
+                            businessProfileId={profile.id}
+                            onSuccess={handleRefreshCatalog}
+                            onClose={() => setShowAddProductModal(false)}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
-    )
-}
-        </div >
     );
 }
 
