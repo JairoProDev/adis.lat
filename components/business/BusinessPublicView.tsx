@@ -62,10 +62,8 @@ export default function BusinessPublicView({
     const [activeTab, setActiveTab] = useState<'inicio' | 'catalogo' | 'feed'>('catalogo');
     const [isHeaderCompact, setIsHeaderCompact] = useState(false);
 
-    // Safeguard against null profile
-    if (!profile) {
-        return <div className="min-h-[50vh] flex items-center justify-center text-slate-400">Cargando perfil...</div>;
-    }
+    // Safeguard against null profile - REMOVED to avoid hook error
+    // if (!profile) ... moved to after hooks
 
     // Catalog State & Filters
     const [searchQuery, setSearchQuery] = useState('');
@@ -93,11 +91,12 @@ export default function BusinessPublicView({
 
     // Ownership check. 
     // True owner check for button visibility
-    const isOwner = user?.id === profile.user_id;
+    const isOwner = user?.id && profile?.user_id && user.id === profile.user_id;
     // Controls for inline editing overlays (pencil on image, etc) - only show when in explicit edit mode
     const showEditControls = isOwner && editMode;
 
     const handleShare = async () => {
+        if (!profile) return;
         if (typeof navigator !== 'undefined' && navigator.share) {
             try {
                 await navigator.share({
@@ -169,8 +168,8 @@ export default function BusinessPublicView({
     };
 
     // Derived State
-    const hasSocials = profile.social_links && profile.social_links.length > 0;
-    const hasLocation = !!profile.contact_address;
+    const hasSocials = profile?.social_links && profile.social_links.length > 0;
+    const hasLocation = !!profile?.contact_address;
     const isOpen = true; // TODO: Calculate from business_hours
 
     // Scroll Handler for Sticky Header
@@ -194,6 +193,10 @@ export default function BusinessPublicView({
         hidden: { y: 20, opacity: 0 },
         visible: { y: 0, opacity: 1 }
     };
+
+    if (!profile) {
+        return <div className="min-h-[50vh] flex items-center justify-center text-slate-400">Cargando perfil...</div>;
+    }
 
     return (
         <div
