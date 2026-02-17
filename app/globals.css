@@ -229,37 +229,39 @@ a {
 }
 
 @media print {
-
+  /* Printable Content Styles */
+  body { visibility: hidden; }
+  #printable-content {
+      visibility: visible;
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      z-index: 9999;
+      min-height: 100vh;
+      background: white;
+  }
+  
   /* Hide non-printable elements */
-  nav,
-  header,
-  .sidebar,
-  /* Don't hide all buttons, maybe user wants to see some, but usually for catalog printing we want clean */
-  /* button,  Let's keep buttons hidden for cleaner look */
-  button,
-  .no-print,
-  .skip-link,
-  .fixed,
-  .sticky {
-    display: none !important;
+  #printable-content > * { display: none !important; }
+  
+  /* Show only the catalog */
+  #printable-content > .printable-catalog { 
+      display: block !important; 
+      visibility: visible !important;
+      position: static !important;
+      top: auto !important;
+      left: auto !important;
+      height: auto !important;
+      overflow: visible !important;
   }
+  #printable-content > .printable-catalog * { visibility: visible !important; }
 
-  /* Reset layout for print */
-  body,
-  main,
-  .container {
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow: visible !important;
-    height: auto !important;
-    background: white !important;
-    color: black !important;
-  }
-
-  /* Ensure background colors/images print */
-  * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
+  /* Ensure background graphics are printed */
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  
+  /* Hide scrollbars */
+  ::-webkit-scrollbar { display: none; }
 }
