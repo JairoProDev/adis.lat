@@ -113,11 +113,11 @@ export default function NavbarMobile({
                 backgroundColor: 'transparent',
                 color: estaActiva ? 'var(--brand-blue)' : 'var(--text-tertiary)',
                 cursor: 'pointer',
-                fontSize: '0.65rem',
-                fontWeight: estaActiva ? 600 : 400,
+                fontSize: '0.75rem', // Larger text
+                fontWeight: estaActiva ? 600 : 500,
                 transition: 'all 0.2s',
                 position: 'relative',
-                minHeight: '60px'
+                minHeight: '64px' // Taller touch target
               }}
               className="navbar-item"
             >
@@ -129,7 +129,7 @@ export default function NavbarMobile({
                   justifyContent: 'center'
                 }}
               >
-                <IconComponent size={esPublicar ? 22 : 20} />
+                <IconComponent size={esPublicar ? 26 : 24} />
                 {esPublicar && (
                   <span
                     style={{
