@@ -207,7 +207,10 @@ export default function PublicBusinessPage({ params }: { params: { slug: string 
                         setIsEditing(true);
                         // Map parts to steps
                         if (part === 'logo' || part === 'visual') setActiveStep(1);
-                        // Add more mappings if needed
+                        if (part === 'add-product') {
+                            setActiveStep(2); // Catalog
+                            setEditingProduct('new');
+                        }
                     }}
                     onEditProduct={(product) => {
                         setIsEditing(true);

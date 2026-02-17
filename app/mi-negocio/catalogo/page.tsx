@@ -732,7 +732,7 @@ function ProductCard({ group, viewMode, isSelecting, isSelected, onToggleSelect,
                 </div>
 
                 <div className="flex items-center gap-2 flex-shrink-0">
-                    {price > 0 && (
+                    {(price || 0) > 0 && (
                         <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
                             S/{price.toFixed(2)}
                         </span>

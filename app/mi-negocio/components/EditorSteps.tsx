@@ -131,16 +131,18 @@ export function EditorSteps({
                 </div>
 
                 <div className="flex items-center gap-2">
-                    {/* View Toggle */}
+                    {/* View Toggle / Close Button */}
                     {onToggleView && (
                         <button
                             onClick={onToggleView}
-                            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-                            title="Ver como visitante"
+                            className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 text-white md:bg-slate-100 md:text-slate-600 rounded-lg md:hover:bg-slate-200 transition-colors font-bold text-xs"
+                            title="Cerrar editor y ver página"
                         >
-                            <span className="sr-only">Ver Página</span>
-                            {/* Eye Icon */}
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>
+                            <span className="hidden md:inline">Ver Página</span>
+                            <span className="md:hidden">Listo</span>
+                            <IconCheck size={14} className="md:hidden" />
+                            {/* Eye Icon for Desktop */}
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="hidden md:block"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>
                         </button>
                     )}
 
