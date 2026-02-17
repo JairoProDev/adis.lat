@@ -185,8 +185,12 @@ export async function getBusinessProductAsAdiso(productId: string): Promise<any 
             titulo: product.title,
             descripcion: product.description,
             precio: product.price,
-            imagenesUrls: product.images || [],
-            imagenUrl: product.images?.[0] || '',
+            imagenesUrls: Array.isArray(product.images)
+                ? product.images.map((img: any) => typeof img === 'string' ? img : img.url)
+                : [],
+            imagenUrl: Array.isArray(product.images) && product.images.length > 0
+                ? (typeof product.images[0] === 'string' ? product.images[0] : product.images[0].url)
+                : '',
             categoria: product.category || 'Otros',
             ubicacion: business?.contact_address || 'Ubicación no especificada',
             usuarioId: product.user_id,
