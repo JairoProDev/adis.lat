@@ -90,7 +90,7 @@ const ONBOARDING_STEPS: ChatStep[] = [
 ];
 
 interface ChatbotGuideProps {
-    profile: Partial<BusinessProfile>;
+    profile: Partial<BusinessProfile> | null;
     onUpdate: (field: keyof BusinessProfile, value: any) => void;
     onComplete: () => void;
     isMinimized: boolean;
