@@ -368,7 +368,7 @@ export default function ProductForm({ initialData, mode }: ProductFormProps) {
                                     className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
                                     placeholder="0.00"
                                 />
-                                {formData.compare_at_price && parseFloat(formData.compare_at_price) > parseFloat(formData.price) && (
+                                {formData.compare_at_price && parseFloat(formData.compare_at_price) > parseFloat(formData.price) && parseFloat(formData.compare_at_price) > 0 && (
                                     <p className="text-xs text-green-600 font-bold mt-1">
                                         -{Math.round(((parseFloat(formData.compare_at_price) - parseFloat(formData.price)) / parseFloat(formData.compare_at_price)) * 100)}% de descuento
                                     </p>
@@ -390,7 +390,7 @@ export default function ProductForm({ initialData, mode }: ProductFormProps) {
                                     className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
                                     placeholder="0.00"
                                 />
-                                {formData.price && formData.cost && (
+                                {formData.price && formData.cost && parseFloat(formData.price) > 0 && (
                                     <div className="flex justify-between text-xs mt-2 text-slate-500">
                                         <span>Margen: {(((parseFloat(formData.price) - parseFloat(formData.cost)) / parseFloat(formData.price)) * 100).toFixed(0)}%</span>
                                         <span>Ganancia: S/ {(parseFloat(formData.price) - parseFloat(formData.cost)).toFixed(2)}</span>

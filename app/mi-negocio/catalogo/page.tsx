@@ -15,6 +15,7 @@ import { ToastContainer } from '@/components/Toast';
 import { supabase } from '@/lib/supabase';
 import type { CatalogProduct } from '@/types/catalog';
 import AddProductModal from '@/components/catalog/AddProductModal';
+import { SectorSelectorModal } from '@/components/catalog/SectorSelectorModal';
 import { groupProducts, getFilterOptions, type GroupedProduct } from '@/lib/catalog/product-grouping';
 import { ProductEditor } from '@/components/business/ProductEditor';
 
@@ -113,6 +114,10 @@ export default function CatalogPage() {
     // Guided fix mode
     const [fixModeIdx, setFixModeIdx] = useState(0);
     const [showFixMode, setShowFixMode] = useState(false);
+
+    // Business Sector
+    const [showSectorSelector, setShowSectorSelector] = useState(false);
+    const [businessSector, setBusinessSector] = useState<string | null>(null);
 
     // ── computed stats ──────────────────────────────────────────────────────
 
@@ -292,8 +297,16 @@ export default function CatalogPage() {
 
     // ── AI organize ─────────────────────────────────────────────────────────
 
-    const runAIOrganize = async (all = false) => {
+    const runAIOrganize = async (all = false, sectorOverride?: string) => {
         if (!supabase) return;
+
+        // If we don't know the sector, ask first
+        const sectorToUse = sectorOverride || businessSector;
+        if (!sectorToUse) {
+            setShowSectorSelector(true);
+            return;
+        }
+
         setAiLoading(true);
         setAiSuggestions(null);
         try {
@@ -304,7 +317,7 @@ export default function CatalogPage() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${session?.access_token}`,
                 },
-                body: JSON.stringify({ all }),
+                body: JSON.stringify({ all, sector: sectorToUse }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Error de IA');
@@ -797,6 +810,20 @@ export default function CatalogPage() {
                     onApply={applyAISuggestions}
                     onRerun={() => { setAiSuggestions(null); runAIOrganize(true); }}
                     onClose={() => { setShowAIOrganize(false); setAiSuggestions(null); }}
+                />
+            )}
+
+            {/* ── Sector Selector Modal ─────────────────────────────────────── */}
+            {showSectorSelector && (
+                <SectorSelectorModal
+                    onSelect={(sector) => {
+                        setBusinessSector(sector);
+                        setShowSectorSelector(false);
+                        // Continue with AI organize
+                        setShowAIOrganize(true);
+                        runAIOrganize(false, sector);
+                    }}
+                    onClose={() => setShowSectorSelector(false)}
                 />
             )}
 

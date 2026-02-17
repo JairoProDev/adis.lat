@@ -5,6 +5,8 @@ import { AdisoGratuito } from '@/types';
 import { createAdisoGratuitoSchema, sanitizeText } from '@/lib/validations';
 import { rateLimit, getClientIP } from '@/lib/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   // Rate limiting para GET
   const ip = getClientIP(request);
@@ -27,7 +29,7 @@ export async function GET(request: NextRequest) {
     if (process.env.NODE_ENV === 'development') {
       console.error('Error al obtener adisos gratuitos:', error);
     }
-    
+
     // Si la tabla no existe aún (error de tabla no encontrada), retornar array vacío
     // Esto permite que la funcionalidad funcione aunque la tabla no esté creada
     if (
@@ -42,18 +44,18 @@ export async function GET(request: NextRequest) {
       }
       return NextResponse.json([], { status: 200 });
     }
-    
+
     // Si es un error de conexión real, retornar 503
-    if (error?.message?.includes('timeout') || 
-        error?.message?.includes('fetch failed') ||
-        error?.message?.includes('network') ||
-        error?.code === 'ECONNREFUSED') {
+    if (error?.message?.includes('timeout') ||
+      error?.message?.includes('fetch failed') ||
+      error?.message?.includes('network') ||
+      error?.code === 'ECONNREFUSED') {
       return NextResponse.json(
         { error: 'Error de conexión con Supabase. Verifica tu conexión y las credenciales.' },
         { status: 503 }
       );
     }
-    
+
     // Para otros errores (incluyendo RLS), retornar array vacío en lugar de error
     // Esto evita que la UI se rompa si hay problemas menores de configuración
     if (process.env.NODE_ENV === 'development') {
@@ -73,11 +75,11 @@ export async function POST(request: NextRequest) {
 
   if (!limitResult.allowed) {
     return NextResponse.json(
-      { 
+      {
         error: 'Has alcanzado el límite de adisos gratuitos. Por favor espera antes de crear otro.',
         retryAfter: Math.ceil((limitResult.resetTime - Date.now()) / 1000)
       },
-      { 
+      {
         status: 429,
         headers: {
           'Retry-After': Math.ceil((limitResult.resetTime - Date.now()) / 1000).toString(),
@@ -88,13 +90,13 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    
+
     // Validar y sanitizar entrada con zod
     const validationResult = createAdisoGratuitoSchema.safeParse(body);
-    
+
     if (!validationResult.success) {
       return NextResponse.json(
-        { 
+        {
           error: 'Datos de entrada inválidos',
           details: validationResult.error.issues.map(e => ({
             path: e.path.join('.'),
@@ -104,9 +106,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    
+
     const validatedData = validationResult.data;
-    
+
     // Sanitizar campos de texto
     const sanitizedData = {
       ...validatedData,
@@ -128,14 +130,14 @@ export async function POST(request: NextRequest) {
     };
 
     const adisoCreado = await createAdisoGratuitoInSupabase(nuevoAdiso);
-    
+
     return NextResponse.json(adisoCreado, { status: 201 });
   } catch (error: any) {
     console.error('Error al crear adiso gratuito:', error);
-    
+
     let errorMessage = 'Error al crear adiso gratuito';
     let statusCode = 500;
-    
+
     if (error?.message?.includes('políticas de seguridad') || error?.message?.includes('permission denied')) {
       errorMessage = 'Las políticas de seguridad no están configuradas. Ejecuta el SQL de seguridad en Supabase.';
       statusCode = 403;
@@ -143,7 +145,7 @@ export async function POST(request: NextRequest) {
       errorMessage = 'Error de conexión con Supabase. Verifica tu conexión y las credenciales.';
       statusCode = 503;
     }
-    
+
     return NextResponse.json(
       { error: errorMessage, details: error?.message },
       { status: statusCode }
