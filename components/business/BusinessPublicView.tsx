@@ -227,7 +227,7 @@ export default function BusinessPublicView({
                     onToggleLeftSidebar={() => {/* No left sidebar logic here yet */ }}
                     ubicacion="Perú"
                     onUbicacionClick={() => { }}
-                    seccionActiva="negocios"
+                    seccionActiva="negocio"
                     onSeccionChange={() => { }}
                 />
             </div>

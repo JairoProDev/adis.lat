@@ -1,305 +1,556 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { IconPlus, IconGrid, IconList, IconSearch, IconFilter, IconSparkles, IconPackage, IconArrowLeft, IconEye, IconChevronDown } from '@/components/Icons';
+import {
+    IconPlus, IconGrid, IconList, IconSearch, IconFilter, IconSparkles,
+    IconPackage, IconArrowLeft, IconEye, IconEdit, IconTrash,
+    IconCheck, IconX
+} from '@/components/Icons';
 import Header from '@/components/Header';
 import { useToast } from '@/hooks/useToast';
 import { ToastContainer } from '@/components/Toast';
 import { supabase } from '@/lib/supabase';
-import type { CatalogProduct, ProductFilters } from '@/types/catalog';
+import type { CatalogProduct } from '@/types/catalog';
 import AddProductModal from '@/components/catalog/AddProductModal';
 import { groupProducts, getFilterOptions, type GroupedProduct } from '@/lib/catalog/product-grouping';
 import { ProductEditor } from '@/components/business/ProductEditor';
-import { IconEdit, IconTrash } from '@/components/Icons';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type QuickFilter = 'all' | 'published' | 'draft' | 'no-image' | 'no-price' | 'incomplete';
+
+interface ProductHealth {
+    missingImage: boolean;
+    missingPrice: boolean;
+    missingCategory: boolean;
+    isDraft: boolean;
+    isIncomplete: boolean;
+    score: number; // 0-100
+}
+
+// ─── Health calculation ────────────────────────────────────────────────────────
+
+function getProductHealth(product: CatalogProduct): ProductHealth {
+    const missingImage = !product.images || product.images.length === 0;
+    const missingPrice = !product.price || product.price <= 0;
+    const missingCategory = !product.category || product.category.trim() === '';
+    const isDraft = product.status === 'draft';
+    const isIncomplete = missingImage || missingPrice || missingCategory;
+
+    let score = 100;
+    if (missingImage) score -= 35;
+    if (missingPrice) score -= 30;
+    if (missingCategory) score -= 20;
+    if (isDraft) score -= 15;
+
+    return { missingImage, missingPrice, missingCategory, isDraft, isIncomplete, score };
+}
+
+function getFirstImageUrl(product: CatalogProduct | GroupedProduct): string {
+    if ('allProducts' in product) {
+        // GroupedProduct
+        const first = product.allProducts[0];
+        if (first?.images && first.images.length > 0) {
+            const img = first.images[0];
+            return typeof img === 'string' ? img : img.url || '';
+        }
+        return product.baseImage || '';
+    }
+    // CatalogProduct
+    if (product.images && product.images.length > 0) {
+        const img = product.images[0];
+        return typeof img === 'string' ? img : img.url || '';
+    }
+    return '';
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function CatalogPage() {
     const router = useRouter();
     const { success, error: showError, toasts, removeToast } = useToast();
 
     const [products, setProducts] = useState<CatalogProduct[]>([]);
-    const [groupedProducts, setGroupedProducts] = useState<GroupedProduct[]>([]);
     const [loading, setLoading] = useState(true);
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [searchQuery, setSearchQuery] = useState('');
-    const [filters, setFilters] = useState<ProductFilters>({});
     const [businessProfileId, setBusinessProfileId] = useState<string | null>(null);
     const [userId, setUserId] = useState<string | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingProduct, setEditingProduct] = useState<CatalogProduct | null>(null);
     const [showEditModal, setShowEditModal] = useState(false);
 
-    // Advanced filters
+    // Filters
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
     const [selectedBrand, setSelectedBrand] = useState<string>('all');
-    const [selectedSpec, setSelectedSpec] = useState<string>('all');
-    const [filterOptions, setFilterOptions] = useState({ categories: [], brands: [], specs: [] });
+    const [filterOptions, setFilterOptions] = useState<{ categories: string[]; brands: string[] }>({ categories: [], brands: [] });
+    const [quickFilter, setQuickFilter] = useState<QuickFilter>('all');
+    const [showFilters, setShowFilters] = useState(false);
 
-    const [stats, setStats] = useState({
-        total: 0,
-        published: 0,
-        draft: 0,
-        views: 0
-    });
+    // Batch selection
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [isSelecting, setIsSelecting] = useState(false);
+    const [bulkLoading, setBulkLoading] = useState(false);
+    const [showBulkCategoryInput, setShowBulkCategoryInput] = useState(false);
+    const [bulkCategory, setBulkCategory] = useState('');
 
-    useEffect(() => {
-        loadBusinessProfile();
-    }, []);
+    // ── computed stats ──────────────────────────────────────────────────────
 
-    useEffect(() => {
-        if (businessProfileId) {
-            loadProducts();
+    const stats = useMemo(() => {
+        const total = products.length;
+        const published = products.filter(p => p.status === 'published').length;
+        const draft = products.filter(p => p.status === 'draft').length;
+        const noImage = products.filter(p => !p.images || p.images.length === 0).length;
+        const incomplete = products.filter(p => getProductHealth(p).isIncomplete).length;
+        return { total, published, draft, noImage, incomplete };
+    }, [products]);
+
+    // ── filtered products ───────────────────────────────────────────────────
+
+    const filteredProducts = useMemo(() => {
+        let list = products;
+
+        // Text search
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase();
+            list = list.filter(p =>
+                p.title?.toLowerCase().includes(q) ||
+                p.description?.toLowerCase().includes(q) ||
+                p.brand?.toLowerCase().includes(q) ||
+                p.category?.toLowerCase().includes(q)
+            );
         }
-    }, [businessProfileId, filters, searchQuery, selectedCategory, selectedBrand, selectedSpec]);
+
+        // Category / brand
+        if (selectedCategory !== 'all') list = list.filter(p => p.category === selectedCategory);
+        if (selectedBrand !== 'all') list = list.filter(p => p.brand === selectedBrand);
+
+        // Quick filter
+        switch (quickFilter) {
+            case 'published': list = list.filter(p => p.status === 'published'); break;
+            case 'draft': list = list.filter(p => p.status === 'draft'); break;
+            case 'no-image': list = list.filter(p => !p.images || p.images.length === 0); break;
+            case 'no-price': list = list.filter(p => !p.price || p.price <= 0); break;
+            case 'incomplete': list = list.filter(p => getProductHealth(p).isIncomplete); break;
+        }
+
+        return list;
+    }, [products, searchQuery, selectedCategory, selectedBrand, quickFilter]);
+
+    const groupedProducts = useMemo(() => groupProducts(filteredProducts), [filteredProducts]);
+
+    // ── data loading ────────────────────────────────────────────────────────
+
+    useEffect(() => { loadBusinessProfile(); }, []);
+
+    useEffect(() => {
+        if (filterOptions.categories.length === 0 && products.length > 0) {
+            const opts = getFilterOptions(products);
+            setFilterOptions(opts as any);
+        }
+    }, [products]);
 
     const loadBusinessProfile = async () => {
         try {
-            if (!supabase) throw new Error('Supabase no está configurado');
+            if (!supabase) throw new Error('Supabase no configurado');
             const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-                router.push('/auth/login');
-                return;
-            }
+            if (!user) { router.push('/auth/login'); return; }
 
-            if (!supabase) throw new Error('Supabase no está configurado');
             const { data: profile, error: profileError } = await supabase
                 .from('business_profiles')
-                .select('*')
+                .select('id')
                 .eq('user_id', user.id)
                 .maybeSingle();
 
-            if (profileError || !profile) {
-                router.push('/mi-negocio');
-                return;
-            }
+            if (profileError || !profile) { router.push('/mi-negocio'); return; }
 
             setUserId(user.id);
             setBusinessProfileId(profile.id);
+            await loadProducts(profile.id);
         } catch (err: any) {
             showError('Error al cargar perfil: ' + err.message);
         }
     };
 
-    const loadProducts = async () => {
+    const loadProducts = useCallback(async (profileId?: string) => {
+        const pid = profileId || businessProfileId;
+        if (!pid || !supabase) return;
         try {
             setLoading(true);
-
-            if (!supabase) throw new Error('Supabase no está configurado');
-            let query = supabase
+            const { data, error } = await supabase
                 .from('catalog_products')
                 .select('*')
-                .eq('business_profile_id', businessProfileId!);
-
-            if (searchQuery) {
-                query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
-            }
-
-            if (filters.status) {
-                query = query.eq('status', filters.status);
-            }
-
-            query = query.order('created_at', { ascending: false });
-
-            const { data, error } = await query;
+                .eq('business_profile_id', pid)
+                .order('created_at', { ascending: false });
 
             if (error) throw error;
-
             setProducts(data || []);
 
-            // Apply advanced filters
-            let filteredData = data || [];
-
-            if (selectedCategory !== 'all') {
-                filteredData = filteredData.filter(p => p.category === selectedCategory);
-            }
-
-            if (selectedBrand !== 'all') {
-                filteredData = filteredData.filter(p => p.brand === selectedBrand);
-            }
-
-            // Group products by variants
-            const grouped = groupProducts(filteredData);
-            setGroupedProducts(grouped);
-
-            // Extract filter options from all products
-            const options = getFilterOptions(data || []);
-            setFilterOptions(options as any);
-
-            // Calculate stats
-            const published = data?.filter(p => p.status === 'published').length || 0;
-            const draft = data?.filter(p => p.status === 'draft').length || 0;
-
-            setStats({
-                total: data?.length || 0,
-                published,
-                draft,
-                views: 0
-            });
-
+            const opts = getFilterOptions(data || []);
+            setFilterOptions(opts as any);
         } catch (err: any) {
             showError('Error al cargar productos: ' + err.message);
         } finally {
             setLoading(false);
         }
+    }, [businessProfileId]);
+
+    // ── batch operations ────────────────────────────────────────────────────
+
+    const toggleSelectAll = () => {
+        if (selectedIds.size === filteredProducts.length) {
+            setSelectedIds(new Set());
+        } else {
+            setSelectedIds(new Set(filteredProducts.map(p => p.id)));
+        }
     };
+
+    const toggleSelect = (id: string) => {
+        const next = new Set(selectedIds);
+        if (next.has(id)) next.delete(id); else next.add(id);
+        setSelectedIds(next);
+    };
+
+    const bulkPublish = async (status: 'published' | 'draft') => {
+        if (!supabase || selectedIds.size === 0) return;
+        setBulkLoading(true);
+        try {
+            const ids = Array.from(selectedIds);
+            const { error } = await supabase
+                .from('catalog_products')
+                .update({ status, updated_at: new Date().toISOString() })
+                .in('id', ids);
+            if (error) throw error;
+            success(`${ids.length} productos ${status === 'published' ? 'publicados' : 'guardados como borrador'}`);
+            setSelectedIds(new Set());
+            setIsSelecting(false);
+            await loadProducts();
+        } catch (err: any) {
+            showError('Error: ' + err.message);
+        } finally {
+            setBulkLoading(false);
+        }
+    };
+
+    const bulkDelete = async () => {
+        if (!supabase || selectedIds.size === 0) return;
+        if (!confirm(`¿Eliminar ${selectedIds.size} productos? Esta acción no se puede deshacer.`)) return;
+        setBulkLoading(true);
+        try {
+            const ids = Array.from(selectedIds);
+            const { error } = await supabase
+                .from('catalog_products')
+                .delete()
+                .in('id', ids);
+            if (error) throw error;
+            success(`${ids.length} productos eliminados`);
+            setSelectedIds(new Set());
+            setIsSelecting(false);
+            await loadProducts();
+        } catch (err: any) {
+            showError('Error: ' + err.message);
+        } finally {
+            setBulkLoading(false);
+        }
+    };
+
+    const quickPublishToggle = async (product: CatalogProduct) => {
+        if (!supabase) return;
+        const newStatus = product.status === 'published' ? 'draft' : 'published';
+        try {
+            const { error } = await supabase
+                .from('catalog_products')
+                .update({ status: newStatus, updated_at: new Date().toISOString() })
+                .eq('id', product.id);
+            if (error) throw error;
+            // Optimistic update
+            setProducts(prev => prev.map(p => p.id === product.id ? { ...p, status: newStatus } : p));
+        } catch (err: any) {
+            showError('Error: ' + err.message);
+        }
+    };
+
+    const bulkChangeCategory = async () => {
+        if (!supabase || selectedIds.size === 0 || !bulkCategory.trim()) return;
+        setBulkLoading(true);
+        try {
+            const ids = Array.from(selectedIds);
+            const { error } = await supabase
+                .from('catalog_products')
+                .update({ category: bulkCategory.trim(), updated_at: new Date().toISOString() })
+                .in('id', ids);
+            if (error) throw error;
+            success(`Categoría "${bulkCategory}" aplicada a ${ids.length} productos`);
+            setSelectedIds(new Set());
+            setIsSelecting(false);
+            setShowBulkCategoryInput(false);
+            setBulkCategory('');
+            await loadProducts();
+        } catch (err: any) {
+            showError('Error: ' + err.message);
+        } finally {
+            setBulkLoading(false);
+        }
+    };
+
+    const deleteProduct = async (id: string) => {
+        if (!supabase) return;
+        if (!confirm('¿Eliminar este producto?')) return;
+        try {
+            const { error } = await supabase.from('catalog_products').delete().eq('id', id);
+            if (error) throw error;
+            setProducts(prev => prev.filter(p => p.id !== id));
+            success('Producto eliminado');
+        } catch (err: any) {
+            showError('Error: ' + err.message);
+        }
+    };
+
+    // ── render ──────────────────────────────────────────────────────────────
+
+    const quickFilters: { id: QuickFilter; label: string; count?: number; color?: string }[] = [
+        { id: 'all', label: 'Todos', count: stats.total },
+        { id: 'published', label: 'Publicados', count: stats.published, color: 'green' },
+        { id: 'draft', label: 'Borradores', count: stats.draft, color: 'yellow' },
+        { id: 'incomplete', label: 'Incompletos', count: stats.incomplete, color: 'red' },
+        { id: 'no-image', label: 'Sin imagen', count: stats.noImage, color: 'orange' },
+        { id: 'no-price', label: 'Sin precio' },
+    ];
 
     return (
         <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--bg-secondary)' }}>
             <Header />
             <ToastContainer toasts={toasts} removeToast={removeToast} />
 
-            <div className="flex-1 overflow-y-auto px-4 py-4 md:py-6">
+            <div className="flex-1 px-3 py-4 md:px-6 md:py-6">
                 <div className="max-w-7xl mx-auto">
-                    {/* Header Section */}
-                    <div className="mb-6">
+
+                    {/* ── Page Header ─────────────────────────────────────── */}
+                    <div className="mb-5">
                         <Link
                             href="/mi-negocio"
-                            className="inline-flex items-center gap-2 text-sm font-bold mb-3 transition-opacity hover:opacity-80"
+                            className="inline-flex items-center gap-1.5 text-xs font-bold mb-3 opacity-70 hover:opacity-100 transition-opacity"
                             style={{ color: 'var(--brand-blue)' }}
                         >
                             <IconArrowLeft size={12} />
-                            Volver al Editor de Negocio
+                            Mi negocio
                         </Link>
 
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="flex items-start justify-between gap-3">
                             <div>
-                                <h1 className="text-3xl md:text-4xl font-black tracking-tight" style={{ color: 'var(--text-primary)' }}>
-                                    📦 Mi Catálogo
+                                <h1 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                                    Mi Catálogo
                                 </h1>
-                                <p style={{ color: 'var(--text-secondary)' }} className="text-sm md:text-base mt-1">
-                                    Gestiona tus productos con inteligencia artificial
+                                <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+                                    {stats.total} productos
+                                    {stats.incomplete > 0 && (
+                                        <span className="ml-2 text-amber-600 font-semibold">
+                                            · {stats.incomplete} necesitan atención
+                                        </span>
+                                    )}
                                 </p>
                             </div>
 
-                            <button
-                                onClick={() => setShowAddModal(true)}
-                                className="flex items-center justify-center gap-2 px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-bold text-white shadow-lg hover:shadow-xl transition-all text-sm md:text-base"
-                                style={{ backgroundColor: 'var(--brand-blue)' }}
-                            >
-                                <IconPlus size={18} />
-                                <span className="hidden sm:inline">Agregar Producto</span>
-                                <span className="sm:hidden">Agregar</span>
-                            </button>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                                <Link
+                                    href="/mi-negocio/catalogo/importar"
+                                    className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold border-2 transition-all hover:shadow-sm"
+                                    style={{
+                                        borderColor: 'var(--brand-blue)',
+                                        color: 'var(--brand-blue)',
+                                        backgroundColor: 'transparent'
+                                    }}
+                                >
+                                    <IconSparkles size={15} />
+                                    Importar
+                                </Link>
+                                <button
+                                    onClick={() => setShowAddModal(true)}
+                                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold text-white shadow-md hover:shadow-lg transition-all"
+                                    style={{ backgroundColor: 'var(--brand-blue)' }}
+                                >
+                                    <IconPlus size={16} />
+                                    <span className="hidden sm:inline">Agregar</span>
+                                    <span className="sm:hidden">+</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Stats Cards */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
-                        <StatCard
-                            label="Total"
-                            value={stats.total}
-                            icon={<IconPackage size={20} />}
-                            color="blue"
-                        />
-                        <StatCard
-                            label="Publicados"
-                            value={stats.published}
-                            icon={<IconGrid size={20} />}
-                            color="green"
-                        />
-                        <StatCard
-                            label="Borradores"
-                            value={stats.draft}
-                            icon={<IconFilter size={20} />}
-                            color="yellow"
-                        />
-                        <StatCard
-                            label="Vistas"
-                            value={stats.views}
-                            icon={<IconEye size={20} />}
-                            color="purple"
-                        />
+                    {/* ── Attention Banner ─────────────────────────────────── */}
+                    {stats.incomplete > 0 && quickFilter !== 'incomplete' && (
+                        <button
+                            onClick={() => setQuickFilter('incomplete')}
+                            className="w-full mb-4 flex items-center gap-3 p-3 rounded-xl border-2 border-amber-200 bg-amber-50 text-left hover:border-amber-300 transition-colors"
+                        >
+                            <span className="text-xl">⚠️</span>
+                            <div className="flex-1">
+                                <p className="font-bold text-amber-800 text-sm">
+                                    {stats.incomplete} productos necesitan atención
+                                </p>
+                                <p className="text-amber-600 text-xs">
+                                    Sin imagen, sin precio o sin categoría — toca para verlos
+                                </p>
+                            </div>
+                            <span className="text-amber-500 text-xs font-bold">Ver →</span>
+                        </button>
+                    )}
+
+                    {/* ── Quick filter chips ───────────────────────────────── */}
+                    <div className="flex gap-2 overflow-x-auto pb-1 mb-4 no-scrollbar">
+                        {quickFilters.map(f => {
+                            const isActive = quickFilter === f.id;
+                            const colorMap: Record<string, string> = {
+                                green: isActive ? '#16a34a' : '#16a34a22',
+                                yellow: isActive ? '#ca8a04' : '#ca8a0422',
+                                red: isActive ? '#dc2626' : '#dc262622',
+                                orange: isActive ? '#ea580c' : '#ea580c22',
+                            };
+                            return (
+                                <button
+                                    key={f.id}
+                                    onClick={() => setQuickFilter(f.id)}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap flex-shrink-0 transition-all"
+                                    style={{
+                                        backgroundColor: isActive
+                                            ? (f.color ? colorMap[f.color] : 'var(--brand-blue)')
+                                            : (f.color ? colorMap[f.color] : 'var(--bg-primary)'),
+                                        color: isActive
+                                            ? (f.color ? '#fff' : '#fff')
+                                            : 'var(--text-secondary)',
+                                        border: `2px solid ${isActive
+                                            ? (f.color ? colorMap[f.color] : 'var(--brand-blue)')
+                                            : 'var(--border-color)'}`,
+                                    }}
+                                >
+                                    {f.label}
+                                    {f.count !== undefined && (
+                                        <span className="opacity-80">({f.count})</span>
+                                    )}
+                                </button>
+                            );
+                        })}
                     </div>
 
-                    {/* Search and Filters */}
-                    <div className="space-y-4 mb-6">
-                        {/* Search Bar */}
-                        <div className="relative">
-                            <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2" size={20} color="var(--text-tertiary)" />
+                    {/* ── Search + Controls ────────────────────────────────── */}
+                    <div className="flex gap-2 mb-3">
+                        <div className="relative flex-1">
+                            <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2" size={16} color="var(--text-tertiary)" />
                             <input
                                 type="text"
                                 placeholder="Buscar productos..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-10 pr-4 py-3 bg-white border-2 rounded-2xl outline-none transition-all"
+                                className="w-full pl-9 pr-4 py-2.5 rounded-xl border-2 outline-none text-sm transition-all bg-white"
                                 style={{ borderColor: 'var(--border-color)' }}
                             />
                         </div>
 
-                        {/* Filters Row */}
-                        <div className="flex flex-col sm:flex-row gap-2">
-                            {/* Category Filter */}
-                            <select
-                                value={selectedCategory}
-                                onChange={(e) => setSelectedCategory(e.target.value)}
-                                className="flex-1 px-3 py-2 bg-white border-2 rounded-xl outline-none text-sm"
-                                style={{ borderColor: 'var(--border-color)' }}
-                            >
-                                <option value="all">Todas las categorías</option>
-                                {filterOptions.categories.map(cat => (
-                                    <option key={cat} value={cat}>{cat}</option>
-                                ))}
-                            </select>
+                        <button
+                            onClick={() => setShowFilters(!showFilters)}
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 text-sm font-semibold transition-all bg-white"
+                            style={{
+                                borderColor: showFilters ? 'var(--brand-blue)' : 'var(--border-color)',
+                                color: showFilters ? 'var(--brand-blue)' : 'var(--text-secondary)'
+                            }}
+                        >
+                            <IconFilter size={15} />
+                            <span className="hidden sm:inline">Filtros</span>
+                        </button>
 
-                            {/* Brand Filter */}
-                            <select
-                                value={selectedBrand}
-                                onChange={(e) => setSelectedBrand(e.target.value)}
-                                className="flex-1 px-3 py-2 bg-white border-2 rounded-xl outline-none text-sm"
-                                style={{ borderColor: 'var(--border-color)' }}
+                        <div className="flex bg-white border-2 rounded-xl overflow-hidden" style={{ borderColor: 'var(--border-color)' }}>
+                            <button
+                                onClick={() => setViewMode('grid')}
+                                className="px-2.5 py-2 transition-colors"
+                                style={{ backgroundColor: viewMode === 'grid' ? 'var(--brand-blue)' : 'transparent', color: viewMode === 'grid' ? '#fff' : 'var(--text-secondary)' }}
                             >
-                                <option value="all">Todas las marcas</option>
-                                {filterOptions.brands.map(brand => (
-                                    <option key={brand} value={brand}>{brand}</option>
-                                ))}
-                            </select>
-
-                            {/* View Mode Toggle */}
-                            <div className="flex bg-slate-100 p-1 rounded-xl">
-                                <button
-                                    onClick={() => setViewMode('grid')}
-                                    className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm' : ''}`}
-                                    style={{ color: viewMode === 'grid' ? 'var(--brand-blue)' : 'var(--text-secondary)' }}
-                                >
-                                    <IconGrid size={18} />
-                                </button>
-                                <button
-                                    onClick={() => setViewMode('list')}
-                                    className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white shadow-sm' : ''}`}
-                                    style={{ color: viewMode === 'list' ? 'var(--brand-blue)' : 'var(--text-secondary)' }}
-                                >
-                                    <IconList size={18} />
-                                </button>
-                            </div>
+                                <IconGrid size={16} />
+                            </button>
+                            <button
+                                onClick={() => setViewMode('list')}
+                                className="px-2.5 py-2 transition-colors"
+                                style={{ backgroundColor: viewMode === 'list' ? 'var(--brand-blue)' : 'transparent', color: viewMode === 'list' ? '#fff' : 'var(--text-secondary)' }}
+                            >
+                                <IconList size={16} />
+                            </button>
                         </div>
                     </div>
 
-                    {/* Products Grid/List */}
-                    {loading ? (
-                        <div className="flex items-center justify-center py-20">
-                            <div className="text-center">
-                                <div className="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin mx-auto mb-4" style={{ borderColor: 'var(--brand-blue)' }}></div>
-                                <p style={{ color: 'var(--text-secondary)' }}>Cargando productos...</p>
-                            </div>
+                    {/* ── Expanded Filters ─────────────────────────────────── */}
+                    {showFilters && (
+                        <div className="flex flex-col sm:flex-row gap-2 mb-3 p-3 rounded-xl bg-white border-2" style={{ borderColor: 'var(--border-color)' }}>
+                            <select
+                                value={selectedCategory}
+                                onChange={(e) => setSelectedCategory(e.target.value)}
+                                className="flex-1 px-3 py-2 border rounded-lg text-sm outline-none"
+                                style={{ borderColor: 'var(--border-color)' }}
+                            >
+                                <option value="all">Todas las categorías</option>
+                                {filterOptions.categories.map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                            <select
+                                value={selectedBrand}
+                                onChange={(e) => setSelectedBrand(e.target.value)}
+                                className="flex-1 px-3 py-2 border rounded-lg text-sm outline-none"
+                                style={{ borderColor: 'var(--border-color)' }}
+                            >
+                                <option value="all">Todas las marcas</option>
+                                {filterOptions.brands.map(b => <option key={b} value={b}>{b}</option>)}
+                            </select>
                         </div>
+                    )}
+
+                    {/* ── Batch controls ───────────────────────────────────── */}
+                    <div className="flex items-center justify-between mb-3">
+                        <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                            {filteredProducts.length} resultado{filteredProducts.length !== 1 ? 's' : ''}
+                        </p>
+                        <button
+                            onClick={() => {
+                                setIsSelecting(!isSelecting);
+                                if (isSelecting) setSelectedIds(new Set());
+                            }}
+                            className="text-xs font-bold transition-colors"
+                            style={{ color: isSelecting ? 'var(--error)' : 'var(--brand-blue)' }}
+                        >
+                            {isSelecting ? 'Cancelar selección' : 'Seleccionar varios'}
+                        </button>
+                    </div>
+
+                    {/* ── Products ─────────────────────────────────────────── */}
+                    {loading ? (
+                        <LoadingGrid />
                     ) : groupedProducts.length === 0 ? (
-                        <EmptyState onAddClick={() => setShowAddModal(true)} />
+                        <EmptyState
+                            hasProducts={products.length > 0}
+                            quickFilter={quickFilter}
+                            onAddClick={() => setShowAddModal(true)}
+                            onClearFilter={() => { setQuickFilter('all'); setSearchQuery(''); }}
+                        />
                     ) : (
-                        <div className={viewMode === 'grid'
-                            ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
-                            : 'space-y-3'
+                        <div className={
+                            viewMode === 'grid'
+                                ? 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3'
+                                : 'space-y-2'
                         }>
                             {groupedProducts.map(group => (
-                                <GroupedProductCard
+                                <ProductCard
                                     key={group.baseId}
                                     group={group}
                                     viewMode={viewMode}
-                                    onRefresh={loadProducts}
+                                    isSelecting={isSelecting}
+                                    isSelected={group.allProducts.some(p => selectedIds.has(p.id))}
+                                    onToggleSelect={() => {
+                                        group.allProducts.forEach(p => toggleSelect(p.id));
+                                    }}
                                     onEdit={(product) => {
                                         setEditingProduct(product);
                                         setShowEditModal(true);
                                     }}
+                                    onDelete={(id) => deleteProduct(id)}
+                                    onTogglePublish={(product) => quickPublishToggle(product)}
                                 />
                             ))}
                         </div>
@@ -307,7 +558,78 @@ export default function CatalogPage() {
                 </div>
             </div>
 
-            {/* Add Product Modal */}
+            {/* ── Floating batch actions bar ───────────────────────────────── */}
+            {isSelecting && selectedIds.size > 0 && (
+                <div className="fixed bottom-20 left-0 right-0 flex justify-center px-4 z-50">
+                    <div
+                        className="w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden"
+                        style={{ backgroundColor: 'var(--text-primary)', color: 'var(--bg-primary)' }}
+                    >
+                        <div className="flex items-center gap-2 px-4 py-3">
+                            <span className="text-sm font-bold flex-shrink-0">{selectedIds.size} sel.</span>
+                            <button
+                                onClick={() => bulkPublish('published')}
+                                disabled={bulkLoading}
+                                className="flex items-center gap-1 px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-bold hover:bg-green-600 transition-colors disabled:opacity-50"
+                            >
+                                <IconEye size={13} />
+                                Publicar
+                            </button>
+                            <button
+                                onClick={() => bulkPublish('draft')}
+                                disabled={bulkLoading}
+                                className="flex items-center gap-1 px-2 py-1.5 bg-yellow-500 text-white rounded-lg text-xs font-bold hover:bg-yellow-600 transition-colors disabled:opacity-50"
+                            >
+                                Borrador
+                            </button>
+                            <button
+                                onClick={() => setShowBulkCategoryInput(!showBulkCategoryInput)}
+                                disabled={bulkLoading}
+                                className="flex items-center gap-1 px-2 py-1.5 bg-purple-500 text-white rounded-lg text-xs font-bold hover:bg-purple-600 transition-colors disabled:opacity-50"
+                            >
+                                Categoría
+                            </button>
+                            <button
+                                onClick={bulkDelete}
+                                disabled={bulkLoading}
+                                className="flex items-center gap-1 px-2 py-1.5 bg-red-500 text-white rounded-lg text-xs font-bold hover:bg-red-600 transition-colors disabled:opacity-50"
+                            >
+                                <IconTrash size={13} />
+                            </button>
+                            <button
+                                onClick={toggleSelectAll}
+                                className="text-[10px] opacity-60 hover:opacity-100 transition-opacity ml-auto flex-shrink-0"
+                            >
+                                {selectedIds.size === filteredProducts.length ? 'Desel. todo' : 'Todo'}
+                            </button>
+                        </div>
+
+                        {/* Category input row */}
+                        {showBulkCategoryInput && (
+                            <div className="flex items-center gap-2 px-4 pb-3 border-t border-white/20 pt-2">
+                                <input
+                                    type="text"
+                                    value={bulkCategory}
+                                    onChange={e => setBulkCategory(e.target.value)}
+                                    onKeyDown={e => e.key === 'Enter' && bulkChangeCategory()}
+                                    placeholder="Nueva categoría para los seleccionados..."
+                                    className="flex-1 px-3 py-1.5 rounded-lg text-sm bg-white/10 text-white placeholder:text-white/50 outline-none border border-white/20"
+                                    autoFocus
+                                />
+                                <button
+                                    onClick={bulkChangeCategory}
+                                    disabled={!bulkCategory.trim() || bulkLoading}
+                                    className="px-3 py-1.5 bg-purple-500 text-white rounded-lg text-xs font-bold disabled:opacity-50 hover:bg-purple-600 transition-colors"
+                                >
+                                    Aplicar
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* ── Modals ───────────────────────────────────────────────────── */}
             {businessProfileId && (
                 <AddProductModal
                     isOpen={showAddModal}
@@ -317,14 +639,13 @@ export default function CatalogPage() {
                 />
             )}
 
-            {/* Edit Product Modal */}
             {showEditModal && editingProduct && businessProfileId && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
                     <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                         <ProductEditor
                             product={editingProduct}
                             businessProfileId={businessProfileId}
-                            userId={userId || ""}
+                            userId={userId || ''}
                             onSave={() => {
                                 setShowEditModal(false);
                                 setEditingProduct(null);
@@ -342,184 +663,200 @@ export default function CatalogPage() {
     );
 }
 
-// Stat Card Component
-interface StatCardProps {
-    label: string;
-    value: number;
-    icon: React.ReactNode;
-    color: 'blue' | 'green' | 'yellow' | 'purple';
-}
+// ─── Product Card ─────────────────────────────────────────────────────────────
 
-function StatCard({ label, value, icon, color }: StatCardProps) {
-    const colorMap = {
-        blue: { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-600' },
-        green: { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-600' },
-        yellow: { bg: 'bg-yellow-50', border: 'border-yellow-200', text: 'text-yellow-600' },
-        purple: { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-600' }
-    };
-
-    const colors = colorMap[color];
-
-    return (
-        <div className={`p-4 rounded-2xl border-2 ${colors.bg} ${colors.border}`}>
-            <div className="flex items-center gap-3">
-                <div className={`${colors.text}`}>
-                    {icon}
-                </div>
-                <div className="flex-1">
-                    <div className={`text-2xl font-black ${colors.text}`}>{value}</div>
-                    <div className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
-                        {label}
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// Empty State Component
-function EmptyState({ onAddClick }: { onAddClick: () => void }) {
-    return (
-        <div className="text-center py-20">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-blue-50 flex items-center justify-center">
-                <IconPackage size={40} color="var(--brand-blue)" />
-            </div>
-            <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
-                Tu catálogo está vacío
-            </h3>
-            <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>
-                Importa tus productos desde Excel o añádelos manualmente con IA
-            </p>
-            <button
-                onClick={onAddClick}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white shadow-lg hover:shadow-xl transition-all"
-                style={{ backgroundColor: 'var(--brand-blue)' }}
-            >
-                <IconSparkles size={18} />
-                Agregar Primer Producto
-            </button>
-        </div>
-    );
-}
-
-// Grouped Product Card Component
-interface GroupedProductCardProps {
+interface ProductCardProps {
     group: GroupedProduct;
     viewMode: 'grid' | 'list';
-    onRefresh: () => void;
-    onEdit: (product: CatalogProduct) => void;
+    isSelecting: boolean;
+    isSelected: boolean;
+    onToggleSelect: () => void;
+    onEdit: (p: CatalogProduct) => void;
+    onDelete: (id: string) => void;
+    onTogglePublish: (p: CatalogProduct) => void;
 }
 
-function GroupedProductCard({ group, viewMode, onRefresh, onEdit }: GroupedProductCardProps) {
-    const [selectedVariant, setSelectedVariant] = useState(0);
-    const currentVariant = group.variants[selectedVariant];
-    const imageUrl = currentVariant.images?.[0]?.url || group.baseImage || '/placeholder-product.png';
+function ProductCard({ group, viewMode, isSelecting, isSelected, onToggleSelect, onEdit, onDelete, onTogglePublish }: ProductCardProps) {
+    const [variantIdx, setVariantIdx] = useState(0);
+    const currentProduct = group.allProducts[variantIdx] || group.allProducts[0];
+    const health = getProductHealth(currentProduct);
+    const imageUrl = getFirstImageUrl(group);
+    const price = group.variants[variantIdx]?.price || currentProduct.price;
+    const isPublished = currentProduct.status === 'published';
 
     if (viewMode === 'list') {
         return (
-            <div className="bg-white rounded-xl p-3 flex items-center gap-3 border-2 hover:shadow-md transition-all" style={{ borderColor: 'var(--border-color)' }}>
-                <img
-                    src={imageUrl}
-                    alt={group.baseName}
-                    className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
-                />
-                <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-sm truncate" style={{ color: 'var(--text-primary)' }}>{group.baseName}</h3>
-                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                        {group.brand && <span className="font-semibold">{group.brand}</span>}
-                        {group.brand && group.category && <span> • </span>}
-                        {group.category}
-                    </p>
-                </div>
-                {group.variants.length > 1 && (
-                    <select
-                        value={selectedVariant}
-                        onChange={(e) => setSelectedVariant(Number(e.target.value))}
-                        className="px-2 py-1 text-xs border rounded-lg outline-none"
-                        style={{ borderColor: 'var(--border-color)' }}
+            <div
+                className="bg-white rounded-xl px-3 py-2.5 flex items-center gap-3 border-2 hover:shadow-sm transition-all"
+                style={{ borderColor: isSelected ? 'var(--brand-blue)' : 'var(--border-color)' }}
+            >
+                {isSelecting && (
+                    <button
+                        onClick={onToggleSelect}
+                        className="w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-colors"
+                        style={{
+                            borderColor: isSelected ? 'var(--brand-blue)' : 'var(--border-color)',
+                            backgroundColor: isSelected ? 'var(--brand-blue)' : 'transparent'
+                        }}
                     >
-                        {group.variants.map((variant, idx) => (
-                            <option key={variant.id} value={idx}>
-                                {variant.specs}
-                            </option>
-                        ))}
-                    </select>
+                        {isSelected && <IconCheck size={10} color="#fff" />}
+                    </button>
                 )}
-                <p className="text-sm font-bold whitespace-nowrap" style={{ color: 'var(--brand-blue)' }}>
-                    S/ {currentVariant.price.toFixed(2)}
-                </p>
-                <button
-                    onClick={() => onEdit(currentVariant as any)}
-                    className="p-2 text-[var(--brand-blue)] hover:bg-sky-50 rounded-lg transition-colors"
-                >
-                    <IconEdit size={16} />
-                </button>
+
+                <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-slate-100">
+                    {imageUrl ? (
+                        <img src={imageUrl} alt={group.baseName} className="w-full h-full object-cover" />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                            <IconPackage size={20} color="var(--text-tertiary)" />
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                        <h3 className="font-semibold text-sm truncate" style={{ color: 'var(--text-primary)' }}>
+                            {group.baseName}
+                        </h3>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                        {group.category && (
+                            <span className="text-xs px-1.5 py-0.5 rounded-md bg-slate-100 font-medium" style={{ color: 'var(--text-secondary)' }}>
+                                {group.category}
+                            </span>
+                        )}
+                        {health.missingImage && <HealthTag label="Sin foto" color="orange" />}
+                        {health.missingPrice && <HealthTag label="Sin precio" color="red" />}
+                        {health.missingCategory && <HealthTag label="Sin cat." color="yellow" />}
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2 flex-shrink-0">
+                    {price > 0 && (
+                        <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
+                            S/{price.toFixed(2)}
+                        </span>
+                    )}
+                    <button
+                        onClick={() => onTogglePublish(currentProduct)}
+                        className="text-xs px-2 py-1 rounded-lg font-bold transition-colors"
+                        style={{
+                            backgroundColor: isPublished ? '#dcfce7' : '#fef9c3',
+                            color: isPublished ? '#16a34a' : '#92400e'
+                        }}
+                    >
+                        {isPublished ? 'Visible' : 'Borrador'}
+                    </button>
+                    <button
+                        onClick={() => onEdit(currentProduct)}
+                        className="p-1.5 rounded-lg transition-colors hover:bg-sky-50"
+                        style={{ color: 'var(--brand-blue)' }}
+                    >
+                        <IconEdit size={15} />
+                    </button>
+                    <button
+                        onClick={() => onDelete(currentProduct.id)}
+                        className="p-1.5 rounded-lg transition-colors hover:bg-red-50"
+                        style={{ color: '#ef4444' }}
+                    >
+                        <IconTrash size={15} />
+                    </button>
+                </div>
             </div>
         );
     }
 
+    // Grid mode
     return (
-        <div className="bg-white rounded-xl overflow-hidden border-2 hover:shadow-lg transition-all group" style={{ borderColor: 'var(--border-color)' }}>
-            <div className="relative aspect-square">
-                <img
-                    src={imageUrl}
-                    alt={group.baseName}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
+        <div
+            className="bg-white rounded-xl overflow-hidden border-2 hover:shadow-md transition-all flex flex-col"
+            style={{ borderColor: isSelected ? 'var(--brand-blue)' : health.isIncomplete ? '#fcd34d' : 'var(--border-color)' }}
+        >
+            {/* Image area */}
+            <div className="relative aspect-square bg-slate-100">
+                {imageUrl ? (
+                    <img src={imageUrl} alt={group.baseName} className="w-full h-full object-cover" />
+                ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-1">
+                        <IconPackage size={32} color="var(--text-tertiary)" />
+                        <span className="text-xs font-semibold text-amber-600">Sin foto</span>
+                    </div>
+                )}
+
+                {/* Select checkbox */}
+                {isSelecting && (
+                    <button
+                        onClick={onToggleSelect}
+                        className="absolute top-2 left-2 w-6 h-6 rounded-lg border-2 flex items-center justify-center shadow-sm transition-colors"
+                        style={{
+                            borderColor: isSelected ? 'var(--brand-blue)' : '#fff',
+                            backgroundColor: isSelected ? 'var(--brand-blue)' : 'rgba(255,255,255,0.9)'
+                        }}
+                    >
+                        {isSelected && <IconCheck size={12} color="#fff" />}
+                    </button>
+                )}
+
+                {/* Status badge */}
+                <div className="absolute top-2 right-2">
+                    <button
+                        onClick={() => onTogglePublish(currentProduct)}
+                        className="text-[10px] font-bold px-1.5 py-0.5 rounded-md shadow-sm transition-all hover:scale-105"
+                        style={{
+                            backgroundColor: isPublished ? '#16a34a' : '#6b7280',
+                            color: '#fff'
+                        }}
+                    >
+                        {isPublished ? '✓ Visible' : 'Borrador'}
+                    </button>
+                </div>
+
+                {/* Variants badge */}
                 {group.variants.length > 1 && (
-                    <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-xs font-bold" style={{ color: 'var(--brand-blue)' }}>
+                    <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm px-1.5 py-0.5 rounded-md text-[10px] font-bold" style={{ color: 'var(--brand-blue)' }}>
                         {group.variants.length} variantes
                     </div>
                 )}
             </div>
-            <div className="p-3">
-                <h3 className="font-bold text-sm mb-1 line-clamp-2" style={{ color: 'var(--text-primary)' }}>
+
+            {/* Content */}
+            <div className="p-2.5 flex flex-col gap-1.5 flex-1">
+                <h3 className="font-semibold text-xs leading-tight line-clamp-2" style={{ color: 'var(--text-primary)' }}>
                     {group.baseName}
                 </h3>
-                {group.brand && (
-                    <p className="text-xs font-semibold mb-2" style={{ color: 'var(--text-secondary)' }}>
-                        {group.brand}
-                    </p>
+
+                {/* Category */}
+                {group.category && (
+                    <span className="text-[10px] font-semibold truncate" style={{ color: 'var(--text-tertiary)' }}>
+                        {group.category}
+                        {group.brand && ` · ${group.brand}`}
+                    </span>
                 )}
 
-                {/* Variant Selector */}
-                {group.variants.length > 1 ? (
-                    <div className="mb-2">
-                        <select
-                            value={selectedVariant}
-                            onChange={(e) => setSelectedVariant(Number(e.target.value))}
-                            className="w-full px-2 py-1.5 text-xs border-2 rounded-lg outline-none font-medium"
-                            style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
-                        >
-                            {group.variants.map((variant, idx) => (
-                                <option key={variant.id} value={idx}>
-                                    {variant.specs}
-                                </option>
-                            ))}
-                        </select>
+                {/* Health tags */}
+                {health.isIncomplete && (
+                    <div className="flex flex-wrap gap-1">
+                        {health.missingImage && <HealthTag label="Sin foto" color="orange" />}
+                        {health.missingPrice && <HealthTag label="Sin precio" color="red" />}
+                        {health.missingCategory && <HealthTag label="Sin categoría" color="yellow" />}
                     </div>
-                ) : (
-                    <p className="text-xs mb-2" style={{ color: 'var(--text-secondary)' }}>
-                        {currentVariant.specs}
-                    </p>
                 )}
 
-                <div className="flex items-center justify-between">
-                    <p className="text-lg font-black" style={{ color: 'var(--brand-blue)' }}>
-                        S/ {currentVariant.price.toFixed(2)}
-                    </p>
-                    {currentVariant.stock !== undefined && (
-                        <p className="text-xs" style={{ color: currentVariant.stock > 0 ? 'var(--success)' : 'var(--error)' }}>
-                            {currentVariant.stock > 0 ? `Stock: ${currentVariant.stock}` : 'Sin stock'}
-                        </p>
+                {/* Price */}
+                <div className="mt-auto pt-1.5 flex items-center justify-between border-t border-slate-50">
+                    {price > 0 ? (
+                        <span className="text-sm font-black" style={{ color: 'var(--brand-blue)' }}>
+                            S/ {price.toFixed(2)}
+                        </span>
+                    ) : (
+                        <span className="text-xs text-red-400 font-semibold">Sin precio</span>
                     )}
-                </div>
-                <div className="mt-3 pt-3 border-t border-slate-50 flex gap-2">
                     <button
-                        onClick={() => onEdit(currentVariant as any)}
-                        className="flex-1 flex items-center justify-center gap-2 py-2 bg-sky-50 text-[var(--brand-blue)] rounded-lg font-bold text-xs hover:bg-sky-100 transition-colors"
+                        onClick={() => onEdit(currentProduct)}
+                        className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-lg transition-colors"
+                        style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--brand-blue)' }}
                     >
-                        <IconEdit size={14} />
+                        <IconEdit size={11} />
                         Editar
                     </button>
                 </div>
@@ -528,19 +865,101 @@ function GroupedProductCard({ group, viewMode, onRefresh, onEdit }: GroupedProdu
     );
 }
 
-// Status Badge Component
-function StatusBadge({ status }: { status: string }) {
-    const statusMap: Record<string, { bg: string; text: string; label: string }> = {
-        published: { bg: 'bg-green-100', text: 'text-green-700', label: 'Publicado' },
-        draft: { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Borrador' },
-        archived: { bg: 'bg-gray-100', text: 'text-gray-700', label: 'Archivado' }
-    };
+// ─── Health Tag ───────────────────────────────────────────────────────────────
 
-    const config = statusMap[status] || statusMap.draft;
+function HealthTag({ label, color }: { label: string; color: 'red' | 'orange' | 'yellow' }) {
+    const colorMap = {
+        red: { bg: '#fee2e2', text: '#dc2626' },
+        orange: { bg: '#ffedd5', text: '#ea580c' },
+        yellow: { bg: '#fef9c3', text: '#92400e' },
+    };
+    const c = colorMap[color];
+    return (
+        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md" style={{ backgroundColor: c.bg, color: c.text }}>
+            {label}
+        </span>
+    );
+}
+
+// ─── Loading skeleton ─────────────────────────────────────────────────────────
+
+function LoadingGrid() {
+    return (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+            {Array.from({ length: 10 }).map((_, i) => (
+                <div key={i} className="bg-white rounded-xl overflow-hidden border-2 border-slate-100 animate-pulse">
+                    <div className="aspect-square bg-slate-200" />
+                    <div className="p-2.5 space-y-2">
+                        <div className="h-3 bg-slate-200 rounded w-3/4" />
+                        <div className="h-3 bg-slate-200 rounded w-1/2" />
+                        <div className="h-4 bg-slate-200 rounded w-1/3" />
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+}
+
+// ─── Empty State ──────────────────────────────────────────────────────────────
+
+function EmptyState({ hasProducts, quickFilter, onAddClick, onClearFilter }: {
+    hasProducts: boolean;
+    quickFilter: QuickFilter;
+    onAddClick: () => void;
+    onClearFilter: () => void;
+}) {
+    if (hasProducts && quickFilter !== 'all') {
+        return (
+            <div className="text-center py-16">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 flex items-center justify-center">
+                    <IconFilter size={28} color="var(--text-tertiary)" />
+                </div>
+                <h3 className="font-bold text-lg mb-1" style={{ color: 'var(--text-primary)' }}>
+                    Ningún producto aquí
+                </h3>
+                <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+                    No hay productos que coincidan con este filtro.
+                </p>
+                <button
+                    onClick={onClearFilter}
+                    className="px-4 py-2 rounded-xl font-bold text-sm text-white"
+                    style={{ backgroundColor: 'var(--brand-blue)' }}
+                >
+                    Ver todos los productos
+                </button>
+            </div>
+        );
+    }
 
     return (
-        <span className={`${config.bg} ${config.text} px-2 py-1 rounded-lg text-xs font-bold`}>
-            {config.label}
-        </span>
+        <div className="text-center py-16">
+            <div className="w-20 h-20 mx-auto mb-5 rounded-full bg-blue-50 flex items-center justify-center">
+                <IconPackage size={36} color="var(--brand-blue)" />
+            </div>
+            <h3 className="font-bold text-xl mb-2" style={{ color: 'var(--text-primary)' }}>
+                Tu catálogo está vacío
+            </h3>
+            <p className="text-sm mb-6 max-w-xs mx-auto" style={{ color: 'var(--text-secondary)' }}>
+                Importa tus productos desde Excel, toma una foto o agrégalos uno a uno.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link
+                    href="/mi-negocio/catalogo/importar"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm border-2 transition-all"
+                    style={{ borderColor: 'var(--brand-blue)', color: 'var(--brand-blue)' }}
+                >
+                    <IconSparkles size={16} />
+                    Importar desde Excel
+                </Link>
+                <button
+                    onClick={onAddClick}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-white"
+                    style={{ backgroundColor: 'var(--brand-blue)' }}
+                >
+                    <IconPlus size={16} />
+                    Agregar producto
+                </button>
+            </div>
+        </div>
     );
 }

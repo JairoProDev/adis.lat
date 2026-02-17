@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { IconBox, IconImage, IconTrash, IconCheck, IconX } from '@/components/Icons';
+import { IconBox, IconImage, IconTrash, IconCheck, IconX, IconEye } from '@/components/Icons';
 import { uploadProductImage, updateCatalogProduct, createCatalogProduct } from '@/lib/business';
 import { useToast } from '@/hooks/useToast';
 
@@ -14,246 +14,378 @@ interface ProductEditorProps {
     onCancel: () => void;
 }
 
+const getImageUrl = (img: any): string => {
+    if (!img) return '';
+    if (typeof img === 'string') return img;
+    return img?.url || '';
+};
+
 export function ProductEditor({ product, businessProfileId, userId, onSave, onCancel }: ProductEditorProps) {
     const [loading, setLoading] = useState(false);
     const { success, error } = useToast();
+
     const [formData, setFormData] = useState({
         title: product?.title || '',
         description: product?.description || '',
-        price: product?.price !== undefined ? product.price : '',
+        price: product?.price !== undefined && product.price !== null ? String(product.price) : '',
+        compare_at_price: product?.compare_at_price !== undefined && product.compare_at_price !== null ? String(product.compare_at_price) : '',
         category: product?.category || '',
-        images: product?.images || [], // Expecting array of objects { url: string } or strings
+        brand: product?.brand || '',
+        sku: product?.sku || '',
+        stock: product?.stock !== undefined && product.stock !== null ? String(product.stock) : '',
+        status: (product?.status || 'draft') as 'published' | 'draft',
+        images: product?.images || [],
     });
 
-    // Sync formData with product prop if it changes while component is mounted (defensive)
     useEffect(() => {
         if (product) {
             setFormData({
                 title: product.title || '',
                 description: product.description || '',
-                price: product.price !== undefined ? product.price : '',
+                price: product.price !== undefined && product.price !== null ? String(product.price) : '',
+                compare_at_price: product.compare_at_price !== undefined && product.compare_at_price !== null ? String(product.compare_at_price) : '',
                 category: product.category || '',
+                brand: product.brand || '',
+                sku: product.sku || '',
+                stock: product.stock !== undefined && product.stock !== null ? String(product.stock) : '',
+                status: product.status || 'draft',
                 images: product.images || [],
             });
         }
-    }, [product]);
+    }, [product?.id]);
 
-    // Normalize images to array of strings for UI logic simplicity, fix on save
-    // Actually schema says images is JSONB. Let's assume array of strings or objects.
-    // BentoCard uses `images?.[0]` assuming string or object with url.
-    // Let's standardise on array of strings for the editor state if possible, or support objects.
-    // Existing data from import might be [{url: ...}].
-
-    const getImageUrl = (img: any) => {
-        if (!img) return '';
-        if (typeof img === 'string') return img;
-        return img?.url || '';
-    };
+    const update = (field: string, value: any) => setFormData(prev => ({ ...prev, [field]: value }));
 
     const handleImageUpload = async (file: File) => {
         setLoading(true);
         try {
             const url = await uploadProductImage(file, userId);
             if (url) {
-                // Add to images
-                // If existing images are objects, we might want to keep that structure?
-                // For now, push object { url, type: 'uploaded' }
                 const newImage = { url, type: 'uploaded', created_at: new Date().toISOString() };
-                setFormData(prev => ({
-                    ...prev,
-                    images: [...(prev.images || []), newImage]
-                }));
+                update('images', [...(formData.images || []), newImage]);
                 success('Imagen subida');
             } else {
                 error('Error al subir imagen');
             }
         } catch (e: any) {
-            console.error(e);
             error(e.message || 'Error al subir imagen');
         } finally {
             setLoading(false);
         }
     };
 
+    const removeImage = (idx: number) => {
+        const next = [...formData.images];
+        next.splice(idx, 1);
+        update('images', next);
+    };
+
     const handleSave = async () => {
-        if (!formData.title) {
-            error('El título es obligatorio');
+        if (!formData.title.trim()) {
+            error('El nombre del producto es obligatorio');
             return;
         }
 
         setLoading(true);
         try {
-            const productData = {
-                title: formData.title,
-                description: formData.description,
-                price: parseFloat(formData.price) || 0,
-                category: formData.category,
+            const productData: any = {
+                title: formData.title.trim(),
+                description: formData.description.trim(),
+                price: formData.price !== '' ? parseFloat(formData.price) || 0 : null,
+                compare_at_price: formData.compare_at_price !== '' ? parseFloat(formData.compare_at_price) || null : null,
+                category: formData.category.trim(),
+                brand: formData.brand.trim(),
+                sku: formData.sku.trim(),
+                stock: formData.stock !== '' ? parseInt(formData.stock) || null : null,
+                status: formData.status,
                 images: formData.images,
                 business_profile_id: businessProfileId,
-                status: 'published' // Default to published
             };
 
-            let savedProduct;
+            // Remove nulls for cleanliness (optional)
+            if (!productData.compare_at_price) delete productData.compare_at_price;
+            if (!productData.brand) delete productData.brand;
+            if (!productData.sku) delete productData.sku;
+            if (productData.stock === null) delete productData.stock;
+
+            let saved;
             if (product?.id) {
-                // Update
-                savedProduct = await updateCatalogProduct(product.id, productData);
-                if (!savedProduct) throw new Error('No se pudo actualizar el producto');
+                saved = await updateCatalogProduct(product.id, productData);
+                if (!saved) throw new Error('No se pudo actualizar el producto');
                 success('Producto actualizado');
             } else {
-                // Create
-                savedProduct = await createCatalogProduct(productData);
-                if (!savedProduct) throw new Error('No se pudo crear el producto');
+                saved = await createCatalogProduct(productData);
+                if (!saved) throw new Error('No se pudo crear el producto');
                 success('Producto creado');
             }
 
-            onSave(savedProduct);
+            onSave(saved);
         } catch (e: any) {
-            console.error(e);
             error(e.message || 'Error al guardar producto');
         } finally {
             setLoading(false);
         }
     };
 
-    return (
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm animate-in fade-in duration-200 z-[100] relative">
-            <h3 className="font-bold text-lg mb-4 text-slate-800">
-                {product ? 'Editar Producto' : 'Nuevo Producto'}
-            </h3>
+    const hasDiscount = formData.compare_at_price && parseFloat(formData.compare_at_price) > parseFloat(formData.price || '0');
 
-            <div className="space-y-4">
-                {/* Images */}
+    return (
+        <div className="bg-white rounded-2xl border-2 shadow-xl overflow-hidden" style={{ borderColor: 'var(--border-color)' }}>
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                <h3 className="font-bold text-base" style={{ color: 'var(--text-primary)' }}>
+                    {product?.id ? 'Editar producto' : 'Nuevo producto'}
+                </h3>
+                <div className="flex items-center gap-2">
+                    {/* Status toggle */}
+                    <button
+                        onClick={() => update('status', formData.status === 'published' ? 'draft' : 'published')}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all"
+                        style={{
+                            backgroundColor: formData.status === 'published' ? '#dcfce7' : '#f3f4f6',
+                            color: formData.status === 'published' ? '#16a34a' : '#6b7280',
+                        }}
+                    >
+                        <IconEye size={12} />
+                        {formData.status === 'published' ? 'Visible' : 'Borrador'}
+                    </button>
+                    <button onClick={onCancel} className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
+                        <IconX size={18} color="var(--text-secondary)" />
+                    </button>
+                </div>
+            </div>
+
+            <div className="p-4 space-y-4 max-h-[calc(90vh-120px)] overflow-y-auto">
+
+                {/* ── Images ──────────────────────────────────────────────── */}
                 <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-2 uppercase">Imágenes</label>
+                    <label className="block text-xs font-bold uppercase mb-2" style={{ color: 'var(--text-secondary)' }}>
+                        Fotos del producto
+                    </label>
                     <div className="flex flex-wrap gap-2">
-                        {Array.isArray(formData.images) && formData.images.map((img: any, idx: number) => (
-                            <div key={idx} className="relative w-20 h-20 rounded-lg overflow-hidden border border-slate-200 group">
+                        {formData.images.map((img: any, idx: number) => (
+                            <div key={idx} className="relative w-20 h-20 rounded-xl overflow-hidden border-2 group" style={{ borderColor: 'var(--border-color)' }}>
                                 <img
                                     src={getImageUrl(img)}
                                     alt=""
                                     className="w-full h-full object-cover"
                                     onError={(e) => {
-                                        // Fallback for broken images (e.g. blobs)
                                         e.currentTarget.style.display = 'none';
-                                        e.currentTarget.parentElement!.style.backgroundColor = '#f1f5f9';
-                                        // add icon
-                                        const icon = document.createElement('div');
-                                        icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-image-off text-slate-400"><line x1="2" x2="22" y1="2" y2="22"/><path d="M10.41 10.41a2 2 0 1 1-2.83-2.83"/><line x1="13.5" x2="6" y1="13.5" y2="21"/><line x1="18" x2="21" y1="12" y2="15"/><path d="M3.59 3.59A1.99 1.99 0 0 0 3 5v14a2 2 0 0 0 2 2h14c.55 0 1.05-.22 1.41-.59"/><path d="M21 15v-4a2 2 0 0 0-2-2H9"/></svg>';
-                                        icon.className = 'absolute inset-0 flex items-center justify-center';
-                                        e.currentTarget.parentElement!.appendChild(icon);
+                                        if (e.currentTarget.parentElement) {
+                                            e.currentTarget.parentElement.style.backgroundColor = '#f1f5f9';
+                                        }
                                     }}
                                 />
                                 <button
-                                    onClick={() => {
-                                        const newImages = [...formData.images];
-                                        newImages.splice(idx, 1);
-                                        setFormData({ ...formData, images: newImages });
-                                    }}
-                                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-red-600"
+                                    onClick={() => removeImage(idx)}
+                                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-10"
                                 >
-                                    <IconTrash size={12} />
+                                    <IconTrash size={11} />
                                 </button>
+                                {idx === 0 && (
+                                    <span className="absolute bottom-0 left-0 right-0 text-center text-[9px] font-bold bg-black/60 text-white py-0.5">
+                                        Principal
+                                    </span>
+                                )}
                             </div>
                         ))}
-                        <label className="w-20 h-20 rounded-lg border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors">
+                        <label className="w-20 h-20 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-colors hover:border-blue-400 hover:bg-blue-50" style={{ borderColor: 'var(--border-color)' }}>
                             {loading ? (
-                                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                                <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                             ) : (
                                 <>
-                                    <IconImage size={20} className="text-slate-400 mb-1" />
-                                    <span className="text-[9px] text-slate-400 font-bold">AÑADIR</span>
+                                    <IconImage size={22} color="var(--text-tertiary)" />
+                                    <span className="text-[9px] font-bold mt-1" style={{ color: 'var(--text-tertiary)' }}>Agregar</span>
                                 </>
                             )}
                             <input
                                 type="file"
                                 accept="image/*"
+                                capture="environment"
                                 className="hidden"
                                 disabled={loading}
                                 onChange={(e) => {
                                     const file = e.target.files?.[0];
                                     if (file) handleImageUpload(file);
+                                    e.target.value = '';
                                 }}
                             />
                         </label>
                     </div>
+                    {formData.images.length === 0 && (
+                        <p className="text-xs mt-1.5 text-amber-600">
+                            Sin foto — los clientes no podrán ver el producto
+                        </p>
+                    )}
                 </div>
 
-                {/* Title */}
+                {/* ── Name ────────────────────────────────────────────────── */}
                 <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Nombre del producto</label>
+                    <label className="block text-xs font-bold uppercase mb-1" style={{ color: 'var(--text-secondary)' }}>
+                        Nombre del producto *
+                    </label>
                     <input
                         type="text"
                         value={formData.title}
-                        onChange={e => setFormData({ ...formData, title: e.target.value })}
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold focus:border-blue-500 outline-none text-slate-900 placeholder:text-slate-400"
-                        placeholder="Ej. Zapatillas Nike Air"
+                        onChange={e => update('title', e.target.value)}
+                        className="w-full px-3 py-2.5 rounded-xl border-2 text-sm font-medium outline-none transition-colors"
+                        style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                        placeholder="Ej. Pintura esmalte blanco 1 galón"
                         disabled={loading}
                     />
                 </div>
 
-                {/* Price & Category */}
-                <div className="grid grid-cols-2 gap-4">
+                {/* ── Brand + Category ─────────────────────────────────────── */}
+                <div className="grid grid-cols-2 gap-3">
                     <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Precio (S/)</label>
+                        <label className="block text-xs font-bold uppercase mb-1" style={{ color: 'var(--text-secondary)' }}>
+                            Marca
+                        </label>
+                        <input
+                            type="text"
+                            value={formData.brand}
+                            onChange={e => update('brand', e.target.value)}
+                            className="w-full px-3 py-2.5 rounded-xl border-2 text-sm outline-none transition-colors"
+                            style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                            placeholder="Ej. Tekno"
+                            disabled={loading}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold uppercase mb-1" style={{ color: 'var(--text-secondary)' }}>
+                            Categoría
+                        </label>
+                        <input
+                            type="text"
+                            value={formData.category}
+                            onChange={e => update('category', e.target.value)}
+                            className="w-full px-3 py-2.5 rounded-xl border-2 text-sm outline-none transition-colors"
+                            style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                            placeholder="Ej. Pinturas"
+                            disabled={loading}
+                        />
+                    </div>
+                </div>
+
+                {/* ── Price + Compare price ────────────────────────────────── */}
+                <div className="grid grid-cols-2 gap-3">
+                    <div>
+                        <label className="block text-xs font-bold uppercase mb-1" style={{ color: 'var(--text-secondary)' }}>
+                            Precio *
+                        </label>
                         <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">S/</span>
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold" style={{ color: 'var(--text-tertiary)' }}>S/</span>
                             <input
                                 type="number"
+                                min="0"
+                                step="0.01"
                                 value={formData.price}
-                                onChange={e => setFormData({ ...formData, price: e.target.value })}
-                                className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:border-blue-500 outline-none text-slate-900 placeholder:text-slate-400"
+                                onChange={e => update('price', e.target.value)}
+                                className="w-full pl-8 pr-3 py-2.5 rounded-xl border-2 text-sm outline-none transition-colors"
+                                style={{ borderColor: formData.price ? 'var(--border-color)' : '#fbbf24', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
                                 placeholder="0.00"
                                 disabled={loading}
                             />
                         </div>
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Categoría</label>
+                        <label className="block text-xs font-bold uppercase mb-1" style={{ color: 'var(--text-secondary)' }}>
+                            Precio antes
+                            {hasDiscount && <span className="ml-1 text-green-600">(-{Math.round((1 - parseFloat(formData.price) / parseFloat(formData.compare_at_price)) * 100)}%)</span>}
+                        </label>
+                        <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold" style={{ color: 'var(--text-tertiary)' }}>S/</span>
+                            <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={formData.compare_at_price}
+                                onChange={e => update('compare_at_price', e.target.value)}
+                                className="w-full pl-8 pr-3 py-2.5 rounded-xl border-2 text-sm outline-none transition-colors"
+                                style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-tertiary)' }}
+                                placeholder="Opcional"
+                                disabled={loading}
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* ── SKU + Stock ──────────────────────────────────────────── */}
+                <div className="grid grid-cols-2 gap-3">
+                    <div>
+                        <label className="block text-xs font-bold uppercase mb-1" style={{ color: 'var(--text-secondary)' }}>
+                            Código (SKU)
+                        </label>
                         <input
                             type="text"
-                            value={formData.category}
-                            onChange={e => setFormData({ ...formData, category: e.target.value })}
-                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:border-blue-500 outline-none text-slate-900 placeholder:text-slate-400"
-                            placeholder="Ej. Calzado"
+                            value={formData.sku}
+                            onChange={e => update('sku', e.target.value)}
+                            className="w-full px-3 py-2.5 rounded-xl border-2 text-sm outline-none font-mono transition-colors"
+                            style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                            placeholder="Ej. PNT-001"
+                            disabled={loading}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold uppercase mb-1" style={{ color: 'var(--text-secondary)' }}>
+                            Stock disponible
+                        </label>
+                        <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={formData.stock}
+                            onChange={e => update('stock', e.target.value)}
+                            className="w-full px-3 py-2.5 rounded-xl border-2 text-sm outline-none transition-colors"
+                            style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                            placeholder="Sin límite"
                             disabled={loading}
                         />
                     </div>
                 </div>
 
-                {/* Description */}
+                {/* ── Description ──────────────────────────────────────────── */}
                 <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Descripción</label>
+                    <label className="block text-xs font-bold uppercase mb-1" style={{ color: 'var(--text-secondary)' }}>
+                        Descripción
+                    </label>
                     <textarea
                         value={formData.description}
-                        onChange={e => setFormData({ ...formData, description: e.target.value })}
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:border-blue-500 outline-none resize-none h-24 text-slate-900 placeholder:text-slate-400"
-                        placeholder="Detalles del producto..."
+                        onChange={e => update('description', e.target.value)}
+                        className="w-full px-3 py-2.5 rounded-xl border-2 text-sm outline-none resize-none h-24 transition-colors"
+                        style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                        placeholder="Describe el producto: características, usos, especificaciones..."
                         disabled={loading}
                     />
                 </div>
 
-                {/* Actions */}
-                <div className="flex items-center gap-3 pt-2">
-                    <button
-                        onClick={onCancel}
-                        disabled={loading}
-                        className="flex-1 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200"
-                    >
-                        Cancelar
-                    </button>
-                    <button
-                        onClick={handleSave}
-                        disabled={loading}
-                        className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm shadow-blue-200 disabled:opacity-70"
-                    >
-                        {loading ? 'Guardando...' : (
-                            <>
-                                <IconCheck size={16} />
-                                Guardar
-                            </>
-                        )}
-                    </button>
-                </div>
+            </div>
+
+            {/* ── Footer actions ───────────────────────────────────────────── */}
+            <div className="flex items-center gap-3 px-4 py-3 border-t" style={{ borderColor: 'var(--border-color)' }}>
+                <button
+                    onClick={onCancel}
+                    disabled={loading}
+                    className="flex-1 py-2.5 text-sm font-bold rounded-xl border-2 transition-colors"
+                    style={{ borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}
+                >
+                    Cancelar
+                </button>
+                <button
+                    onClick={handleSave}
+                    disabled={loading || !formData.title.trim()}
+                    className="flex-1 py-2.5 text-sm font-bold rounded-xl text-white flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                    style={{ backgroundColor: 'var(--brand-blue)' }}
+                >
+                    {loading ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                        <>
+                            <IconCheck size={16} />
+                            {product?.id ? 'Guardar cambios' : 'Crear producto'}
+                        </>
+                    )}
+                </button>
             </div>
         </div>
     );

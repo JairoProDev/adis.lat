@@ -31,10 +31,34 @@ export default function NavbarMobile({
   const router = useRouter();
   const [mounted, setMounted] = React.useState(false);
   const isDesktop = useMediaQuery('(min-width: 768px)');
+  const [navVisible, setNavVisible] = React.useState(true);
+  const lastScrollY = React.useRef(0);
 
   React.useEffect(() => {
     setMounted(true);
   }, []);
+
+  React.useEffect(() => {
+    if (!mounted) return;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const delta = currentScrollY - lastScrollY.current;
+
+      if (currentScrollY < 60) {
+        setNavVisible(true);
+      } else if (delta > 4) {
+        setNavVisible(false);
+      } else if (delta < -4) {
+        setNavVisible(true);
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [mounted]);
 
   // Safe checks
   if (!mounted) return null;
@@ -77,7 +101,8 @@ export default function NavbarMobile({
           padding: '0.5rem 0',
           boxShadow: '0 -2px 10px rgba(0, 0, 0, 0.05)',
           zIndex: 1500,
-          animation: 'fadeIn 0.3s ease-out'
+          transform: navVisible ? 'translateY(0)' : 'translateY(100%)',
+          transition: 'transform 0.3s ease',
         }}
       >
         {secciones.map((seccion) => {
