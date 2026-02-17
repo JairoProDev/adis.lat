@@ -94,9 +94,15 @@ export const getAdisos = async (): Promise<Adiso[]> => {
       const response = await fetchAdisos();
       const adisosDesdeAPI = response.data;
 
-      // Actualizar cache con datos frescos
+      // Actualizar cache con datos frescos (LIMITADO para evitar QuotaExceededError)
       if (adisosDesdeAPI && adisosDesdeAPI.length > 0) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(adisosDesdeAPI));
+        try {
+          // Guardar solo los primeros 50 para no saturar el localStorage
+          const cacheLimit = adisosDesdeAPI.slice(0, 50);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(cacheLimit));
+        } catch (storageError) {
+          console.warn('No se pudo actualizar el cache en localStorage (probablemente lleno):', storageError);
+        }
       }
 
       return adisosDesdeAPI;
