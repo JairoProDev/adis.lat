@@ -606,9 +606,11 @@ export default function BusinessPublicView({
                                                 <IconList size={22} />
                                             </button>
                                             <div className="w-[1px] h-6 bg-slate-200 mx-1 hidden md:block" />
+
+                                            {/* PDF Download - Visible on Mobile now too, next to count */}
                                             <button
                                                 onClick={() => window.print()}
-                                                className="hidden md:flex p-3 text-slate-400 hover:text-slate-600"
+                                                className="p-3 text-slate-400 hover:text-slate-600"
                                                 title="Descargar PDF"
                                             >
                                                 <IconFileAlt size={22} />
@@ -618,10 +620,14 @@ export default function BusinessPublicView({
                                 </div>
 
                                 {/* Mobile Count Indicator */}
-                                <div className="md:hidden px-1 -mt-2 mb-2 flex items-center gap-2 text-xs font-bold text-slate-400">
-                                    <IconBox size={14} />
-                                    {filteredAdisos.length} productos encontrados
+                                <div className="md:hidden px-1 -mt-2 mb-2 flex items-center justify-between text-xs font-bold text-slate-400">
+                                    <div className="flex items-center gap-2">
+                                        <IconBox size={14} />
+                                        {filteredAdisos.length} productos encontrados
+                                    </div>
                                 </div>
+
+
 
                                 {/* Categories - Horizontal Scroll Pills */}
                                 {categories.length > 0 && (
@@ -796,7 +802,10 @@ export default function BusinessPublicView({
             </div >
 
             {/* --- FLOATING ACTION BUTTON --- */}
-            < div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3 print:hidden" >
+            <div className={cn(
+                "fixed right-6 z-50 flex flex-col gap-3 print:hidden transition-all duration-500",
+                showNav ? "bottom-24" : "bottom-6" // Move up when navbar is shown to avoid overlap
+            )}>
                 {
                     isOwner ? (
                         <button
@@ -838,14 +847,17 @@ export default function BusinessPublicView({
                     <PrintableCatalog profile={profile} adisos={filteredAdisos} />
                 </div>
             </div >
-            {/* --- NAVBAR MOBILE (Scroll Aware) --- */}
-            {showNav && (
+            {/* --- NAVBAR MOBILE (Scroll Aware with Animation) --- */}
+            <div className={cn(
+                "fixed bottom-0 left-0 right-0 z-40 transition-transform duration-500 ease-in-out md:hidden",
+                showNav ? "translate-y-0" : "translate-y-full"
+            )}>
                 <NavbarMobile
                     seccionActiva={null}
                     onCambiarSeccion={() => { }}
                     tieneAdisoAbierto={false}
                 />
-            )}
+            </div>
         </div>
     );
 }
