@@ -344,43 +344,46 @@ function BusinessBuilderPageContent() {
                             <IconX size={20} color="var(--text-secondary)" />
                         </button>
                         <div className="flex items-center gap-2">
-                            {/* Name removed as requested */}
-
-                            {/* Improved Auto-save Indicator */}
-                            <div className="flex items-center gap-2">
-                                {saving ? (
-                                    <span className="text-xs text-slate-400 flex items-center gap-1">
-                                        <div className="w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
-                                        Guardando...
-                                    </span>
-                                ) : (
-                                    lastSavedTime && (
-                                        <span className="text-xs text-green-600 flex items-center gap-1">
-                                            <IconCheck size={12} />
-                                            Guardado
+                            <div className="flex flex-col items-start gap-0.5 ml-2">
+                                <h1 className="font-bold text-base md:text-lg text-slate-800 leading-tight">Editar Página</h1>
+                                {/* Auto-save Indicator */}
+                                <div className="flex items-center gap-2">
+                                    {saving ? (
+                                        <span className="text-[10px] md:text-xs text-slate-400 flex items-center gap-1 font-medium">
+                                            <div className="w-2.5 h-2.5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
+                                            Guardando...
                                         </span>
-                                    )
-                                )}
+                                    ) : (
+                                        lastSavedTime && (
+                                            <span className="text-[10px] md:text-xs text-green-600 flex items-center gap-1 font-medium bg-green-50 px-1.5 rounded-full">
+                                                <IconCheck size={10} />
+                                                Autoguardado
+                                            </span>
+                                        )
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-3">
                         {!isFirstTime && (
-                            <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
+                            <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200 shadow-inner">
                                 <button
                                     onClick={() => setViewMode('preview')}
-                                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${viewMode === 'preview' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                                    className={`px-2 md:px-3 py-1.5 rounded-md text-xs md:text-sm font-bold transition-all flex items-center gap-1.5 ${viewMode === 'preview' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                                    title="Ver como usuario"
                                 >
-                                    <IconEye size={16} />
-                                    <span className="hidden sm:inline">Ver Página</span>
+                                    <IconEye size={14} />
+                                    <span>Ver</span>
                                 </button>
                                 <button
                                     onClick={() => setViewMode('editor')}
-                                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${viewMode === 'editor' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                                    className={`px-2 md:px-3 py-1.5 rounded-md text-xs md:text-sm font-bold transition-all flex items-center gap-1.5 ${viewMode === 'editor' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                                    title="Editar contenido"
                                 >
-                                    <IconEdit size={16} />
-                                    <span className="hidden sm:inline">Editar</span>
+                                    <IconEdit size={14} />
+                                    <span>Editar</span>
                                 </button>
                             </div>
                         )}
@@ -415,6 +418,8 @@ function BusinessBuilderPageContent() {
                             catalogProducts={catalogProducts}
                             onAddProduct={() => setShowAddProductModal(true)}
                             onRefreshCatalog={handleRefreshCatalog}
+                            onToggleView={() => setViewMode('preview')}
+                            isPublished={!!profile.is_published}
                         />
                     </div>
                 </div>
