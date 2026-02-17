@@ -734,7 +734,7 @@ function ProductCard({ group, viewMode, isSelecting, isSelected, onToggleSelect,
                 <div className="flex items-center gap-2 flex-shrink-0">
                     {(price || 0) > 0 && (
                         <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
-                            S/{price.toFixed(2)}
+                            S/{(price || 0).toFixed(2)}
                         </span>
                     )}
                     <button
@@ -844,9 +844,9 @@ function ProductCard({ group, viewMode, isSelecting, isSelected, onToggleSelect,
 
                 {/* Price */}
                 <div className="mt-auto pt-1.5 flex items-center justify-between border-t border-slate-50">
-                    {price > 0 ? (
+                    {(price || 0) > 0 ? (
                         <span className="text-sm font-black" style={{ color: 'var(--brand-blue)' }}>
-                            S/ {price.toFixed(2)}
+                            S/ {(price || 0).toFixed(2)}
                         </span>
                     ) : (
                         <span className="text-xs text-red-400 font-semibold">Sin precio</span>

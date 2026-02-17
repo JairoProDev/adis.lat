@@ -406,7 +406,7 @@ export function EditorSteps({
                                                                             <h4 className="font-bold text-xs text-blue-900 truncate">{p.title}</h4>
                                                                             <IconSparkles size={10} className="text-blue-400 shrink-0" />
                                                                         </div>
-                                                                        <p className="text-[10px] text-blue-600 truncate">S/ {p.price?.toFixed(2)}</p>
+                                                                        <p className="text-[10px] text-blue-600 truncate">S/ {(p.price || 0).toFixed(2)}</p>
                                                                     </div>
 
                                                                     {/* Actions */}
