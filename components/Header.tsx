@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import {
   FaBars,
@@ -51,10 +51,40 @@ export default function Header({
   const [mounted, setMounted] = useState(false);
   const { t } = useTranslation();
   const isDesktop = useMediaQuery('(min-width: 768px)');
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const lastScrollY = useRef(0);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const delta = currentScrollY - lastScrollY.current;
+
+      if (window.innerWidth >= 768) {
+        setHeaderVisible(true);
+        lastScrollY.current = currentScrollY;
+        return;
+      }
+
+      if (currentScrollY < 60) {
+        setHeaderVisible(true);
+      } else if (delta > 4) {
+        setHeaderVisible(false);
+      } else if (delta < -4) {
+        setHeaderVisible(true);
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [mounted]);
 
   const [showMobileSettings, setShowMobileSettings] = useState(false);
   const [activePopover, setActivePopover] = useState<'notifications' | 'messages' | null>(null);
@@ -70,13 +100,15 @@ export default function Header({
       backgroundColor: 'var(--bg-primary)',
       borderBottom: '1px solid var(--border-color)',
       boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-      height: '72px', // Increased height for labels
+      height: '72px',
       position: 'sticky',
       top: 0,
       zIndex: 1000,
       display: 'flex',
       alignItems: 'center',
       padding: '0 1rem',
+      transform: headerVisible ? 'translateY(0)' : 'translateY(-100%)',
+      transition: 'transform 0.3s ease',
     }}>
       {/* LEFT: Logo + Location */}
       <div style={{

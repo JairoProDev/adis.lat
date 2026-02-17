@@ -76,6 +76,10 @@ export async function updateBusinessProfile(userId: string, updates: Partial<Bus
     return data as BusinessProfile;
 }
 
+export async function saveBusinessProfile(profile: BusinessProfile): Promise<BusinessProfile | null> {
+    return updateBusinessProfile(profile.user_id, profile);
+}
+
 export async function checkSlugAvailability(slug: string): Promise<boolean> {
     if (!supabase) return false;
 

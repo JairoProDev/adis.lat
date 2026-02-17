@@ -36,9 +36,63 @@ interface ImportResult {
     errors: any[];
 }
 
+// ─── Sector Templates ─────────────────────────────────────────────────────────
+
+const SECTOR_TEMPLATES: Record<string, { label: string; emoji: string; categories: string[] }> = {
+    ferreteria: {
+        label: 'Ferretería / Construcción',
+        emoji: '🔧',
+        categories: ['Herramientas', 'Pinturas', 'Plomería', 'Electricidad', 'Materiales', 'Seguridad', 'Adhesivos', 'Abrasivos']
+    },
+    ropa: {
+        label: 'Ropa y Accesorios',
+        emoji: '👗',
+        categories: ['Camisetas', 'Pantalones', 'Vestidos', 'Calzado', 'Accesorios', 'Ropa interior', 'Deportivo', 'Infantil']
+    },
+    hogar: {
+        label: 'Hogar y Decoración',
+        emoji: '🏠',
+        categories: ['Muebles', 'Decoración', 'Cocina', 'Baño', 'Jardín', 'Limpieza', 'Iluminación', 'Textiles']
+    },
+    alimentos: {
+        label: 'Alimentos y Bebidas',
+        emoji: '🍎',
+        categories: ['Frutas y verduras', 'Carnes', 'Lácteos', 'Panadería', 'Bebidas', 'Snacks', 'Congelados', 'Abarrotes']
+    },
+    tecnologia: {
+        label: 'Tecnología / Electrónica',
+        emoji: '💻',
+        categories: ['Celulares', 'Computadoras', 'Accesorios', 'Audio', 'Gaming', 'Impresión', 'Redes', 'Componentes']
+    },
+    belleza: {
+        label: 'Belleza y Cuidado Personal',
+        emoji: '💄',
+        categories: ['Cabello', 'Maquillaje', 'Cuidado de la piel', 'Perfumes', 'Higiene', 'Uñas', 'Spa', 'Afeitado']
+    },
+    servicios: {
+        label: 'Servicios',
+        emoji: '💼',
+        categories: ['Consultoría', 'Diseño', 'Marketing', 'Tecnología', 'Legal', 'Capacitación', 'Mantenimiento', 'Salud']
+    },
+    agro: {
+        label: 'Agropecuario / Veterinaria',
+        emoji: '🌿',
+        categories: ['Semillas', 'Fertilizantes', 'Herramientas agrícolas', 'Alimento animal', 'Veterinaria', 'Fumigación', 'Riego', 'Otros']
+    },
+    otro: {
+        label: 'Otro tipo de negocio',
+        emoji: '🏪',
+        categories: ['Categoría 1', 'Categoría 2', 'Categoría 3', 'Categoría 4', 'Otros']
+    }
+};
+
 export default function CatalogImportPage() {
     const router = useRouter();
     const { success: showSuccess, error: showError, toasts, removeToast } = useToast();
+
+    // Sector selection
+    const [selectedSector, setSelectedSector] = useState<string | null>(null);
+    const [showSectorPicker, setShowSectorPicker] = useState(false);
 
     // UI Mode state
     const [mode, setMode] = useState<'excel' | 'manual'>('excel');
@@ -83,6 +137,7 @@ export default function CatalogImportPage() {
 
             const formData = new FormData();
             formData.append('file', file);
+            if (selectedSector) formData.append('sector', selectedSector);
 
             // Simulate progress
             const progressInterval = setInterval(() => {
@@ -217,25 +272,90 @@ export default function CatalogImportPage() {
             <div className="flex-1 overflow-y-auto px-4 py-4 md:py-6">
                 <div className="max-w-4xl mx-auto">
                     {/* Header Navigation */}
-                    <div className="mb-6">
+                    <div className="mb-5">
                         <Link
-                            href="/mi-negocio/catalogo/tabla"
-                            className="inline-flex items-center gap-2 text-sm font-bold text-[var(--brand-blue)] hover:opacity-80 mb-2 transition-all"
+                            href="/mi-negocio/catalogo"
+                            className="inline-flex items-center gap-2 text-xs font-bold opacity-70 hover:opacity-100 mb-3 transition-all"
+                            style={{ color: 'var(--brand-blue)' }}
                         >
-                            <IconArrowLeft size={14} />
-                            Volver al catálogo
+                            <IconArrowLeft size={12} />
+                            Mi catálogo
                         </Link>
 
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
+                        <div className="flex items-start justify-between gap-2">
                             <div>
-                                <h1 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">
+                                <h1 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: 'var(--text-primary)' }}>
                                     Agregar Productos
                                 </h1>
-                                <p className="text-slate-500 text-sm md:text-base">
-                                    Elige cómo quieres agregar productos a tu catálogo
+                                <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+                                    Importa en lote o agrega uno a uno
                                 </p>
                             </div>
                         </div>
+                    </div>
+
+                    {/* Sector selector */}
+                    <div className="mb-5 p-4 rounded-2xl border-2 bg-white" style={{ borderColor: selectedSector ? 'var(--brand-blue)' : 'var(--border-color)' }}>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
+                                    ¿Qué tipo de negocio es?
+                                </p>
+                                {selectedSector ? (
+                                    <p className="text-xs mt-0.5" style={{ color: 'var(--brand-blue)' }}>
+                                        {SECTOR_TEMPLATES[selectedSector].emoji} {SECTOR_TEMPLATES[selectedSector].label}
+                                    </p>
+                                ) : (
+                                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
+                                        Opcional — nos ayuda a clasificar mejor tus productos
+                                    </p>
+                                )}
+                            </div>
+                            <button
+                                onClick={() => setShowSectorPicker(!showSectorPicker)}
+                                className="text-xs font-bold px-3 py-1.5 rounded-lg transition-colors"
+                                style={{ color: 'var(--brand-blue)', backgroundColor: 'var(--bg-secondary)' }}
+                            >
+                                {selectedSector ? 'Cambiar' : 'Elegir'}
+                            </button>
+                        </div>
+
+                        {showSectorPicker && (
+                            <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                {Object.entries(SECTOR_TEMPLATES).map(([key, s]) => (
+                                    <button
+                                        key={key}
+                                        onClick={() => { setSelectedSector(key); setShowSectorPicker(false); }}
+                                        className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold text-left transition-all border-2"
+                                        style={{
+                                            borderColor: selectedSector === key ? 'var(--brand-blue)' : 'var(--border-color)',
+                                            backgroundColor: selectedSector === key ? 'var(--bg-secondary)' : 'transparent',
+                                            color: 'var(--text-primary)'
+                                        }}
+                                    >
+                                        <span className="text-base">{s.emoji}</span>
+                                        <span className="text-xs leading-tight">{s.label}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
+                        {selectedSector && !showSectorPicker && (
+                            <div className="mt-3">
+                                <p className="text-xs font-bold mb-2" style={{ color: 'var(--text-tertiary)' }}>Categorías pre-cargadas:</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {SECTOR_TEMPLATES[selectedSector].categories.map(cat => (
+                                        <span
+                                            key={cat}
+                                            className="text-xs px-2 py-0.5 rounded-full font-medium"
+                                            style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}
+                                        >
+                                            {cat}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Tabs */}
@@ -366,7 +486,7 @@ export default function CatalogImportPage() {
 
                                     <div className="flex flex-col sm:flex-row gap-3">
                                         <button
-                                            onClick={() => router.push('/mi-negocio/catalogo/tabla')}
+                                            onClick={() => router.push('/mi-negocio/catalogo')}
                                             className="flex-1 py-3 px-4 bg-white border-2 border-slate-200 text-slate-700 font-bold rounded-xl hover:border-blue-500 hover:text-blue-600 transition-all"
                                         >
                                             Ver Catálogo
