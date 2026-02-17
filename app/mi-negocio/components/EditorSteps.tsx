@@ -38,6 +38,8 @@ interface EditorStepsProps {
     editingProduct?: any;
     setEditingProduct?: (product: any) => void;
     onRefreshCatalog?: () => void;
+    onToggleView?: () => void;
+    isPublished?: boolean;
 }
 
 export function EditorSteps({
@@ -51,7 +53,9 @@ export function EditorSteps({
     onAddProduct,
     editingProduct,
     setEditingProduct,
-    onRefreshCatalog
+    onRefreshCatalog,
+    onToggleView,
+    isPublished
 }: EditorStepsProps) {
     const [uploadingImage, setUploadingImage] = useState<string | null>(null);
     const [catalogSearch, setCatalogSearch] = useState('');
@@ -116,11 +120,34 @@ export function EditorSteps({
 
     return (
         <div className="flex flex-col h-full bg-white relative">
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-                <h2 className="font-bold text-lg text-slate-800">Editar Página</h2>
-                <div className="text-xs font-semibold px-2 py-1 bg-green-100 text-green-700 rounded-lg flex items-center gap-1">
-                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                    {saving ? 'Guardando...' : 'Autoguardado'}
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10 shrink-0">
+                <div className="flex items-center gap-3">
+                    <h2 className="font-bold text-lg text-slate-800">Editar</h2>
+                    {/* Auto-save Indicator */}
+                    <div className="text-[10px] font-semibold px-1.5 py-0.5 bg-green-50 text-green-700 rounded border border-green-100 flex items-center gap-1">
+                        <div className={cn("w-1.5 h-1.5 rounded-full bg-green-500", saving && "animate-pulse")} />
+                        {saving ? 'Guardando...' : 'Guardado'}
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    {/* View Toggle */}
+                    {onToggleView && (
+                        <button
+                            onClick={onToggleView}
+                            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                            title="Ver como visitante"
+                        >
+                            <span className="sr-only">Ver Página</span>
+                            {/* Eye Icon */}
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>
+                        </button>
+                    )}
+
+                    {/* Publish Status Badge (Static for now as requested) */}
+                    <div className="px-3 py-1.5 bg-green-600 text-white text-xs font-bold rounded-full shadow-sm shadow-green-200">
+                        {isPublished ? 'Publicado' : 'Publicar'}
+                    </div>
                 </div>
             </div>
 

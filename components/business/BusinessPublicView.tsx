@@ -66,8 +66,11 @@ export default function BusinessPublicView({
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [filteredAdisos, setFilteredAdisos] = useState(adisos);
 
-    // Ownership check
+    // Ownership check. 
+    // True owner check for button visibility
     const isOwner = user?.id === profile.user_id;
+    // Controls for inline editing overlays (pencil on image, etc) - only show when in explicit edit mode
+    const showEditControls = isOwner && editMode;
 
     const handleShare = async () => {
         if (typeof navigator !== 'undefined' && navigator.share) {
@@ -196,8 +199,8 @@ export default function BusinessPublicView({
 
             {/* --- HERO SECTION & PROFILE HEADER --- */}
             <div className="bg-white pb-2 shadow-sm relative z-10">
-                {/* Banner Wrapper - Maximized width but contained */}
-                <div className="w-full relative group h-[200px] md:h-[350px] overflow-hidden bg-slate-100">
+                {/* Banner Wrapper - Maximized width but contained like Facebook */}
+                <div className="w-full max-w-[1100px] mx-auto relative group h-[200px] md:h-[350px] overflow-hidden bg-slate-100 md:rounded-b-xl shadow-sm">
                     {profile.banner_url ? (
                         <img
                             src={profile.banner_url}
@@ -208,7 +211,7 @@ export default function BusinessPublicView({
                         <div className="w-full h-full bg-gradient-to-r from-[var(--brand-color)] to-slate-800 opacity-90" />
                     )}
                     {/* Owner Banner Edit */}
-                    {isOwner && (
+                    {showEditControls && (
                         <button
                             onClick={() => onEditPart?.('visual')}
                             className="absolute top-4 right-4 bg-black/40 hover:bg-black/60 backdrop-blur-md text-white p-2 rounded-full transition-all opacity-0 group-hover:opacity-100"
@@ -236,7 +239,7 @@ export default function BusinessPublicView({
                                         {profile.name?.substring(0, 1) || 'N'}
                                     </div>
                                 )}
-                                {isOwner && (
+                                {showEditControls && (
                                     <button
                                         onClick={() => onEditPart?.('logo')}
                                         className="absolute inset-0 bg-black/30 opacity-0 group-hover/logo:opacity-100 flex items-center justify-center text-white transition-opacity"
@@ -292,7 +295,51 @@ export default function BusinessPublicView({
                                     >
                                         <IconShareAlt size={20} />
                                     </button>
+
+                                    {/* Edit Button - Desktop */}
+                                    {isOwner && (
+                                        <button
+                                            onClick={() => onEditPart?.('general')}
+                                            className="bg-slate-100 hover:bg-slate-200 text-slate-800 px-4 py-3 rounded-xl font-bold transition-all flex items-center gap-2 print:hidden"
+                                        >
+                                            <IconEdit size={18} />
+                                            <span className="text-sm">Editar página</span>
+                                        </button>
+                                    )}
                                 </div>
+                            </div>
+
+                            {/* Mobile Actions - Stacked/Grid */}
+                            <div className="md:hidden grid grid-cols-5 gap-2 mt-6">
+                                {/* WhatsApp - Takes most space */}
+                                {profile.contact_whatsapp && (
+                                    <a
+                                        href={getWhatsappUrl(profile.contact_whatsapp, profile.name || 'Negocio')}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="col-span-3 bg-[var(--brand-color)] text-white h-12 rounded-xl font-bold shadow-lg shadow-[var(--brand-color)]/20 flex items-center justify-center gap-2 text-sm active:scale-[0.98] transition-transform"
+                                    >
+                                        <IconWhatsapp size={18} /> Contáctanos
+                                    </a>
+                                )}
+
+                                {/* Share Button */}
+                                <button
+                                    onClick={handleShare}
+                                    className="col-span-1 bg-slate-100 text-slate-700 h-12 rounded-xl flex items-center justify-center active:bg-slate-200 transition-colors"
+                                >
+                                    <IconShareAlt size={20} />
+                                </button>
+
+                                {/* Edit Button - Mobile (Only Owner) */}
+                                {isOwner && (
+                                    <button
+                                        onClick={() => onEditPart?.('general')}
+                                        className="col-span-1 bg-slate-200 text-slate-800 h-12 rounded-xl flex items-center justify-center active:bg-slate-300 transition-colors"
+                                    >
+                                        <IconEdit size={20} className="text-slate-700" />
+                                    </button>
+                                )}
                             </div>
                         </div>
 
