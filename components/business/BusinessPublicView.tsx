@@ -804,7 +804,7 @@ export default function BusinessPublicView({
             {/* --- FLOATING ACTION BUTTON --- */}
             <div className={cn(
                 "fixed right-6 z-50 flex flex-col gap-3 print:hidden transition-all duration-500",
-                showNav ? "bottom-24" : "bottom-6" // Move up when navbar is shown to avoid overlap
+                showNav ? "bottom-32" : "bottom-6" // Move up when navbar is shown to avoid overlap
             )}>
                 {
                     isOwner ? (

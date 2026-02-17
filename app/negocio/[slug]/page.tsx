@@ -12,7 +12,7 @@ import { EditorSteps } from '../../mi-negocio/components/EditorSteps';
 import { IconEdit, IconX, IconEye } from '@/components/Icons';
 import { cn } from '@/lib/utils';
 
-export default function PublicBusinessPage({ params }: { params: { slug: string } }) {
+export default function PublicBusinessPage({ params, searchParams }: { params: { slug: string }, searchParams: { [key: string]: string | string[] | undefined } }) {
     const router = useRouter();
     const slug = params.slug;
     const { user } = useAuth();
@@ -35,7 +35,11 @@ export default function PublicBusinessPage({ params }: { params: { slug: string 
         if (slug) {
             loadBusinessData();
         }
-    }, [slug]);
+        // Auto-open editor if requested
+        if (searchParams?.edit === 'true') {
+            setIsEditing(true);
+        }
+    }, [slug, searchParams]);
 
     const loadBusinessData = async () => {
         try {
@@ -172,7 +176,7 @@ export default function PublicBusinessPage({ params }: { params: { slug: string 
 
             {/* --- EDITOR SIDEBAR (Only visible when isEditing) --- */}
             <div className={cn(
-                "fixed inset-y-0 left-0 z-50 w-full md:w-[450px] bg-white shadow-2xl transform transition-transform duration-300 ease-in-out border-r border-slate-200",
+                "fixed inset-y-0 left-0 z-[60] w-full md:w-[450px] bg-white shadow-2xl transform transition-transform duration-300 ease-in-out border-r border-slate-200",
                 isEditing ? "translate-x-0" : "-translate-x-full"
             )}>
                 {isEditing && (
@@ -188,7 +192,7 @@ export default function PublicBusinessPage({ params }: { params: { slug: string 
                         setEditingProduct={setEditingProduct}
                         onRefreshCatalog={() => loadCatalog(business.id)}
                         onToggleView={() => setIsEditing(false)}
-                        isPublished={true}
+                        isPublished={!!business.is_published}
                     />
                 )}
             </div>

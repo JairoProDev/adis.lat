@@ -150,6 +150,12 @@ function BusinessBuilderPageContent() {
             const existingProfile = await getBusinessProfile(user.id);
 
             if (existingProfile) {
+                // If the business already has a slug, redirect to the public page editor (Unified Experience)
+                if (existingProfile.slug) {
+                    router.push(`/negocio/${existingProfile.slug}?edit=true`);
+                    return;
+                }
+
                 setProfile(existingProfile);
                 lastSavedProfileStr.current = JSON.stringify(existingProfile);
                 setIsFirstTime(false);
