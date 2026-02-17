@@ -175,221 +175,223 @@ export default function BusinessPublicView({
             )}
 
             {/* --- HERO SECTION --- */}
-            <div className="relative w-full h-[25vh] md:h-[30vh] max-h-[350px] min-h-[180px] overflow-hidden group print:hidden">
-                {/* Banner Image */}
-                <div className="absolute inset-0 bg-gray-900">
-                    {profile.banner_url ? (
-                        <img
-                            src={profile.banner_url}
-                            alt="Banner"
-                            className="w-full h-full object-cover object-center opacity-80 transition-transform duration-1000 group-hover:scale-105"
-                        />
-                    ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-[var(--brand-color)] to-purple-900 opacity-80" />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-                </div>
+            <div className="max-w-6xl mx-auto md:px-4 md:mt-6 print:hidden">
+                <div className="relative w-full h-[25vh] md:h-[30vh] max-h-[350px] min-h-[180px] overflow-hidden group md:rounded-3xl shadow-lg">
+                    {/* Banner Image */}
+                    <div className="absolute inset-0 bg-gray-900">
+                        {profile.banner_url ? (
+                            <img
+                                src={profile.banner_url}
+                                alt="Banner"
+                                className="w-full h-full object-cover object-center opacity-80 transition-transform duration-1000 group-hover:scale-105"
+                            />
+                        ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-[var(--brand-color)] to-purple-900 opacity-80" />
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                    </div>
 
-                {/* Main Content Overlay */}
-                <div className="absolute bottom-0 left-0 w-full p-6 pb-20 md:pb-8 max-w-6xl mx-auto flex flex-row items-end gap-3 md:gap-6 z-10 text-left">
+                    {/* Main Content Overlay */}
+                    <div className="absolute bottom-0 left-0 w-full p-6 pb-20 md:pb-8 flex flex-row items-end gap-3 md:gap-6 z-10 text-left">
 
-                    {/* Logo */}
-                    <motion.div
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        className="relative group/logo flex-shrink-0"
-                    >
-                        <div className="w-24 h-24 md:w-36 md:h-36 rounded-2xl bg-white shadow-xl p-1 overflow-hidden border-2 border-white/50 backdrop-blur-sm relative">
-                            {profile.logo_url ? (
-                                <img src={profile.logo_url} alt="Logo" className="w-full h-full object-cover rounded-xl" />
-                            ) : (
-                                <div className="w-full h-full bg-gray-100 flex items-center justify-center text-4xl font-bold text-gray-400">
-                                    {profile.name?.substring(0, 1) || '?'}
-                                </div>
-                            )}
-
-                            {isOwner && (
-                                <button
-                                    onClick={() => onEditPart?.('logo')}
-                                    className="absolute inset-0 bg-black/40 opacity-0 group-hover/logo:opacity-100 transition-opacity flex items-center justify-center text-white"
-                                >
-                                    <IconEdit size={24} />
-                                </button>
-                            )}
-                        </div>
-                        {/* Verified Badge */}
-                        <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white rounded-full p-1 border-2 border-[var(--bg-secondary)]" title="Verificado">
-                            <IconVerified size={12} className="md:size-4" />
-                        </div>
-                    </motion.div>
-
-                    {/* Text Info */}
-                    <div className="flex-1 text-white mb-2 md:mb-4 relative group/info min-w-0">
-                        <div className="relative inline-flex items-center gap-2 max-w-full">
-                            {editingField === 'name' ? (
-                                <div className="flex items-center gap-2 w-full max-w-md">
-                                    <input
-                                        value={tempValue}
-                                        onChange={(e) => setTempValue(e.target.value)}
-                                        className="text-xl md:text-5xl font-black tracking-tight bg-white/20 text-white rounded px-2 w-full outline-none border border-white/30 backdrop-blur-md"
-                                        autoFocus
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') saveField('name');
-                                            if (e.key === 'Escape') cancelEditing();
-                                        }}
-                                    />
-                                    <div className="flex gap-1">
-                                        <button onClick={() => saveField('name')} className="bg-green-500 hover:bg-green-600 p-2 rounded-full text-white transition-colors"><IconCheck size={20} /></button>
-                                        <button onClick={cancelEditing} className="bg-red-500 hover:bg-red-600 p-2 rounded-full text-white transition-colors"><IconX size={20} /></button>
+                        {/* Logo */}
+                        <motion.div
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            className="relative group/logo flex-shrink-0"
+                        >
+                            <div className="w-24 h-24 md:w-36 md:h-36 rounded-2xl bg-white shadow-xl p-1 overflow-hidden border-2 border-white/50 backdrop-blur-sm relative transition-transform duration-300 group-hover/logo:scale-105">
+                                {profile.logo_url ? (
+                                    <img src={profile.logo_url} alt="Logo" className="w-full h-full object-cover rounded-xl" />
+                                ) : (
+                                    <div className="w-full h-full bg-gray-100 flex items-center justify-center text-4xl font-bold text-gray-400">
+                                        {profile.name?.substring(0, 1) || '?'}
                                     </div>
-                                </div>
-                            ) : (
-                                <motion.h1
-                                    initial={{ x: -20, opacity: 0 }}
-                                    animate={{ x: 0, opacity: 1 }}
-                                    className="text-xl md:text-5xl font-black tracking-tight mb-0.5 md:mb-2 drop-shadow-md truncate pr-8"
-                                >
-                                    {profile.name}
-                                    {isOwner && (
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                startEditing('name', profile.name || '');
-                                            }}
-                                            className="absolute -top-2 -right-6 opacity-0 group-hover/info:opacity-100 bg-white/20 hover:bg-white/30 p-1.5 rounded-full backdrop-blur-sm transition-all text-white scale-75"
-                                            title="Editar Nombre"
-                                        >
-                                            <IconEdit size={16} />
-                                        </button>
-                                    )}
-                                </motion.h1>
-                            )}
-                        </div>
+                                )}
 
-                        <div className="relative mt-1">
-                            {editingField === 'description' ? (
-                                <div className="flex items-start gap-2 w-full max-w-2xl">
-                                    <textarea
-                                        value={tempValue}
-                                        onChange={(e) => setTempValue(e.target.value)}
-                                        className="text-sm md:text-base bg-white/20 text-white rounded px-2 py-1 w-full outline-none border border-white/30 backdrop-blur-md resize-none"
-                                        rows={2}
-                                        autoFocus
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter' && !e.shiftKey) {
-                                                e.preventDefault();
-                                                saveField('description');
-                                            }
-                                            if (e.key === 'Escape') cancelEditing();
-                                        }}
-                                    />
-                                    <div className="flex flex-col gap-1">
-                                        <button onClick={() => saveField('description')} className="bg-green-500 hover:bg-green-600 p-1.5 rounded-full text-white transition-colors"><IconCheck size={16} /></button>
-                                        <button onClick={cancelEditing} className="bg-red-500 hover:bg-red-600 p-1.5 rounded-full text-white transition-colors"><IconX size={16} /></button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="relative pr-8">
-                                    <motion.p
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        transition={{ delay: 0.1 }}
-                                        className="text-white/80 text-[10px] md:text-base line-clamp-1 md:line-clamp-2 max-w-2xl leading-tight"
+                                {isOwner && (
+                                    <button
+                                        onClick={() => onEditPart?.('logo')}
+                                        className="absolute inset-0 bg-black/40 opacity-0 group-hover/logo:opacity-100 transition-opacity flex items-center justify-center text-white"
                                     >
-                                        {profile.description || 'Bienvenido a mi tienda digital.'}
-                                    </motion.p>
-                                    {isOwner && (
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                startEditing('description', profile.description || '');
+                                        <IconEdit size={24} />
+                                    </button>
+                                )}
+                            </div>
+                            {/* Verified Badge */}
+                            <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white rounded-full p-1 border-2 border-[var(--bg-secondary)]" title="Verificado">
+                                <IconVerified size={12} className="md:size-4" />
+                            </div>
+                        </motion.div>
+
+                        {/* Text Info */}
+                        <div className="flex-1 text-white mb-2 md:mb-4 relative group/info min-w-0">
+                            <div className="relative inline-flex items-center gap-2 max-w-full">
+                                {editingField === 'name' ? (
+                                    <div className="flex items-center gap-2 w-full max-w-md">
+                                        <input
+                                            value={tempValue}
+                                            onChange={(e) => setTempValue(e.target.value)}
+                                            className="text-xl md:text-5xl font-black tracking-tight bg-white/20 text-white rounded px-2 w-full outline-none border border-white/30 backdrop-blur-md"
+                                            autoFocus
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') saveField('name');
+                                                if (e.key === 'Escape') cancelEditing();
                                             }}
-                                            className="absolute -right-6 top-0 opacity-0 group-hover/info:opacity-100 bg-white/20 hover:bg-white/30 p-1.5 rounded-full backdrop-blur-sm transition-all text-white scale-75"
-                                            title="Editar Descripción"
-                                        >
-                                            <IconEdit size={16} />
-                                        </button>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Highlights (Desktop Status Only) */}
-                        <div className="hidden md:flex flex-wrap justify-start gap-4 mt-4 text-xs md:text-sm font-medium">
-                            {hasLocation && (
-                                <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 group/loc relative">
-                                    <IconMapMarkerAlt className="text-[var(--brand-color)]" size={14} color={profile.theme_color} />
-
-                                    {editingField === 'address' ? (
-                                        <div className="flex items-center gap-1">
-                                            <input
-                                                value={tempValue}
-                                                onChange={(e) => setTempValue(e.target.value)}
-                                                className="bg-transparent text-white w-40 outline-none text-xs border-b border-white/50"
-                                                autoFocus
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') saveField('contact_address');
-                                                    if (e.key === 'Escape') cancelEditing();
-                                                }}
-                                            />
-                                            <button onClick={() => saveField('contact_address')}><IconCheck size={12} className="text-green-400" /></button>
-                                            <button onClick={cancelEditing}><IconX size={12} className="text-red-400" /></button>
+                                        />
+                                        <div className="flex gap-1">
+                                            <button onClick={() => saveField('name')} className="bg-green-500 hover:bg-green-600 p-2 rounded-full text-white transition-colors"><IconCheck size={20} /></button>
+                                            <button onClick={cancelEditing} className="bg-red-500 hover:bg-red-600 p-2 rounded-full text-white transition-colors"><IconX size={20} /></button>
                                         </div>
-                                    ) : (
-                                        <>
-                                            <span>{profile.contact_address}</span>
-                                            {isOwner && (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        startEditing('address', profile.contact_address || '');
+                                    </div>
+                                ) : (
+                                    <motion.h1
+                                        initial={{ x: -20, opacity: 0 }}
+                                        animate={{ x: 0, opacity: 1 }}
+                                        className="text-xl md:text-5xl font-black tracking-tight mb-0.5 md:mb-2 drop-shadow-md truncate pr-8"
+                                    >
+                                        {profile.name}
+                                        {isOwner && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    startEditing('name', profile.name || '');
+                                                }}
+                                                className="absolute -top-2 -right-6 opacity-0 group-hover/info:opacity-100 bg-white/20 hover:bg-white/30 p-1.5 rounded-full backdrop-blur-sm transition-all text-white scale-75"
+                                                title="Editar Nombre"
+                                            >
+                                                <IconEdit size={16} />
+                                            </button>
+                                        )}
+                                    </motion.h1>
+                                )}
+                            </div>
+
+                            <div className="relative mt-1">
+                                {editingField === 'description' ? (
+                                    <div className="flex items-start gap-2 w-full max-w-2xl">
+                                        <textarea
+                                            value={tempValue}
+                                            onChange={(e) => setTempValue(e.target.value)}
+                                            className="text-sm md:text-base bg-white/20 text-white rounded px-2 py-1 w-full outline-none border border-white/30 backdrop-blur-md resize-none"
+                                            rows={2}
+                                            autoFocus
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' && !e.shiftKey) {
+                                                    e.preventDefault();
+                                                    saveField('description');
+                                                }
+                                                if (e.key === 'Escape') cancelEditing();
+                                            }}
+                                        />
+                                        <div className="flex flex-col gap-1">
+                                            <button onClick={() => saveField('description')} className="bg-green-500 hover:bg-green-600 p-1.5 rounded-full text-white transition-colors"><IconCheck size={16} /></button>
+                                            <button onClick={cancelEditing} className="bg-red-500 hover:bg-red-600 p-1.5 rounded-full text-white transition-colors"><IconX size={16} /></button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="relative pr-8">
+                                        <motion.p
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            transition={{ delay: 0.1 }}
+                                            className="text-white/80 text-[10px] md:text-base line-clamp-1 md:line-clamp-2 max-w-2xl leading-tight"
+                                        >
+                                            {profile.description || 'Bienvenido a mi tienda digital.'}
+                                        </motion.p>
+                                        {isOwner && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    startEditing('description', profile.description || '');
+                                                }}
+                                                className="absolute -right-6 top-0 opacity-0 group-hover/info:opacity-100 bg-white/20 hover:bg-white/30 p-1.5 rounded-full backdrop-blur-sm transition-all text-white scale-75"
+                                                title="Editar Descripción"
+                                            >
+                                                <IconEdit size={16} />
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Highlights (Desktop Status Only) */}
+                            <div className="hidden md:flex flex-wrap justify-start gap-4 mt-4 text-xs md:text-sm font-medium">
+                                {hasLocation && (
+                                    <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 group/loc relative">
+                                        <IconMapMarkerAlt className="text-[var(--brand-color)]" size={14} color={profile.theme_color} />
+
+                                        {editingField === 'address' ? (
+                                            <div className="flex items-center gap-1">
+                                                <input
+                                                    value={tempValue}
+                                                    onChange={(e) => setTempValue(e.target.value)}
+                                                    className="bg-transparent text-white w-40 outline-none text-xs border-b border-white/50"
+                                                    autoFocus
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') saveField('contact_address');
+                                                        if (e.key === 'Escape') cancelEditing();
                                                     }}
-                                                    className="absolute -top-4 -right-2 opacity-0 group-hover/loc:opacity-100 bg-[var(--brand-color)] p-1 rounded-full text-white scale-75 transition-all"
-                                                    title="Editar Dirección"
-                                                >
-                                                    <IconEdit size={12} />
-                                                </button>
-                                            )}
-                                        </>
-                                    )}
+                                                />
+                                                <button onClick={() => saveField('contact_address')}><IconCheck size={12} className="text-green-400" /></button>
+                                                <button onClick={cancelEditing}><IconX size={12} className="text-red-400" /></button>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <span>{profile.contact_address}</span>
+                                                {isOwner && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            startEditing('address', profile.contact_address || '');
+                                                        }}
+                                                        className="absolute -top-4 -right-2 opacity-0 group-hover/loc:opacity-100 bg-[var(--brand-color)] p-1 rounded-full text-white scale-75 transition-all"
+                                                        title="Editar Dirección"
+                                                    >
+                                                        <IconEdit size={12} />
+                                                    </button>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+                                )}
+                                <div className="flex items-center gap-1.5 bg-emerald-500/20 backdrop-blur-md px-3 py-1.5 rounded-full border border-emerald-500/30 text-emerald-300">
+                                    <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                                    <span>Abierto Ahora</span>
                                 </div>
-                            )}
-                            <div className="flex items-center gap-1.5 bg-emerald-500/20 backdrop-blur-md px-3 py-1.5 rounded-full border border-emerald-500/30 text-emerald-300">
-                                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                                <span>Abierto Ahora</span>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Action Buttons (Desktop) */}
-                    <div className="hidden md:flex gap-3">
-                        {profile.contact_whatsapp && (
-                            <a
-                                href={getWhatsappUrl(profile.contact_whatsapp, profile.name || 'Negocio')}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-green-500/30 hover:-translate-y-1"
+                        {/* Action Buttons (Desktop) */}
+                        <div className="hidden md:flex gap-3">
+                            {profile.contact_whatsapp && (
+                                <a
+                                    href={getWhatsappUrl(profile.contact_whatsapp, profile.name || 'Negocio')}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-green-500/30 hover:-translate-y-1"
+                                >
+                                    <IconWhatsapp size={20} />
+                                    WhatsApp
+                                </a>
+                            )}
+                            <button
+                                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-3 rounded-xl font-bold backdrop-blur-md border border-white/10 transition-all"
                             >
-                                <IconWhatsapp size={20} />
-                                WhatsApp
-                            </a>
-                        )}
-                        <button
-                            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-3 rounded-xl font-bold backdrop-blur-md border border-white/10 transition-all"
-                        >
-                            <IconShareAlt size={20} />
-                        </button>
-                    </div>
+                                <IconShareAlt size={20} />
+                            </button>
+                        </div>
 
-                    {isOwner && (
-                        <button
-                            onClick={() => onEditPart?.('visual')}
-                            className="absolute top-4 right-4 bg-white/10 hover:bg-white/30 backdrop-blur-md text-white p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-all shadow-md border border-white/20"
-                            title="Editar Portada"
-                        >
-                            <IconEdit size={16} />
-                        </button>
-                    )}
+                        {isOwner && (
+                            <button
+                                onClick={() => onEditPart?.('visual')}
+                                className="absolute top-4 right-4 bg-white/10 hover:bg-white/30 backdrop-blur-md text-white p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-all shadow-md border border-white/20"
+                                title="Editar Portada"
+                            >
+                                <IconEdit size={16} />
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
 
