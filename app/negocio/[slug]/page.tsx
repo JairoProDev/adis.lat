@@ -164,7 +164,6 @@ export default function PublicBusinessPage({ params, searchParams }: { params: {
         setEditingProduct(null);
     };
 
-    // ... (rest of effects) ...
 
     return (
         <div className="min-h-screen bg-slate-50 relative flex flex-col md:flex-row overflow-x-hidden">
@@ -174,7 +173,7 @@ export default function PublicBusinessPage({ params, searchParams }: { params: {
                 "fixed inset-y-0 left-0 z-[60] w-full md:w-[450px] bg-white shadow-2xl transform transition-transform duration-300 ease-in-out border-r border-slate-200",
                 isEditing ? "translate-x-0" : "-translate-x-full"
             )}>
-                {isEditing && (
+                {isEditing && business && (
                     <EditorSteps
                         profile={business}
                         setProfile={setBusiness}
