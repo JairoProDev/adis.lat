@@ -6,7 +6,8 @@ import Link from 'next/link';
 import {
     IconPlus, IconGrid, IconList, IconSearch, IconFilter, IconSparkles,
     IconPackage, IconArrowLeft, IconEye, IconEdit, IconTrash,
-    IconCheck, IconX
+    IconCheck, IconX, IconRefresh, IconTag, IconZap, IconChevronRight,
+    IconChevronDown, IconLightbulb
 } from '@/components/Icons';
 import Header from '@/components/Header';
 import { useToast } from '@/hooks/useToast';
@@ -28,6 +29,11 @@ interface ProductHealth {
     isDraft: boolean;
     isIncomplete: boolean;
     score: number; // 0-100
+}
+
+interface AISuggestion {
+    category: string;
+    products: { id: string; title: string; currentCategory: string | null }[];
 }
 
 // ─── Health calculation ────────────────────────────────────────────────────────
@@ -95,6 +101,18 @@ export default function CatalogPage() {
     const [bulkLoading, setBulkLoading] = useState(false);
     const [showBulkCategoryInput, setShowBulkCategoryInput] = useState(false);
     const [bulkCategory, setBulkCategory] = useState('');
+
+    // AI organize
+    const [showAIOrganize, setShowAIOrganize] = useState(false);
+    const [aiLoading, setAiLoading] = useState(false);
+    const [aiSuggestions, setAiSuggestions] = useState<AISuggestion[] | null>(null);
+    const [aiSelectedCategories, setAiSelectedCategories] = useState<Set<string>>(new Set());
+    const [aiApplying, setAiApplying] = useState(false);
+    const [aiTotal, setAiTotal] = useState(0);
+
+    // Guided fix mode
+    const [fixModeIdx, setFixModeIdx] = useState(0);
+    const [showFixMode, setShowFixMode] = useState(false);
 
     // ── computed stats ──────────────────────────────────────────────────────
 
@@ -272,6 +290,66 @@ export default function CatalogPage() {
         }
     };
 
+    // ── AI organize ─────────────────────────────────────────────────────────
+
+    const runAIOrganize = async (all = false) => {
+        if (!supabase) return;
+        setAiLoading(true);
+        setAiSuggestions(null);
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const res = await fetch('/api/catalog/ai-categorize', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.access_token}`,
+                },
+                body: JSON.stringify({ all }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Error de IA');
+            setAiSuggestions(data.suggestions);
+            setAiTotal(data.total);
+            // Select all by default
+            setAiSelectedCategories(new Set(data.suggestions.map((s: AISuggestion) => s.category)));
+        } catch (err: any) {
+            showError('Error: ' + err.message);
+            setShowAIOrganize(false);
+        } finally {
+            setAiLoading(false);
+        }
+    };
+
+    const applyAISuggestions = async () => {
+        if (!supabase || !aiSuggestions) return;
+        setAiApplying(true);
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const assignments = aiSuggestions
+                .filter(s => aiSelectedCategories.has(s.category))
+                .flatMap(s => s.products.map(p => ({ productId: p.id, category: s.category })));
+
+            const res = await fetch('/api/catalog/ai-categorize', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.access_token}`,
+                },
+                body: JSON.stringify({ assignments }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+            success(`✓ ${data.applied} productos organizados`);
+            setShowAIOrganize(false);
+            setAiSuggestions(null);
+            await loadProducts();
+        } catch (err: any) {
+            showError('Error: ' + err.message);
+        } finally {
+            setAiApplying(false);
+        }
+    };
+
     const bulkChangeCategory = async () => {
         if (!supabase || selectedIds.size === 0 || !bulkCategory.trim()) return;
         setBulkLoading(true);
@@ -379,24 +457,57 @@ export default function CatalogPage() {
                         </div>
                     </div>
 
-                    {/* ── Attention Banner ─────────────────────────────────── */}
-                    {stats.incomplete > 0 && quickFilter !== 'incomplete' && (
-                        <button
-                            onClick={() => setQuickFilter('incomplete')}
-                            className="w-full mb-4 flex items-center gap-3 p-3 rounded-xl border-2 border-amber-200 bg-amber-50 text-left hover:border-amber-300 transition-colors"
-                        >
-                            <span className="text-xl">⚠️</span>
-                            <div className="flex-1">
-                                <p className="font-bold text-amber-800 text-sm">
-                                    {stats.incomplete} productos necesitan atención
-                                </p>
-                                <p className="text-amber-600 text-xs">
-                                    Sin imagen, sin precio o sin categoría — toca para verlos
-                                </p>
+                    {/* ── Smart action banners ─────────────────────────────── */}
+                    {(() => {
+                        const noCategory = products.filter(p => !p.category).length;
+                        const showAIBanner = noCategory > 0;
+                        const showFixBanner = stats.incomplete > 0 && quickFilter !== 'incomplete';
+
+                        return (
+                            <div className="space-y-2 mb-4">
+                                {/* AI organize banner */}
+                                {showAIBanner && (
+                                    <div className="flex items-center gap-3 p-3 rounded-xl border-2 border-purple-100 bg-purple-50">
+                                        <span className="text-xl flex-shrink-0">✨</span>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-bold text-purple-800 text-sm">
+                                                {noCategory} productos sin categoría
+                                            </p>
+                                            <p className="text-purple-600 text-xs truncate">
+                                                La IA puede organizarlos en segundos
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => { setShowAIOrganize(true); runAIOrganize(false); }}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 text-white rounded-lg text-xs font-bold hover:bg-purple-700 transition-colors flex-shrink-0"
+                                        >
+                                            <IconZap size={11} />
+                                            Organizar
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* Incomplete banner */}
+                                {showFixBanner && (
+                                    <button
+                                        onClick={() => { setQuickFilter('incomplete'); setShowFixMode(true); setFixModeIdx(0); }}
+                                        className="w-full flex items-center gap-3 p-3 rounded-xl border-2 border-amber-200 bg-amber-50 text-left hover:border-amber-300 transition-colors"
+                                    >
+                                        <span className="text-xl">⚠️</span>
+                                        <div className="flex-1">
+                                            <p className="font-bold text-amber-800 text-sm">
+                                                {stats.incomplete} productos incompletos
+                                            </p>
+                                            <p className="text-amber-600 text-xs">
+                                                Sin imagen, precio o categoría — toca para revisar uno a uno
+                                            </p>
+                                        </div>
+                                        <span className="text-amber-500 text-xs font-bold flex-shrink-0">Revisar →</span>
+                                    </button>
+                                )}
                             </div>
-                            <span className="text-amber-500 text-xs font-bold">Ver →</span>
-                        </button>
-                    )}
+                        );
+                    })()}
 
                     {/* ── Quick filter chips ───────────────────────────────── */}
                     <div className="flex gap-2 overflow-x-auto pb-1 mb-4 no-scrollbar">
@@ -659,6 +770,75 @@ export default function CatalogPage() {
                     </div>
                 </div>
             )}
+
+            {/* ── AI Organize Modal ─────────────────────────────────────────── */}
+            {showAIOrganize && (
+                <AIOrganizeModal
+                    loading={aiLoading}
+                    suggestions={aiSuggestions}
+                    total={aiTotal}
+                    selectedCategories={aiSelectedCategories}
+                    applying={aiApplying}
+                    onToggleCategory={(cat) => {
+                        setAiSelectedCategories(prev => {
+                            const next = new Set(prev);
+                            if (next.has(cat)) next.delete(cat); else next.add(cat);
+                            return next;
+                        });
+                    }}
+                    onToggleAll={() => {
+                        if (aiSuggestions) {
+                            const allCats = new Set(aiSuggestions.map(s => s.category));
+                            setAiSelectedCategories(
+                                aiSelectedCategories.size === allCats.size ? new Set() : allCats
+                            );
+                        }
+                    }}
+                    onApply={applyAISuggestions}
+                    onRerun={() => { setAiSuggestions(null); runAIOrganize(true); }}
+                    onClose={() => { setShowAIOrganize(false); setAiSuggestions(null); }}
+                />
+            )}
+
+            {/* ── Guided Fix Mode ───────────────────────────────────────────── */}
+            {showFixMode && businessProfileId && userId && (() => {
+                const incompleteProducts = filteredProducts.filter(p => getProductHealth(p).isIncomplete);
+                if (incompleteProducts.length === 0) {
+                    setShowFixMode(false);
+                    return null;
+                }
+                const current = incompleteProducts[fixModeIdx];
+                if (!current) return null;
+
+                return (
+                    <FixModeModal
+                        product={current}
+                        current={fixModeIdx}
+                        total={incompleteProducts.length}
+                        businessProfileId={businessProfileId}
+                        userId={userId}
+                        onSave={() => {
+                            loadProducts();
+                            if (fixModeIdx < incompleteProducts.length - 1) {
+                                setFixModeIdx(prev => prev + 1);
+                            } else {
+                                setShowFixMode(false);
+                                setFixModeIdx(0);
+                                success('¡Todos los productos revisados!');
+                            }
+                        }}
+                        onSkip={() => {
+                            if (fixModeIdx < incompleteProducts.length - 1) {
+                                setFixModeIdx(prev => prev + 1);
+                            } else {
+                                setShowFixMode(false);
+                                setFixModeIdx(0);
+                            }
+                        }}
+                        onClose={() => { setShowFixMode(false); setFixModeIdx(0); }}
+                    />
+                );
+            })()}
         </div>
     );
 }
@@ -959,6 +1139,284 @@ function EmptyState({ hasProducts, quickFilter, onAddClick, onClearFilter }: {
                     <IconPlus size={16} />
                     Agregar producto
                 </button>
+            </div>
+        </div>
+    );
+}
+
+// ─── AI Organize Modal ────────────────────────────────────────────────────────
+
+interface AIOrganizeModalProps {
+    loading: boolean;
+    suggestions: AISuggestion[] | null;
+    total: number;
+    selectedCategories: Set<string>;
+    applying: boolean;
+    onToggleCategory: (cat: string) => void;
+    onToggleAll: () => void;
+    onApply: () => void;
+    onRerun: () => void;
+    onClose: () => void;
+}
+
+function AIOrganizeModal({
+    loading, suggestions, total, selectedCategories,
+    applying, onToggleCategory, onToggleAll, onApply, onRerun, onClose
+}: AIOrganizeModalProps) {
+    const selectedCount = suggestions
+        ? suggestions.filter(s => selectedCategories.has(s.category)).reduce((n, s) => n + s.products.length, 0)
+        : 0;
+    const allSelected = suggestions ? selectedCategories.size === suggestions.length : false;
+
+    return (
+        <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm">
+            <div className="w-full sm:max-w-lg bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+                {/* Header */}
+                <div className="flex items-center gap-3 px-5 py-4 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                    <div className="w-8 h-8 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <IconZap size={16} color="#7c3aed" />
+                    </div>
+                    <div className="flex-1">
+                        <h2 className="font-bold text-base" style={{ color: 'var(--text-primary)' }}>
+                            Organizar con IA
+                        </h2>
+                        {!loading && suggestions && (
+                            <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                                {total} productos → {suggestions.length} categorías sugeridas
+                            </p>
+                        )}
+                    </div>
+                    <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
+                        <IconX size={18} color="var(--text-secondary)" />
+                    </button>
+                </div>
+
+                {/* Body */}
+                <div className="flex-1 overflow-y-auto">
+                    {loading ? (
+                        <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                            <div className="w-14 h-14 mb-4 rounded-2xl bg-purple-50 flex items-center justify-center">
+                                <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                            </div>
+                            <p className="font-bold text-base mb-1" style={{ color: 'var(--text-primary)' }}>
+                                Analizando {total} productos...
+                            </p>
+                            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                                La IA está creando la estructura perfecta para tu catálogo
+                            </p>
+                        </div>
+                    ) : suggestions && suggestions.length === 0 ? (
+                        <div className="flex flex-col items-center py-12 px-6 text-center">
+                            <p className="text-4xl mb-3">🎉</p>
+                            <p className="font-bold text-base mb-1" style={{ color: 'var(--text-primary)' }}>
+                                ¡Todos los productos ya tienen categoría!
+                            </p>
+                            <button
+                                onClick={onRerun}
+                                className="mt-4 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold border-2 transition-colors"
+                                style={{ borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}
+                            >
+                                <IconRefresh size={14} />
+                                Re-organizar todo el catálogo
+                            </button>
+                        </div>
+                    ) : suggestions ? (
+                        <div className="p-4">
+                            {/* Select all toggle */}
+                            <button
+                                onClick={onToggleAll}
+                                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl mb-3 text-sm font-bold transition-colors"
+                                style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}
+                            >
+                                <div
+                                    className="w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0"
+                                    style={{
+                                        borderColor: allSelected ? 'var(--brand-blue)' : 'var(--border-color)',
+                                        backgroundColor: allSelected ? 'var(--brand-blue)' : 'transparent'
+                                    }}
+                                >
+                                    {allSelected && <IconCheck size={9} color="#fff" />}
+                                </div>
+                                {allSelected ? 'Deseleccionar todo' : 'Seleccionar todo'}
+                            </button>
+
+                            <div className="space-y-2">
+                                {suggestions.map(s => {
+                                    const isSelected = selectedCategories.has(s.category);
+                                    return (
+                                        <button
+                                            key={s.category}
+                                            onClick={() => onToggleCategory(s.category)}
+                                            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl border-2 text-left transition-all"
+                                            style={{
+                                                borderColor: isSelected ? 'var(--brand-blue)' : 'var(--border-color)',
+                                                backgroundColor: isSelected ? '#eff6ff' : 'white',
+                                            }}
+                                        >
+                                            <div
+                                                className="w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0"
+                                                style={{
+                                                    borderColor: isSelected ? 'var(--brand-blue)' : 'var(--border-color)',
+                                                    backgroundColor: isSelected ? 'var(--brand-blue)' : 'transparent'
+                                                }}
+                                            >
+                                                {isSelected && <IconCheck size={10} color="#fff" />}
+                                            </div>
+                                            <IconTag size={13} color={isSelected ? 'var(--brand-blue)' : 'var(--text-tertiary)'} />
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>
+                                                    {s.category}
+                                                </p>
+                                                <p className="text-xs truncate" style={{ color: 'var(--text-tertiary)' }}>
+                                                    {s.products.slice(0, 3).map(p => p.title).join(', ')}
+                                                    {s.products.length > 3 && ` +${s.products.length - 3} más`}
+                                                </p>
+                                            </div>
+                                            <span
+                                                className="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0"
+                                                style={{
+                                                    backgroundColor: isSelected ? 'var(--brand-blue)' : 'var(--bg-secondary)',
+                                                    color: isSelected ? '#fff' : 'var(--text-secondary)'
+                                                }}
+                                            >
+                                                {s.products.length}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            <div className="mt-4 pt-3 border-t" style={{ borderColor: 'var(--border-color)' }}>
+                                <button
+                                    onClick={onRerun}
+                                    className="flex items-center gap-1.5 text-xs font-bold transition-colors"
+                                    style={{ color: 'var(--text-tertiary)' }}
+                                >
+                                    <IconRefresh size={11} />
+                                    Re-analizar todo el catálogo
+                                </button>
+                            </div>
+                        </div>
+                    ) : null}
+                </div>
+
+                {/* Footer */}
+                {!loading && suggestions && suggestions.length > 0 && (
+                    <div className="px-4 py-3 border-t flex gap-2" style={{ borderColor: 'var(--border-color)' }}>
+                        <button
+                            onClick={onClose}
+                            className="flex-1 py-2.5 text-sm font-bold rounded-xl border-2 transition-colors"
+                            style={{ borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            onClick={onApply}
+                            disabled={selectedCount === 0 || applying}
+                            className="flex-2 flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl text-white transition-all disabled:opacity-40"
+                            style={{ backgroundColor: '#7c3aed', flex: 2 }}
+                        >
+                            {applying ? (
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                                <>
+                                    <IconCheck size={15} />
+                                    Aplicar {selectedCount} productos
+                                </>
+                            )}
+                        </button>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+// ─── Fix Mode Modal ───────────────────────────────────────────────────────────
+
+interface FixModeModalProps {
+    product: CatalogProduct;
+    current: number;
+    total: number;
+    businessProfileId: string;
+    userId: string;
+    onSave: () => void;
+    onSkip: () => void;
+    onClose: () => void;
+}
+
+function FixModeModal({ product, current, total, businessProfileId, userId, onSave, onSkip, onClose }: FixModeModalProps) {
+    const health = getProductHealth(product);
+
+    return (
+        <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm">
+            <div className="w-full sm:max-w-lg bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[95vh] flex flex-col">
+                {/* Progress header */}
+                <div className="px-5 pt-4 pb-3">
+                    <div className="flex items-center justify-between mb-2">
+                        <p className="text-sm font-bold" style={{ color: 'var(--text-secondary)' }}>
+                            Revisando productos incompletos
+                        </p>
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold" style={{ color: 'var(--brand-blue)' }}>
+                                {current + 1} / {total}
+                            </span>
+                            <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100">
+                                <IconX size={16} color="var(--text-tertiary)" />
+                            </button>
+                        </div>
+                    </div>
+                    {/* Progress bar */}
+                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                            className="h-full rounded-full transition-all duration-300"
+                            style={{ width: `${((current + 1) / total) * 100}%`, backgroundColor: 'var(--brand-blue)' }}
+                        />
+                    </div>
+                </div>
+
+                {/* What needs fixing */}
+                <div className="px-5 pb-3">
+                    <div className="flex flex-wrap gap-1.5">
+                        {health.missingImage && (
+                            <span className="text-xs font-bold px-2 py-1 rounded-lg" style={{ backgroundColor: '#ffedd5', color: '#ea580c' }}>
+                                📷 Falta foto
+                            </span>
+                        )}
+                        {health.missingPrice && (
+                            <span className="text-xs font-bold px-2 py-1 rounded-lg" style={{ backgroundColor: '#fee2e2', color: '#dc2626' }}>
+                                💰 Falta precio
+                            </span>
+                        )}
+                        {health.missingCategory && (
+                            <span className="text-xs font-bold px-2 py-1 rounded-lg" style={{ backgroundColor: '#fef9c3', color: '#92400e' }}>
+                                🏷️ Falta categoría
+                            </span>
+                        )}
+                    </div>
+                </div>
+
+                {/* Product editor inline */}
+                <div className="flex-1 overflow-y-auto px-4 pb-4">
+                    <ProductEditor
+                        product={product}
+                        businessProfileId={businessProfileId}
+                        userId={userId}
+                        onSave={onSave}
+                        onCancel={onSkip}
+                    />
+                </div>
+
+                {/* Skip action */}
+                <div className="px-4 pb-4 pt-2 border-t" style={{ borderColor: 'var(--border-color)' }}>
+                    <button
+                        onClick={onSkip}
+                        className="w-full py-2 text-sm font-semibold transition-colors"
+                        style={{ color: 'var(--text-tertiary)' }}
+                    >
+                        Saltar este producto ({total - current - 1} restantes)
+                    </button>
+                </div>
             </div>
         </div>
     );
