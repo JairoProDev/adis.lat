@@ -37,7 +37,7 @@ const getWhatsappUrl = (phone: string, businessName: string) => {
 };
 
 interface BusinessPublicViewProps {
-    profile: Partial<BusinessProfile>;
+    profile: Partial<BusinessProfile> | null;
     adisos?: Adiso[];
     isPreview?: boolean;
     onEditPart?: (part: string) => void;
