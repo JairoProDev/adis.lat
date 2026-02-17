@@ -16,10 +16,13 @@ import ChatbotGuide from '@/components/business/ChatbotGuide';
 import { ProductEditor } from '@/components/business/ProductEditor';
 import SimpleCatalogAdd from '@/components/business/SimpleCatalogAdd';
 
+import { useToast } from '@/hooks/useToast'; // Add import
+
 export default function PublicBusinessPage({ params, searchParams }: { params: { slug: string }, searchParams: { [key: string]: string | string[] | undefined } }) {
     const router = useRouter();
     const slug = params.slug;
     const { user } = useAuth();
+    const { success } = useToast();
 
     const [business, setBusiness] = useState<BusinessProfile | null>(null);
     const [adisos, setAdisos] = useState<Adiso[]>([]);
@@ -59,6 +62,31 @@ export default function PublicBusinessPage({ params, searchParams }: { params: {
         }
     }, [isOwner, business?.id]);
 
+    const trackEvent = async (eventType: string, businessId: string, productId?: string) => {
+        try {
+            await supabase!.from('page_analytics').insert({
+                business_profile_id: businessId,
+                event_type: eventType,
+                product_id: productId,
+                session_id: getSessionId(),
+                user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+                referrer: typeof document !== 'undefined' ? document.referrer : ''
+            });
+        } catch (error) {
+            console.error('Analytics error:', error);
+        }
+    };
+
+    const getSessionId = () => {
+        if (typeof sessionStorage === 'undefined') return 'ssr-session';
+        let sessionId = sessionStorage.getItem('session_id');
+        if (!sessionId) {
+            sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            sessionStorage.setItem('session_id', sessionId);
+        }
+        return sessionId;
+    };
+
     const loadBusinessData = async () => {
         try {
             const profileData = await getBusinessProfileBySlug(slug);
@@ -69,7 +97,6 @@ export default function PublicBusinessPage({ params, searchParams }: { params: {
             }
 
             setBusiness(profileData);
-            // Initial load - might be guest view first, then useEffect updates if owner
             loadCatalog(profileData.id);
             trackEvent('page_view', profileData.id);
 
@@ -85,11 +112,10 @@ export default function PublicBusinessPage({ params, searchParams }: { params: {
                 .from('catalog_products')
                 .select('*')
                 .eq('business_profile_id', businessId)
-                .order('sort_order', { ascending: true });
+                // Sort by creation date descending to show new products first
+                .order('created_at', { ascending: false });
 
-            // If not owner, ONLY show published. If owner, show ALL.
-            // Note: We use the ref to current isOwner value or pass it? 
-            // Since this function is closed over the render scope, it uses current isOwner.
+            // If not owner, ONLY show published.
             if (!isOwner) {
                 query = query.eq('status', 'published');
             }
@@ -117,7 +143,6 @@ export default function PublicBusinessPage({ params, searchParams }: { params: {
                     ubicacion: business?.contact_address || '',
                     fechaPublicacion: p.created_at ? new Date(p.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
                     horaPublicacion: p.created_at ? new Date(p.created_at).toLocaleTimeString() : new Date().toLocaleTimeString(),
-                    // Pass status so UI can maybe show badge
                     status: p.status
                 }));
             }
@@ -132,7 +157,8 @@ export default function PublicBusinessPage({ params, searchParams }: { params: {
 
     const handleProductSave = async (updatedProduct: any) => {
         if (business?.id) {
-            await loadCatalog(business.id); // Assuming business is set if we are editing
+            await loadCatalog(business.id);
+            success('Producto guardado correctamente');
         }
         setShowProductModal(false);
         setEditingProduct(null);
@@ -254,8 +280,9 @@ export default function PublicBusinessPage({ params, searchParams }: { params: {
                         <SimpleCatalogAdd
                             businessProfileId={business.id}
                             onSuccess={() => {
-                                loadCatalog(business.id); // Fixed from business!.id to business.id checked by condition
+                                loadCatalog(business.id); // Fixed from business!.id to business.id
                                 setShowAddProductModal(false);
+                                success('Producto añadido correctamente');
                             }}
                             onClose={() => setShowAddProductModal(false)}
                         />
