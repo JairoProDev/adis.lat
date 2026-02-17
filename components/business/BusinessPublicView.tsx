@@ -174,256 +174,137 @@ export default function BusinessPublicView({
                 </div>
             )}
 
-            {/* --- HERO SECTION --- */}
-            <div className="max-w-6xl mx-auto md:px-4 md:mt-6 print:hidden">
-                <div className="relative w-full h-[25vh] md:h-[30vh] max-h-[350px] min-h-[180px] overflow-hidden group md:rounded-3xl shadow-lg">
-                    {/* Banner Image */}
-                    <div className="absolute inset-0 bg-gray-900">
-                        {profile.banner_url ? (
-                            <img
-                                src={profile.banner_url}
-                                alt="Banner"
-                                className="w-full h-full object-cover object-center opacity-80 transition-transform duration-1000 group-hover:scale-105"
-                            />
-                        ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-[var(--brand-color)] to-purple-900 opacity-80" />
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-                    </div>
-
-                    {/* Main Content Overlay */}
-                    <div className="absolute bottom-0 left-0 w-full p-6 pb-20 md:pb-8 flex flex-row items-end gap-3 md:gap-6 z-10 text-left">
-
-                        {/* Logo */}
-                        <motion.div
-                            initial={{ scale: 0.8, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            className="relative group/logo flex-shrink-0"
+            {/* --- HERO SECTION & PROFILE HEADER --- */}
+            <div className="bg-white pb-2 shadow-sm relative z-10">
+                {/* Banner Wrapper - Maximized width but contained */}
+                <div className="w-full relative group h-[200px] md:h-[350px] overflow-hidden bg-slate-100">
+                    {profile.banner_url ? (
+                        <img
+                            src={profile.banner_url}
+                            alt="Portada"
+                            className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
+                        />
+                    ) : (
+                        <div className="w-full h-full bg-gradient-to-r from-[var(--brand-color)] to-slate-800 opacity-90" />
+                    )}
+                    {/* Owner Banner Edit */}
+                    {isOwner && (
+                        <button
+                            onClick={() => onEditPart?.('visual')}
+                            className="absolute top-4 right-4 bg-black/40 hover:bg-black/60 backdrop-blur-md text-white p-2 rounded-full transition-all opacity-0 group-hover:opacity-100"
                         >
-                            <div className="w-24 h-24 md:w-36 md:h-36 rounded-2xl bg-white shadow-xl p-1 overflow-hidden border-2 border-white/50 backdrop-blur-sm relative transition-transform duration-300 group-hover/logo:scale-105">
+                            <IconEdit size={18} />
+                        </button>
+                    )}
+                </div>
+
+                {/* Profile Info Bar - Logo overlaps banner */}
+                <div className="max-w-6xl mx-auto px-4 md:px-8">
+                    <div className="flex flex-col md:flex-row gap-4 md:gap-8 items-start relative">
+
+                        {/* Logo Container - Negative margin to pull it UP */}
+                        <motion.div
+                            initial={{ y: 20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            className="-mt-16 md:-mt-24 relative z-20 shrink-0"
+                        >
+                            <div className="w-32 h-32 md:w-48 md:h-48 rounded-full border-[6px] border-white bg-white shadow-xl overflow-hidden relative group/logo">
                                 {profile.logo_url ? (
-                                    <img src={profile.logo_url} alt="Logo" className="w-full h-full object-cover rounded-xl" />
+                                    <img src={profile.logo_url} alt="Logo" className="w-full h-full object-cover" />
                                 ) : (
-                                    <div className="w-full h-full bg-gray-100 flex items-center justify-center text-4xl font-bold text-gray-400">
-                                        {profile.name?.substring(0, 1) || '?'}
+                                    <div className="w-full h-full bg-slate-100 flex items-center justify-center text-5xl font-bold text-slate-300">
+                                        {profile.name?.substring(0, 1) || 'N'}
                                     </div>
                                 )}
-
                                 {isOwner && (
                                     <button
                                         onClick={() => onEditPart?.('logo')}
-                                        className="absolute inset-0 bg-black/40 opacity-0 group-hover/logo:opacity-100 transition-opacity flex items-center justify-center text-white"
+                                        className="absolute inset-0 bg-black/30 opacity-0 group-hover/logo:opacity-100 flex items-center justify-center text-white transition-opacity"
                                     >
                                         <IconEdit size={24} />
                                     </button>
                                 )}
                             </div>
                             {/* Verified Badge */}
-                            <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white rounded-full p-1 border-2 border-[var(--bg-secondary)]" title="Verificado">
-                                <IconVerified size={12} className="md:size-4" />
+                            <div className="absolute bottom-2 right-2 bg-blue-500 text-white p-1.5 rounded-full border-4 border-white shadow-sm" title="Verificado">
+                                <IconVerified size={16} />
                             </div>
                         </motion.div>
 
-                        {/* Text Info */}
-                        <div className="flex-1 text-white mb-2 md:mb-4 relative group/info min-w-0">
-                            <div className="relative inline-flex items-center gap-2 max-w-full">
-                                {editingField === 'name' ? (
-                                    <div className="flex items-center gap-2 w-full max-w-md">
-                                        <input
-                                            value={tempValue}
-                                            onChange={(e) => setTempValue(e.target.value)}
-                                            className="text-xl md:text-5xl font-black tracking-tight bg-white/20 text-white rounded px-2 w-full outline-none border border-white/30 backdrop-blur-md"
-                                            autoFocus
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter') saveField('name');
-                                                if (e.key === 'Escape') cancelEditing();
-                                            }}
-                                        />
-                                        <div className="flex gap-1">
-                                            <button onClick={() => saveField('name')} className="bg-green-500 hover:bg-green-600 p-2 rounded-full text-white transition-colors"><IconCheck size={20} /></button>
-                                            <button onClick={cancelEditing} className="bg-red-500 hover:bg-red-600 p-2 rounded-full text-white transition-colors"><IconX size={20} /></button>
-                                        </div>
-                                    </div>
-                                ) : (
+                        {/* Name & Bio & Actions */}
+                        <div className="flex-1 pt-2 md:pt-4 w-full md:w-auto text-left">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div>
                                     <motion.h1
-                                        initial={{ x: -20, opacity: 0 }}
-                                        animate={{ x: 0, opacity: 1 }}
-                                        className="text-xl md:text-5xl font-black tracking-tight mb-0.5 md:mb-2 drop-shadow-md truncate pr-8"
+                                        className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight mb-2 leading-none"
                                     >
-                                        {profile.name}
-                                        {isOwner && (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    startEditing('name', profile.name || '');
-                                                }}
-                                                className="absolute -top-2 -right-6 opacity-0 group-hover/info:opacity-100 bg-white/20 hover:bg-white/30 p-1.5 rounded-full backdrop-blur-sm transition-all text-white scale-75"
-                                                title="Editar Nombre"
-                                            >
-                                                <IconEdit size={16} />
-                                            </button>
-                                        )}
+                                        {profile.name || 'Mi Negocio'}
                                     </motion.h1>
-                                )}
-                            </div>
+                                    <p className="text-slate-500 text-sm md:text-lg max-w-2xl mx-auto md:mx-0 font-medium leading-relaxed">
+                                        {profile.description || 'Bienvenido a nuestra tienda oficial.'}
+                                    </p>
 
-                            <div className="relative mt-1">
-                                {editingField === 'description' ? (
-                                    <div className="flex items-start gap-2 w-full max-w-2xl">
-                                        <textarea
-                                            value={tempValue}
-                                            onChange={(e) => setTempValue(e.target.value)}
-                                            className="text-sm md:text-base bg-white/20 text-white rounded px-2 py-1 w-full outline-none border border-white/30 backdrop-blur-md resize-none"
-                                            rows={2}
-                                            autoFocus
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter' && !e.shiftKey) {
-                                                    e.preventDefault();
-                                                    saveField('description');
-                                                }
-                                                if (e.key === 'Escape') cancelEditing();
-                                            }}
-                                        />
-                                        <div className="flex flex-col gap-1">
-                                            <button onClick={() => saveField('description')} className="bg-green-500 hover:bg-green-600 p-1.5 rounded-full text-white transition-colors"><IconCheck size={16} /></button>
-                                            <button onClick={cancelEditing} className="bg-red-500 hover:bg-red-600 p-1.5 rounded-full text-white transition-colors"><IconX size={16} /></button>
-                                        </div>
+                                    {/* Quick Stats / Meta */}
+                                    <div className="flex items-center justify-start gap-4 mt-3 text-sm text-slate-400 font-medium">
+                                        {profile.contact_address && (
+                                            <span className="flex items-center gap-1"><IconMapMarkerAlt size={14} /> {profile.contact_address}</span>
+                                        )}
+                                        <span className="flex items-center gap-1 text-green-600 bg-green-50 px-2 py-0.5 rounded-full"><span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /> Abierto ahora</span>
                                     </div>
-                                ) : (
-                                    <div className="relative pr-8">
-                                        <motion.p
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            transition={{ delay: 0.1 }}
-                                            className="text-white/80 text-[10px] md:text-base line-clamp-1 md:line-clamp-2 max-w-2xl leading-tight"
+                                </div>
+
+                                {/* Desktop Actions */}
+                                <div className="hidden md:flex items-center gap-3">
+                                    {profile.contact_whatsapp && (
+                                        <a
+                                            href={getWhatsappUrl(profile.contact_whatsapp, profile.name || 'Negocio')}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="bg-[var(--brand-color)] hover:brightness-110 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-[var(--brand-color)]/30 hover:-translate-y-1 transition-all flex items-center gap-2"
                                         >
-                                            {profile.description || 'Bienvenido a mi tienda digital.'}
-                                        </motion.p>
-                                        {isOwner && (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    startEditing('description', profile.description || '');
-                                                }}
-                                                className="absolute -right-6 top-0 opacity-0 group-hover/info:opacity-100 bg-white/20 hover:bg-white/30 p-1.5 rounded-full backdrop-blur-sm transition-all text-white scale-75"
-                                                title="Editar Descripción"
-                                            >
-                                                <IconEdit size={16} />
-                                            </button>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Highlights (Desktop Status Only) */}
-                            <div className="hidden md:flex flex-wrap justify-start gap-4 mt-4 text-xs md:text-sm font-medium">
-                                {hasLocation && (
-                                    <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 group/loc relative">
-                                        <IconMapMarkerAlt className="text-[var(--brand-color)]" size={14} color={profile.theme_color} />
-
-                                        {editingField === 'address' ? (
-                                            <div className="flex items-center gap-1">
-                                                <input
-                                                    value={tempValue}
-                                                    onChange={(e) => setTempValue(e.target.value)}
-                                                    className="bg-transparent text-white w-40 outline-none text-xs border-b border-white/50"
-                                                    autoFocus
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === 'Enter') saveField('contact_address');
-                                                        if (e.key === 'Escape') cancelEditing();
-                                                    }}
-                                                />
-                                                <button onClick={() => saveField('contact_address')}><IconCheck size={12} className="text-green-400" /></button>
-                                                <button onClick={cancelEditing}><IconX size={12} className="text-red-400" /></button>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <span>{profile.contact_address}</span>
-                                                {isOwner && (
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            startEditing('address', profile.contact_address || '');
-                                                        }}
-                                                        className="absolute -top-4 -right-2 opacity-0 group-hover/loc:opacity-100 bg-[var(--brand-color)] p-1 rounded-full text-white scale-75 transition-all"
-                                                        title="Editar Dirección"
-                                                    >
-                                                        <IconEdit size={12} />
-                                                    </button>
-                                                )}
-                                            </>
-                                        )}
-                                    </div>
-                                )}
-                                <div className="flex items-center gap-1.5 bg-emerald-500/20 backdrop-blur-md px-3 py-1.5 rounded-full border border-emerald-500/30 text-emerald-300">
-                                    <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                                    <span>Abierto Ahora</span>
+                                            <IconWhatsapp size={20} /> Contáctanos
+                                        </a>
+                                    )}
+                                    <button className="bg-slate-100 hover:bg-slate-200 text-slate-700 p-3 rounded-xl transition-colors">
+                                        <IconShareAlt size={20} />
+                                    </button>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Action Buttons (Desktop) */}
-                        <div className="hidden md:flex gap-3">
-                            {profile.contact_whatsapp && (
-                                <a
-                                    href={getWhatsappUrl(profile.contact_whatsapp, profile.name || 'Negocio')}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-green-500/30 hover:-translate-y-1"
-                                >
-                                    <IconWhatsapp size={20} />
-                                    WhatsApp
-                                </a>
-                            )}
-                            <button
-                                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-3 rounded-xl font-bold backdrop-blur-md border border-white/10 transition-all"
-                            >
-                                <IconShareAlt size={20} />
-                            </button>
-                        </div>
-
-                        {isOwner && (
-                            <button
-                                onClick={() => onEditPart?.('visual')}
-                                className="absolute top-4 right-4 bg-white/10 hover:bg-white/30 backdrop-blur-md text-white p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-all shadow-md border border-white/20"
-                                title="Editar Portada"
-                            >
-                                <IconEdit size={16} />
-                            </button>
-                        )}
                     </div>
                 </div>
-            </div>
 
-            {/* --- NAVIGATION TABS (Sticky) --- */}
-            <div className="sticky top-0 z-40 bg-[var(--bg-secondary)]/80 backdrop-blur-lg border-b border-[var(--border-subtle)] print:hidden">
-                <div className="max-w-6xl mx-auto px-4">
-                    <div className="flex items-center justify-center md:items-center md:justify-start gap-8 overflow-x-auto no-scrollbar">
-                        {[
-                            { id: 'catalogo', label: 'Catálogo', count: adisos.length },
-                            { id: 'inicio', label: 'Sobre Nosotros' },
-                            { id: 'feed', label: 'Publicaciones' }
-                        ].map(tab => (
-                            <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id as any)}
-                                className={cn(
-                                    "relative py-4 px-2 font-bold text-sm whitespace-nowrap transition-colors",
-                                    activeTab === tab.id ? "text-[var(--brand-color)]" : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
-                                )}
-                            >
-                                {tab.label}
-                                {tab.count !== undefined && (
-                                    <span className="ml-2 bg-[var(--bg-tertiary)] px-2 py-0.5 rounded-full text-xs text-[var(--text-primary)]">{tab.count}</span>
-                                )}
-                                {activeTab === tab.id && (
-                                    <motion.div
-                                        layoutId="activeTab"
-                                        className="absolute bottom-0 left-0 w-full h-[3px] bg-[var(--brand-color)] rounded-t-full"
-                                    />
-                                )}
-                            </button>
-                        ))}
+                {/* --- NAVIGATION TABS --- */}
+                <div className="mt-8 border-t border-slate-100 bg-white sticky top-0 z-40 shadow-sm backdrop-blur-md bg-white/90 supports-[backdrop-filter]:bg-white/80">
+                    <div className="max-w-6xl mx-auto px-4">
+                        <div className="flex items-center gap-8 overflow-x-auto no-scrollbar mask-fade-right">
+                            {[
+                                { id: 'catalogo', label: 'Catálogo', icon: <IconStore size={18} />, count: adisos.length },
+                                { id: 'inicio', label: 'Información', icon: <IconMapMarkerAlt size={18} /> },
+                                { id: 'feed', label: 'Novedades', icon: <IconHeart size={18} /> }
+                            ].map(tab => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id as any)}
+                                    className={cn(
+                                        "flex items-center gap-2 py-4 px-2 font-bold text-sm whitespace-nowrap transition-all border-b-2 relative",
+                                        activeTab === tab.id
+                                            ? "text-[var(--brand-color)] border-[var(--brand-color)]"
+                                            : "text-slate-400 border-transparent hover:text-slate-600"
+                                    )}
+                                >
+                                    {tab.icon}
+                                    {tab.label}
+                                    {tab.count !== undefined && (
+                                        <span className={cn(
+                                            "ml-1 px-2 py-0.5 rounded-full text-xs",
+                                            activeTab === tab.id ? "bg-[var(--brand-color)]/10" : "bg-slate-100 text-slate-500"
+                                        )}>{tab.count}</span>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -567,81 +448,91 @@ export default function BusinessPublicView({
                             exit={{ opacity: 0, scale: 0.98 }}
                             className="max-w-7xl mx-auto space-y-12"
                         >
-                            {/* Catalog Header & Search */}
+                            {/* Catalog Header & Search & Categories */}
                             <div className="flex flex-col gap-6">
-                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                                    <div>
-                                        <h2 className="text-4xl font-black text-slate-800 dark:text-zinc-100 flex items-center gap-3">
-                                            Catálogo <span className="bg-[var(--brand-color)]/10 text-[var(--brand-color)] text-xs px-3 py-1 rounded-full">{filteredAdisos.length}</span>
-                                        </h2>
-                                        <p className="text-slate-500 font-medium italic">Selección premium exclusiva</p>
+
+                                {/* Top Row: Search input + View Toggles - Single Line on Mobile */}
+                                <div className="flex flex-row gap-3 items-center">
+                                    {/* Modern Search Bar */}
+                                    <div className="relative flex-1 group">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[var(--brand-color)] transition-colors">
+                                            <IconSearch size={22} />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            placeholder="Buscar en el catálogo..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-none rounded-2xl shadow-inner focus:ring-2 focus:ring-[var(--brand-color)]/20 focus:bg-white transition-all font-medium text-slate-700 outline-none"
+                                        />
+                                        {searchQuery && (
+                                            <button
+                                                onClick={() => setSearchQuery('')}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 bg-slate-200 text-slate-500 rounded-full p-1 hover:bg-slate-300"
+                                            >
+                                                <IconX size={14} />
+                                            </button>
+                                        )}
                                     </div>
 
-                                    <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-                                        <div className="relative w-full sm:w-64 group">
-                                            <IconSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[var(--brand-color)] transition-colors" size={18} />
-                                            <input
-                                                type="text"
-                                                placeholder="Buscar..."
-                                                value={searchQuery}
-                                                onChange={(e) => setSearchQuery(e.target.value)}
-                                                className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-800 border-2 border-slate-100 dark:border-zinc-800 rounded-xl shadow-sm focus:outline-none focus:border-[var(--brand-color)] focus:ring-4 focus:ring-[var(--brand-color)]/10 transition-all font-medium text-sm"
-                                            />
-                                        </div>
-
-                                        <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-slate-100 shadow-sm">
-                                            <button
-                                                onClick={() => setViewMode('grid')}
-                                                className={cn("p-2.5 rounded-lg transition-all", viewMode === 'grid' ? "bg-[var(--brand-color)] text-white shadow-md" : "text-slate-400 hover:bg-slate-50")}
-                                            >
-                                                <IconGrid size={18} />
-                                            </button>
-                                            <button
-                                                onClick={() => setViewMode('list')}
-                                                className={cn("p-2.5 rounded-lg transition-all", viewMode === 'list' ? "bg-[var(--brand-color)] text-white shadow-md" : "text-slate-400 hover:bg-slate-50")}
-                                            >
-                                                <IconList size={18} />
-                                            </button>
-                                        </div>
-
+                                    {/* View Mode Toggles - Inline on Desktop */}
+                                    <div className="flex items-center gap-1 bg-slate-100 p-1.5 rounded-2xl self-start md:self-auto">
+                                        <button
+                                            onClick={() => setViewMode('grid')}
+                                            className={cn("p-2.5 rounded-xl transition-all", viewMode === 'grid' ? "bg-white text-[var(--brand-color)] shadow-sm" : "text-slate-400 hover:text-slate-600")}
+                                        >
+                                            <IconGrid size={20} />
+                                        </button>
+                                        <button
+                                            onClick={() => setViewMode('list')}
+                                            className={cn("p-2.5 rounded-xl transition-all", viewMode === 'list' ? "bg-white text-[var(--brand-color)] shadow-sm" : "text-slate-400 hover:text-slate-600")}
+                                        >
+                                            <IconList size={20} />
+                                        </button>
+                                        <div className="w-[1px] h-6 bg-slate-200 mx-1 hidden md:block" />
                                         <button
                                             onClick={() => window.print()}
-                                            className="hidden md:flex items-center justify-center gap-2 px-5 py-3 bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-900 active:scale-95 transition-all shadow-lg text-sm"
+                                            className="hidden md:flex p-2.5 text-slate-400 hover:text-slate-600"
+                                            title="Descargar PDF"
                                         >
-                                            <IconFileAlt size={16} />
-                                            <span>PDF</span>
+                                            <IconFileAlt size={20} />
                                         </button>
                                     </div>
                                 </div>
 
-                                {/* Categories Filter */}
+                                {/* Categories - Horizontal Scroll Pills */}
                                 {categories.length > 0 && (
-                                    <div className="flex flex-wrap gap-2 pb-4 border-b border-slate-100/50">
-                                        <button
-                                            onClick={() => setSelectedCategory(null)}
-                                            className={cn(
-                                                "px-4 py-1.5 rounded-full text-sm font-bold transition-all border",
-                                                !selectedCategory
-                                                    ? "bg-[var(--brand-color)] text-white border-[var(--brand-color)] shadow-md shadow-[var(--brand-color)]/20"
-                                                    : "bg-white text-slate-500 border-slate-200 hover:border-[var(--brand-color)] hover:text-[var(--brand-color)]"
-                                            )}
-                                        >
-                                            Todos
-                                        </button>
-                                        {categories.map(cat => (
+                                    <div className="overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 no-scrollbar mask-fade-right">
+                                        <div className="flex gap-2.5">
                                             <button
-                                                key={cat}
-                                                onClick={() => setSelectedCategory(cat)}
+                                                onClick={() => setSelectedCategory(null)}
                                                 className={cn(
-                                                    "px-4 py-1.5 rounded-full text-sm font-bold transition-all border",
-                                                    selectedCategory === cat
-                                                        ? "bg-[var(--brand-color)] text-white border-[var(--brand-color)] shadow-md shadow-[var(--brand-color)]/20"
-                                                        : "bg-white text-slate-500 border-slate-200 hover:border-[var(--brand-color)] hover:text-[var(--brand-color)]"
+                                                    "px-5 py-2.5 rounded-full text-sm font-bold transition-all whitespace-nowrap flex items-center gap-2",
+                                                    !selectedCategory
+                                                        ? "bg-[var(--brand-color)] text-white shadow-lg shadow-[var(--brand-color)]/25 ring-2 ring-[var(--brand-color)] ring-offset-2"
+                                                        : "bg-white text-slate-600 border border-slate-200 hover:border-[var(--brand-color)] hover:text-[var(--brand-color)] hover:bg-slate-50"
                                                 )}
                                             >
-                                                {cat}
+                                                <IconStore size={16} />
+                                                Todos
                                             </button>
-                                        ))}
+                                            {categories.map(cat => (
+                                                <button
+                                                    key={cat}
+                                                    onClick={() => setSelectedCategory(cat)}
+                                                    className={cn(
+                                                        "px-5 py-2.5 rounded-full text-sm font-bold transition-all whitespace-nowrap flex items-center gap-2",
+                                                        selectedCategory === cat
+                                                            ? "bg-[var(--brand-color)] text-white shadow-lg shadow-[var(--brand-color)]/25 ring-2 ring-[var(--brand-color)] ring-offset-2"
+                                                            : "bg-white text-slate-600 border border-slate-200 hover:border-[var(--brand-color)] hover:text-[var(--brand-color)] hover:bg-slate-50"
+                                                    )}
+                                                >
+                                                    {/* Generic Icon since we don't have category specific ones yet */}
+                                                    <IconBox size={16} className={selectedCategory === cat ? "text-white" : "text-slate-400"} />
+                                                    {cat}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
                             </div>
