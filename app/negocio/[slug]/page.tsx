@@ -12,6 +12,10 @@ import { EditorSteps } from '../../mi-negocio/components/EditorSteps';
 import { IconEdit, IconX, IconEye } from '@/components/Icons';
 import { cn } from '@/lib/utils';
 
+import ChatbotGuide from '@/components/business/ChatbotGuide';
+import { ProductEditor } from '@/components/business/ProductEditor';
+import SimpleCatalogAdd from '@/components/business/SimpleCatalogAdd';
+
 export default function PublicBusinessPage({ params, searchParams }: { params: { slug: string }, searchParams: { [key: string]: string | string[] | undefined } }) {
     const router = useRouter();
     const slug = params.slug;
@@ -28,6 +32,13 @@ export default function PublicBusinessPage({ params, searchParams }: { params: {
     const [editingProduct, setEditingProduct] = useState<any>(null);
     const [catalogProducts, setCatalogProducts] = useState<any[]>([]);
 
+    // Modals state
+    const [showProductModal, setShowProductModal] = useState(false);
+    const [showAddProductModal, setShowAddProductModal] = useState(false);
+
+    // Chatbot State
+    const [chatbotMinimized, setChatbotMinimized] = useState(true);
+
     // Derived owner check
     const isOwner = user?.id && business?.user_id && user.id === business.user_id;
 
@@ -41,21 +52,25 @@ export default function PublicBusinessPage({ params, searchParams }: { params: {
         }
     }, [slug, searchParams]);
 
+    // Reload catalog when ownership is confirmed to ensure drafts are visible
+    useEffect(() => {
+        if (business?.id) {
+            loadCatalog(business.id);
+        }
+    }, [isOwner, business?.id]);
+
     const loadBusinessData = async () => {
         try {
-            // Load business profile
             const profileData = await getBusinessProfileBySlug(slug);
 
             if (!profileData) {
-                console.log('Profile not found for slug:', slug);
                 setLoading(false);
                 return;
             }
 
             setBusiness(profileData);
+            // Initial load - might be guest view first, then useEffect updates if owner
             loadCatalog(profileData.id);
-
-            // Track page view
             trackEvent('page_view', profileData.id);
 
         } catch (error) {
@@ -66,12 +81,20 @@ export default function PublicBusinessPage({ params, searchParams }: { params: {
 
     const loadCatalog = async (businessId: string) => {
         try {
-            const { data: productsData } = await supabase!
+            let query = supabase!
                 .from('catalog_products')
                 .select('*')
                 .eq('business_profile_id', businessId)
-                .eq('status', 'published')
                 .order('sort_order', { ascending: true });
+
+            // If not owner, ONLY show published. If owner, show ALL.
+            // Note: We use the ref to current isOwner value or pass it? 
+            // Since this function is closed over the render scope, it uses current isOwner.
+            if (!isOwner) {
+                query = query.eq('status', 'published');
+            }
+
+            const { data: productsData } = await query;
 
             let mappedAdisos: Adiso[] = [];
 
@@ -89,11 +112,13 @@ export default function PublicBusinessPage({ params, searchParams }: { params: {
                         : '',
                     slug: p.id,
                     categoria: p.category || 'productos',
-                    user_id: business?.user_id, // Might be null initially but updated later
+                    user_id: business?.user_id || p.business_profile_id,
                     contacto: business?.contact_phone || '',
                     ubicacion: business?.contact_address || '',
                     fechaPublicacion: p.created_at ? new Date(p.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-                    horaPublicacion: p.created_at ? new Date(p.created_at).toLocaleTimeString() : new Date().toLocaleTimeString()
+                    horaPublicacion: p.created_at ? new Date(p.created_at).toLocaleTimeString() : new Date().toLocaleTimeString(),
+                    // Pass status so UI can maybe show badge
+                    status: p.status
                 }));
             }
             setAdisos(mappedAdisos);
@@ -105,76 +130,20 @@ export default function PublicBusinessPage({ params, searchParams }: { params: {
         }
     };
 
-    // Auto-save effect
-    useEffect(() => {
-        if (!business || !isOwner) return;
-
-        const timer = setTimeout(async () => {
-            setSaving(true);
-            try {
-                await saveBusinessProfile(business);
-            } catch (e) {
-                console.error("Save error:", e);
-            } finally {
-                setSaving(false);
-            }
-        }, 3000); // 3 seconds debounce
-
-        return () => clearTimeout(timer);
-    }, [business, isOwner]);
-
-    const trackEvent = async (eventType: string, businessId: string, productId?: string) => {
-        try {
-            await supabase!.from('page_analytics').insert({
-                business_profile_id: businessId,
-                event_type: eventType,
-                product_id: productId,
-                session_id: getSessionId(),
-                user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
-                referrer: typeof document !== 'undefined' ? document.referrer : ''
-            });
-        } catch (error) {
-            console.error('Analytics error:', error);
+    const handleProductSave = async (updatedProduct: any) => {
+        if (business?.id) {
+            await loadCatalog(business.id); // Assuming business is set if we are editing
         }
+        setShowProductModal(false);
+        setEditingProduct(null);
     };
 
-    const getSessionId = () => {
-        if (typeof sessionStorage === 'undefined') return 'ssr-session';
-        let sessionId = sessionStorage.getItem('session_id');
-        if (!sessionId) {
-            sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            sessionStorage.setItem('session_id', sessionId);
-        }
-        return sessionId;
-    };
-
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-white">
-                <div className="w-16 h-16 border-4 border-slate-200 border-t-[var(--brand-color)] rounded-full animate-spin" />
-            </div>
-        );
-    }
-
-    if (!business) {
-        return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-4 text-center">
-                <h1 className="text-2xl font-bold text-slate-800 mb-2">Negocio no encontrado</h1>
-                <p className="text-slate-500 mb-6">La página que buscas no existe o ha sido movida.</p>
-                <button
-                    onClick={() => router.push('/')}
-                    className="px-6 py-2 bg-slate-900 text-white rounded-lg hover:bg-black transition-colors"
-                >
-                    Volver al inicio
-                </button>
-            </div>
-        );
-    }
+    // ... (rest of effects) ...
 
     return (
         <div className="min-h-screen bg-slate-50 relative flex flex-col md:flex-row overflow-x-hidden">
 
-            {/* --- EDITOR SIDEBAR (Only visible when isEditing) --- */}
+            {/* --- EDITOR SIDEBAR --- */}
             <div className={cn(
                 "fixed inset-y-0 left-0 z-[60] w-full md:w-[450px] bg-white shadow-2xl transform transition-transform duration-300 ease-in-out border-r border-slate-200",
                 isEditing ? "translate-x-0" : "-translate-x-full"
@@ -187,17 +156,20 @@ export default function PublicBusinessPage({ params, searchParams }: { params: {
                         catalogProducts={catalogProducts}
                         activeStep={activeStep}
                         setActiveStep={setActiveStep}
-                        onAddProduct={() => setEditingProduct('new')}
+                        onAddProduct={() => setShowAddProductModal(true)} // Changed to open SimpleCatalogAdd
                         editingProduct={editingProduct}
-                        setEditingProduct={setEditingProduct}
-                        onRefreshCatalog={() => loadCatalog(business.id)}
+                        setEditingProduct={(product) => {
+                            setEditingProduct(product);
+                            setShowProductModal(true);
+                        }}
+                        onRefreshCatalog={() => business?.id && loadCatalog(business.id)}
                         onToggleView={() => setIsEditing(false)}
-                        isPublished={!!business.is_published}
+                        isPublished={!!business?.is_published}
                     />
                 )}
             </div>
 
-            {/* --- MAIN CONTENT (Preview / Public View) --- */}
+            {/* --- MAIN CONTENT --- */}
             <div className={cn(
                 "flex-1 min-w-0 transition-all duration-300",
                 isEditing ? "md:ml-[450px]" : ""
@@ -205,26 +177,47 @@ export default function PublicBusinessPage({ params, searchParams }: { params: {
                 <BusinessPublicView
                     profile={business}
                     adisos={adisos}
-                    editMode={isEditing}
-                    // When clicking "inline edit" on view, open sidebar
+                    editMode={isEditing || isOwner} // Allow inline edits if owner
                     onEditPart={(part) => {
                         setIsEditing(true);
-                        // Map parts to steps
                         if (part === 'logo' || part === 'visual') setActiveStep(1);
                         if (part === 'add-product') {
-                            setActiveStep(2); // Catalog
-                            setEditingProduct('new');
+                            setActiveStep(2);
+                            setShowAddProductModal(true); // Changed to open SimpleCatalogAdd
                         }
                     }}
-                    onEditProduct={(product) => {
+                    onEditProduct={(productAdiso) => {
                         setIsEditing(true);
-                        setActiveStep(2); // Catalog Step
-                        // We need to find the raw product data... 
-                        setEditingProduct(product); // This might need conversion if types don't match perfect
+                        setActiveStep(2);
+                        // Find full product data
+                        const fullProduct = catalogProducts.find(p => p.id === productAdiso.id);
+                        setEditingProduct(fullProduct || productAdiso);
+                        setShowProductModal(true);
                     }}
                 />
 
-                {/* --- FLOATING EDIT BUTTON REMOVED (Moved to BusinessPublicView Actions) --- */}
+                {/* --- CHATBOT GUIDE --- */}
+                {isOwner && (
+                    <>
+                        <ChatbotGuide
+                            profile={business}
+                            onUpdate={(field, value) => setBusiness(prev => prev ? ({ ...prev, [field]: value }) : null)}
+                            onComplete={() => setChatbotMinimized(true)}
+                            isMinimized={chatbotMinimized}
+                            onToggleMinimize={() => setChatbotMinimized(!chatbotMinimized)}
+                        />
+                        {/* Floating Chat Button (Re-open) */}
+                        {chatbotMinimized && (
+                            <button
+                                onClick={() => setChatbotMinimized(false)}
+                                className="fixed bottom-32 right-6 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center z-50 hover:scale-110 transition-transform bg-white text-blue-600 border border-blue-100"
+                                title="Asistente IA"
+                            >
+                                <span className="text-2xl">💬</span>
+                            </button>
+                        )}
+                    </>
+                )}
             </div>
 
             {/* Overlay for mobile when editing */}
@@ -233,6 +226,41 @@ export default function PublicBusinessPage({ params, searchParams }: { params: {
                     className="fixed inset-0 bg-black/20 z-40 md:hidden backdrop-blur-sm"
                     onClick={() => setIsEditing(false)}
                 />
+            )}
+
+            {/* Product Edit Modal Overlay */}
+            {(showProductModal || editingProduct) && user && business?.id && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                        <ProductEditor
+                            key={editingProduct?.id || 'new-product'}
+                            product={editingProduct === 'new' ? null : editingProduct}
+                            businessProfileId={business.id}
+                            userId={user.id}
+                            onSave={handleProductSave}
+                            onCancel={() => {
+                                setShowProductModal(false);
+                                setEditingProduct(null);
+                            }}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* Simple Product Add Modal */}
+            {showAddProductModal && business?.id && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in zoom-in-95 duration-300">
+                    <div className="w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl overflow-hidden">
+                        <SimpleCatalogAdd
+                            businessProfileId={business.id}
+                            onSuccess={() => {
+                                loadCatalog(business.id); // Fixed from business!.id to business.id checked by condition
+                                setShowAddProductModal(false);
+                            }}
+                            onClose={() => setShowAddProductModal(false)}
+                        />
+                    </div>
+                </div>
             )}
         </div>
     );

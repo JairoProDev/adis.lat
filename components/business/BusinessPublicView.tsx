@@ -62,6 +62,11 @@ export default function BusinessPublicView({
     const [activeTab, setActiveTab] = useState<'inicio' | 'catalogo' | 'feed'>('catalogo');
     const [isHeaderCompact, setIsHeaderCompact] = useState(false);
 
+    // Safeguard against null profile
+    if (!profile) {
+        return <div className="min-h-[50vh] flex items-center justify-center text-slate-400">Cargando perfil...</div>;
+    }
+
     // Catalog State & Filters
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
