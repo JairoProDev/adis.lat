@@ -43,7 +43,7 @@ export default function PublicBusinessPage({ params, searchParams }: { params: {
     const [chatbotMinimized, setChatbotMinimized] = useState(true);
 
     // Derived owner check
-    const isOwner = user?.id && business?.user_id && user.id === business.user_id;
+    const isOwner = Boolean(user?.id && business?.user_id && user.id === business.user_id);
 
     useEffect(() => {
         if (slug) {
