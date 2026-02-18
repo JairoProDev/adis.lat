@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BusinessProfile } from '@/types/business';
 import { Adiso } from '@/types';
@@ -114,9 +114,8 @@ export default function BusinessPublicView({
         }
     };
 
-    // Pagination
-    const ITEMS_PER_PAGE = viewMode === 'list' ? 12 : 24;
-    const [currentPage, setCurrentPage] = useState(1);
+    // Infinite Scroll State
+    const [visibleCount, setVisibleCount] = useState(24);
 
     // Derived Categories
     const categories = Array.from(new Set(adisos.map(a => a.categoria || 'Otros').filter(Boolean)));
@@ -138,15 +137,37 @@ export default function BusinessPublicView({
         }
 
         setFilteredAdisos(result);
-        setCurrentPage(1); // Reset page
+        setVisibleCount(24); // Reset visible count on filter change
     }, [searchQuery, selectedCategory, adisos]);
 
-    // Calculate pagination
-    const totalPages = Math.ceil(filteredAdisos.length / ITEMS_PER_PAGE);
-    const displayedAdisos = filteredAdisos.slice(
-        (currentPage - 1) * ITEMS_PER_PAGE,
-        currentPage * ITEMS_PER_PAGE
-    );
+    // Calculate display items
+    const displayedAdisos = filteredAdisos.slice(0, visibleCount);
+    const hasMore = visibleCount < filteredAdisos.length;
+
+    // Infinite Scroll Observer
+    const loadMoreRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasMore) {
+                    setVisibleCount((prev) => prev + 24);
+                }
+            },
+            { rootMargin: '400px' }
+        );
+
+        const currentRef = loadMoreRef.current;
+        if (currentRef) {
+            observer.observe(currentRef);
+        }
+
+        return () => {
+            if (currentRef) {
+                observer.unobserve(currentRef);
+            }
+        };
+    }, [hasMore, visibleCount]);
 
     // Editing State
     const [editingField, setEditingField] = useState<string | null>(null);
@@ -741,26 +762,17 @@ export default function BusinessPublicView({
                                         ))}
                                     </div>
 
-                                    {/* Pagination Controls */}
-                                    {totalPages > 1 && (
-                                        <div className="flex justify-center items-center gap-4 mt-8 py-4">
-                                            <button
-                                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                                disabled={currentPage === 1}
-                                                className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                            >
-                                                Anterior
-                                            </button>
-                                            <span className="text-sm font-medium text-slate-600">
-                                                Página {currentPage} de {totalPages}
-                                            </span>
-                                            <button
-                                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                                disabled={currentPage === totalPages}
-                                                className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                            >
-                                                Siguiente
-                                            </button>
+                                    {/* Infinite Scroll Sentinel */}
+                                    {hasMore && (
+                                        <div
+                                            ref={loadMoreRef}
+                                            className="h-20 flex items-center justify-center p-4"
+                                        >
+                                            <div className="flex items-center gap-2 text-slate-400 text-sm">
+                                                <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                                                <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                                                <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
+                                            </div>
                                         </div>
                                     )}
                                 </>
