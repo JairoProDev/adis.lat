@@ -6,7 +6,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { IconCamera, IconCheck, IconX, IconImage, IconUpload } from '@/components/Icons';
+import { IconCamera, IconCheck, IconX, IconImage, IconUpload, IconSparkles } from '@/components/Icons';
 import { supabase } from '@/lib/supabase';
 import { uploadProductImage } from '@/lib/business';
 
@@ -21,6 +21,7 @@ interface SimpleCatalogAddProps {
 export default function SimpleCatalogAdd({ businessProfileId, onSuccess, onClose }: SimpleCatalogAddProps) {
     const [method, setMethod] = useState<AddMethod>(null);
     const [loading, setLoading] = useState(false);
+    const [magicLoading, setMagicLoading] = useState(false);
 
     // Quick: foto + nombre
     const [quickImage, setQuickImage] = useState<File | null>(null);
@@ -43,6 +44,7 @@ export default function SimpleCatalogAdd({ businessProfileId, onSuccess, onClose
     const quickFileRef = useRef<HTMLInputElement>(null);
     const completeFileRef = useRef<HTMLInputElement>(null);
     const excelFileRef = useRef<HTMLInputElement>(null);
+    const magicFileRef = useRef<HTMLInputElement>(null);
 
     const handleQuickImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -215,6 +217,64 @@ export default function SimpleCatalogAdd({ businessProfileId, onSuccess, onClose
         if (file) setExcelFile(file);
     };
 
+    const handleMagicImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            setMagicLoading(true);
+            setMethod('complete'); // Switch to complete view to show progress/results immediately
+
+            // 1. Show preview immediately
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setForm(prev => ({ ...prev, image: file, imagePreview: reader.result as string }));
+            };
+            reader.readAsDataURL(file);
+
+            // 2. Upload to Supabase to get URL
+            if (!supabase) throw new Error('Supabase no configurado');
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error('Usuario no autenticado');
+
+            const imageUrl = await uploadProductImage(file, user.id);
+            if (!imageUrl) throw new Error('Error al subir imagen');
+
+            // 3. Analyze with AI
+            const response = await fetch('/api/analyze-product', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ imageUrl })
+            });
+
+            if (!response.ok) {
+                // If AI fails, we still have the image, just let user fill manually
+                console.warn('AI Analysis failed');
+                return;
+            }
+
+            const { data } = await response.json();
+
+            if (data) {
+                // 4. Fill form
+                setForm(prev => ({
+                    ...prev,
+                    image: file,
+                    title: data.title || '',
+                    description: data.description || '',
+                    price: data.price ? String(data.price) : '',
+                    // You might save category elsewhere if your form supports it
+                }));
+            }
+
+        } catch (error: any) {
+            console.error('Magic scan error:', error);
+            alert('No pudimos analizar la imagen, pero puedes llenar los datos manualmente.');
+        } finally {
+            setMagicLoading(false);
+        }
+    };
+
     return (
         <div className="space-y-4">
             {/* Selección de Método */}
@@ -230,6 +290,37 @@ export default function SimpleCatalogAdd({ businessProfileId, onSuccess, onClose
                     </div>
 
                     <div className="space-y-3">
+                        {/* Magic Scan Button */}
+                        <button
+                            onClick={() => magicFileRef.current?.click()}
+                            className="w-full p-4 rounded-xl border-2 text-left hover:shadow-lg transition-all relative overflow-hidden group"
+                            style={{
+                                borderColor: 'transparent',
+                                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                                color: 'white'
+                            }}
+                        >
+                            <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <div className="flex items-center gap-3 relative z-10">
+                                <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-white/20 backdrop-blur-sm">
+                                    <IconSparkles size={24} color="white" />
+                                </div>
+                                <div className="flex-1">
+                                    <div className="font-bold text-white flex items-center gap-2">
+                                        ✨ Escaneo Mágico IA
+                                        <span className="bg-white/20 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">Nuevo</span>
+                                    </div>
+                                    <div className="text-sm text-white/90">Sube la foto y nosotros llenamos todo</div>
+                                </div>
+                            </div>
+                            <input
+                                ref={magicFileRef}
+                                type="file"
+                                accept="image/*"
+                                onChange={handleMagicImageSelect}
+                                className="hidden"
+                            />
+                        </button>
                         <button
                             onClick={() => setMethod('quick')}
                             className="w-full p-4 rounded-xl border-2 text-left hover:shadow-md transition-all group"
@@ -356,6 +447,13 @@ export default function SimpleCatalogAdd({ businessProfileId, onSuccess, onClose
                     >
                         ← Cambiar método
                     </button>
+
+                    {magicLoading && (
+                        <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl flex items-center gap-3 animate-pulse mb-4">
+                            <IconSparkles className="text-indigo-600 animate-spin" />
+                            <div className="text-indigo-800 text-sm font-medium">Analizando imagen con IA...</div>
+                        </div>
+                    )}
 
                     <div
                         onClick={() => completeFileRef.current?.click()}
