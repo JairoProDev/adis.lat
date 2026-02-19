@@ -11,7 +11,7 @@ import {
     IconVerified, IconShareAlt, IconGlobe, IconPhone, IconClock, IconChevronDown,
     IconLinkedin, IconYoutube, IconSearch, IconArrowRight, IconHeart,
     IconFileAlt, IconEdit, IconPlus, IconBox, IconCheck, IconX,
-    IconGrid, IconList, IconFilter, IconChevronLeft
+    IconGrid, IconList, IconFilter, IconChevronLeft, IconSparkles
 } from '@/components/Icons';
 import BentoCard from '@/components/BentoCard';
 import { useRouter } from 'next/navigation';
