@@ -95,9 +95,10 @@ interface ChatbotGuideProps {
     onComplete: () => void;
     isMinimized: boolean;
     onToggleMinimize: () => void;
+    hideTriggerButton?: boolean;
 }
 
-export default function ChatbotGuide({ profile, onUpdate, onComplete, isMinimized, onToggleMinimize }: ChatbotGuideProps) {
+export default function ChatbotGuide({ profile, onUpdate, onComplete, isMinimized, onToggleMinimize, hideTriggerButton = false }: ChatbotGuideProps) {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [inputValue, setInputValue] = useState('');
@@ -255,6 +256,8 @@ export default function ChatbotGuide({ profile, onUpdate, onComplete, isMinimize
     };
 
     if (isMinimized) {
+        if (hideTriggerButton) return null;
+        
         return (
             <button
                 onClick={onToggleMinimize}

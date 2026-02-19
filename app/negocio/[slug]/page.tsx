@@ -219,6 +219,8 @@ export default function PublicBusinessPage({ params, searchParams }: { params: {
                         setEditingProduct(fullProduct || productAdiso);
                         setShowProductModal(true);
                     }}
+                    chatbotMinimized={chatbotMinimized}
+                    onToggleChatbot={() => setChatbotMinimized(!chatbotMinimized)}
                 />
 
                 {/* --- CHATBOT GUIDE --- */}
@@ -230,17 +232,8 @@ export default function PublicBusinessPage({ params, searchParams }: { params: {
                             onComplete={() => setChatbotMinimized(true)}
                             isMinimized={chatbotMinimized}
                             onToggleMinimize={() => setChatbotMinimized(!chatbotMinimized)}
+                            hideTriggerButton={true}
                         />
-                        {/* Floating Chat Button (Re-open) */}
-                        {chatbotMinimized && (
-                            <button
-                                onClick={() => setChatbotMinimized(false)}
-                                className="fixed bottom-48 right-6 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center z-[70] hover:scale-110 transition-transform bg-white text-blue-600 border border-blue-100"
-                                title="Asistente IA"
-                            >
-                                <span className="text-2xl">💬</span>
-                            </button>
-                        )}
                     </>
                 )}
             </div>

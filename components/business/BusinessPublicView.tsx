@@ -44,6 +44,8 @@ interface BusinessPublicViewProps {
     editMode?: boolean;
     onUpdate?: (field: keyof BusinessProfile, value: any) => void;
     onEditProduct?: (product: Adiso) => void;
+    chatbotMinimized?: boolean;
+    onToggleChatbot?: () => void;
 }
 
 const DEFAULT_ADISOS: Adiso[] = [];
@@ -55,7 +57,9 @@ export default function BusinessPublicView({
     onEditPart,
     editMode = false,
     onUpdate,
-    onEditProduct
+    onEditProduct,
+    chatbotMinimized = true,
+    onToggleChatbot
 }: BusinessPublicViewProps) {
     const { user } = useAuth();
     const router = useRouter();
@@ -828,17 +832,30 @@ export default function BusinessPublicView({
             )}>
                 {
                     isOwner ? (
-                        <button
-                            onClick={() => onEditPart?.('add-product')
-                            }
-                            className="w-14 h-14 bg-[var(--brand-color)] text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform active:scale-95 group relative"
-                            title="Agregar Producto"
-                        >
-                            <IconPlus size={28} />
-                            <span className="absolute right-full mr-3 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                Nuevo Producto
-                            </span>
-                        </button >
+                        <>
+                            {chatbotMinimized && onToggleChatbot && (
+                                <button
+                                    onClick={onToggleChatbot}
+                                    className="w-14 h-14 bg-white text-[var(--brand-color)] border-2 border-[var(--brand-color)] rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform active:scale-95 group relative mb-2"
+                                    title="Asistente IA"
+                                >
+                                    <IconSparkles size={24} />
+                                    <span className="absolute right-full mr-3 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                        Asistente
+                                    </span>
+                                </button>
+                            )}
+                            <button
+                                onClick={() => onEditPart?.('add-product')}
+                                className="w-14 h-14 bg-[var(--brand-color)] text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform active:scale-95 group relative"
+                                title="Agregar Producto"
+                            >
+                                <IconPlus size={28} />
+                                <span className="absolute right-full mr-3 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                    Nuevo Producto
+                                </span>
+                            </button>
+                        </>
                     ) : (
                         profile.contact_whatsapp && (
                             <a
