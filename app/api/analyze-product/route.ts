@@ -5,7 +5,7 @@ import { createServerClient } from '@/lib/supabase-server';
 export const runtime = 'nodejs'; // or 'edge' if preferred, but nodejs is safer for fetch/buffer
 export const maxDuration = 60; // 1 minute should be enough
 
-const MODEL_NAME = 'gemini-1.5-flash';
+const MODEL_NAME = 'gemini-1.5-flash-latest';
 
 // Helper to authenticate
 async function authenticate(request: NextRequest) {

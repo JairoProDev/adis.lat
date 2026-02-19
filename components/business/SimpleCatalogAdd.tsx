@@ -237,19 +237,27 @@ export default function SimpleCatalogAdd({ businessProfileId, onSuccess, onClose
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error('Usuario no autenticado');
 
+            // Get session for API authorization
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
             const imageUrl = await uploadProductImage(file, user.id);
             if (!imageUrl) throw new Error('Error al subir imagen');
 
             // 3. Analyze with AI
+            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+
             const response = await fetch('/api/analyze-product', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({ imageUrl })
             });
 
             if (!response.ok) {
-                // If AI fails, we still have the image, just let user fill manually
-                console.warn('AI Analysis failed');
+                const errorData = await response.json().catch(() => ({}));
+                console.error('AI Analysis failed:', response.status, errorData);
+                alert(`Error al analizar imagen: ${errorData.error || 'Error desconocido'}`);
                 return;
             }
 
