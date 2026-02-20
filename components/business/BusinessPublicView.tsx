@@ -728,14 +728,14 @@ export default function BusinessPublicView({
                                             ) : (
                                                 <div
                                                     key={adiso.id}
-                                                    className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all flex gap-4 items-start relative group cursor-pointer"
+                                                    className="bg-white dark:bg-zinc-900 p-3 rounded-2xl border border-slate-100 dark:border-zinc-800 shadow-sm hover:shadow-md transition-all flex gap-4 items-start relative group cursor-pointer"
                                                     onClick={() => router.push(`/adiso/${(adiso as any).slug || adiso.id}`)}
                                                 >
-                                                    <div className="w-24 h-24 flex-shrink-0 bg-slate-100 rounded-xl overflow-hidden relative">
+                                                    <div className="w-24 h-24 flex-shrink-0 bg-slate-100 dark:bg-zinc-800 rounded-xl overflow-hidden relative">
                                                         {adiso.imagenUrl ? (
                                                             <img src={adiso.imagenUrl} alt={adiso.titulo} className="w-full h-full object-cover" />
                                                         ) : (
-                                                            <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                                            <div className="w-full h-full flex items-center justify-center text-slate-300 dark:text-zinc-600">
                                                                 <IconBox size={24} />
                                                             </div>
                                                         )}
@@ -743,9 +743,9 @@ export default function BusinessPublicView({
                                                     <div className="flex-1 min-w-0 pr-8"> {/* Right padding for edit button */}
                                                         <div>
                                                             <span className="text-[10px] font-bold text-[var(--brand-color)] uppercase tracking-wider mb-0.5 block">{adiso.categoria || 'Sin categoría'}</span>
-                                                            <h3 className="font-bold text-base text-slate-800 mb-1 leading-snug break-words line-clamp-2">{adiso.titulo}</h3>
-                                                            <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{adiso.descripcion}</p>
-                                                            <div className="mt-2 font-black text-lg text-slate-900">
+                                                            <h3 className="font-bold text-base text-slate-800 dark:text-zinc-100 mb-1 leading-snug break-words line-clamp-2">{adiso.titulo}</h3>
+                                                            <p className="text-xs text-slate-500 dark:text-zinc-400 line-clamp-2 leading-relaxed">{adiso.descripcion}</p>
+                                                            <div className="mt-2 font-black text-lg text-slate-900 dark:text-white">
                                                                 {adiso.precio ? `S/ ${adiso.precio}` : 'Consultar'}
                                                             </div>
                                                         </div>
@@ -756,7 +756,7 @@ export default function BusinessPublicView({
                                                                 e.stopPropagation();
                                                                 if (onEditProduct) onEditProduct(adiso);
                                                             }}
-                                                            className="absolute top-2 right-2 p-1.5 bg-slate-100 text-slate-600 rounded-lg hover:bg-[var(--brand-color)] hover:text-white transition-colors"
+                                                            className="absolute top-2 right-2 p-1.5 bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 rounded-lg hover:bg-[var(--brand-color)] hover:text-white transition-colors"
                                                         >
                                                             <IconEdit size={16} />
                                                         </button>

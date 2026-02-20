@@ -15,24 +15,24 @@ export default function TrustBadge({ type, size = 'md', showLabel = true }: Trus
                     icon: IconUserCheck,
                     color: '#3B82F6', // Blue
                     label: 'Verificado',
-                    bgColor: '#EFF6FF',
-                    borderColor: '#BFDBFE'
+                    bgColor: 'rgba(59, 130, 246, 0.15)',
+                    borderColor: 'rgba(59, 130, 246, 0.3)'
                 };
             case 'business':
                 return {
                     icon: IconShield,
                     color: '#8B5CF6', // Purple
                     label: 'Empresa',
-                    bgColor: '#F5F3FF',
-                    borderColor: '#DDD6FE'
+                    bgColor: 'rgba(139, 92, 246, 0.15)',
+                    borderColor: 'rgba(139, 92, 246, 0.3)'
                 };
             case 'identity':
                 return {
                     icon: IconShield,
                     color: '#10B981', // Green
                     label: 'Identidad',
-                    bgColor: '#ECFDF5',
-                    borderColor: '#A7F3D0'
+                    bgColor: 'rgba(16, 185, 129, 0.15)',
+                    borderColor: 'rgba(16, 185, 129, 0.3)'
                 };
         }
     };
