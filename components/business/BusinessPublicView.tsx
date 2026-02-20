@@ -703,51 +703,111 @@ export default function BusinessPublicView({
                             {displayedAdisos.length > 0 ? (
                                 <>
                                     <div className={cn(
-                                        "grid gap-4 md:gap-6",
+                                        "grid gap-3 md:gap-4",
                                         viewMode === 'grid'
-                                            ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+                                            ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
                                             : "grid-cols-1"
                                     )}>
                                         {displayedAdisos.map((adiso) => (
                                             viewMode === 'grid' ? (
-                                                <BentoCard
+                                                /* ── Grid Card ── */
+                                                <button
                                                     key={adiso.id}
-                                                    adiso={adiso}
-                                                    icon={<IconBox size={14} className="text-[var(--brand-color)]" />}
                                                     onClick={() => router.push(`/adiso/${(adiso as any).slug || adiso.id}`)}
-                                                    className="!rounded-2xl"
-                                                    onEdit={isOwner ? (e) => {
-                                                        e.stopPropagation();
-                                                        if (onEditProduct) {
-                                                            onEditProduct(adiso);
-                                                        } else {
-                                                            onEditPart?.('catalog');
-                                                        }
-                                                    } : undefined}
-                                                />
+                                                    className="group relative bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-left flex flex-col"
+                                                >
+                                                    {/* Image */}
+                                                    <div className="relative w-full bg-slate-50 overflow-hidden" style={{ aspectRatio: '4/3' }}>
+                                                        {adiso.imagenUrl || adiso.imagenesUrls?.[0] ? (
+                                                            <img
+                                                                src={adiso.imagenesUrls?.[0] || adiso.imagenUrl || ''}
+                                                                alt={adiso.titulo}
+                                                                className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+                                                                loading="lazy"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-slate-200">
+                                                                <IconBox size={40} />
+                                                            </div>
+                                                        )}
+                                                        {/* Category pill */}
+                                                        {adiso.categoria && (
+                                                            <span className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm text-[10px] font-bold px-2 py-0.5 rounded-full text-[var(--brand-color)] shadow-sm">
+                                                                {adiso.categoria}
+                                                            </span>
+                                                        )}
+                                                        {/* Edit overlay - owner only */}
+                                                        {showEditControls && (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    if (onEditProduct) onEditProduct(adiso);
+                                                                    else onEditPart?.('catalog');
+                                                                }}
+                                                                className="absolute top-2 right-2 p-1.5 bg-white/90 backdrop-blur-sm rounded-lg shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[var(--brand-color)] hover:text-white text-slate-600"
+                                                            >
+                                                                <IconEdit size={14} />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    {/* Content */}
+                                                    <div className="p-3 flex flex-col gap-1 flex-1">
+                                                        <h3 className="font-bold text-sm text-slate-800 line-clamp-2 leading-snug">
+                                                            {adiso.titulo}
+                                                        </h3>
+                                                        {adiso.descripcion && (
+                                                            <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed flex-1">
+                                                                {adiso.descripcion.replace('Precio:', '').trim()}
+                                                            </p>
+                                                        )}
+                                                        <div className="flex items-center justify-between mt-1 pt-2 border-t border-slate-50">
+                                                            <span className="font-black text-base text-slate-900">
+                                                                {adiso.precio ? `S/ ${adiso.precio}` : <span className="text-sm font-semibold text-slate-400">Consultar</span>}
+                                                            </span>
+                                                            {profile.contact_whatsapp && (
+                                                                <a
+                                                                    href={`https://wa.me/${profile.contact_whatsapp}?text=${encodeURIComponent(`Hola! Me interesa: ${adiso.titulo}`)}`}
+                                                                    target="_blank"
+                                                                    rel="noreferrer"
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                    className="text-[10px] font-bold px-2 py-1 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors flex items-center gap-1"
+                                                                >
+                                                                    <IconWhatsapp size={11} />
+                                                                    Pedir
+                                                                </a>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </button>
                                             ) : (
+                                                /* ── List Card ── */
                                                 <div
                                                     key={adiso.id}
-                                                    className="bg-white dark:bg-zinc-900 p-3 rounded-2xl border border-slate-100 dark:border-zinc-800 shadow-sm hover:shadow-md transition-all flex gap-4 items-start relative group cursor-pointer"
+                                                    className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all flex gap-3 items-start relative group cursor-pointer p-3"
                                                     onClick={() => router.push(`/adiso/${(adiso as any).slug || adiso.id}`)}
                                                 >
-                                                    <div className="w-24 h-24 flex-shrink-0 bg-slate-100 dark:bg-zinc-800 rounded-xl overflow-hidden relative">
-                                                        {adiso.imagenUrl ? (
-                                                            <img src={adiso.imagenUrl} alt={adiso.titulo} className="w-full h-full object-cover" />
+                                                    <div className="w-20 h-20 flex-shrink-0 bg-slate-50 rounded-xl overflow-hidden">
+                                                        {adiso.imagenUrl || adiso.imagenesUrls?.[0] ? (
+                                                            <img
+                                                                src={adiso.imagenesUrls?.[0] || adiso.imagenUrl || ''}
+                                                                alt={adiso.titulo}
+                                                                className="w-full h-full object-contain"
+                                                                loading="lazy"
+                                                            />
                                                         ) : (
-                                                            <div className="w-full h-full flex items-center justify-center text-slate-300 dark:text-zinc-600">
-                                                                <IconBox size={24} />
+                                                            <div className="w-full h-full flex items-center justify-center text-slate-200">
+                                                                <IconBox size={28} />
                                                             </div>
                                                         )}
                                                     </div>
-                                                    <div className="flex-1 min-w-0 pr-8"> {/* Right padding for edit button */}
-                                                        <div>
-                                                            <span className="text-[10px] font-bold text-[var(--brand-color)] uppercase tracking-wider mb-0.5 block">{adiso.categoria || 'Sin categoría'}</span>
-                                                            <h3 className="font-bold text-base text-slate-800 dark:text-zinc-100 mb-1 leading-snug break-words line-clamp-2">{adiso.titulo}</h3>
-                                                            <p className="text-xs text-slate-500 dark:text-zinc-400 line-clamp-2 leading-relaxed">{adiso.descripcion}</p>
-                                                            <div className="mt-2 font-black text-lg text-slate-900 dark:text-white">
-                                                                {adiso.precio ? `S/ ${adiso.precio}` : 'Consultar'}
-                                                            </div>
+                                                    <div className="flex-1 min-w-0 pr-8">
+                                                        <span className="text-[10px] font-bold text-[var(--brand-color)] uppercase tracking-wide block mb-0.5">{adiso.categoria || ''}</span>
+                                                        <h3 className="font-bold text-sm text-slate-800 mb-1 leading-snug line-clamp-2">{adiso.titulo}</h3>
+                                                        {adiso.descripcion && (
+                                                            <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">{adiso.descripcion.replace('Precio:', '').trim()}</p>
+                                                        )}
+                                                        <div className="mt-2 font-black text-lg text-slate-900">
+                                                            {adiso.precio ? `S/ ${adiso.precio}` : <span className="text-sm font-semibold text-slate-400">Consultar</span>}
                                                         </div>
                                                     </div>
                                                     {showEditControls && (
@@ -756,7 +816,7 @@ export default function BusinessPublicView({
                                                                 e.stopPropagation();
                                                                 if (onEditProduct) onEditProduct(adiso);
                                                             }}
-                                                            className="absolute top-2 right-2 p-1.5 bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 rounded-lg hover:bg-[var(--brand-color)] hover:text-white transition-colors"
+                                                            className="absolute top-2 right-2 p-1.5 bg-slate-100 text-slate-600 rounded-lg hover:bg-[var(--brand-color)] hover:text-white transition-colors"
                                                         >
                                                             <IconEdit size={16} />
                                                         </button>

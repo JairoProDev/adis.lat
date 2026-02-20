@@ -2,9 +2,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { IconBox, IconImage, IconTrash, IconCheck, IconX, IconEye } from '@/components/Icons';
+import { IconBox, IconImage, IconTrash, IconCheck, IconX, IconEye, IconSparkles, IconZap } from '@/components/Icons';
 import { uploadProductImage, updateCatalogProduct, createCatalogProduct } from '@/lib/business';
 import { useToast } from '@/hooks/useToast';
+import { supabase } from '@/lib/supabase';
+
+const UNITS = ['unidad', 'par', 'caja', 'kg', 'g', 'litro', 'ml', 'metro', 'cm', 'rollo', 'paquete', 'docena', 'servicio'];
 
 interface ProductEditorProps {
     product?: any;
@@ -33,9 +36,12 @@ export function ProductEditor({ product, businessProfileId, userId, onSave, onCa
         brand: product?.brand || '',
         sku: product?.sku || '',
         stock: product?.stock !== undefined && product.stock !== null ? String(product.stock) : '',
+        unit: product?.unit || 'unidad',
+        tags: Array.isArray(product?.tags) ? product.tags.join(', ') : '',
         status: (product?.status || 'draft') as 'published' | 'draft',
         images: product?.images || [],
     });
+    const [enhancingIdx, setEnhancingIdx] = useState<number | null>(null);
 
     useEffect(() => {
         if (product) {
@@ -48,6 +54,8 @@ export function ProductEditor({ product, businessProfileId, userId, onSave, onCa
                 brand: product.brand || '',
                 sku: product.sku || '',
                 stock: product.stock !== undefined && product.stock !== null ? String(product.stock) : '',
+                unit: product.unit || 'unidad',
+                tags: Array.isArray(product.tags) ? product.tags.join(', ') : '',
                 status: product.status || 'draft',
                 images: product.images || [],
             });
@@ -80,6 +88,44 @@ export function ProductEditor({ product, businessProfileId, userId, onSave, onCa
         update('images', next);
     };
 
+    const enhanceImage = async (idx: number, action: 'remove_bg' | 'upscale') => {
+        const img = formData.images[idx];
+        const imgUrl = typeof img === 'string' ? img : img?.url;
+        if (!imgUrl || !supabase) return;
+
+        setEnhancingIdx(idx);
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const res = await fetch('/api/catalog/enhance-image', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.access_token}`
+                },
+                body: JSON.stringify({ imageUrl: imgUrl, actions: [action] })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Error');
+            const newUrl = data.removedBgUrl || data.upscaledUrl || data.finalUrl;
+            if (newUrl) {
+                const updatedImages = [...formData.images];
+                updatedImages[idx] = {
+                    ...(typeof img === 'string' ? { url: img } : img),
+                    url: newUrl,
+                    ai_enhanced: true,
+                    enhancement_type: action === 'remove_bg' ? 'remove_bg' : 'upscale',
+                    original_url: imgUrl
+                };
+                update('images', updatedImages);
+                success(action === 'remove_bg' ? 'Fondo eliminado' : 'Imagen mejorada');
+            }
+        } catch (err: any) {
+            error('Error: ' + err.message);
+        } finally {
+            setEnhancingIdx(null);
+        }
+    };
+
     const handleSave = async () => {
         if (!formData.title.trim()) {
             error('El nombre del producto es obligatorio');
@@ -88,6 +134,7 @@ export function ProductEditor({ product, businessProfileId, userId, onSave, onCa
 
         setLoading(true);
         try {
+            const tagsArr = formData.tags.split(',').map((t: string) => t.trim()).filter(Boolean);
             const productData: any = {
                 title: formData.title.trim(),
                 description: formData.description.trim(),
@@ -97,6 +144,8 @@ export function ProductEditor({ product, businessProfileId, userId, onSave, onCa
                 brand: formData.brand.trim(),
                 sku: formData.sku.trim(),
                 stock: formData.stock !== '' ? parseInt(formData.stock) || null : null,
+                unit: formData.unit || 'unidad',
+                tags: tagsArr,
                 status: formData.status,
                 images: formData.images,
                 business_profile_id: businessProfileId,
@@ -164,27 +213,52 @@ export function ProductEditor({ product, businessProfileId, userId, onSave, onCa
                     </label>
                     <div className="flex flex-wrap gap-2">
                         {formData.images.map((img: any, idx: number) => (
-                            <div key={idx} className="relative w-20 h-20 rounded-xl overflow-hidden border-2 group" style={{ borderColor: 'var(--border-color)' }}>
-                                <img
-                                    src={getImageUrl(img)}
-                                    alt=""
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                        e.currentTarget.style.display = 'none';
-                                        if (e.currentTarget.parentElement) {
-                                            e.currentTarget.parentElement.style.backgroundColor = '#f1f5f9';
-                                        }
-                                    }}
-                                />
-                                <button
-                                    onClick={() => removeImage(idx)}
-                                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                                >
-                                    <IconTrash size={11} />
-                                </button>
+                            <div key={idx} className="relative group">
+                                <div className="w-24 h-24 rounded-xl overflow-hidden border-2 bg-slate-50" style={{ borderColor: 'var(--border-color)' }}>
+                                    <img
+                                        src={getImageUrl(img)}
+                                        alt=""
+                                        className="w-full h-full object-contain"
+                                        onError={(e) => {
+                                            e.currentTarget.style.display = 'none';
+                                        }}
+                                    />
+                                </div>
+                                {/* Image actions on hover */}
+                                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-1">
+                                    <button
+                                        onClick={() => removeImage(idx)}
+                                        className="self-end bg-red-500 text-white rounded-full p-1 shadow-lg"
+                                    >
+                                        <IconTrash size={10} />
+                                    </button>
+                                    <div className="flex gap-1 justify-center">
+                                        <button
+                                            onClick={() => enhanceImage(idx, 'remove_bg')}
+                                            disabled={enhancingIdx === idx}
+                                            title="Quitar fondo"
+                                            className="bg-purple-500 text-white rounded-lg p-1.5 text-[9px] font-bold shadow-lg disabled:opacity-60"
+                                        >
+                                            {enhancingIdx === idx ? <div className="w-2.5 h-2.5 border border-white border-t-transparent rounded-full animate-spin" /> : <IconSparkles size={9} />}
+                                        </button>
+                                        <button
+                                            onClick={() => enhanceImage(idx, 'upscale')}
+                                            disabled={enhancingIdx === idx}
+                                            title="Mejorar calidad"
+                                            className="bg-blue-500 text-white rounded-lg p-1.5 text-[9px] font-bold shadow-lg disabled:opacity-60"
+                                        >
+                                            {enhancingIdx === idx ? <div className="w-2.5 h-2.5 border border-white border-t-transparent rounded-full animate-spin" /> : <IconZap size={9} />}
+                                        </button>
+                                    </div>
+                                </div>
                                 {idx === 0 && (
-                                    <span className="absolute bottom-0 left-0 right-0 text-center text-[9px] font-bold bg-black/60 text-white py-0.5">
+                                    <span className="absolute bottom-0 left-0 right-0 text-center text-[9px] font-bold bg-black/60 text-white py-0.5 rounded-b-xl pointer-events-none">
                                         Principal
+                                    </span>
+                                )}
+                                {img?.ai_enhanced && (
+                                    <span className="absolute top-1 left-1 bg-purple-500 text-white text-[8px] font-bold px-1 py-0.5 rounded pointer-events-none">
+                                        IA
                                     </span>
                                 )}
                             </div>
@@ -339,6 +413,38 @@ export function ProductEditor({ product, businessProfileId, userId, onSave, onCa
                             className="w-full px-3 py-2.5 rounded-xl border-2 text-sm outline-none transition-colors"
                             style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
                             placeholder="Sin límite"
+                            disabled={loading}
+                        />
+                    </div>
+                </div>
+
+                {/* ── Unit + Tags ──────────────────────────────────────────── */}
+                <div className="grid grid-cols-2 gap-3">
+                    <div>
+                        <label className="block text-xs font-bold uppercase mb-1" style={{ color: 'var(--text-secondary)' }}>
+                            Unidad de venta
+                        </label>
+                        <select
+                            value={formData.unit}
+                            onChange={e => update('unit', e.target.value)}
+                            className="w-full px-3 py-2.5 rounded-xl border-2 text-sm outline-none transition-colors"
+                            style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                            disabled={loading}
+                        >
+                            {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold uppercase mb-1" style={{ color: 'var(--text-secondary)' }}>
+                            Etiquetas (tags)
+                        </label>
+                        <input
+                            type="text"
+                            value={formData.tags}
+                            onChange={e => update('tags', e.target.value)}
+                            className="w-full px-3 py-2.5 rounded-xl border-2 text-sm outline-none transition-colors"
+                            style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                            placeholder="ej: oferta, nuevo, popular"
                             disabled={loading}
                         />
                     </div>
