@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import {
   FaBars,
@@ -89,9 +89,28 @@ export default function Header({
   const [showMobileSettings, setShowMobileSettings] = useState(false);
   const [activePopover, setActivePopover] = useState<'notifications' | 'messages' | null>(null);
   const [hoveredItem, setHoveredItem] = useState<SeccionSidebar | null>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
   const { openChat } = useUI();
   const isAuthenticated = !!user;
+
+  // Close popovers on outside click
+  useEffect(() => {
+    if (!activePopover) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      const notifEl = notifRef.current;
+      const msgEl = messagesRef.current;
+      if (activePopover === 'notifications' && notifEl && !notifEl.contains(target)) {
+        setActivePopover(null);
+      } else if (activePopover === 'messages' && msgEl && !msgEl.contains(target)) {
+        setActivePopover(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [activePopover]);
 
   if (!mounted) return null;
 
@@ -358,7 +377,7 @@ export default function Header({
             )}
 
             {/* Notifications */}
-            <div className="relative">
+            <div className="relative" ref={notifRef}>
               <button
                 onClick={() => setActivePopover(activePopover === 'notifications' ? null : 'notifications')}
                 style={{
@@ -383,7 +402,7 @@ export default function Header({
             </div>
 
             {/* Messages */}
-            <div className="relative">
+            <div className="relative" ref={messagesRef}>
               <button
                 onClick={() => setActivePopover(activePopover === 'messages' ? null : 'messages')}
                 style={{

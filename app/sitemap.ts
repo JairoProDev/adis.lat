@@ -1,84 +1,65 @@
 import { MetadataRoute } from 'next';
-import { getAdisosFromSupabase } from '@/lib/supabase';
-import { Categoria } from '@/types';
+import { createClient } from '@supabase/supabase-js';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://buscadis.com';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://adis.lat';
+
+const categorias = ['empleos', 'inmuebles', 'vehiculos', 'servicios', 'productos', 'eventos', 'negocios', 'comunidad'] as const;
+
+async function getPublicData() {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return { adisos: [], businesses: [] };
+  }
+  const client = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
+  const [adisosRes, businessRes] = await Promise.allSettled([
+    client.from('adisos').select('id, categoria, fechaPublicacion').order('fechaPublicacion', { ascending: false }).limit(5000),
+    client.from('business_profiles').select('slug, updated_at').eq('is_published', true).limit(1000),
+  ]);
+  return {
+    adisos: adisosRes.status === 'fulfilled' ? (adisosRes.value.data || []) : [],
+    businesses: businessRes.status === 'fulfilled' ? (businessRes.value.data || []) : [],
+  };
+}
+
+function safeDate(val: any): Date {
+  try {
+    if (!val) return new Date();
+    const d = new Date(val);
+    return isNaN(d.getTime()) ? new Date() : d;
+  } catch { return new Date(); }
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const categorias: Categoria[] = [
-    'empleos',
-    'inmuebles',
-    'vehiculos',
-    'servicios',
-    'productos',
-    'eventos',
-    'negocios',
-    'comunidad'
-  ];
+  const { adisos, businesses } = await getPublicData();
 
-  // Páginas estáticas
   const staticPages: MetadataRoute.Sitemap = [
-    {
-      url: siteUrl,
-      lastModified: new Date(),
-      changeFrequency: 'hourly',
-      priority: 1,
-    },
+    { url: siteUrl, lastModified: new Date(), changeFrequency: 'hourly', priority: 1 },
+    { url: `${siteUrl}/publicar`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${siteUrl}/mapa`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.6 },
+    { url: `${siteUrl}/chat`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.4 },
+    { url: `${siteUrl}/feed`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
   ];
 
-  // Páginas de categorías (tanto query param como ruta dedicada)
-  const categoriaPages: MetadataRoute.Sitemap = categorias.flatMap((categoria) => [
-    {
-      url: `${siteUrl}/?categoria=${categoria}`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.8,
-    },
-    {
-      url: `${siteUrl}/categoria/${categoria}`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.7,
-    },
+  const categoriaPages: MetadataRoute.Sitemap = categorias.flatMap((cat) => [
+    { url: `${siteUrl}/categoria/${cat}`, lastModified: new Date(), changeFrequency: 'daily' as const, priority: 0.85 },
+    { url: `${siteUrl}/?categoria=${cat}`, lastModified: new Date(), changeFrequency: 'daily' as const, priority: 0.7 },
   ]);
 
-  // Páginas de adisos
-  let adisoPages: MetadataRoute.Sitemap = [];
-  
-  try {
-    const adisos = await getAdisosFromSupabase();
-    
-    adisoPages = adisos.slice(0, 1000).map((adiso) => {
-      // Validar y crear fecha de forma segura
-      let lastModified: Date;
-      try {
-        if (adiso.fechaPublicacion && adiso.horaPublicacion) {
-          const dateString = `${adiso.fechaPublicacion}T${adiso.horaPublicacion}:00`;
-          const date = new Date(dateString);
-          // Verificar si la fecha es válida
-          if (isNaN(date.getTime())) {
-            lastModified = new Date(); // Usar fecha actual si es inválida
-          } else {
-            lastModified = date;
-          }
-        } else {
-          lastModified = new Date(); // Usar fecha actual si faltan datos
-        }
-      } catch {
-        lastModified = new Date(); // Usar fecha actual en caso de error
-      }
+  const businessPages: MetadataRoute.Sitemap = (businesses as any[]).map((biz) => ({
+    url: `${siteUrl}/negocio/${biz.slug}`,
+    lastModified: safeDate(biz.updated_at),
+    changeFrequency: 'weekly' as const,
+    priority: 0.8,
+  }));
 
-      return {
-        url: `${siteUrl}/${adiso.categoria}/${adiso.id}`,
-        lastModified,
-        changeFrequency: 'weekly' as const,
-        priority: 0.6,
-      };
-    });
-  } catch (error) {
-    console.error('Error al generar sitemap de adisos:', error);
-    // Continuar sin adisos si hay error
-  }
+  const adisoPages: MetadataRoute.Sitemap = (adisos as any[]).slice(0, 5000).map((adiso) => ({
+    url: `${siteUrl}/${adiso.categoria}/${adiso.id}`,
+    lastModified: safeDate(adiso.fechaPublicacion),
+    changeFrequency: 'weekly' as const,
+    priority: 0.6,
+  }));
 
-  return [...staticPages, ...categoriaPages, ...adisoPages];
+  return [...staticPages, ...categoriaPages, ...businessPages, ...adisoPages];
 }

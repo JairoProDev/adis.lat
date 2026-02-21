@@ -446,6 +446,19 @@ export default function CatalogPage() {
 
                             <div className="flex items-center gap-2 flex-shrink-0">
                                 <Link
+                                    href="/mi-negocio/catalogo/categorias"
+                                    className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold border-2 transition-all hover:shadow-sm"
+                                    style={{
+                                        borderColor: 'var(--border-color)',
+                                        color: 'var(--text-secondary)',
+                                        backgroundColor: 'transparent'
+                                    }}
+                                    title="Gestionar categorías"
+                                >
+                                    <IconTag size={15} />
+                                    Categorías
+                                </Link>
+                                <Link
                                     href="/mi-negocio/catalogo/importar"
                                     className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold border-2 transition-all hover:shadow-sm"
                                     style={{
@@ -1049,7 +1062,7 @@ function ProductCard({ group, viewMode, isSelecting, isSelected, onToggleSelect,
                     </div>
                 )}
 
-                {/* Price */}
+                {/* Price + Actions */}
                 <div className="mt-auto pt-1.5 flex items-center justify-between border-t border-slate-50">
                     {(price || 0) > 0 ? (
                         <span className="text-sm font-black" style={{ color: 'var(--brand-blue)' }}>
@@ -1058,14 +1071,24 @@ function ProductCard({ group, viewMode, isSelecting, isSelected, onToggleSelect,
                     ) : (
                         <span className="text-xs text-red-400 font-semibold">Sin precio</span>
                     )}
-                    <button
-                        onClick={() => onEdit(currentProduct)}
-                        className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-lg transition-colors"
-                        style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--brand-blue)' }}
-                    >
-                        <IconEdit size={11} />
-                        Editar
-                    </button>
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={() => onEdit(currentProduct)}
+                            className="flex items-center gap-0.5 text-[10px] font-bold px-2 py-1 rounded-lg transition-colors"
+                            style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--brand-blue)' }}
+                        >
+                            <IconEdit size={11} />
+                            Editar
+                        </button>
+                        <button
+                            onClick={() => onDelete(currentProduct.id)}
+                            className="flex items-center justify-center w-6 h-6 rounded-lg transition-colors hover:bg-red-50"
+                            style={{ color: '#ef4444' }}
+                            title="Eliminar producto"
+                        >
+                            <IconTrash size={11} />
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

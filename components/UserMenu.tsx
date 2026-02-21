@@ -97,11 +97,7 @@ export default function UserMenu({ onProgressClick, onSidebarToggle }: UserMenuP
     <div style={{ position: 'relative' }} ref={menuRef}>
       <button
         onClick={() => {
-          if (onSidebarToggle) {
-            onSidebarToggle();
-          } else {
-            setMostrarMenu(!mostrarMenu);
-          }
+          setMostrarMenu(!mostrarMenu);
         }}
         style={{
           display: 'flex',

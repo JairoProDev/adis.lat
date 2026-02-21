@@ -1,21 +1,38 @@
 import { MetadataRoute } from 'next';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://buscadis.com';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://adis.lat';
 
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
         userAgent: '*',
-        allow: '/',
-        disallow: ['/api/', '/admin/'],
+        allow: [
+          '/',
+          '/categoria/',
+          '/negocio/',
+          '/feed',
+          '/mapa',
+          '/publicar',
+          '/chat',
+        ],
+        disallow: [
+          '/api/',
+          '/admin/',
+          '/mi-negocio/',
+          '/auth/',
+          '/favoritos',
+          '/ocultos',
+          '/perfil',
+        ],
       },
       {
         userAgent: 'Googlebot',
         allow: '/',
-        disallow: ['/api/', '/admin/'],
+        disallow: ['/api/', '/admin/', '/mi-negocio/', '/auth/'],
       },
     ],
     sitemap: `${siteUrl}/sitemap.xml`,
+    host: siteUrl,
   };
 }
