@@ -9,6 +9,8 @@ import { supabase } from '@/lib/supabase';
 
 import { findPotentialDuplicate, validatePrice } from '@/lib/business-validation';
 import { Adiso } from '@/types';
+import ImageWithBgRemoval from './ImageWithBgRemoval';
+import MagicEditorPanel from './MagicEditorPanel';
 
 const UNITS = ['unidad', 'par', 'caja', 'kg', 'g', 'litro', 'ml', 'metro', 'cm', 'rollo', 'paquete', 'docena', 'servicio'];
 
@@ -48,6 +50,10 @@ export function ProductEditor({ product, businessProfileId, userId, onSave, onCa
 
     const [formData, setFormData] = useState(initialFormData);
     const [enhancingIdx, setEnhancingIdx] = useState<number | null>(null);
+    // Track original File objects per image index (for bg removal)
+    const [uploadedFiles, setUploadedFiles] = useState<(File | null)[]>([]);
+    // Track which images have bg removed
+    const [bgRemovedIdx, setBgRemovedIdx] = useState<Set<number>>(new Set());
 
     // Track if form is dirty
     const isDirty = JSON.stringify(formData) !== JSON.stringify(initialFormData);
@@ -89,7 +95,14 @@ export function ProductEditor({ product, businessProfileId, userId, onSave, onCa
             const url = await uploadProductImage(file, userId);
             if (url) {
                 const newImage = { url, type: 'uploaded', created_at: new Date().toISOString() };
-                update('images', [...(formData.images || []), newImage]);
+                const newImages = [...(formData.images || []), newImage];
+                update('images', newImages);
+                // Track the original File for bg removal
+                setUploadedFiles(prev => {
+                    const next = [...prev];
+                    next[newImages.length - 1] = file;
+                    return next;
+                });
                 success('Imagen subida');
             } else {
                 error('Error al subir imagen');
@@ -99,6 +112,30 @@ export function ProductEditor({ product, businessProfileId, userId, onSave, onCa
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleBgRemoved = async (idx: number, newFile: File, newPreview: string) => {
+        // Upload the bg-removed file and replace the image at idx
+        setLoading(true);
+        try {
+            const url = await uploadProductImage(newFile, userId);
+            if (url) {
+                const updatedImages = [...formData.images];
+                updatedImages[idx] = { url, type: 'bg_removed', created_at: new Date().toISOString(), original_url: getImageUrl(formData.images[idx]) };
+                update('images', updatedImages);
+                setUploadedFiles(prev => { const n = [...prev]; n[idx] = newFile; return n; });
+                setBgRemovedIdx(prev => new Set([...prev, idx]));
+                success('¡Fondo eliminado! 🎉');
+            }
+        } catch (e: any) {
+            error(e.message || 'Error al subir imagen sin fondo');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleBgRestore = (idx: number) => {
+        setBgRemovedIdx(prev => { const n = new Set(prev); n.delete(idx); return n; });
     };
 
     const removeImage = (idx: number) => {
@@ -262,57 +299,76 @@ export function ProductEditor({ product, businessProfileId, userId, onSave, onCa
                         Fotos del producto
                     </label>
                     <div className="flex flex-wrap gap-2">
-                        {formData.images.map((img: any, idx: number) => (
-                            <div key={idx} className="relative group">
-                                <div className="w-24 h-24 rounded-xl overflow-hidden border-2 bg-slate-50" style={{ borderColor: 'var(--border-color)' }}>
-                                    <img
-                                        src={getImageUrl(img)}
-                                        alt=""
-                                        className="w-full h-full object-contain"
-                                        onError={(e) => {
-                                            e.currentTarget.style.display = 'none';
-                                        }}
-                                    />
-                                </div>
-                                {/* Image actions on hover */}
-                                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-1">
-                                    <button
-                                        onClick={() => removeImage(idx)}
-                                        className="self-end bg-red-500 text-white rounded-full p-1 shadow-lg"
-                                    >
-                                        <IconTrash size={10} />
-                                    </button>
-                                    <div className="flex gap-1 justify-center">
-                                        <button
-                                            onClick={() => enhanceImage(idx, 'remove_bg')}
-                                            disabled={enhancingIdx === idx}
-                                            title="Quitar fondo"
-                                            className="bg-purple-500 text-white rounded-lg p-1.5 text-[9px] font-bold shadow-lg disabled:opacity-60"
-                                        >
-                                            {enhancingIdx === idx ? <div className="w-2.5 h-2.5 border border-white border-t-transparent rounded-full animate-spin" /> : <IconSparkles size={9} />}
-                                        </button>
-                                        <button
-                                            onClick={() => enhanceImage(idx, 'upscale')}
-                                            disabled={enhancingIdx === idx}
-                                            title="Mejorar calidad"
-                                            className="bg-blue-500 text-white rounded-lg p-1.5 text-[9px] font-bold shadow-lg disabled:opacity-60"
-                                        >
-                                            {enhancingIdx === idx ? <div className="w-2.5 h-2.5 border border-white border-t-transparent rounded-full animate-spin" /> : <IconZap size={9} />}
-                                        </button>
+                        {formData.images.map((img: any, idx: number) => {
+                            const imgUrl = getImageUrl(img);
+                            const originalFile = uploadedFiles[idx] ?? null;
+                            const isBgRemoved = bgRemovedIdx.has(idx);
+
+                            // Use the rich component for the first (main) image if we have a file
+                            if (idx === 0 && (originalFile || imgUrl)) {
+                                return (
+                                    <div key={idx} className="w-28 h-28 flex-shrink-0">
+                                        <ImageWithBgRemoval
+                                            src={imgUrl}
+                                            originalFile={originalFile}
+                                            isBgRemoved={isBgRemoved}
+                                            onProcessed={(newFile, newPreview) => handleBgRemoved(idx, newFile, newPreview)}
+                                            onRestore={() => handleBgRestore(idx)}
+                                        />
                                     </div>
+                                );
+                            }
+
+                            return (
+                                <div key={idx} className="relative group">
+                                    <div className="w-24 h-24 rounded-xl overflow-hidden border-2 bg-slate-50" style={{ borderColor: 'var(--border-color)' }}>
+                                        <img
+                                            src={imgUrl}
+                                            alt=""
+                                            className="w-full h-full object-contain"
+                                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                        />
+                                    </div>
+                                    {/* Image actions on hover */}
+                                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-1">
+                                        <button
+                                            onClick={() => removeImage(idx)}
+                                            className="self-end bg-red-500 text-white rounded-full p-1 shadow-lg"
+                                        >
+                                            <IconTrash size={10} />
+                                        </button>
+                                        <div className="flex gap-1 justify-center">
+                                            <button
+                                                onClick={() => enhanceImage(idx, 'remove_bg')}
+                                                disabled={enhancingIdx === idx}
+                                                title="Quitar fondo (IA servidor)"
+                                                className="bg-purple-500 text-white rounded-lg p-1.5 text-[9px] font-bold shadow-lg disabled:opacity-60"
+                                            >
+                                                {enhancingIdx === idx ? <div className="w-2.5 h-2.5 border border-white border-t-transparent rounded-full animate-spin" /> : <IconSparkles size={9} />}
+                                            </button>
+                                            <button
+                                                onClick={() => enhanceImage(idx, 'upscale')}
+                                                disabled={enhancingIdx === idx}
+                                                title="Mejorar calidad"
+                                                className="bg-blue-500 text-white rounded-lg p-1.5 text-[9px] font-bold shadow-lg disabled:opacity-60"
+                                            >
+                                                {enhancingIdx === idx ? <div className="w-2.5 h-2.5 border border-white border-t-transparent rounded-full animate-spin" /> : <IconZap size={9} />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {idx === 0 && (
+                                        <span className="absolute bottom-0 left-0 right-0 text-center text-[9px] font-bold bg-black/60 text-white py-0.5 rounded-b-xl pointer-events-none">
+                                            Principal
+                                        </span>
+                                    )}
+                                    {img?.ai_enhanced && (
+                                        <span className="absolute top-1 left-1 bg-purple-500 text-white text-[8px] font-bold px-1 py-0.5 rounded pointer-events-none">
+                                            IA
+                                        </span>
+                                    )}
                                 </div>
-                                {idx === 0 && (
-                                    <span className="absolute bottom-0 left-0 right-0 text-center text-[9px] font-bold bg-black/60 text-white py-0.5 rounded-b-xl pointer-events-none">
-                                        Principal
-                                    </span>
-                                )}
-                                {img?.ai_enhanced && (
-                                    <span className="absolute top-1 left-1 bg-purple-500 text-white text-[8px] font-bold px-1 py-0.5 rounded pointer-events-none">
-                                        IA
-                                    </span>
-                                )}
-                            </div>
-                        ))}
+                            );
+                        })}
                         <label className="w-20 h-20 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-colors hover:border-blue-400 hover:bg-blue-50" style={{ borderColor: 'var(--border-color)' }}>
                             {loading ? (
                                 <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
@@ -342,6 +398,22 @@ export function ProductEditor({ product, businessProfileId, userId, onSave, onCa
                         </p>
                     )}
                 </div>
+
+                {/* ── Magic AI Editor ───────────────────────────────────── */}
+                <MagicEditorPanel
+                    currentImages={formData.images}
+                    currentTitle={formData.title}
+                    currentDescription={formData.description}
+                    onFillAll={(data) => {
+                        if (data.title) update('title', data.title);
+                        if (data.description) update('description', data.description);
+                        if (data.price !== undefined && data.price !== null) update('price', String(data.price));
+                        if (data.category) update('category', data.category);
+                        if (data.brand) update('brand', data.brand);
+                        if (data.tags && data.tags.length > 0) update('tags', data.tags.join(', '));
+                    }}
+                    onFillField={(field, value) => update(field, value)}
+                />
 
                 {/* ── Name ────────────────────────────────────────────────── */}
                 <div>
