@@ -97,6 +97,10 @@ function HomeContent() {
   const busquedaDebounced = useDebounce(busqueda, 300);
   const [categoriaFiltro, setCategoriaFiltro] = useState<Categoria | 'todos'>(categoriaUrl && ['empleos', 'inmuebles', 'vehiculos', 'servicios', 'productos', 'eventos', 'negocios', 'comunidad'].includes(categoriaUrl) ? categoriaUrl : 'todos');
   const [ordenamiento, setOrdenamiento] = useState<TipoOrdenamiento>('recientes');
+
+  // Expresión regular profesional para limpiar datos de prueba residuales
+  const TEST_REGEX = /toyota test|test adiso|test anuncio/i;
+
   const [filtroUbicacion, setFiltroUbicacion] = useState<{
     departamento?: string;
     provincia?: string;
@@ -161,7 +165,6 @@ function HomeContent() {
       let cache = getAdisosCache();
 
       // LIMPIEZA: Si hay adisos de prueba locales antiguos, filtrarlos (Case Insensitive)
-      const TEST_REGEX = /toyota test|test adiso|test anuncio/i;
 
       if (cache.some(a => TEST_REGEX.test(a.titulo || ''))) {
         console.log('🧹 Limpiando adisos de prueba locales...');
@@ -305,6 +308,9 @@ function HomeContent() {
       return;
     }
 
+    // Filtrar siempre datos de prueba como salvaguarda final
+    let filtrados = adisos.filter(a => !TEST_REGEX.test(a.titulo || ''));
+
     // Función auxiliar para parsear fechas - DEFINIDA DENTRO del useEffect
     const parsearFecha = (fechaPublicacion: string, horaPublicacion: string): number => {
       if (!fechaPublicacion) return 0;
@@ -336,8 +342,6 @@ function HomeContent() {
         return 0;
       }
     };
-
-    let filtrados = [...adisos]; // Crear copia para no mutar
 
     // Filtrar por categoría
     if (categoriaFiltro !== 'todos') {
@@ -658,12 +662,15 @@ function HomeContent() {
       });
 
       if (nuevosAdisos.length > 0) {
+        // Filtrar adisos de prueba que puedan venir de la API
+        const nuevosFiltrados = nuevosAdisos.filter(a => !TEST_REGEX.test(a.titulo || ''));
+
         setAdisos(prev => {
           const adisosMap = new Map<string, Adiso>();
           // Agregar adisos existentes
           prev.forEach(adiso => adisosMap.set(adiso.id, adiso));
-          // Agregar nuevos adisos
-          nuevosAdisos.forEach(adiso => adisosMap.set(adiso.id, adiso));
+          // Agregar nuevos adisos filtrados
+          nuevosFiltrados.forEach(adiso => adisosMap.set(adiso.id, adiso));
           return Array.from(adisosMap.values());
         });
 
