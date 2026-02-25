@@ -478,6 +478,7 @@ function BusinessBuilderPageContent() {
                             product={editingProduct}
                             businessProfileId={profile.id}
                             userId={user.id}
+                            adisos={adisos}
                             onSave={handleProductSave}
                             onCancel={() => {
                                 setShowProductModal(false);
@@ -496,6 +497,7 @@ function BusinessBuilderPageContent() {
                             businessProfileId={profile.id}
                             onSuccess={handleRefreshCatalog}
                             onClose={() => setShowAddProductModal(false)}
+                            adisos={adisos}
                         />
                     </div>
                 </div>

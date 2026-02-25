@@ -9,6 +9,8 @@
 import { useState, useRef } from 'react';
 import { IconCamera, IconSparkles, IconEdit, IconCheck, IconImage, IconX } from '@/components/Icons';
 import { supabase } from '@/lib/supabase';
+import { findPotentialDuplicate, validatePrice } from '@/lib/business-validation';
+import { Adiso } from '@/types';
 
 type AddMode = 'select' | 'quick' | 'complete' | 'ai';
 
@@ -16,9 +18,10 @@ interface InlineCatalogAddProps {
     businessProfileId: string;
     onSuccess?: () => void;
     onCancel: () => void;
+    adisos?: Adiso[]; // Added for duplicate check
 }
 
-export default function InlineCatalogAdd({ businessProfileId, onSuccess, onCancel }: InlineCatalogAddProps) {
+export default function InlineCatalogAdd({ businessProfileId, onSuccess, onCancel, adisos = [] }: InlineCatalogAddProps) {
     const [mode, setMode] = useState<AddMode>('select');
     const [loading, setLoading] = useState(false);
 
@@ -48,6 +51,19 @@ export default function InlineCatalogAdd({ businessProfileId, onSuccess, onCance
     const completeFileInputRef = useRef<HTMLInputElement>(null);
     const aiFileInputRef = useRef<HTMLInputElement>(null);
 
+    // Track dirty state
+    const isDirty = quickName.trim() !== '' || completeForm.title.trim() !== '' || quickImage !== null || completeForm.image !== null;
+
+    const handleCancel = () => {
+        if (isDirty) {
+            if (confirm('Tienes cambios sin guardar en el formulario. ¿Estás seguro de que quieres cerrar?')) {
+                onCancel();
+            }
+        } else {
+            onCancel();
+        }
+    };
+
     const handleQuickImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -72,6 +88,22 @@ export default function InlineCatalogAdd({ businessProfileId, onSuccess, onCance
         if (!quickName.trim()) {
             alert('El nombre es obligatorio');
             return;
+        }
+
+        // Accidente: Duplicados
+        const potentialDuplicate = findPotentialDuplicate(quickName, adisos);
+        if (potentialDuplicate) {
+            if (!confirm(`⚠️ Ya tienes un producto llamado "${potentialDuplicate.titulo}". ¿Estás seguro de que quieres agregar otro igual?`)) {
+                return;
+            }
+        }
+
+        // Accidente: Sin imagen
+        if (!quickImage) {
+            if (!confirm('📸 No has subido una foto. ¿Quieres publicar el producto sin imagen o prefieres subir una ahora?')) {
+                quickFileInputRef.current?.click();
+                return;
+            }
         }
 
         try {
@@ -121,6 +153,36 @@ export default function InlineCatalogAdd({ businessProfileId, onSuccess, onCance
         if (!completeForm.title.trim()) {
             alert('El nombre es obligatorio');
             return;
+        }
+
+        // Accidente: Duplicados
+        const potentialDuplicate = findPotentialDuplicate(completeForm.title, adisos);
+        if (potentialDuplicate) {
+            if (!confirm(`⚠️ Ya tienes un producto llamado "${potentialDuplicate.titulo}". ¿Estás seguro de que quieres agregar otro igual?`)) {
+                return;
+            }
+        }
+
+        // Accidente: Precio extraño
+        if (completeForm.price) {
+            const priceValidation = validatePrice(completeForm.price);
+            if (!priceValidation.isValid) {
+                alert(priceValidation.warning);
+                return;
+            }
+            if (priceValidation.warning) {
+                if (!confirm(`💰 ${priceValidation.warning}`)) {
+                    return;
+                }
+            }
+        }
+
+        // Accidente: Sin imagen
+        if (!completeForm.image) {
+            if (!confirm('📸 No has subido una foto. ¿Quieres publicar el producto sin imagen o prefieres subir una ahora?')) {
+                completeFileInputRef.current?.click();
+                return;
+            }
         }
 
         try {
@@ -253,7 +315,7 @@ export default function InlineCatalogAdd({ businessProfileId, onSuccess, onCance
                     {mode === 'ai' && '🤖 IA Automática'}
                 </h3>
                 <button
-                    onClick={resetForm}
+                    onClick={handleCancel}
                     className="p-2 hover:bg-slate-100 rounded-full transition-colors"
                 >
                     <IconX size={20} color="var(--text-secondary)" />

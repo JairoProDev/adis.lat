@@ -255,6 +255,7 @@ export default function PublicBusinessPage({ params, searchParams }: { params: {
                             product={editingProduct === 'new' ? null : editingProduct}
                             businessProfileId={business.id}
                             userId={user.id}
+                            adisos={adisos}
                             onSave={handleProductSave}
                             onCancel={() => {
                                 setShowProductModal(false);
@@ -272,11 +273,12 @@ export default function PublicBusinessPage({ params, searchParams }: { params: {
                         <SimpleCatalogAdd
                             businessProfileId={business.id}
                             onSuccess={() => {
-                                loadCatalog(business.id); // Fixed from business!.id to business.id
+                                loadCatalog(business.id);
                                 setShowAddProductModal(false);
                                 success('Producto añadido correctamente');
                             }}
                             onClose={() => setShowAddProductModal(false)}
+                            adisos={adisos}
                         />
                     </div>
                 </div>

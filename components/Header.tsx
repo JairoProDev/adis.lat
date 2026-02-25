@@ -175,6 +175,16 @@ export default function Header({
                   }
                 }}
               />
+              <span style={{
+                fontSize: isDesktop ? '1.5rem' : '1.2rem',
+                fontWeight: 900,
+                color: 'var(--text-primary)',
+                letterSpacing: '-1px',
+                marginLeft: '2px',
+                fontFamily: 'var(--font-display), sans-serif'
+              }}>
+                Buscadis<span style={{ color: 'var(--brand-blue)' }}>.</span>
+              </span>
             </div>
           </a>
 

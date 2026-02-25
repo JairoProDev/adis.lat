@@ -7,6 +7,9 @@ import { uploadProductImage, updateCatalogProduct, createCatalogProduct } from '
 import { useToast } from '@/hooks/useToast';
 import { supabase } from '@/lib/supabase';
 
+import { findPotentialDuplicate, validatePrice } from '@/lib/business-validation';
+import { Adiso } from '@/types';
+
 const UNITS = ['unidad', 'par', 'caja', 'kg', 'g', 'litro', 'ml', 'metro', 'cm', 'rollo', 'paquete', 'docena', 'servicio'];
 
 interface ProductEditorProps {
@@ -15,6 +18,7 @@ interface ProductEditorProps {
     userId: string;
     onSave: (product: any) => void;
     onCancel: () => void;
+    adisos?: Adiso[]; // Added for duplicate check
 }
 
 const getImageUrl = (img: any): string => {
@@ -23,11 +27,11 @@ const getImageUrl = (img: any): string => {
     return img?.url || '';
 };
 
-export function ProductEditor({ product, businessProfileId, userId, onSave, onCancel }: ProductEditorProps) {
+export function ProductEditor({ product, businessProfileId, userId, onSave, onCancel, adisos = [] }: ProductEditorProps) {
     const [loading, setLoading] = useState(false);
     const { success, error } = useToast();
 
-    const [formData, setFormData] = useState({
+    const initialFormData = {
         title: product?.title || '',
         description: product?.description || '',
         price: product?.price !== undefined && product.price !== null ? String(product.price) : '',
@@ -40,8 +44,23 @@ export function ProductEditor({ product, businessProfileId, userId, onSave, onCa
         tags: Array.isArray(product?.tags) ? product.tags.join(', ') : '',
         status: (product?.status || 'draft') as 'published' | 'draft',
         images: product?.images || [],
-    });
+    };
+
+    const [formData, setFormData] = useState(initialFormData);
     const [enhancingIdx, setEnhancingIdx] = useState<number | null>(null);
+
+    // Track if form is dirty
+    const isDirty = JSON.stringify(formData) !== JSON.stringify(initialFormData);
+
+    const handleCancel = () => {
+        if (isDirty) {
+            if (confirm('Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?')) {
+                onCancel();
+            }
+        } else {
+            onCancel();
+        }
+    };
 
     useEffect(() => {
         if (product) {
@@ -132,6 +151,37 @@ export function ProductEditor({ product, businessProfileId, userId, onSave, onCa
             return;
         }
 
+        // 1. Accidente: Duplicados (Solo si es nuevo)
+        if (!product?.id) {
+            const potentialDuplicate = findPotentialDuplicate(formData.title, adisos);
+            if (potentialDuplicate) {
+                if (!confirm(`⚠️ Ya tienes un producto llamado "${potentialDuplicate.titulo}". ¿Estás seguro de que quieres agregar otro igual?`)) {
+                    return;
+                }
+            }
+        }
+
+        // 2. Accidente: Precio extraño
+        if (formData.price) {
+            const priceValidation = validatePrice(formData.price);
+            if (!priceValidation.isValid) {
+                error(priceValidation.warning || 'Precio inválido');
+                return;
+            }
+            if (priceValidation.warning) {
+                if (!confirm(`💰 ${priceValidation.warning}`)) {
+                    return;
+                }
+            }
+        }
+
+        // 3. Accidente: Sin imagen
+        if (formData.images.length === 0) {
+            if (!confirm('📸 No has subido ninguna foto. ¿Quieres publicar el producto sin imagen?')) {
+                return;
+            }
+        }
+
         setLoading(true);
         try {
             const tagsArr = formData.tags.split(',').map((t: string) => t.trim()).filter(Boolean);
@@ -198,7 +248,7 @@ export function ProductEditor({ product, businessProfileId, userId, onSave, onCa
                         <IconEye size={12} />
                         {formData.status === 'published' ? 'Visible' : 'Borrador'}
                     </button>
-                    <button onClick={onCancel} className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
+                    <button onClick={handleCancel} className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
                         <IconX size={18} color="var(--text-secondary)" />
                     </button>
                 </div>
@@ -470,7 +520,7 @@ export function ProductEditor({ product, businessProfileId, userId, onSave, onCa
             {/* ── Footer actions ───────────────────────────────────────────── */}
             <div className="flex items-center gap-3 px-4 py-3 border-t" style={{ borderColor: 'var(--border-color)' }}>
                 <button
-                    onClick={onCancel}
+                    onClick={handleCancel}
                     disabled={loading}
                     className="flex-1 py-2.5 text-sm font-bold rounded-xl border-2 transition-colors"
                     style={{ borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}

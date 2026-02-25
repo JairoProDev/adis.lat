@@ -9,6 +9,8 @@ import { useState, useRef } from 'react';
 import { IconCamera, IconCheck, IconX, IconImage, IconUpload, IconSparkles } from '@/components/Icons';
 import { supabase } from '@/lib/supabase';
 import { uploadProductImage } from '@/lib/business';
+import { Adiso } from '@/types';
+import { findPotentialDuplicate, validatePrice } from '@/lib/business-validation';
 
 type AddMethod = null | 'quick' | 'complete' | 'file';
 
@@ -16,9 +18,10 @@ interface SimpleCatalogAddProps {
     businessProfileId: string;
     onSuccess?: () => void;
     onClose: () => void;
+    adisos?: Adiso[]; // Existing products for duplicate check
 }
 
-export default function SimpleCatalogAdd({ businessProfileId, onSuccess, onClose }: SimpleCatalogAddProps) {
+export default function SimpleCatalogAdd({ businessProfileId, onSuccess, onClose, adisos = [] }: SimpleCatalogAddProps) {
     const [method, setMethod] = useState<AddMethod>(null);
     const [loading, setLoading] = useState(false);
     const [magicLoading, setMagicLoading] = useState(false);
@@ -46,6 +49,19 @@ export default function SimpleCatalogAdd({ businessProfileId, onSuccess, onClose
     const excelFileRef = useRef<HTMLInputElement>(null);
     const magicFileRef = useRef<HTMLInputElement>(null);
 
+    // Dirty state tracking (to prevent accidental closing)
+    const isDirty = quickName.trim() !== '' || form.title.trim() !== '' || quickImage !== null || form.image !== null;
+
+    const handleClose = () => {
+        if (isDirty) {
+            if (confirm('Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?')) {
+                onClose();
+            }
+        } else {
+            onClose();
+        }
+    };
+
     const handleQuickImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -68,6 +84,22 @@ export default function SimpleCatalogAdd({ businessProfileId, onSuccess, onClose
         if (!quickName.trim()) {
             alert('El nombre es obligatorio');
             return;
+        }
+
+        // 1. Accidente: Duplicados
+        const potentialDuplicate = findPotentialDuplicate(quickName, adisos);
+        if (potentialDuplicate) {
+            if (!confirm(`⚠️ Ya tienes un producto llamado "${potentialDuplicate.titulo}". ¿Estás seguro de que quieres agregar otro igual?`)) {
+                return;
+            }
+        }
+
+        // 2. Accidente: Sin imagen
+        if (!quickImage) {
+            if (!confirm('📸 No has subido una foto. ¿Quieres publicar el producto sin imagen o prefieres subir una ahora?')) {
+                quickFileRef.current?.click();
+                return;
+            }
         }
 
         try {
@@ -115,6 +147,36 @@ export default function SimpleCatalogAdd({ businessProfileId, onSuccess, onClose
         if (!form.title.trim()) {
             alert('El nombre es obligatorio');
             return;
+        }
+
+        // 1. Accidente: Duplicados
+        const potentialDuplicate = findPotentialDuplicate(form.title, adisos);
+        if (potentialDuplicate) {
+            if (!confirm(`⚠️ Ya tienes un producto llamado "${potentialDuplicate.titulo}". ¿Estás seguro de que quieres agregar otro igual?`)) {
+                return;
+            }
+        }
+
+        // 2. Accidente: Precio extraño
+        if (form.price) {
+            const priceValidation = validatePrice(form.price);
+            if (!priceValidation.isValid) {
+                alert(priceValidation.warning);
+                return;
+            }
+            if (priceValidation.warning) {
+                if (!confirm(`💰 ${priceValidation.warning}`)) {
+                    return;
+                }
+            }
+        }
+
+        // 3. Accidente: Sin imagen
+        if (!form.image) {
+            if (!confirm('📸 No has subido una foto. ¿Quieres publicar el producto sin imagen o prefieres subir una ahora?')) {
+                completeFileRef.current?.click();
+                return;
+            }
         }
 
         try {
@@ -379,7 +441,7 @@ export default function SimpleCatalogAdd({ businessProfileId, onSuccess, onClose
                     </div>
 
                     <button
-                        onClick={onClose}
+                        onClick={handleClose}
                         className="w-full py-3 rounded-xl font-medium hover:bg-slate-100 transition-colors"
                         style={{ color: 'var(--text-secondary)' }}
                     >

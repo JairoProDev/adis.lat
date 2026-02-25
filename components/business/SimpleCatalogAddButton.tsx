@@ -7,6 +7,7 @@
 
 import { useState } from 'react';
 import { IconPlus, IconUpload } from '@/components/Icons';
+import { Adiso } from '@/types';
 import SimpleCatalogAdd from './SimpleCatalogAdd';
 
 interface SimpleCatalogAddButtonProps {
@@ -14,13 +15,15 @@ interface SimpleCatalogAddButtonProps {
     onSuccess?: () => void;
     variant?: 'primary' | 'secondary';
     compact?: boolean;
+    adisos?: Adiso[];
 }
 
 export default function SimpleCatalogAddButton({
     businessProfileId,
     onSuccess,
     variant = 'primary',
-    compact = false
+    compact = false,
+    adisos = []
 }: SimpleCatalogAddButtonProps) {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -47,6 +50,7 @@ export default function SimpleCatalogAddButton({
                                 businessProfileId={businessProfileId}
                                 onSuccess={handleSuccess}
                                 onClose={() => setIsOpen(false)}
+                                adisos={adisos}
                             />
                         </div>
                     </div>
@@ -72,6 +76,7 @@ export default function SimpleCatalogAddButton({
                             businessProfileId={businessProfileId}
                             onSuccess={handleSuccess}
                             onClose={() => setIsOpen(false)}
+                            adisos={adisos}
                         />
                     </div>
                 </div>
