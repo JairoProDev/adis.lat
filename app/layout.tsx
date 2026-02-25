@@ -84,15 +84,15 @@ export default function RootLayout({
                   const theme = localStorage.getItem('theme') || 'auto';
                   const root = document.documentElement;
                   if (theme === 'dark') {
-                    root.classList.add('dark-mode');
+                    root.classList.add('dark-mode', 'dark');
                   } else if (theme === 'light') {
-                    root.classList.add('light-mode');
+                    root.classList.add('light-mode', 'light');
                   } else {
                     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
                     if (prefersDark) {
-                      root.classList.add('dark-mode');
+                      root.classList.add('dark-mode', 'dark');
                     } else {
-                      root.classList.add('light-mode');
+                      root.classList.add('light-mode', 'light');
                     }
                   }
                 } catch (e) {}

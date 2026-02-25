@@ -1,83 +1,171 @@
-export default function SkeletonAdisos() {
+'use client';
+
+/**
+ * SkeletonAdisos - Professional skeleton UI that mirrors the real card layout.
+ * Uses a CSS shimmer animation defined globally in globals.css via the
+ * `.skeleton-shimmer` class. This component relies on CSS variables for
+ * seamless light/dark mode support.
+ */
+
+// Single card skeleton - matches AdisoCard layout 1:1
+function SkeletonCard() {
+  return (
+    <div
+      className="skeleton-card"
+      style={{
+        backgroundColor: 'var(--bg-primary)',
+        border: '1px solid var(--border-color)',
+        borderRadius: '12px',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      {/* Image placeholder — aspect ratio 4/3 matching the card */}
+      <div
+        className="skeleton-shimmer"
+        style={{
+          width: '100%',
+          aspectRatio: '4/3',
+          backgroundColor: 'var(--bg-tertiary)',
+        }}
+      />
+
+      {/* Content area */}
+      <div style={{ padding: '0.625rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        {/* Title line (70%) */}
+        <div
+          className="skeleton-shimmer"
+          style={{
+            height: '13px',
+            width: '72%',
+            borderRadius: '6px',
+            backgroundColor: 'var(--bg-tertiary)',
+          }}
+        />
+
+        {/* Description line 1 (100%) */}
+        <div
+          className="skeleton-shimmer"
+          style={{
+            height: '11px',
+            width: '100%',
+            borderRadius: '6px',
+            backgroundColor: 'var(--bg-tertiary)',
+          }}
+        />
+
+        {/* Description line 2 (85%) */}
+        <div
+          className="skeleton-shimmer"
+          style={{
+            height: '11px',
+            width: '85%',
+            borderRadius: '6px',
+            backgroundColor: 'var(--bg-tertiary)',
+          }}
+        />
+
+        {/* Footer: price + stats */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2px' }}>
+          <div
+            className="skeleton-shimmer"
+            style={{
+              height: '10px',
+              width: '36%',
+              borderRadius: '6px',
+              backgroundColor: 'var(--bg-tertiary)',
+            }}
+          />
+          <div
+            className="skeleton-shimmer"
+            style={{
+              height: '10px',
+              width: '28%',
+              borderRadius: '6px',
+              backgroundColor: 'var(--bg-tertiary)',
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Toolbar skeleton — mirrors the count + sort + view-toggle row
+export function SkeletonToolbar() {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '0.75rem',
+        padding: '0.25rem 0',
+        gap: '8px',
+      }}
+    >
+      {/* Left: count pill */}
+      <div
+        className="skeleton-shimmer"
+        style={{
+          height: '20px',
+          width: '120px',
+          borderRadius: '6px',
+          backgroundColor: 'var(--bg-tertiary)',
+        }}
+      />
+
+      {/* Right: sort + view toggles */}
+      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+        <div
+          className="skeleton-shimmer"
+          style={{
+            height: '32px',
+            width: '110px',
+            borderRadius: '6px',
+            backgroundColor: 'var(--bg-tertiary)',
+          }}
+        />
+        <div
+          className="skeleton-shimmer"
+          style={{
+            height: '32px',
+            width: '96px',
+            borderRadius: '6px',
+            backgroundColor: 'var(--bg-tertiary)',
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+interface SkeletonAdisosProps {
+  count?: number;
+  isDesktop?: boolean;
+  showToolbar?: boolean;
+}
+
+export default function SkeletonAdisos({ count, isDesktop, showToolbar = false }: SkeletonAdisosProps) {
+  const cardCount = count ?? (isDesktop ? 8 : 6);
+
   return (
     <>
-      <style jsx>{`
-        .skeleton-grilla {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 1rem;
-        }
-        @media (min-width: 768px) {
-          .skeleton-grilla {
-            grid-template-columns: repeat(4, 1fr);
-          }
-        }
-        @keyframes pulse {
-          0%, 100% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0.5;
-          }
-        }
-        .skeleton-item {
-          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-      `}</style>
-      <div className="skeleton-grilla">
-        {[...Array(8)].map((_, i) => (
-          <div
-            key={i}
-            className="skeleton-item"
-            style={{
-              backgroundColor: 'var(--bg-primary)',
-              border: '1px solid var(--border-color)',
-              borderRadius: '8px',
-              padding: '1rem',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.5rem',
-              minHeight: '120px'
-            }}
-          >
-            <div style={{
-              width: '60px',
-              height: '12px',
-              backgroundColor: 'var(--bg-tertiary)',
-              borderRadius: '4px'
-            }} />
-            <div style={{
-              width: '100%',
-              height: '16px',
-              backgroundColor: 'var(--bg-tertiary)',
-              borderRadius: '4px',
-              marginTop: '0.5rem'
-            }} />
-            <div style={{
-              width: '80%',
-              height: '16px',
-              backgroundColor: 'var(--bg-tertiary)',
-              borderRadius: '4px'
-            }} />
-          </div>
+      {showToolbar && <SkeletonToolbar />}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: isDesktop
+            ? 'repeat(auto-fill, minmax(250px, 1fr))'
+            : 'repeat(2, 1fr)',
+          gap: isDesktop ? '1.5rem' : '0.75rem',
+        }}
+      >
+        {Array.from({ length: cardCount }).map((_, i) => (
+          <SkeletonCard key={i} />
         ))}
       </div>
     </>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

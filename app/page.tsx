@@ -49,8 +49,7 @@ import Buscador from '@/components/Buscador';
 import Ordenamiento, { TipoOrdenamiento } from '@/components/Ordenamiento';
 import FiltroUbicacion from '@/components/FiltroUbicacion';
 import GrillaAdisos from '@/components/GrillaAdisos';
-import SkeletonAdisos from '@/components/SkeletonAdisos';
-import { SkeletonAdisosGrid } from '@/components/SkeletonAdiso';
+import SkeletonAdisos, { SkeletonToolbar } from '@/components/SkeletonAdisos';
 import { ToastContainer } from '@/components/Toast';
 import FeedbackButton from '@/components/FeedbackButton';
 import NavbarMobile from '@/components/NavbarMobile';
@@ -159,7 +158,20 @@ function HomeContent() {
 
     const cargarTodo = async () => {
       // Mostrar cache primero (instantáneo, síncrono)
-      const cache = getAdisosCache();
+      let cache = getAdisosCache();
+
+      // LIMPIEZA: Si hay adisos de prueba locales antiguos, filtrarlos (Case Insensitive)
+      const TEST_REGEX = /toyota test|test adiso|test anuncio/i;
+
+      if (cache.some(a => TEST_REGEX.test(a.titulo || ''))) {
+        console.log('🧹 Limpiando adisos de prueba locales...');
+        cache = cache.filter(a => !TEST_REGEX.test(a.titulo || ''));
+        // Actualizar localStorage para que no vuelvan a aparecer
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('buscadis_adisos', JSON.stringify(cache));
+        }
+      }
+
       if (cache.length > 0) {
         // Solo actualizar adisos - el useEffect de ordenamiento se encargará de adisosFiltrados
         setAdisos(cache);
@@ -170,24 +182,12 @@ function HomeContent() {
           const adisoCache = cache.find(a => a.id === adisoId);
           if (adisoCache) {
             setAdisoAbierto(adisoCache);
-            // En mobile, abrir sección de adiso si no es desktop
-            /*
-            if (!isDesktop) {
-              setSeccionMobileActiva('adiso');
-            }
-            */
           } else {
             // Si no está en cache, cargarlo primero
             const adisoEspecifico = await getAdisoById(adisoId);
-            if (adisoEspecifico) {
+            if (adisoEspecifico && !TEST_REGEX.test(adisoEspecifico.titulo || '')) {
               setAdisoAbierto(adisoEspecifico);
               setAdisos(prev => [adisoEspecifico, ...prev]);
-              // En mobile, abrir sección de adiso si no es desktop
-              /*
-              if (!isDesktop) {
-                setSeccionMobileActiva('adiso');
-              }
-              */
             }
           }
         }
@@ -195,11 +195,17 @@ function HomeContent() {
 
       // Actualizar desde API en background - cargar primera página
       try {
-        const adisosDesdeAPI = await getAdisosFromSupabase({
+        let adisosDesdeAPI = await getAdisosFromSupabase({
           limit: ITEMS_POR_PAGINA,
           offset: 0,
           soloActivos: false // Mostrar todos, incluyendo históricos
         });
+
+        // Filtrar también los resultados de la API
+        if (adisosDesdeAPI.some(a => TEST_REGEX.test(a.titulo || ''))) {
+          console.log('🧹 Filtrando adisos de prueba detectados en API...');
+          adisosDesdeAPI = adisosDesdeAPI.filter(a => !TEST_REGEX.test(a.titulo || ''));
+        }
 
         if (adisosDesdeAPI.length > 0 || cache.length === 0) {
           // Si hay menos de ITEMS_POR_PAGINA, no hay más páginas
@@ -214,7 +220,7 @@ function HomeContent() {
             });
             // Luego agregar adisos locales que no están en API (pueden ser recién publicados)
             prev.forEach(adisoLocal => {
-              if (!adisosMap.has(adisoLocal.id)) {
+              if (!adisosMap.has(adisoLocal.id) && !TEST_REGEX.test(adisoLocal.titulo || '')) {
                 adisosMap.set(adisoLocal.id, adisoLocal);
               }
             });
@@ -910,168 +916,160 @@ function HomeContent() {
             onCerrar={() => setMostrarFiltroUbicacion(false)}
           />
         )}
-        {cargando ? (
-          <SkeletonAdisos />
-        ) : (
-          <>
-            {adisosFiltrados.length > 0 && (
-              <div style={{
-                marginBottom: '0.75rem',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                fontSize: '0.8rem',
-                color: 'var(--text-secondary)',
-                padding: '0.25rem 0',
-                gap: '8px',
-                width: '100%',
-                whiteSpace: 'nowrap'
-              }}>
-                {/* Left: Count & Share */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
-                      {adisosFiltrados.length}
-                    </span>
-                    <span style={{ marginLeft: '4px', opacity: 0.8 }} className="hidden sm:inline">
-                      {adisosFiltrados.length === 1 ? 'adiso encontrado' : 'adisos encontrados'}
-                    </span>
-                    <span style={{ marginLeft: '4px' }} className="sm:hidden inline">
-                      adisos
-                    </span>
-                  </div>
-
-                  <button
-                    onClick={async () => {
-                      const url = getBusquedaUrl(categoriaFiltro, busqueda);
-                      try {
-                        await navigator.clipboard.writeText(url);
-                        success('Link de búsqueda copiado');
-                      } catch (err) {
-                        error('Error al copiar link');
-                      }
-                    }}
-                    style={{
-                      padding: '5px',
-                      border: '1px solid var(--border-color)',
-                      backgroundColor: 'var(--bg-primary)',
-                      color: 'var(--brand-blue)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderRadius: '50%',
-                      flexShrink: 0
-                    }}
-                    className="hover:bg-blue-50 transition-colors"
-                    title="Compartir búsqueda"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
-                  </button>
-                </div>
-
-                {/* Right: Sort & View Mode */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-                  <Ordenamiento
-                    valor={ordenamiento}
-                    onChange={setOrdenamiento}
-                  />
-                  <div style={{
-                    display: 'flex',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '6px',
-                    overflow: 'hidden',
-                    height: '32px'
-                  }}>
-                    <button
-                      onClick={() => setVista('grid')}
-                      style={{
-                        width: '32px',
-                        background: vista === 'grid' ? 'var(--bg-secondary)' : 'transparent',
-                        border: 'none',
-                        borderRight: '1px solid var(--border-color)',
-                        cursor: 'pointer',
-                        color: vista === 'grid' ? 'var(--brand-blue)' : 'var(--text-secondary)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                      title="Vista Cuadrícula"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                    </button>
-                    <button
-                      onClick={() => setVista('feed')}
-                      style={{
-                        width: '32px',
-                        background: vista === 'feed' ? 'var(--bg-secondary)' : 'transparent',
-                        border: 'none',
-                        borderRight: '1px solid var(--border-color)',
-                        cursor: 'pointer',
-                        color: vista === 'feed' ? 'var(--brand-blue)' : 'var(--text-secondary)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                      title="Vista Feed"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
-                    </button>
-                    <button
-                      onClick={() => setVista('list')}
-                      style={{
-                        width: '32px',
-                        background: vista === 'list' ? 'var(--bg-secondary)' : 'transparent',
-                        border: 'none',
-                        cursor: 'pointer',
-                        color: vista === 'list' ? 'var(--brand-blue)' : 'var(--text-secondary)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                      title="Vista Lista"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
-                    </button>
-                  </div>
-                </div>
+        {/* ── Toolbar: always visible (buscador + controles) ── */}
+        <div style={{
+          marginBottom: '0.75rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          fontSize: '0.8rem',
+          color: 'var(--text-secondary)',
+          padding: '0.25rem 0',
+          gap: '8px',
+          width: '100%',
+          whiteSpace: 'nowrap',
+          minHeight: '36px',
+        }}>
+          {/* Left: Count pill — shimmer while loading */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+            {cargando ? (
+              <div className="skeleton-shimmer" style={{ width: 100, height: 18, borderRadius: 6, display: 'inline-block' }} />
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
+                  {adisosFiltrados.length}
+                </span>
+                <span style={{ marginLeft: '4px', opacity: 0.8 }} className="hidden sm:inline">
+                  {adisosFiltrados.length === 1 ? 'adiso encontrado' : 'adisos encontrados'}
+                </span>
+                <span style={{ marginLeft: '4px' }} className="sm:hidden inline">
+                  adisos
+                </span>
               </div>
             )}
-            {cargando && adisosFiltrados.length === 0 ? (
-              <div
-                className="grilla-adisos"
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: `repeat(${isDesktop ? 4 : 2}, 1fr)`,
-                  gap: '0.5rem',
-                  gridAutoRows: 'minmax(80px, auto)'
+
+            {!cargando && (
+              <button
+                onClick={async () => {
+                  const url = getBusquedaUrl(categoriaFiltro, busqueda);
+                  try {
+                    await navigator.clipboard.writeText(url);
+                    success('Link de búsqueda copiado');
+                  } catch (err) {
+                    error('Error al copiar link');
+                  }
                 }}
+                style={{
+                  padding: '5px',
+                  border: '1px solid var(--border-color)',
+                  backgroundColor: 'var(--bg-primary)',
+                  color: 'var(--brand-blue)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '50%',
+                  flexShrink: 0
+                }}
+                className="hover:bg-blue-50 transition-colors"
+                title="Compartir búsqueda"
               >
-                <SkeletonAdisosGrid count={isDesktop ? 8 : 4} />
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
+              </button>
+            )}
+          </div>
+
+          {/* Right: Sort & View Mode — always interactive */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+            <Ordenamiento
+              valor={ordenamiento}
+              onChange={setOrdenamiento}
+            />
+            <div style={{
+              display: 'flex',
+              border: '1px solid var(--border-color)',
+              borderRadius: '6px',
+              overflow: 'hidden',
+              height: '32px'
+            }}>
+              <button
+                onClick={() => setVista('grid')}
+                style={{
+                  width: '32px',
+                  background: vista === 'grid' ? 'var(--bg-secondary)' : 'transparent',
+                  border: 'none',
+                  borderRight: '1px solid var(--border-color)',
+                  cursor: 'pointer',
+                  color: vista === 'grid' ? 'var(--brand-blue)' : 'var(--text-secondary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                title="Vista Cuadrícula"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+              </button>
+              <button
+                onClick={() => setVista('feed')}
+                style={{
+                  width: '32px',
+                  background: vista === 'feed' ? 'var(--bg-secondary)' : 'transparent',
+                  border: 'none',
+                  borderRight: '1px solid var(--border-color)',
+                  cursor: 'pointer',
+                  color: vista === 'feed' ? 'var(--brand-blue)' : 'var(--text-secondary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                title="Vista Feed"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
+              </button>
+              <button
+                onClick={() => setVista('list')}
+                style={{
+                  width: '32px',
+                  background: vista === 'list' ? 'var(--bg-secondary)' : 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: vista === 'list' ? 'var(--brand-blue)' : 'var(--text-secondary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                title="Vista Lista"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Cards: skeleton during first load, grid once ready ── */}
+        {cargando ? (
+          <SkeletonAdisos isDesktop={isDesktop} />
+        ) : (
+          <>
+            <GrillaAdisos
+              adisos={adisosFiltrados}
+              onAbrirAdiso={handleAbrirAdiso}
+              adisoSeleccionadoId={adisoAbierto?.id}
+              espacioAdicional={isSidebarMinimizado ? 360 : 0}
+              cargandoMas={cargandoMas}
+              sentinelRef={sentinelRef}
+              vista={vista}
+            />
+            {adisosFiltrados.length === 0 && !cargando && (
+              <div style={{
+                textAlign: 'center',
+                padding: '3rem 1rem',
+                color: 'var(--text-secondary)'
+              }}>
+                {busqueda || categoriaFiltro !== 'todos'
+                  ? 'No se encontraron adisos con esos filtros'
+                  : 'Aún no hay adisos publicados'}
               </div>
-            ) : (
-              <>
-                <GrillaAdisos
-                  adisos={adisosFiltrados}
-                  onAbrirAdiso={handleAbrirAdiso}
-                  adisoSeleccionadoId={adisoAbierto?.id}
-                  espacioAdicional={isSidebarMinimizado ? 360 : 0}
-                  cargandoMas={cargandoMas}
-                  sentinelRef={sentinelRef}
-                  vista={vista}
-                />
-                {adisosFiltrados.length === 0 && !cargando && (
-                  <div style={{
-                    textAlign: 'center',
-                    padding: '3rem 1rem',
-                    color: 'var(--text-secondary)'
-                  }}>
-                    {busqueda || categoriaFiltro !== 'todos'
-                      ? 'No se encontraron adisos con esos filtros'
-                      : 'Aún no hay adisos publicados'}
-                  </div>
-                )}
-              </>
             )}
           </>
         )}

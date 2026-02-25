@@ -231,10 +231,10 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
                 }
             }}
             className={`
-        group relative flex ${vista === 'list' ? 'flex-row' : 'flex-col'} items-start text-left bg-white dark:bg-obsidian-800 rounded-xl border transition-all duration-300 overflow-hidden outline-none cursor-pointer font-sans
+        group relative flex ${vista === 'list' ? 'flex-row' : 'flex-col'} items-start text-left bg-white dark:bg-obsidian-900 rounded-xl border transition-all duration-300 overflow-hidden outline-none cursor-pointer font-sans
         ${estaSeleccionado
                     ? `ring-2 ring-offset-1 shadow-xl scale-[1.01] z-10 ${theme.border.replace('border-', 'ring-')}`
-                    : 'border-gray-100 dark:border-obsidian-700 hover:border-gray-300 dark:hover:border-obsidian-600 hover:shadow-lg hover:-translate-y-1'
+                    : 'border-gray-100 dark:border-obsidian-800 hover:border-gray-300 dark:hover:border-obsidian-600 hover:shadow-lg hover:-translate-y-1'
                 }
         ${vista === 'feed' ? 'w-full shadow-sm' : ''}
       `}
@@ -426,7 +426,7 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
                         {(adiso.precio && adiso.precio > 0) && (
                             <div className={`
                                 font-bold ${vista === 'feed' ? 'text-sm px-3 py-1.5' : 'text-[10px] px-2 py-1'} rounded shadow-md backdrop-blur-md
-                                bg-white text-[var(--brand-blue)] border border-white/30 drop-shadow-md
+                                bg-white dark:bg-obsidian-700 text-[var(--brand-blue)] dark:text-platinum-100 border border-white/30 dark:border-obsidian-600 drop-shadow-md
                              `}>
                                 {displayPrice}
                             </div>
