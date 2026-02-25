@@ -11,7 +11,7 @@ import {
     IconVerified, IconShareAlt, IconGlobe, IconPhone, IconClock, IconChevronDown,
     IconLinkedin, IconYoutube, IconSearch, IconArrowRight, IconHeart,
     IconFileAlt, IconEdit, IconPlus, IconBox, IconCheck, IconX,
-    IconGrid, IconList, IconFilter, IconChevronLeft, IconSparkles
+    IconGrid, IconList, IconFeed, IconFilter, IconChevronLeft, IconSparkles
 } from '@/components/Icons';
 import BentoCard from '@/components/BentoCard';
 import { useRouter } from 'next/navigation';
@@ -72,7 +72,7 @@ export default function BusinessPublicView({
     // Catalog State & Filters
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const [viewMode, setViewMode] = useState<'grid' | 'list' | 'feed'>('grid');
     const [filteredAdisos, setFilteredAdisos] = useState(adisos);
 
     // Scroll Direction for Hide/Show Header/Nav
@@ -633,6 +633,12 @@ export default function BusinessPublicView({
                                                 <IconGrid size={22} />
                                             </button>
                                             <button
+                                                onClick={() => setViewMode('feed')}
+                                                className={cn("p-3 rounded-xl transition-all", viewMode === 'feed' ? "bg-[var(--brand-color)] text-white shadow-md" : "text-slate-400 hover:text-slate-600")}
+                                            >
+                                                <IconFeed size={22} />
+                                            </button>
+                                            <button
                                                 onClick={() => setViewMode('list')}
                                                 className={cn("p-3 rounded-xl transition-all", viewMode === 'list' ? "bg-[var(--brand-color)] text-white shadow-md" : "text-slate-400 hover:text-slate-600")}
                                             >
@@ -706,10 +712,89 @@ export default function BusinessPublicView({
                                         "grid gap-3 md:gap-4",
                                         viewMode === 'grid'
                                             ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-                                            : "grid-cols-1"
+                                            : viewMode === 'feed'
+                                                ? "grid-cols-1 max-w-xl mx-auto"
+                                                : "grid-cols-1"
                                     )}>
                                         {displayedAdisos.map((adiso) => (
-                                            viewMode === 'grid' ? (
+                                            viewMode === 'feed' ? (
+                                                /* ── Feed Card (Instagram Style) ── */
+                                                <div
+                                                    key={adiso.id}
+                                                    className="bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm flex flex-col"
+                                                >
+                                                    {/* Header */}
+                                                    <div className="p-3 flex items-center justify-between">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-100 relative">
+                                                                {profile.logo_url ? (
+                                                                    <img src={profile.logo_url} alt={profile.name} className="w-full h-full object-cover" />
+                                                                ) : (
+                                                                    <div className="w-full h-full flex items-center justify-center text-xs font-bold text-slate-300">
+                                                                        {profile.name?.substring(0, 1) || 'N'}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <span className="text-sm font-bold text-slate-900">{profile.name}</span>
+                                                        </div>
+                                                        {showEditControls && (
+                                                            <button
+                                                                onClick={() => {
+                                                                    if (onEditProduct) onEditProduct(adiso);
+                                                                    else onEditPart?.('catalog');
+                                                                }}
+                                                                className="text-slate-400 hover:text-[var(--brand-color)]"
+                                                            >
+                                                                <IconEdit size={16} />
+                                                            </button>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Image - Square */}
+                                                    <div className="relative w-full aspect-square bg-slate-50 overflow-hidden cursor-pointer" onClick={() => router.push(`/adiso/${(adiso as any).slug || adiso.id}`)}>
+                                                        {adiso.imagenUrl || adiso.imagenesUrls?.[0] ? (
+                                                            <img
+                                                                src={adiso.imagenesUrls?.[0] || adiso.imagenUrl || ''}
+                                                                alt={adiso.titulo}
+                                                                className="w-full h-full object-contain"
+                                                                loading="lazy"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-slate-200">
+                                                                <IconBox size={48} />
+                                                            </div>
+                                                        )}
+                                                        {/* Price Tag Overlay */}
+                                                        {adiso.precio && (
+                                                            <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl shadow-lg border border-white/50">
+                                                                <span className="font-black text-slate-900">S/ {adiso.precio}</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Legend */}
+                                                    <div className="p-4 flex flex-col gap-1">
+                                                        <h3 className="font-bold text-base text-slate-900 leading-tight cursor-pointer" onClick={() => router.push(`/adiso/${(adiso as any).slug || adiso.id}`)}>
+                                                            {adiso.titulo}
+                                                        </h3>
+                                                        {adiso.descripcion && (
+                                                            <p className="text-sm text-slate-600 leading-relaxed mt-1">
+                                                                {adiso.descripcion.replace('Precio:', '').trim()}
+                                                            </p>
+                                                        )}
+                                                        {profile.contact_whatsapp && (
+                                                            <a
+                                                                href={`https://wa.me/${profile.contact_whatsapp}?text=${encodeURIComponent(`Hola! Me interesa: ${adiso.titulo}`)}`}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="mt-3 bg-green-500 hover:bg-green-600 text-white py-2.5 rounded-xl font-bold text-center transition-all flex items-center justify-center gap-2"
+                                                            >
+                                                                <IconWhatsapp size={18} /> Pedir ahora
+                                                            </a>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ) : viewMode === 'grid' ? (
                                                 /* ── Grid Card ── */
                                                 <button
                                                     key={adiso.id}

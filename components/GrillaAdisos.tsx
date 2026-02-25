@@ -14,7 +14,7 @@ interface GrillaAdisosProps {
   espacioAdicional?: number;
   cargandoMas?: boolean;
   sentinelRef?: React.RefObject<HTMLDivElement>;
-  vista?: 'grid' | 'list';
+  vista?: 'grid' | 'list' | 'feed';
 }
 
 export default function GrillaAdisos({
@@ -67,6 +67,13 @@ export default function GrillaAdisos({
           grid-template-columns: 1fr !important;
           gap: 1rem;
         }
+
+        .grilla-adisos.vista-feed {
+          grid-template-columns: 1fr !important;
+          gap: 1.5rem;
+          max-width: 600px;
+          margin: 0 auto;
+        }
         
         @media (min-width: 768px) {
              .grilla-adisos {
@@ -77,7 +84,7 @@ export default function GrillaAdisos({
         }
       `}</style>
 
-      <div className={`grilla-adisos pb-20 ${vista === 'list' ? 'vista-list' : ''}`}>
+      <div className={`grilla-adisos pb-20 ${vista === 'list' ? 'vista-list' : vista === 'feed' ? 'vista-feed' : ''}`}>
         {adisos.map((adiso) => (
           <AdisoCard
             key={adiso.id}
