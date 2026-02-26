@@ -595,78 +595,69 @@ export default function BusinessPublicView({
                         >
                             <div className="flex flex-col gap-6 print:hidden">
 
-                                {/* Top Row: Search input + View Toggles - Single Line on Mobile */}
-                                <div className="flex flex-row gap-3 items-center">
-                                    {/* Modern Search Bar */}
-                                    <div className="relative flex-1 group">
-                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[var(--brand-color)] transition-colors">
-                                            <IconSearch size={22} />
-                                        </div>
-                                        <input
-                                            type="text"
-                                            placeholder="Buscar..."
-                                            value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
-                                            className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-slate-100 rounded-2xl shadow-sm focus:border-[var(--brand-color)] focus:ring-4 focus:ring-[var(--brand-color)]/10 transition-all font-medium text-slate-700 outline-none"
-                                        />
-                                        {searchQuery && (
-                                            <button
-                                                onClick={() => setSearchQuery('')}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 bg-slate-200 text-slate-500 rounded-full p-1 hover:bg-slate-300"
-                                            >
-                                                <IconX size={14} />
-                                            </button>
-                                        )}
+                                {/* Row 1: Search Bar — full width */}
+                                <div className="relative group">
+                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[var(--brand-color)] transition-colors">
+                                        <IconSearch size={22} />
                                     </div>
-
-                                    {/* View Mode Toggles & Counter */}
-                                    <div className="flex items-center gap-3 shrink-0">
-                                        <span className="hidden md:block text-sm font-bold text-slate-500">
-                                            {filteredAdisos.length} adisos
-                                        </span>
-
-                                        <div className="flex items-center gap-1 bg-white border border-slate-100 p-1.5 rounded-2xl shadow-sm">
-                                            <button
-                                                onClick={() => setViewMode('grid')}
-                                                className={cn("p-3 rounded-xl transition-all", viewMode === 'grid' ? "bg-[var(--brand-color)] text-white shadow-md" : "text-slate-400 hover:text-slate-600")}
-                                            >
-                                                <IconGrid size={22} />
-                                            </button>
-                                            <button
-                                                onClick={() => setViewMode('feed')}
-                                                className={cn("p-3 rounded-xl transition-all", viewMode === 'feed' ? "bg-[var(--brand-color)] text-white shadow-md" : "text-slate-400 hover:text-slate-600")}
-                                            >
-                                                <IconFeed size={22} />
-                                            </button>
-                                            <button
-                                                onClick={() => setViewMode('list')}
-                                                className={cn("p-3 rounded-xl transition-all", viewMode === 'list' ? "bg-[var(--brand-color)] text-white shadow-md" : "text-slate-400 hover:text-slate-600")}
-                                            >
-                                                <IconList size={22} />
-                                            </button>
-                                            <div className="w-[1px] h-6 bg-slate-200 mx-1 hidden md:block" />
-
-                                            {/* PDF Download - Visible on Mobile now too, next to count */}
-                                            <button
-                                                onClick={() => window.print()}
-                                                className="p-3 text-slate-400 hover:text-slate-600"
-                                                title="Descargar PDF"
-                                            >
-                                                <IconFileAlt size={22} />
-                                            </button>
-                                        </div>
-                                    </div>
+                                    <input
+                                        type="text"
+                                        placeholder="Buscar productos..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-slate-100 rounded-2xl shadow-sm focus:border-[var(--brand-color)] focus:ring-4 focus:ring-[var(--brand-color)]/10 transition-all font-medium text-slate-700 outline-none"
+                                    />
+                                    {searchQuery && (
+                                        <button
+                                            onClick={() => setSearchQuery('')}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 bg-slate-200 text-slate-500 rounded-full p-1 hover:bg-slate-300"
+                                        >
+                                            <IconX size={14} />
+                                        </button>
+                                    )}
                                 </div>
 
-                                {/* Mobile Count Indicator */}
-                                <div className="md:hidden px-1 -mt-2 mb-2 flex items-center justify-between text-xs font-bold text-slate-400">
-                                    <div className="flex items-center gap-2">
+                                {/* Row 2: Count + View Mode Toggles */}
+                                <div className="flex items-center justify-between gap-3">
+                                    {/* Product count */}
+                                    <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
                                         <IconBox size={14} />
-                                        {filteredAdisos.length} productos encontrados
+                                        <span>{filteredAdisos.length} productos encontrados</span>
+                                    </div>
+
+                                    {/* View Mode Toggles + PDF */}
+                                    <div className="flex items-center gap-1 bg-white border border-slate-100 p-1 rounded-2xl shadow-sm shrink-0">
+                                        <button
+                                            onClick={() => setViewMode('grid')}
+                                            className={cn("p-2.5 rounded-xl transition-all", viewMode === 'grid' ? "bg-[var(--brand-color)] text-white shadow-md" : "text-slate-400 hover:text-slate-600")}
+                                            title="Cuadrícula"
+                                        >
+                                            <IconGrid size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => setViewMode('feed')}
+                                            className={cn("p-2.5 rounded-xl transition-all", viewMode === 'feed' ? "bg-[var(--brand-color)] text-white shadow-md" : "text-slate-400 hover:text-slate-600")}
+                                            title="Feed"
+                                        >
+                                            <IconFeed size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => setViewMode('list')}
+                                            className={cn("p-2.5 rounded-xl transition-all", viewMode === 'list' ? "bg-[var(--brand-color)] text-white shadow-md" : "text-slate-400 hover:text-slate-600")}
+                                            title="Lista"
+                                        >
+                                            <IconList size={18} />
+                                        </button>
+                                        <div className="w-[1px] h-5 bg-slate-200 mx-1" />
+                                        <button
+                                            onClick={() => window.print()}
+                                            className="p-2.5 text-slate-400 hover:text-slate-600"
+                                            title="Descargar PDF"
+                                        >
+                                            <IconFileAlt size={18} />
+                                        </button>
                                     </div>
                                 </div>
-
-
 
                                 {/* Categories - Horizontal Scroll Pills */}
                                 {categories.length > 0 && (
@@ -821,7 +812,7 @@ export default function BusinessPublicView({
                                                                 {adiso.categoria}
                                                             </span>
                                                         )}
-                                                        {/* Edit overlay - owner only */}
+                                                        {/* Edit button - always visible for owner, no hover dependency */}
                                                         {showEditControls && (
                                                             <button
                                                                 onClick={(e) => {
@@ -829,7 +820,8 @@ export default function BusinessPublicView({
                                                                     if (onEditProduct) onEditProduct(adiso);
                                                                     else onEditPart?.('catalog');
                                                                 }}
-                                                                className="absolute top-2 right-2 p-1.5 bg-white/90 backdrop-blur-sm rounded-lg shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[var(--brand-color)] hover:text-white text-slate-600"
+                                                                className="absolute top-2 right-2 p-1.5 bg-white/95 backdrop-blur-sm rounded-lg shadow-md border border-slate-100 hover:bg-[var(--brand-color)] hover:text-white text-slate-600 transition-colors z-10"
+                                                                title="Editar producto"
                                                             >
                                                                 <IconEdit size={14} />
                                                             </button>

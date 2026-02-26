@@ -101,11 +101,10 @@ export default function AdisoPageContent({ adiso }: AdisoPageContentProps) {
                 minimizado={true}
             />
 
-            {/* Main Content Wrapper - add right padding to account for fixed sidebar */}
+            {/* Main Content Wrapper */}
             <div style={{
                 display: 'flex',
                 flexDirection: 'column',
-                paddingRight: 'var(--sidebar-width, 60px)' // Space for sidebar
             }}>
                 <Header onChangelogClick={() => router.push('/progreso')} />
 
