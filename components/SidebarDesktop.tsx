@@ -86,8 +86,10 @@ export default function SidebarDesktop({
         display: 'flex',
         flexDirection: 'column',
         backgroundColor: 'var(--bg-primary)', // Solid background
-        borderLeft: '1px solid var(--border-color)',
-        boxShadow: '-2px 0 8px rgba(0,0,0,0.05)',
+        borderLeft: 'none',
+        boxShadow: '-10px 0 30px rgba(0,0,0,0.03)',
+        borderTopLeftRadius: '24px',
+        borderBottomLeftRadius: '24px',
       }}
       initial={{ x: anchoSidebar }}
       animate={{

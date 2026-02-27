@@ -534,8 +534,8 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
           <div style={{
             display: 'grid',
             gridTemplateColumns: imagenes.length === 1 ? '1fr' : 'repeat(auto-fill, minmax(140px, 1fr))',
-            gap: '8px',
-            borderRadius: '12px',
+            gap: '12px',
+            borderRadius: '24px',
             overflow: 'hidden'
           }}>
             {imagenes.map((url, idx) => (
@@ -555,10 +555,10 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
       })()}
 
       {/* Detalles e Info */}
-      <div style={{ padding: '1rem', backgroundColor: 'var(--bg-secondary)', borderRadius: '12px', gap: '8px', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ padding: '1.25rem', backgroundColor: 'var(--bg-tertiary)', borderRadius: '24px', gap: '12px', display: 'flex', flexDirection: 'column' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <IconLocation color="var(--brand-blue)" />
-          <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>{formatearUbicacion(adiso.ubicacion).texto}</span>
+          <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 600 }}>{formatearUbicacion(adiso.ubicacion).texto}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <IconCalendar color="var(--brand-blue)" />
@@ -574,7 +574,7 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
       <div style={{ fontSize: '1rem', lineHeight: 1.6, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap' }}>
         {adiso.descripcion}
       </div>
-    </div>
+    </div >
   );
 
   // --- MOBILE SHEET VIEW ---
@@ -725,11 +725,12 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
           {/* Desktop Header */}
           <div style={{
             padding: '1.5rem',
-            borderBottom: '1px solid var(--border-color)',
+            borderBottom: 'none',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            flexShrink: 0
+            flexShrink: 0,
+            backgroundColor: 'var(--bg-primary)'
           }}>
             <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>Detalle de Adiso</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -748,7 +749,11 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
           </div>
 
           {/* Footer */}
-          <div style={{ padding: '1.5rem', borderTop: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}>
+          <div style={{
+            padding: '1.5rem',
+            borderTop: 'none',
+            backgroundColor: 'var(--bg-primary)'
+          }}>
             <ContactButton fullWidth={true} />
           </div>
         </div>
