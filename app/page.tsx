@@ -113,7 +113,8 @@ function HomeContent() {
   // Estados para scroll infinito
   const [cargandoMas, setCargandoMas] = useState(false);
   const [hayMasAdisos, setHayMasAdisos] = useState(true);
-  const ITEMS_POR_PAGINA = 100;
+  const ITEMS_POR_PAGINA = 20;
+  const [visibleCount, setVisibleCount] = useState(20);
   const [modalMobileAbierto, setModalMobileAbierto] = useState(false);
   const [seccionMobileInicial, setSeccionMobileInicial] = useState<SeccionMobile>('gratuitos');
   const [seccionMobileActiva, setSeccionMobileActiva] = useState<SeccionSidebar | null>(seccionUrl ? seccionUrl : null);
@@ -455,6 +456,8 @@ function HomeContent() {
 
 
     setAdisosFiltrados(filtradosOrdenados);
+    // Resetear visibleCount cuando cambian los filtros para empezar de nuevo
+    setVisibleCount(20);
   }, [busquedaDebounced, categoriaFiltro, ordenamiento, adisos, filtroUbicacion, profile]);
 
   // Actualizar índice del adiso abierto cuando cambian los filtrados o el adiso abierto
@@ -650,7 +653,21 @@ function HomeContent() {
 
   // Función optimizada para cargar más anuncios (scroll infinito)
   const cargarMasAdisos = useCallback(async () => {
-    if (cargandoMas || !hayMasAdisos) return;
+    // Si ya estamos cargando, no hacer nada
+    if (cargandoMas) return;
+
+    // Caso 1: Todavía hay anuncios en memoria que no se están mostrando (Client-side)
+    if (visibleCount < adisosFiltrados.length) {
+      setCargandoMas(true);
+      // Simular un pequeño delay para una mejor UX (opcional)
+      await new Promise(resolve => setTimeout(resolve, 300));
+      setVisibleCount(prev => Math.min(prev + ITEMS_POR_PAGINA, adisosFiltrados.length));
+      setCargandoMas(false);
+      return;
+    }
+
+    // Caso 2: No hay más en memoria, pero la API dice que hay más (Server-side)
+    if (!hayMasAdisos) return;
 
     setCargandoMas(true);
     try {
@@ -674,6 +691,9 @@ function HomeContent() {
           return Array.from(adisosMap.values());
         });
 
+        // Aumentar visibleCount para mostrar los nuevos
+        setVisibleCount(prev => prev + ITEMS_POR_PAGINA);
+
         // Si hay menos de ITEMS_POR_PAGINA, no hay más páginas
         const tieneMas = nuevosAdisos.length === ITEMS_POR_PAGINA;
         setHayMasAdisos(tieneMas);
@@ -689,7 +709,7 @@ function HomeContent() {
     } finally {
       setCargandoMas(false);
     }
-  }, [cargandoMas, hayMasAdisos, adisos.length, paginaActual]);
+  }, [cargandoMas, hayMasAdisos, adisos.length, paginaActual, visibleCount, adisosFiltrados.length]);
 
   // Usar hook profesional para infinite scroll
   const { sentinelRef } = useInfiniteScroll({
@@ -697,7 +717,7 @@ function HomeContent() {
     isLoading: cargandoMas,
     onLoadMore: cargarMasAdisos,
     threshold: 200, // Cargar cuando queden 200px para el final
-    enabled: !cargando && adisosFiltrados.length > 0
+    enabled: !cargando && (hayMasAdisos || visibleCount < adisosFiltrados.length)
   });
 
   // Prefetch de imágenes de adisos relacionados cuando se abre un adiso
@@ -1059,7 +1079,7 @@ function HomeContent() {
         ) : (
           <>
             <GrillaAdisos
-              adisos={adisosFiltrados}
+              adisos={adisosFiltrados.slice(0, visibleCount)}
               onAbrirAdiso={handleAbrirAdiso}
               adisoSeleccionadoId={adisoAbierto?.id}
               espacioAdicional={isSidebarMinimizado ? 360 : 0}
