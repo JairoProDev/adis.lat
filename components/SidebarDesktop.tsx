@@ -60,14 +60,14 @@ export default function SidebarDesktop({
 
   // Update CSS variable for sidebar width
   useEffect(() => {
-    const width = internalMinimizado ? 60 : 420;
+    const width = internalMinimizado ? 0 : 420;
     document.documentElement.style.setProperty('--sidebar-width', `${width}px`);
     setSidebarExpanded(!internalMinimizado);
   }, [internalMinimizado, setSidebarExpanded]);
 
   if (!isDesktop) return null;
 
-  const anchoSidebar = internalMinimizado ? 60 : 420;
+  const anchoSidebar = internalMinimizado ? 0 : 420;
 
   const handleMinimizarToggle = () => {
     const nuevoEstado = !internalMinimizado;
@@ -116,16 +116,22 @@ export default function SidebarDesktop({
           justifyContent: 'center',
           border: '1px solid var(--border-color)',
           cursor: 'pointer',
-          top: '12px',
-          left: internalMinimizado ? '50%' : '-12px',
-          transform: internalMinimizado ? 'translateX(-50%)' : 'none',
+          top: '20px',
+          left: '-36px',
+          transform: 'none',
           color: 'var(--text-secondary)',
           transition: 'all 0.2s ease',
         }}
-        whileHover={{ scale: 1.1 }}
+        whileHover={{ scale: 1.1, backgroundColor: 'var(--bg-secondary)' }}
         whileTap={{ scale: 0.95 }}
       >
-        {internalMinimizado ? <IconExpand size={14} /> : <IconMinimize size={14} />}
+        {internalMinimizado ? (
+          <div style={{ transform: 'rotate(180deg)', display: 'flex' }}>
+            <IconMinimize size={16} />
+          </div>
+        ) : (
+          <IconMinimize size={16} />
+        )}
       </motion.button>
 
       {/* Content Area */}

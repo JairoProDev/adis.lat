@@ -831,11 +831,11 @@ function HomeContent() {
           alignItems: 'center',
           width: '100%',
           maxWidth: isDesktop
-            ? 'calc(100% - var(--sidebar-width, 60px))'
+            ? 'calc(100% - var(--sidebar-width, 0px))'
             : '100%',
           margin: '0 auto',
           transition: 'max-width 0.3s ease, margin-right 0.3s ease',
-          ...(isDesktop && { marginRight: 'var(--sidebar-width, 60px)' })
+          ...(isDesktop && { marginRight: 'var(--sidebar-width, 0px)' })
         }}
       >
         {[
@@ -919,12 +919,12 @@ function HomeContent() {
         padding: '1rem',
         paddingBottom: isDesktop ? '1rem' : '5rem', // Espacio para navbar mobile permanente
         maxWidth: isDesktop
-          ? 'calc(100% - var(--sidebar-width, 60px))'
+          ? 'calc(100% - var(--sidebar-width, 0px))'
           : '1400px',
         margin: '0 auto',
         width: '100%',
         transition: 'max-width 0.3s ease, margin-right 0.3s ease, padding-bottom 0.3s ease',
-        ...(isDesktop && { marginRight: 'var(--sidebar-width, 60px)' })
+        ...(isDesktop && { marginRight: 'var(--sidebar-width, 0px)' })
       }}>
         <div style={{ marginBottom: '1.5rem' }}>
           <Buscador

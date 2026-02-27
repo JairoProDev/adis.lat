@@ -77,9 +77,9 @@ export default function GrillaAdisos({
         
         @media (min-width: 768px) {
              .grilla-adisos {
-                /* Desktop: Adaptive columns - Reduced min-width to allow more columns */
-                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-                gap: 1rem;
+                /* Desktop: Adaptive columns - Ajustado para permitir 3+ columnas */
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+                gap: 0.75rem;
              }
         }
       `}</style>

@@ -356,10 +356,10 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
                     {vista !== 'feed' && (
                         <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start z-10 transition-transform group-hover:scale-105 origin-top-left">
                             {isDesktop ? (
-                                // Desktop: Full Badge
-                                <div className="flex items-center gap-2 p-1 rounded-lg backdrop-blur-md bg-black/40 dark:bg-black/60 shadow-lg border border-white/10">
-                                    {/* Brand Square Image */}
-                                    <div className="w-8 h-8 rounded-md overflow-hidden bg-white/20 flex-shrink-0 relative border border-white/30 shadow-inner">
+                                // Desktop: Compact Pill Badge
+                                <div className="flex items-center gap-1.5 p-1 rounded-full backdrop-blur-md bg-black/40 dark:bg-black/60 shadow-lg border border-white/10 hover:bg-black/60 transition-colors">
+                                    {/* Small Avatar */}
+                                    <div className="w-6 h-6 rounded-full overflow-hidden bg-white/20 flex-shrink-0 relative border border-white/20">
                                         {adiso.vendedor?.avatarUrl ? (
                                             <Image
                                                 src={adiso.vendedor.avatarUrl}
@@ -368,25 +368,19 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
                                                 className="object-cover"
                                             />
                                         ) : (
-                                            <div className={`w-full h-full flex items-center justify-center ${theme.bg} ${theme.text}`}>
-                                                <IconComponent size={14} />
+                                            <div className="w-full h-full flex items-center justify-center text-white">
+                                                <IconComponent size={10} />
                                             </div>
                                         )}
                                     </div>
-                                    {/* Brand Name & User Name (Simulated structure) */}
-                                    <div className="pr-2.5 flex flex-col justify-center overflow-hidden">
-                                        {/* Assuming vendedor.nombre is the Business Name. We'll use "Anunciante" as label for now if User Name unavailable */}
-                                        <span className="text-[10px] uppercase tracking-tighter text-white/90 font-black leading-none mb-0.5 whitespace-nowrap drop-shadow-sm">
-                                            Anunciante
-                                        </span>
-                                        <span className="text-[11px] font-extrabold text-white leading-none truncate max-w-[120px] drop-shadow-md">
-                                            {adiso.vendedor?.nombre || 'Anunciante'}
-                                        </span>
-                                    </div>
+                                    {/* Compact Name Only */}
+                                    <span className="text-[10px] font-bold text-white leading-none pr-1.5 truncate max-w-[80px] drop-shadow-md">
+                                        {adiso.vendedor?.nombre || 'Anunciante'}
+                                    </span>
                                 </div>
                             ) : (
-                                // Mobile: Minimal Badge (Avatar Only)
-                                <div className="w-9 h-9 rounded-full overflow-hidden bg-black/40 backdrop-blur-sm border border-white/20 shadow-lg relative">
+                                // Mobile: Minimal Circular Badge
+                                <div className="w-8 h-8 rounded-full overflow-hidden bg-black/50 backdrop-blur-sm border border-white/20 shadow-lg relative">
                                     {adiso.vendedor?.avatarUrl ? (
                                         <Image
                                             src={adiso.vendedor.avatarUrl}
@@ -395,8 +389,8 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
                                             className="object-cover"
                                         />
                                     ) : (
-                                        <div className={`w-full h-full flex items-center justify-center bg-gray-100 dark:bg-obsidian-700 text-gray-500 dark:text-obsidian-400`}>
-                                            <IconComponent size={16} />
+                                        <div className="w-full h-full flex items-center justify-center text-white">
+                                            <IconComponent size={14} />
                                         </div>
                                     )}
                                 </div>
