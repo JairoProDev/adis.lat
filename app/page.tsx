@@ -551,6 +551,11 @@ function HomeContent() {
     setIndiceAdisoActual(indice >= 0 ? indice : 0);
     setAdisoAbierto(adiso);
 
+    // Expandir sidebar automáticamente en desktop
+    if (isDesktop) {
+      setIsSidebarMinimizado(false);
+    }
+
     // En mobile, abrir sección de adiso automáticamente
     /*
     if (!isDesktop) {

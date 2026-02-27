@@ -357,7 +357,7 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
                         <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start z-10 transition-transform group-hover:scale-105 origin-top-left">
                             {isDesktop ? (
                                 // Desktop: Full Badge
-                                <div className="flex items-center gap-2 p-1 rounded-lg backdrop-blur-md bg-white/40 shadow-lg border border-white/20">
+                                <div className="flex items-center gap-2 p-1 rounded-lg backdrop-blur-md bg-black/40 dark:bg-black/60 shadow-lg border border-white/10">
                                     {/* Brand Square Image */}
                                     <div className="w-8 h-8 rounded-md overflow-hidden bg-white/20 flex-shrink-0 relative border border-white/30 shadow-inner">
                                         {adiso.vendedor?.avatarUrl ? (
@@ -386,7 +386,7 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
                                 </div>
                             ) : (
                                 // Mobile: Minimal Badge (Avatar Only)
-                                <div className="w-9 h-9 rounded-full overflow-hidden bg-white/20 backdrop-blur-sm border border-white/30 shadow-lg relative">
+                                <div className="w-9 h-9 rounded-full overflow-hidden bg-black/40 backdrop-blur-sm border border-white/20 shadow-lg relative">
                                     {adiso.vendedor?.avatarUrl ? (
                                         <Image
                                             src={adiso.vendedor.avatarUrl}
