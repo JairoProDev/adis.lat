@@ -141,8 +141,24 @@ export default function ModalAdiso({
     }
   };
 
-  const getCategoriaIcon = (categoria: Categoria): React.ComponentType<{ size?: number; color?: string }> => {
-    const iconMap: Record<Categoria, React.ComponentType<{ size?: number; color?: string }>> = {
+  const getCategoriaTheme = (categoria: Categoria) => {
+    const themes: Record<Categoria, { color: string; bg: string; iconBg: string }> = {
+      empleos: { color: 'var(--brand-blue)', bg: 'rgba(56, 189, 248, 0.1)', iconBg: 'from-sky-400 to-blue-600' },
+      inmuebles: { color: '#10b981', bg: 'rgba(16, 185, 129, 0.1)', iconBg: 'from-emerald-400 to-teal-600' },
+      vehiculos: { color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.1)', iconBg: 'from-violet-400 to-purple-600' },
+      servicios: { color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)', iconBg: 'from-amber-400 to-orange-600' },
+      productos: { color: '#f43f5e', bg: 'rgba(244, 63, 94, 0.1)', iconBg: 'from-rose-400 to-pink-600' },
+      eventos: { color: '#6366f1', bg: 'rgba(99, 102, 241, 0.1)', iconBg: 'from-indigo-400 to-violet-600' },
+      negocios: { color: '#64748b', bg: 'rgba(100, 116, 139, 0.1)', iconBg: 'from-slate-400 to-slate-600' },
+      comunidad: { color: '#06b6d4', bg: 'rgba(6, 182, 212, 0.1)', iconBg: 'from-cyan-400 to-sky-600' },
+    };
+    return themes[categoria] || themes.productos;
+  };
+
+  const theme = getCategoriaTheme(adiso.categoria);
+
+  const getCategoriaIcon = (categoria: Categoria): React.ComponentType<{ size?: number; color?: string; className?: string }> => {
+    const iconMap: Record<Categoria, React.ComponentType<{ size?: number; color?: string; className?: string }>> = {
       empleos: IconEmpleos,
       inmuebles: IconInmuebles,
       vehiculos: IconVehiculos,
@@ -334,21 +350,24 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
   // --- RENDER LOGIC ---
 
   // Botones de acción (Links, Share, Fav) - Reutilizables
+  // Botones de acción (Links, Share, Fav) - Reutilizables
   const ActionButtons = ({ mobile = false }) => (
     <div style={{ display: 'flex', gap: '8px' }}>
       <button
         onClick={handleCompartir}
+        className="hover:scale-105 active:scale-95 transition-all"
         style={{
-          width: '40px',
-          height: '40px',
-          borderRadius: '50%',
-          border: '1px solid var(--border-color)',
-          backgroundColor: 'var(--bg-secondary)',
+          width: '38px',
+          height: '38px',
+          borderRadius: '12px',
+          border: 'none',
+          backgroundColor: 'var(--bg-tertiary)',
           color: 'var(--text-secondary)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          cursor: 'pointer'
+          cursor: 'pointer',
+          boxShadow: '0 4px 10px rgba(0,0,0,0.03)'
         }}
         title="Compartir"
       >
@@ -356,18 +375,19 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
       </button>
       <button
         onClick={handleCopiarLink}
+        className="hover:scale-105 active:scale-95 transition-all"
         style={{
-          width: '40px',
-          height: '40px',
-          borderRadius: '50%',
-          border: '1px solid var(--border-color)',
-          backgroundColor: copiado ? '#22c55e' : 'var(--bg-secondary)',
+          width: '38px',
+          height: '38px',
+          borderRadius: '12px',
+          border: 'none',
+          backgroundColor: copiado ? '#22c55e' : 'var(--bg-tertiary)',
           color: copiado ? 'white' : 'var(--text-secondary)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           cursor: 'pointer',
-          transition: 'all 0.2s'
+          boxShadow: '0 4px 10px rgba(0,0,0,0.03)'
         }}
         title="Copiar Link"
       >
@@ -376,17 +396,19 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
       <button
         onClick={handleToggleFavorito}
         disabled={cargandoFavorito}
+        className="hover:scale-105 active:scale-95 transition-all"
         style={{
-          width: '40px',
-          height: '40px',
-          borderRadius: '50%',
-          border: '1px solid var(--border-color)',
-          backgroundColor: esFavoritoState ? 'var(--bg-secondary)' : 'var(--bg-secondary)',
+          width: '38px',
+          height: '38px',
+          borderRadius: '12px',
+          border: 'none',
+          backgroundColor: 'var(--bg-tertiary)',
           color: esFavoritoState ? '#fbbf24' : 'var(--text-secondary)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          cursor: 'pointer'
+          cursor: 'pointer',
+          boxShadow: '0 4px 10px rgba(0,0,0,0.03)'
         }}
         title="Guardar en favoritos"
       >
@@ -413,59 +435,59 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
       esHistorico ||
       (adiso.fechaExpiracion && new Date(adiso.fechaExpiracion) < ahora);
 
+    const baseButtonStyle: React.CSSProperties = {
+      width: fullWidth ? '100%' : 'auto',
+      padding: '1rem 2rem',
+      fontSize: '1.05rem',
+      fontWeight: 800,
+      color: 'white',
+      border: 'none',
+      borderRadius: '16px',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '0.75rem',
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      boxShadow: '0 10px 25px -5px rgba(56, 189, 248, 0.4)',
+      textTransform: 'none'
+    };
+
     if (estaCaducado || esHistorico) {
       return (
         <button
           onClick={() => handleContactar()}
+          className="hover:-translate-y-1 hover:brightness-110 active:scale-[0.98]"
           style={{
-            width: fullWidth ? '100%' : 'auto',
-            padding: '0.875rem 1.5rem',
-            fontSize: '1rem',
-            fontWeight: 700,
+            ...baseButtonStyle,
             backgroundColor: 'var(--brand-blue)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '12px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.5rem',
-            boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+            backgroundImage: 'linear-gradient(135deg, var(--brand-blue) 0%, #2563eb 100%)'
           }}
         >
-          <IconWhatsApp /> Consultar disponibilidad
+          <IconWhatsApp size={22} /> Consultar disponibilidad
         </button>
       )
     }
 
     if (contactosMultiples && contactosMultiples.length > 1) {
-      // Si hay múltiples contactos, mostramos el primero o un botón genérico que abre opciones
-      // Por simplicidad en el sticky footer, mostraremos el principal (o un menú si se complica, 
-      // pero el usuario pidió "solo cta más importante").
-      // Mostraremos el botón del PRIMER contacto como principal CTA
       const contactoPrincipal = contactosMultiples[0];
+      const isWA = contactoPrincipal.tipo === 'whatsapp';
       return (
         <button
           onClick={() => handleContactar(contactoPrincipal.valor)}
+          className="hover:-translate-y-1 hover:brightness-110 active:scale-[0.98]"
           style={{
-            width: fullWidth ? '100%' : 'auto',
-            padding: '0.875rem 1.5rem',
-            fontSize: '1rem',
-            fontWeight: 700,
-            backgroundColor: contactoPrincipal.tipo === 'whatsapp' ? '#25D366' : '#3b82f6',
-            color: 'white',
-            border: 'none',
-            borderRadius: '12px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.5rem',
-            boxShadow: '0 4px 12px rgba(37, 211, 102, 0.3)'
+            ...baseButtonStyle,
+            backgroundColor: isWA ? '#22c55e' : '#3b82f6',
+            backgroundImage: isWA
+              ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'
+              : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+            boxShadow: isWA
+              ? '0 10px 25px -5px rgba(34, 197, 94, 0.4)'
+              : '0 10px 25px -5px rgba(59, 130, 246, 0.4)'
           }}
         >
-          {contactoPrincipal.tipo === 'whatsapp' ? <IconWhatsApp /> : '✉️'}
+          {isWA ? <IconWhatsApp size={22} /> : '✉️'}
           {contactoPrincipal.etiqueta || 'Contactar ahora'}
         </button>
       );
@@ -474,24 +496,15 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
     return (
       <button
         onClick={() => handleContactar()}
+        className="hover:-translate-y-1 hover:brightness-110 active:scale-[0.98]"
         style={{
-          width: fullWidth ? '100%' : 'auto',
-          padding: '0.875rem 1.5rem',
-          fontSize: '1rem',
-          fontWeight: 700,
-          backgroundColor: '#25D366',
-          color: 'white',
-          border: 'none',
-          borderRadius: '12px',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '0.5rem',
-          boxShadow: '0 4px 12px rgba(37, 211, 102, 0.3)'
+          ...baseButtonStyle,
+          backgroundColor: '#22c55e',
+          backgroundImage: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+          boxShadow: '0 10px 25px -5px rgba(34, 197, 94, 0.4)'
         }}
       >
-        <IconWhatsApp />
+        <IconWhatsApp size={22} />
         Contactar por WhatsApp
       </button>
     );
@@ -500,23 +513,26 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
   const ContentBody = () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       {/* Vendedor Info Header within content */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
           <div style={{
-            width: '40px', height: '40px', borderRadius: '10px', overflow: 'hidden',
-            border: '1px solid var(--border-color)', position: 'relative'
+            width: '46px', height: '46px', borderRadius: '14px', overflow: 'hidden',
+            boxShadow: '0 8px 16px rgba(0,0,0,0.06)', position: 'relative',
+            backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)'
           }}>
             {adiso.vendedor?.avatarUrl ? (
               <Image src={adiso.vendedor.avatarUrl} alt={adiso.vendedor.nombre} fill style={{ objectFit: 'cover' }} />
             ) : (
-              <div style={{ width: '100%', height: '100%', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {(() => { const Icon = getCategoriaIcon(adiso.categoria); return <Icon size={20} />; })()}
+              <div
+                className={`w-full h-full bg-gradient-to-br ${theme.iconBg} flex items-center justify-center text-white`}
+              >
+                {(() => { const Icon = getCategoriaIcon(adiso.categoria); return <Icon size={22} />; })()}
               </div>
             )}
           </div>
           <div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase' }}>Publicado por</div>
-            <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>{adiso.vendedor?.nombre || 'Anunciante'}</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Publicado por</div>
+            <div style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>{adiso.vendedor?.nombre || 'Anunciante'}</div>
           </div>
         </div>
       </div>
@@ -554,19 +570,47 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
         );
       })()}
 
-      {/* Detalles e Info */}
-      <div style={{ padding: '1.25rem', backgroundColor: 'var(--bg-tertiary)', borderRadius: '24px', gap: '12px', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <IconLocation color="var(--brand-blue)" />
-          <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 600 }}>{formatearUbicacion(adiso.ubicacion).texto}</span>
+      {/* Detalles e Info (Premium Card) */}
+      <div style={{
+        padding: '1.5rem',
+        backgroundColor: 'var(--bg-primary)',
+        borderRadius: '24px',
+        gap: '12px',
+        display: 'flex',
+        flexDirection: 'column',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
+        border: '1px solid var(--border-subtle)',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        {/* Subtle background accent */}
+        <div style={{
+          position: 'absolute',
+          top: 0, right: 0, width: '100px', height: '100px',
+          background: `radial-gradient(circle at top right, ${theme.color}15, transparent 70%)`,
+          pointerEvents: 'none'
+        }} />
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ color: theme.color }}><IconLocation size={20} /></div>
+          <span style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 600 }}>{formatearUbicacion(adiso.ubicacion).texto}</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <IconCalendar color="var(--brand-blue)" />
-          <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>{formatFecha(adiso.fechaPublicacion, adiso.horaPublicacion)}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ color: theme.color }}><IconCalendar size={20} /></div>
+          <span style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 500 }}>{formatFecha(adiso.fechaPublicacion, adiso.horaPublicacion)}</span>
         </div>
-        <div style={{ display: 'flex', gap: '1rem', marginTop: '4px' }}>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>👁️ {vistasLocales} Vistas</span>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>💬 {contactosLocales} Interesados</span>
+
+        <div style={{ height: '1px', backgroundColor: 'var(--border-subtle)', margin: '4px 0' }} />
+
+        <div style={{ display: 'flex', gap: '1.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ opacity: 0.7 }}>👁️</span>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{vistasLocales} Vistas</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ opacity: 0.7 }}>💬</span>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{contactosLocales} Interesados</span>
+          </div>
         </div>
       </div>
 
@@ -637,7 +681,16 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
 
                 {/* Top Actions Row */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
+                  <div style={{
+                    fontWeight: 800,
+                    fontSize: '0.8rem',
+                    color: 'var(--brand-blue)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                    padding: '4px 12px',
+                    borderRadius: '20px'
+                  }}>
                     Detalle de Adiso
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
