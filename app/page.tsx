@@ -43,7 +43,11 @@ import {
   IconProductos,
   IconEventos,
   IconNegocios,
-  IconComunidad
+  IconComunidad,
+  IconShare,
+  IconGrid,
+  IconFeed,
+  IconList
 } from '@/components/Icons';
 import Buscador from '@/components/Buscador';
 import Ordenamiento, { TipoOrdenamiento } from '@/components/Ordenamiento';
@@ -951,132 +955,143 @@ function HomeContent() {
             onCerrar={() => setMostrarFiltroUbicacion(false)}
           />
         )}
-        {/* ── Toolbar: always visible (buscador + controles) ── */}
+        {/* ── Toolbar: modern controls ── */}
         <div style={{
-          marginBottom: '0.75rem',
+          marginBottom: '1.25rem',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          fontSize: '0.8rem',
-          color: 'var(--text-secondary)',
-          padding: '0.25rem 0',
-          gap: '8px',
+          padding: '0.5rem 0.25rem',
+          gap: '12px',
           width: '100%',
-          whiteSpace: 'nowrap',
-          minHeight: '36px',
+          flexWrap: 'wrap'
         }}>
-          {/* Left: Count pill — shimmer while loading */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+          {/* Left: Count pill */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {cargando ? (
-              <div className="skeleton-shimmer" style={{ width: 100, height: 18, borderRadius: 6, display: 'inline-block' }} />
+              <div className="skeleton-shimmer" style={{ width: 120, height: 36, borderRadius: '18px' }} />
             ) : (
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
-                  {adisosFiltrados.length}
-                </span>
-                <span style={{ marginLeft: '4px', opacity: 0.8 }} className="hidden sm:inline">
-                  {adisosFiltrados.length === 1 ? 'adiso encontrado' : 'adisos encontrados'}
-                </span>
-                <span style={{ marginLeft: '4px' }} className="sm:hidden inline">
-                  adisos
-                </span>
-              </div>
-            )}
-
-            {!cargando && (
-              <button
-                onClick={async () => {
-                  const url = getBusquedaUrl(categoriaFiltro, busqueda);
-                  try {
-                    await navigator.clipboard.writeText(url);
-                    success('Link de búsqueda copiado');
-                  } catch (err) {
-                    error('Error al copiar link');
-                  }
-                }}
-                style={{
-                  padding: '5px',
-                  border: '1px solid var(--border-color)',
-                  backgroundColor: 'var(--bg-primary)',
-                  color: 'var(--brand-blue)',
-                  cursor: 'pointer',
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                backgroundColor: 'var(--bg-primary)',
+                padding: '4px 12px 4px 6px',
+                borderRadius: '20px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+                height: '36px'
+              }}>
+                <div style={{
+                  backgroundColor: 'var(--brand-blue)',
+                  color: 'white',
+                  height: '24px',
+                  minWidth: '24px',
+                  padding: '0 8px',
+                  borderRadius: '12px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  borderRadius: '50%',
-                  flexShrink: 0
-                }}
-                className="hover:bg-blue-50 transition-colors"
-                title="Compartir búsqueda"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
-              </button>
+                  fontSize: '0.85rem',
+                  fontWeight: 800
+                }}>
+                  {adisosFiltrados.length}
+                </div>
+                <span style={{
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  color: 'var(--text-secondary)'
+                }}>
+                  <span className="hidden sm:inline">
+                    {adisosFiltrados.length === 1 ? 'adiso encontrado' : 'adisos encontrados'}
+                  </span>
+                  <span className="sm:hidden inline">
+                    adisos
+                  </span>
+                </span>
+
+                {!cargando && (
+                  <button
+                    onClick={async () => {
+                      const url = getBusquedaUrl(categoriaFiltro, busqueda);
+                      try {
+                        await navigator.clipboard.writeText(url);
+                        success('Link de búsqueda copiado');
+                      } catch (err) {
+                        error('Error al copiar link');
+                      }
+                    }}
+                    style={{
+                      marginLeft: '4px',
+                      width: '26px',
+                      height: '26px',
+                      borderRadius: '50%',
+                      border: 'none',
+                      backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                      color: 'var(--brand-blue)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.2s'
+                    }}
+                    className="hover:bg-sky-500 hover:text-white"
+                    title="Compartir búsqueda"
+                  >
+                    <IconShare size={14} />
+                  </button>
+                )}
+              </div>
             )}
           </div>
 
-          {/* Right: Sort & View Mode — always interactive */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+          {/* Right: Sort & View Mode */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Ordenamiento
               valor={ordenamiento}
               onChange={setOrdenamiento}
             />
+
+            {/* View Mode Switcher */}
             <div style={{
               display: 'flex',
-              border: '1px solid var(--border-color)',
-              borderRadius: '6px',
-              overflow: 'hidden',
-              height: '32px'
+              backgroundColor: 'var(--bg-primary)',
+              padding: '4px',
+              borderRadius: '14px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+              height: '42px',
+              alignItems: 'center'
             }}>
-              <button
-                onClick={() => setVista('grid')}
-                style={{
-                  width: '32px',
-                  background: vista === 'grid' ? 'var(--bg-secondary)' : 'transparent',
-                  border: 'none',
-                  borderRight: '1px solid var(--border-color)',
-                  cursor: 'pointer',
-                  color: vista === 'grid' ? 'var(--brand-blue)' : 'var(--text-secondary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-                title="Vista Cuadrícula"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-              </button>
-              <button
-                onClick={() => setVista('feed')}
-                style={{
-                  width: '32px',
-                  background: vista === 'feed' ? 'var(--bg-secondary)' : 'transparent',
-                  border: 'none',
-                  borderRight: '1px solid var(--border-color)',
-                  cursor: 'pointer',
-                  color: vista === 'feed' ? 'var(--brand-blue)' : 'var(--text-secondary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-                title="Vista Feed"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
-              </button>
-              <button
-                onClick={() => setVista('list')}
-                style={{
-                  width: '32px',
-                  background: vista === 'list' ? 'var(--bg-secondary)' : 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: vista === 'list' ? 'var(--brand-blue)' : 'var(--text-secondary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-                title="Vista Lista"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
-              </button>
+              {[
+                { id: 'grid', icon: IconGrid, title: 'Cuadrícula' },
+                { id: 'feed', icon: IconFeed, title: 'Individual' },
+                { id: 'list', icon: IconList, title: 'Lista' }
+              ].map((m) => {
+                const Icon = m.icon;
+                const active = vista === m.id;
+                return (
+                  <button
+                    key={m.id}
+                    onClick={() => setVista(m.id as any)}
+                    style={{
+                      width: '34px',
+                      height: '34px',
+                      borderRadius: '10px',
+                      backgroundColor: active ? 'var(--brand-blue)' : 'transparent',
+                      color: active ? 'white' : 'var(--text-tertiary)',
+                      border: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      margin: '0 2px'
+                    }}
+                    title={m.title}
+                  >
+                    <Icon size={18} />
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

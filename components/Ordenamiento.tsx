@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { FaSort, FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa';
+import { IconSort, IconSortDown, IconSortUp } from './Icons';
 import { useTranslation } from '@/hooks/useTranslation';
 
 export type TipoOrdenamiento = 'recientes' | 'antiguos' | 'titulo-asc' | 'titulo-desc';
@@ -16,11 +16,11 @@ export default function Ordenamiento({ valor, onChange }: OrdenamientoProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const opcionesOrdenamiento: Array<{ valor: TipoOrdenamiento; labelKey: string; icon: React.ComponentType<{ size?: number }> }> = [
-    { valor: 'recientes', labelKey: 'sort.recent', icon: FaSortAmountDown },
-    { valor: 'antiguos', labelKey: 'sort.oldest', icon: FaSortAmountUp },
-    { valor: 'titulo-asc', labelKey: 'sort.titleAsc', icon: FaSort },
-    { valor: 'titulo-desc', labelKey: 'sort.titleDesc', icon: FaSort },
+  const opcionesOrdenamiento: Array<{ valor: TipoOrdenamiento; labelKey: string; icon: React.ComponentType<{ size?: number; color?: string; className?: string }> }> = [
+    { valor: 'recientes', labelKey: 'sort.recent', icon: IconSortDown },
+    { valor: 'antiguos', labelKey: 'sort.oldest', icon: IconSortUp },
+    { valor: 'titulo-asc', labelKey: 'sort.titleAsc', icon: IconSort },
+    { valor: 'titulo-desc', labelKey: 'sort.titleDesc', icon: IconSort },
   ];
 
   useEffect(() => {
@@ -58,79 +58,92 @@ export default function Ordenamiento({ valor, onChange }: OrdenamientoProps) {
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '0.4rem',
-          padding: '0.4rem 0.6rem',
-          border: '1px solid var(--border-color)',
-          borderRadius: '6px',
+          gap: '0.5rem',
+          padding: '0 0.875rem',
+          border: 'none',
+          borderRadius: '14px',
           backgroundColor: 'var(--bg-primary)',
           color: 'var(--text-primary)',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
           cursor: 'pointer',
-          fontSize: '0.8rem',
-          transition: 'all 0.2s',
-          height: '32px'
+          fontSize: '0.85rem',
+          fontWeight: 600,
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          height: '42px'
         }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-        }}
+        className="hover:shadow-md hover:-translate-y-0.5"
       >
-        <CurrentIcon size={14} aria-hidden="true" />
+        <CurrentIcon size={16} aria-hidden="true" className="text-sky-500" />
         <span className="hidden sm:inline">{t(opcionActual.labelKey)}</span>
-        <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', marginLeft: '2px' }}>▼</span>
+        <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginLeft: '4px', opacity: 0.5 }}>▼</span>
       </button>
 
       {isOpen && (
         <div
           style={{
             position: 'absolute',
-            top: '100%',
+            top: 'calc(100% + 8px)',
             right: 0,
-            marginTop: '0.5rem',
             backgroundColor: 'var(--bg-primary)',
-            border: '1px solid var(--border-color)',
-            borderRadius: '8px',
-            boxShadow: '0 4px 12px var(--shadow)',
+            border: 'none',
+            borderRadius: '16px',
+            boxShadow: '0 15px 35px rgba(0,0,0,0.1), 0 5px 15px rgba(0,0,0,0.05)',
             zIndex: 1000,
-            minWidth: '180px',
+            minWidth: '200px',
             overflow: 'hidden',
+            padding: '4px',
+            animation: 'fadeIn 0.2s ease'
           }}
         >
           {opcionesOrdenamiento.map((opcion) => {
             const OptionIcon = opcion.icon;
+            const isSelected = valor === opcion.valor;
             return (
               <button
                 key={opcion.valor}
                 onClick={() => handleSelect(opcion.valor)}
                 style={{
                   width: '100%',
-                  padding: '0.75rem 1rem',
+                  padding: '10px 14px',
                   textAlign: 'left',
                   border: 'none',
-                  backgroundColor: valor === opcion.valor ? 'var(--text-primary)' : 'transparent',
-                  color: valor === opcion.valor ? 'var(--bg-primary)' : 'var(--text-primary)',
+                  borderRadius: '12px',
+                  backgroundColor: isSelected ? 'rgba(56, 189, 248, 0.1)' : 'transparent',
+                  color: isSelected ? 'var(--brand-blue)' : 'var(--text-primary)',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.75rem',
                   fontSize: '0.875rem',
-                  transition: 'background-color 0.2s',
+                  fontWeight: isSelected ? 600 : 500,
+                  transition: 'all 0.2s',
+                  marginBottom: '2px'
                 }}
                 onMouseEnter={(e) => {
-                  if (valor !== opcion.valor) {
+                  if (!isSelected) {
                     e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (valor !== opcion.valor) {
+                  if (!isSelected) {
                     e.currentTarget.style.backgroundColor = 'transparent';
                   }
                 }}
               >
-                <OptionIcon size={14} aria-hidden="true" />
+                <div style={{
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '8px',
+                  backgroundColor: isSelected ? 'white' : 'transparent',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: isSelected ? '0 2px 5px rgba(0,0,0,0.05)' : 'none'
+                }}>
+                  <OptionIcon size={14} color={isSelected ? 'var(--brand-blue)' : undefined} />
+                </div>
                 <span>{t(opcion.labelKey)}</span>
-                {valor === opcion.valor && <span style={{ marginLeft: 'auto' }}>✓</span>}
+                {isSelected && <span style={{ marginLeft: 'auto', color: 'var(--brand-blue)' }}>●</span>}
               </button>
             );
           })}

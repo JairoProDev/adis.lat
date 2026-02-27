@@ -8,7 +8,8 @@ import {
   FaHandHoldingHeart, FaPlus, FaImage, FaSpinner, FaEye, FaTags, FaExclamationTriangle,
   FaInfoCircle, FaQrcode, FaRegHeart, FaMicrophone, FaLinkedin, FaYoutube,
   FaFile, FaCamera, FaTable, FaUpload, FaList, FaFilter, FaMapPin, FaShoppingCart, FaMagic, FaMinus,
-  FaFileExcel, FaDownload, FaLightbulb, FaSyncAlt, FaBolt, FaTag, FaEyeSlash, FaLayerGroup, FaSquare
+  FaFileExcel, FaDownload, FaLightbulb, FaSyncAlt, FaBolt, FaTag, FaEyeSlash, FaLayerGroup, FaSquare,
+  FaSort, FaSortAmountDown, FaSortAmountUp
 } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
 import { MdCenterFocusWeak } from 'react-icons/md';
@@ -128,3 +129,6 @@ export const IconTag = (p: IconProps) => <FaTag size={getSize(p)} color={p.color
 export const IconTags = (p: IconProps) => <FaTags size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
 export const IconEyeOff = (p: IconProps) => <FaEyeSlash size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
 export const IconLayers = (p: IconProps) => <FaLayerGroup size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
+export const IconSort = (p: IconProps) => <FaSort size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
+export const IconSortDown = (p: IconProps) => <FaSortAmountDown size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
+export const IconSortUp = (p: IconProps) => <FaSortAmountUp size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
