@@ -97,18 +97,19 @@ export default function Header({
 
   return (
     <header style={{
-      backgroundColor: 'var(--bg-primary)',
-      borderBottom: '1px solid var(--border-color)',
-      boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+      backgroundColor: 'var(--glass-bg)',
+      backdropFilter: 'blur(20px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+      boxShadow: '0 4px 15px -10px rgba(0,0,0,0.1)',
       height: '72px',
       position: 'sticky',
       top: 0,
       zIndex: 1000,
       display: 'flex',
       alignItems: 'center',
-      padding: '0 1rem',
+      padding: '0 1.5rem',
       transform: headerVisible ? 'translateY(0)' : 'translateY(-100%)',
-      transition: 'transform 0.3s ease',
+      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
     }}>
       {/* LEFT: Logo + Location */}
       <div style={{

@@ -30,10 +30,10 @@ export default function Buscador({
       <div className="relative group z-30">
         <div
           className={`
-            relative flex items-center bg-white border border-gray-200 rounded-full px-4 py-3 
-            shadow-[0_2px_12px_rgba(0,0,0,0.08)] transition-all duration-300
-            hover:shadow-[0_4px_16px_rgba(0,0,0,0.12)] hover:border-gray-300
-            focus-within:shadow-[0_4px_20px_rgba(83,172,197,0.15)] focus-within:border-[var(--brand-blue)]
+            relative flex items-center bg-white dark:bg-zinc-900 border-none rounded-2xl px-6 py-4 
+            shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500
+            hover:shadow-[0_20px_40px_rgba(0,0,0,0.06)] hover:-translate-y-0.5
+            focus-within:shadow-[0_20px_50px_rgba(56,189,248,0.15)] focus-within:ring-2 focus-within:ring-sky-400/20
           `}
         >
           {/* Search Icon */}

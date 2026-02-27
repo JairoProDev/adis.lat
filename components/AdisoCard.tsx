@@ -231,12 +231,12 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
                 }
             }}
             className={`
-        group relative flex ${vista === 'list' ? 'flex-row' : 'flex-col'} items-start text-left bg-white dark:bg-obsidian-900 rounded-xl border transition-all duration-300 overflow-hidden outline-none cursor-pointer font-sans
+        group relative flex ${vista === 'list' ? 'flex-row' : 'flex-col'} items-start text-left bg-white dark:bg-slate-900 rounded-2xl border-none transition-all duration-500 overflow-hidden outline-none cursor-pointer font-sans
         ${estaSeleccionado
-                    ? `ring-2 ring-offset-1 shadow-xl scale-[1.01] z-10 ${theme.border.replace('border-', 'ring-')}`
-                    : 'border-gray-100 dark:border-obsidian-800 hover:border-gray-300 dark:hover:border-obsidian-600 hover:shadow-lg hover:-translate-y-1'
+                    ? `ring-2 ring-sky-400 shadow-[0_20px_50px_rgba(56,189,248,0.2)] scale-[1.02] z-10`
+                    : 'shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_30px_60px_rgba(0,0,0,0.12)] hover:-translate-y-2'
                 }
-        ${vista === 'feed' ? 'w-full shadow-sm' : ''}
+        ${vista === 'feed' ? 'w-full shadow-md' : ''}
       `}
             style={{
                 gridColumn: (vista === 'list' || vista === 'feed') ? '1 / -1' : `span ${gridColumnSpan}`,

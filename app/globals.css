@@ -19,55 +19,46 @@
 
 :root {
   /* ========================================
-     PALETA DE MARCA - ESTRICTA
+     PALETA DE MARCA - MÁS VIBRANTE
      ======================================== */
-  --brand-blue: #53acc5;
-  /* Turquesa principal */
-  --brand-yellow: #ffc24a;
-  /* Amarillo secundario */
+  --brand-blue: #38bdf8; /* Sky blue más brillante */
+  --brand-yellow: #fbbf24; /* Amber más vivo */
+  --brand-primary-rgb: 56, 189, 248;
 
   /* ========================================
-     COLORES DE TEXTO - SIN NEGRO PURO
+     COLORES DE TEXTO
      ======================================== */
-  --text-primary: #1e293b;
-  /* Gris oscuro para texto principal */
-  --text-secondary: #64748b;
-  /* Gris medio para texto secundario */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
   --text-tertiary: #94a3b8;
-  /* Gris claro para texto terciario */
 
   /* ========================================
-     FONDOS
+     FONDOS - GLASS & MESH
      ======================================== */
   --bg-primary: #ffffff;
-  /* Blanco puro */
-  --bg-secondary: #f8fafc;
-  /* Gris muy claro */
+  --bg-secondary: #fdfdfd; 
   --bg-tertiary: #f1f5f9;
-  /* Gris claro */
 
   /* ========================================
      COLORES DE INTERFAZ
      ======================================== */
-  --border-color: #e2e8f0;
-  /* Bordes sutiles */
-  --border-subtle: rgba(0, 0, 0, 0.06);
-  /* Bordes muy sutiles */
-  --hover-bg: #f8fafc;
-  /* Fondo en hover */
+  --border-color: rgba(0, 0, 0, 0.04); /* Casi invisible */
+  --border-subtle: rgba(0, 0, 0, 0.02);
+  --hover-bg: rgba(56, 189, 248, 0.05);
 
   /* Legacy - Mantener compatibilidad */
   --color-secondary: #ffc24a;
   --accent-color: #53acc5;
 
-  /* Glassmorphism */
-  --glass-bg: rgba(255, 255, 255, 0.85);
+  /* Glassmorphism Refined */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.5);
 
-  /* Shadows - Professional layered shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-hover: 0 8px 16px -4px rgba(60, 105, 151, 0.15), 0 4px 8px -2px rgba(60, 105, 151, 0.08);
+  /* Shadows - More depth, less "dirty" gray */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.02);
+  --shadow-md: 0 10px 25px -5px rgba(0, 0, 0, 0.03), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 20px 25px -5px rgba(56, 189, 248, 0.05), 0 10px 10px -5px rgba(56, 189, 248, 0.02);
+  --shadow-hover: 0 20px 50px -12px rgba(56, 189, 248, 0.2);
 
   /* Category Colors */
   --cat-empleos: #3b82f6;
@@ -80,22 +71,22 @@
   --cat-comunidad: #6366f1;
 }
 
-/* Modo oscuro */
+/* Modo oscuro vibrant */
 @media (prefers-color-scheme: dark) {
   :root:not(.light-mode) {
-    --bg-primary: #18191a;
-    /* Facebook Dark key */
-    --bg-secondary: #242526;
-    --bg-tertiary: #3a3b3c;
-    --text-primary: #e4e6eb;
-    --text-secondary: #b0b3b8;
-    --text-tertiary: #e4e6eb;
+    --bg-primary: #0f172a; /* Navy profundo */
+    --bg-secondary: #0b1120;
+    --bg-tertiary: #1e293b;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-tertiary: #64748b;
     --color-secondary: #ffc24a;
     --accent-color: #53acc5;
-    --border-color: #3e4042;
-    --border-subtle: rgba(255, 255, 255, 0.1);
+    --border-color: rgba(255, 255, 255, 0.05);
+    --border-subtle: rgba(255, 255, 255, 0.03);
     --hover-bg: #333333;
-    --glass-bg: rgba(26, 26, 26, 0.85);
+    --glass-bg: rgba(15, 23, 42, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.1);
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
@@ -150,6 +141,12 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--bg-secondary);
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.05) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(251, 191, 36, 0.05) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(56, 189, 248, 0.03) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(251, 191, 36, 0.03) 0px, transparent 50%);
+  background-attachment: fixed;
   color: var(--text-primary);
   line-height: 1.6;
 }

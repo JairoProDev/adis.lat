@@ -820,11 +820,9 @@ function HomeContent() {
           display: 'flex',
           justifyContent: isDesktop ? 'center' : 'flex-start',
           overflowX: 'auto',
-          gap: '1rem',
-          padding: '1rem',
-          paddingBottom: '0.5rem',
-          backgroundColor: 'var(--bg-primary)',
-          borderBottom: '1px solid var(--border-color)',
+          gap: '1.5rem',
+          padding: '1.25rem 1rem',
+          backgroundColor: 'transparent',
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
           WebkitOverflowScrolling: 'touch',
@@ -834,7 +832,7 @@ function HomeContent() {
             ? 'calc(100% - var(--sidebar-width, 0px))'
             : '100%',
           margin: '0 auto',
-          transition: 'max-width 0.3s ease, margin-right 0.3s ease',
+          transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
           ...(isDesktop && { marginRight: 'var(--sidebar-width, 0px)' })
         }}
       >
@@ -873,34 +871,39 @@ function HomeContent() {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: '0.25rem',
+              gap: '0.5rem',
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              minWidth: '72px',
+              minWidth: '80px',
               flexShrink: 0,
-              opacity: categoriaFiltro === id ? 1 : 0.7,
-              color: categoriaFiltro === id ? 'var(--brand-blue)' : 'var(--text-secondary)',
-              transition: 'transform 0.2s, color 0.2s',
+              padding: '4px',
+              borderRadius: '12px',
+              opacity: categoriaFiltro === id ? 1 : 0.8,
+              transform: categoriaFiltro === id ? 'scale(1.05)' : 'scale(1)',
+              transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
-            className="hover:opacity-100 hover:scale-105"
+            className="group"
           >
             <div style={{
-              padding: '0.75rem',
-              borderRadius: '50%',
-              backgroundColor: categoriaFiltro === id ? 'var(--brand-yellow)' : 'var(--bg-secondary)',
-              color: categoriaFiltro === id ? 'var(--brand-blue)' : 'var(--text-secondary)',
+              width: '48px',
+              height: '48px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: categoriaFiltro === id ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
-              transition: 'all 0.2s',
-              width: '48px',
-              height: '48px',
+              borderRadius: '16px',
+              backgroundColor: categoriaFiltro === id ? 'var(--brand-blue)' : 'var(--bg-primary)',
+              color: categoriaFiltro === id ? 'white' : 'var(--text-secondary)',
+              boxShadow: categoriaFiltro === id
+                ? '0 10px 20px -5px rgba(56, 189, 248, 0.4)'
+                : '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              position: 'relative',
+              overflow: 'hidden'
             }}
-              className={categoriaFiltro !== id ? 'group-hover:bg-gray-200 dark:group-hover:bg-zinc-700' : ''}
+              className="group-hover:shadow-lg group-hover:-translate-y-1"
             >
-              <Icon size={22} color={categoriaFiltro === id ? 'var(--brand-blue)' : undefined} />
+              <Icon size={24} color={categoriaFiltro === id ? 'white' : undefined} />
             </div>
             <span style={{
               fontSize: '0.75rem',
