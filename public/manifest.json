@@ -1,0 +1,20 @@
+{
+    "name": "Buscadis",
+    "short_name": "Buscadis",
+    "description": "El catálogo más grande de ofertas y oportunidades en Perú.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#38bdf8",
+    "dir": "ltr",
+    "lang": "es-PE",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/logo.png",
+            "sizes": "192x192 512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}

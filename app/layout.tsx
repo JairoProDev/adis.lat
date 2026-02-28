@@ -63,6 +63,15 @@ export const metadata: Metadata = {
     // Agregar cuando tengas Google Search Console
     // google: 'verification-code',
   },
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Buscadis',
+  },
+  formatDetection: {
+    telephone: false,
+  },
 };
 
 export default function RootLayout({
