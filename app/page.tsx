@@ -487,15 +487,17 @@ function HomeContent() {
 
 
     setAdisosFiltrados(filtradosOrdenados);
-    // Resetear visibleCount cuando cambian los filtros para empezar de nuevo
-    setVisibleCount(ITEMS_POR_PAGINA);
+  }, [busquedaDebounced, categoriaFiltro, ordenamiento, adisos, filtroUbicacion, profile]);
 
-    // IMPORTANTE: Si al filtrar nos quedamos con muy pocos anuncios y todavía hay más en la API,
-    // debemos intentar cargar más automáticamente para llenar el espacio vacío.
-    if (filtradosOrdenados.length < 10 && hayMasAdisos && !cargando && !cargandoMas) {
-      setTimeout(() => cargarMasAdisos(), 100);
-    }
-  }, [busquedaDebounced, categoriaFiltro, ordenamiento, adisos, filtroUbicacion, profile, hayMasAdisos]);
+  // Resetear visibilidad local y estado de paginación SOLO cuando cambian los filtros principales
+  // (Esto evita resetear la página actual cuando se cargan más adisos en el mismo filtro)
+  useEffect(() => {
+    setVisibleCount(ITEMS_POR_PAGINA);
+    setHayMasAdisos(true);
+    setPaginaActual(1);
+    // El scroll infinito (hook useInfiniteScroll) se encargará de cargar más
+    // automáticamente si el sentinel queda visible después del filtrado inicial.
+  }, [busquedaDebounced, categoriaFiltro, filtroUbicacion]);
 
   // Actualizar índice del adiso abierto cuando cambian los filtrados o el adiso abierto
   useEffect(() => {

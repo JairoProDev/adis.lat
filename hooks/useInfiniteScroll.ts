@@ -38,7 +38,7 @@ export function useInfiniteScroll({
     if (hasMore && !isLoading) {
       isLoadingRef.current = true;
       lastLoadTimeRef.current = now;
-      
+
       try {
         await onLoadMore();
       } catch (error) {
@@ -97,6 +97,21 @@ export function useInfiniteScroll({
   useEffect(() => {
     isLoadingRef.current = isLoading;
   }, [isLoading]);
+
+  // Si sigue intersectando después de cargar, volver a intentar (por si no se llenó la pantalla)
+  // Esto es crucial para categorías con pocos anuncios por página
+  useEffect(() => {
+    if (isIntersecting && !isLoading && hasMore && enabled) {
+      // Usamos un pequeño delay para evitar bucles infinitos agresivos 
+      // y dar tiempo al DOM para renderizar los nuevos elementos
+      const timer = setTimeout(() => {
+        if (isIntersecting && !isLoading && hasMore) {
+          handleLoadMore();
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isIntersecting, isLoading, hasMore, enabled, handleLoadMore]);
 
   return {
     sentinelRef,
