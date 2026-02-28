@@ -1,0 +1,140 @@
+[
+    {
+        "version": "2.4.0",
+        "date": "2026-02-28",
+        "time": "11:30",
+        "type": "feature",
+        "title": "Búsqueda Inteligente y Scroll Infinito Optimizado",
+        "description": "Mejora crítica en la visibilidad del buscador y optimización del scroll infinito con filtrado en servidor",
+        "userBenefits": [
+            "Buscador más visible en modo oscuro con bordes y acentos celestes automáticos",
+            "Listados completos: categorías como Empleos y Servicios ahora cargan todos los anuncios automáticamente",
+            "Búsqueda más rápida gracias al filtrado directo en la base de datos de Supabase",
+            "Navegación fluida: el sistema detecta si necesitas más contenido y lo carga sin que tengas que scrollear si la pantalla está vacía"
+        ],
+        "technicalDetails": [
+            "Buscador: Rediseño con bordes sky-400/30 constantes y efectos de glow en focus",
+            "Supabase: Actualización de getAdisosFromSupabase para soportar filtros de categoría y búsqueda con ilike",
+            "Infinite Scroll: Mejora en el hook useInfiniteScroll para auto-disparar cargas si el sentinel sigue visible",
+            "Page logic: Reseteo inteligente de offset y visibilidad al cambiar de filtros"
+        ],
+        "impact": "major"
+    },
+    {
+        "version": "2.3.5",
+        "date": "2026-02-28",
+        "time": "06:30",
+        "type": "feature",
+        "title": "Experiencia PWA Completa",
+        "description": "Integración de Progressive Web App con capacidades offline y gestos modernos",
+        "userBenefits": [
+            "Instalación como App: ahora puedes instalar Buscadis en tu pantalla de inicio",
+            "Modo Offline: indicador visual de conexión y soporte para ver anuncios guardados sin internet",
+            "Pull-to-refresh: gesto de deslizar hacia abajo para actualizar los anuncios, como en redes sociales",
+            "Carga ultrarrápida gracias al service worker optimizado"
+        ],
+        "technicalDetails": [
+            "Integración de @ducanh2912/next-pwa",
+            "Componentes de UI para estado de conexión (Online/Offline indicator)",
+            "Implementación de pull-to-refresh minimalista",
+            "Service worker con estrategias de cache personalizadas"
+        ],
+        "impact": "major"
+    },
+    {
+        "version": "2.3.2",
+        "date": "2026-02-27",
+        "time": "18:00",
+        "type": "ui",
+        "title": "Rediseño Visual Premium",
+        "description": "Transformación estética global con glassmorphism, colores vibrantes y tarjetas dinámicas",
+        "userBenefits": [
+            "Efecto Cristal: Interfaz moderna con fondos desenfocados y bordes elegantes",
+            "Colores Vibrantes: Paleta de colores revitalizada para una experiencia más viva",
+            "Vista Detallada Mejorada: Nuevo diseño de sidebar y modal móvil con curvas suaves y mejor tipografía",
+            "Badges Premium: Etiquetas de anunciante rediseñadas para mayor prestigio"
+        ],
+        "technicalDetails": [
+            "Implementación de clases backdrop-blur-md y gradientes dinámicos",
+            "Refactorización de AdisoCard con layouts de 5 columnas optimizados",
+            "Ajustes de padding y spacing en Header y Toolbar para un diseño más 'aireado'",
+            "Nuevos estilos de badges con rings y sombras sutiles"
+        ],
+        "impact": "major"
+    },
+    {
+        "version": "2.3.0",
+        "date": "2025-01-27",
+        "time": "22:00",
+        "type": "improvement",
+        "title": "Mejoras de Fase 2: Modo Oscuro y SEO",
+        "description": "Implementación de modo oscuro con preferencias del sistema y páginas de categorías para SEO",
+        "userBenefits": [
+            "Modo oscuro: soporte automático según preferencias del sistema",
+            "Navegación más rápida con prefetching de imágenes",
+            "Mejor SEO con páginas dedicadas por categoría"
+        ],
+        "technicalDetails": [
+            "CSS variables con @media (prefers-color-scheme: dark)",
+            "Metadata dinámica en app/categoria/[nombre]/page.tsx",
+            "Sitemap actualizado con rutas de categorías"
+        ],
+        "impact": "major"
+    },
+    {
+        "version": "2.2.0",
+        "date": "2025-01-27",
+        "time": "20:00",
+        "type": "improvement",
+        "title": "Auditoría de Accesibilidad y Rendimiento",
+        "description": "Mejoras críticas en accesibilidad WCAG 2.1 AA y optimización de rendimiento",
+        "userBenefits": [
+            "Mejor accesibilidad para lectores de pantalla",
+            "Rendimiento optimizado con next/image",
+            "Mayor seguridad con validación Zod"
+        ],
+        "technicalDetails": [
+            "ARIA labels y focus visible",
+            "Validación con Zod en rutas API",
+            "Paginación implementada en Supabase"
+        ],
+        "impact": "major"
+    },
+    {
+        "version": "2.0.0",
+        "date": "2025-11-29",
+        "time": "15:00",
+        "type": "feature",
+        "title": "Sistema de Paquetes de Publicación",
+        "description": "Paquetes escalonados con diferentes tamaños y visibilidad",
+        "userBenefits": [
+            "5 tamaños de publicaciones para destacar",
+            "Límites de imágenes según el paquete",
+            "Grid responsive que se adapta a cada tamaño"
+        ],
+        "technicalDetails": [
+            "Lógica de spans en CSS Grid para diferentes tamaños",
+            "Script SQL para campo tamaño en Supabase"
+        ],
+        "impact": "major"
+    },
+    {
+        "version": "1.0.0",
+        "date": "2025-11-28",
+        "time": "16:00",
+        "type": "feature",
+        "title": "Lanzamiento Inicial - MVP",
+        "description": "Primera versión funcional de buscadis.com",
+        "userBenefits": [
+            "Publica y busca anuncios en tiempo real",
+            "Filtra por categorías",
+            "Comparte por WhatsApp"
+        ],
+        "technicalDetails": [
+            "Integración inicial con Supabase",
+            "Sistema de cache local",
+            "Diseño responsive minimalista"
+        ],
+        "impact": "major"
+    }
+]
