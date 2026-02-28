@@ -27,13 +27,15 @@ function sync() {
         }
     }
 
-    // Obtener los últimos 100 commits
-    // Formato: hash | fecha_iso | mensaje
+    // Obtener los últimos 100 commits con cuerpo completo
+    // Formato: hash | fecha_iso | cuerpo_completo
     let logs = [];
     try {
-        logs = execSync('git log -n 100 --pretty=format:"%h|%ad|%s" --date=iso')
-            .toString()
-            .split('\n');
+        // Usamos un delimitador único para separar commits ya que el cuerpo puede tener múltiples líneas
+        const separator = '---COMIT_END---';
+        const rawOutput = execSync(`git log -n 50 --pretty=format:"%h|%ad|%B${separator}" --date=iso`)
+            .toString();
+        logs = rawOutput.split(separator).filter(l => l.trim() !== '');
     } catch (e) {
         console.error('❌ Error al ejecutar git log. ¿Estás en un repositorio git?');
         return;
@@ -42,19 +44,24 @@ function sync() {
     const newEntries = [];
     const titlesSeen = new Set(currentProgress.map(e => e.title.toLowerCase()));
 
-    logs.forEach(line => {
-        const parts = line.split('|');
-        if (parts.length < 3) return;
+    logs.forEach(commitRaw => {
+        const firstPipe = commitRaw.indexOf('|');
+        const secondPipe = commitRaw.indexOf('|', firstPipe + 1);
 
-        const hash = parts[0];
-        const dateStr = parts[1];
-        const fullMessage = parts.slice(2).join('|');
+        if (firstPipe === -1 || secondPipe === -1) return;
+
+        const hash = commitRaw.substring(0, firstPipe).trim();
+        const dateStr = commitRaw.substring(firstPipe + 1, secondPipe).trim();
+        const fullBody = commitRaw.substring(secondPipe + 1).trim();
+
+        const lines = fullBody.split('\n');
+        const subject = lines[0].trim();
 
         // Ignorar mensajes de merge o commits automáticos
-        if (fullMessage.includes('Merge branch') || fullMessage.includes('Merge pull request')) return;
+        if (subject.includes('Merge branch') || subject.includes('Merge pull request')) return;
 
         // Limpiar el título quitando prefijos convencionales
-        let title = fullMessage.replace(/^(feat|fix|ui|improvement|improvement|chore|style|refactor|docs|perf|test|build|ci)(\(.*\))?:\s*/i, '');
+        let title = subject.replace(/^(feat|fix|ui|improvement|chore|style|refactor|docs|perf|test|build|ci)(\(.*\))?:\s*/i, '');
         title = title.charAt(0).toUpperCase() + title.slice(1);
 
         // Si el título ya existe en el progreso, ignorar
@@ -65,10 +72,53 @@ function sync() {
         const date = dateObj.toISOString().split('T')[0];
         const time = dateObj.toTimeString().split(' ')[0].substring(0, 5);
 
+        // --- PARSEO DEL CUERPO ---
+        let description = subject;
+        let userBenefits = [];
+        let technicalDetails = [`Commit Hash: ${hash}`];
+        let currentSection = 'desc';
+
+        for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+
+            const lineLower = line.toLowerCase();
+            if (lineLower.startsWith('description:') || lineLower.startsWith('descripción:')) {
+                currentSection = 'desc';
+                description = line.split(':')[1]?.trim() || '';
+                continue;
+            } else if (lineLower.startsWith('benefits:') || lineLower.startsWith('beneficios:')) {
+                currentSection = 'benefits';
+                continue;
+            } else if (lineLower.startsWith('tech:') || lineLower.startsWith('técnico:') || lineLower.startsWith('tecnico:')) {
+                currentSection = 'tech';
+                continue;
+            }
+
+            if (currentSection === 'desc') {
+                description += (description ? ' ' : '') + line;
+            } else if (currentSection === 'benefits') {
+                if (line.startsWith('-') || line.startsWith('*')) {
+                    userBenefits.push(line.substring(1).trim());
+                } else {
+                    userBenefits.push(line);
+                }
+            } else if (currentSection === 'tech') {
+                if (line.startsWith('-') || line.startsWith('*')) {
+                    technicalDetails.push(line.substring(1).trim());
+                } else {
+                    technicalDetails.push(line);
+                }
+            }
+        }
+
+        // Si no se detectaron beneficios, poner un default amigable
+        if (userBenefits.length === 0) userBenefits = ["Mejoras constantes en la plataforma"];
+
         // Inferir tipo e impacto
         let type = 'improvement';
         let impact = 'minor';
-        const msgLower = fullMessage.toLowerCase();
+        const msgLower = subject.toLowerCase();
 
         if (msgLower.startsWith('feat')) {
             type = 'feature';
@@ -79,24 +129,18 @@ function sync() {
         } else if (msgLower.startsWith('ui')) {
             type = 'ui';
             impact = 'minor';
-        } else if (msgLower.startsWith('chore') || msgLower.startsWith('build')) {
-            type = 'improvement';
-            impact = 'patch';
         }
 
         newEntries.push({
             version: `${hash}`,
             date,
             time,
-            type: type,
+            type,
             title,
-            description: fullMessage,
-            userBenefits: ["Mejora automática detectada"],
-            technicalDetails: [
-                `Commit Hash: ${hash}`,
-                `Fecha commit: ${dateStr}`
-            ],
-            impact: impact
+            description,
+            userBenefits,
+            technicalDetails,
+            impact
         });
 
         titlesSeen.add(title.toLowerCase());
