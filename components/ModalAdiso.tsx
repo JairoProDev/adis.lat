@@ -143,14 +143,14 @@ export default function ModalAdiso({
 
   const getCategoriaTheme = (categoria: Categoria) => {
     const themes: Record<Categoria, { color: string; bg: string; iconBg: string }> = {
-      empleos: { color: 'var(--brand-blue)', bg: 'rgba(56, 189, 248, 0.1)', iconBg: 'from-sky-400 to-blue-600' },
-      inmuebles: { color: '#10b981', bg: 'rgba(16, 185, 129, 0.1)', iconBg: 'from-emerald-400 to-teal-600' },
-      vehiculos: { color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.1)', iconBg: 'from-violet-400 to-purple-600' },
-      servicios: { color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)', iconBg: 'from-amber-400 to-orange-600' },
-      productos: { color: '#f43f5e', bg: 'rgba(244, 63, 94, 0.1)', iconBg: 'from-rose-400 to-pink-600' },
-      eventos: { color: '#6366f1', bg: 'rgba(99, 102, 241, 0.1)', iconBg: 'from-indigo-400 to-violet-600' },
-      negocios: { color: '#64748b', bg: 'rgba(100, 116, 139, 0.1)', iconBg: 'from-slate-400 to-slate-600' },
-      comunidad: { color: '#06b6d4', bg: 'rgba(6, 182, 212, 0.1)', iconBg: 'from-cyan-400 to-sky-600' },
+      empleos: { color: '#2c3e50', bg: 'rgba(44, 62, 80, 0.05)', iconBg: 'from-[#2c3e50] to-[#4b79a1]' },
+      inmuebles: { color: '#134E5E', bg: 'rgba(19, 78, 94, 0.05)', iconBg: 'from-[#134E5E] to-[#71B280]' },
+      vehiculos: { color: '#1A2980', bg: 'rgba(26, 41, 128, 0.05)', iconBg: 'from-[#1A2980] to-[#26D0CE]' },
+      servicios: { color: '#f2994a', bg: 'rgba(242, 153, 74, 0.05)', iconBg: 'from-[#f2994a] to-[#f2c94c]' },
+      productos: { color: '#b31217', bg: 'rgba(179, 18, 23, 0.05)', iconBg: 'from-[#e52d27] to-[#b31217]' },
+      eventos: { color: '#4facfe', bg: 'rgba(79, 172, 254, 0.05)', iconBg: 'from-[#4facfe] to-[#00f2fe]' },
+      negocios: { color: '#434343', bg: 'rgba(67, 67, 67, 0.05)', iconBg: 'from-[#434343] to-[#000000]' },
+      comunidad: { color: '#0072ff', bg: 'rgba(0, 114, 255, 0.05)', iconBg: 'from-[#00c6ff] to-[#0072ff]' },
     };
     return themes[categoria] || themes.productos;
   };
