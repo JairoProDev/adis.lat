@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.0.8",
+    "@emotion/is-prop-valid": "^1.4.0",
     "@google/generative-ai": "^0.24.1",
     "@imgly/background-removal": "^1.7.0",
     "@supabase/ssr": "^0.8.0",

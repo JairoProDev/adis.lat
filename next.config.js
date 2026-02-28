@@ -45,6 +45,25 @@ const nextConfig = {
   async rewrites() {
     return [];
   },
+  transpilePackages: ['@imgly/background-removal', 'onnxruntime-web'],
+  webpack: (config, { isServer }) => {
+    // Si estamos en el cliente, ignoramos onnxruntime-node
+    if (!isServer) {
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        'onnxruntime-node': false,
+      };
+    }
+
+    // Manejo de archivos .mjs para evitar errores de import.meta en algunos entornos
+    config.module.rules.push({
+      test: /\.mjs$/,
+      include: /node_modules/,
+      type: 'javascript/auto',
+    });
+
+    return config;
+  },
 }
 
 module.exports = nextConfig
