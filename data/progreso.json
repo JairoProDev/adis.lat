@@ -1,140 +1,1692 @@
 [
-    {
-        "version": "2.4.0",
-        "date": "2026-02-28",
-        "time": "11:30",
-        "type": "feature",
-        "title": "Búsqueda Inteligente y Scroll Infinito Optimizado",
-        "description": "Mejora crítica en la visibilidad del buscador y optimización del scroll infinito con filtrado en servidor",
-        "userBenefits": [
-            "Buscador más visible en modo oscuro con bordes y acentos celestes automáticos",
-            "Listados completos: categorías como Empleos y Servicios ahora cargan todos los anuncios automáticamente",
-            "Búsqueda más rápida gracias al filtrado directo en la base de datos de Supabase",
-            "Navegación fluida: el sistema detecta si necesitas más contenido y lo carga sin que tengas que scrollear si la pantalla está vacía"
-        ],
-        "technicalDetails": [
-            "Buscador: Rediseño con bordes sky-400/30 constantes y efectos de glow en focus",
-            "Supabase: Actualización de getAdisosFromSupabase para soportar filtros de categoría y búsqueda con ilike",
-            "Infinite Scroll: Mejora en el hook useInfiniteScroll para auto-disparar cargas si el sentinel sigue visible",
-            "Page logic: Reseteo inteligente de offset y visibilidad al cambiar de filtros"
-        ],
-        "impact": "major"
-    },
-    {
-        "version": "2.3.5",
-        "date": "2026-02-28",
-        "time": "06:30",
-        "type": "feature",
-        "title": "Experiencia PWA Completa",
-        "description": "Integración de Progressive Web App con capacidades offline y gestos modernos",
-        "userBenefits": [
-            "Instalación como App: ahora puedes instalar Buscadis en tu pantalla de inicio",
-            "Modo Offline: indicador visual de conexión y soporte para ver anuncios guardados sin internet",
-            "Pull-to-refresh: gesto de deslizar hacia abajo para actualizar los anuncios, como en redes sociales",
-            "Carga ultrarrápida gracias al service worker optimizado"
-        ],
-        "technicalDetails": [
-            "Integración de @ducanh2912/next-pwa",
-            "Componentes de UI para estado de conexión (Online/Offline indicator)",
-            "Implementación de pull-to-refresh minimalista",
-            "Service worker con estrategias de cache personalizadas"
-        ],
-        "impact": "major"
-    },
-    {
-        "version": "2.3.2",
-        "date": "2026-02-27",
-        "time": "18:00",
-        "type": "ui",
-        "title": "Rediseño Visual Premium",
-        "description": "Transformación estética global con glassmorphism, colores vibrantes y tarjetas dinámicas",
-        "userBenefits": [
-            "Efecto Cristal: Interfaz moderna con fondos desenfocados y bordes elegantes",
-            "Colores Vibrantes: Paleta de colores revitalizada para una experiencia más viva",
-            "Vista Detallada Mejorada: Nuevo diseño de sidebar y modal móvil con curvas suaves y mejor tipografía",
-            "Badges Premium: Etiquetas de anunciante rediseñadas para mayor prestigio"
-        ],
-        "technicalDetails": [
-            "Implementación de clases backdrop-blur-md y gradientes dinámicos",
-            "Refactorización de AdisoCard con layouts de 5 columnas optimizados",
-            "Ajustes de padding y spacing en Header y Toolbar para un diseño más 'aireado'",
-            "Nuevos estilos de badges con rings y sombras sutiles"
-        ],
-        "impact": "major"
-    },
-    {
-        "version": "2.3.0",
-        "date": "2025-01-27",
-        "time": "22:00",
-        "type": "improvement",
-        "title": "Mejoras de Fase 2: Modo Oscuro y SEO",
-        "description": "Implementación de modo oscuro con preferencias del sistema y páginas de categorías para SEO",
-        "userBenefits": [
-            "Modo oscuro: soporte automático según preferencias del sistema",
-            "Navegación más rápida con prefetching de imágenes",
-            "Mejor SEO con páginas dedicadas por categoría"
-        ],
-        "technicalDetails": [
-            "CSS variables con @media (prefers-color-scheme: dark)",
-            "Metadata dinámica en app/categoria/[nombre]/page.tsx",
-            "Sitemap actualizado con rutas de categorías"
-        ],
-        "impact": "major"
-    },
-    {
-        "version": "2.2.0",
-        "date": "2025-01-27",
-        "time": "20:00",
-        "type": "improvement",
-        "title": "Auditoría de Accesibilidad y Rendimiento",
-        "description": "Mejoras críticas en accesibilidad WCAG 2.1 AA y optimización de rendimiento",
-        "userBenefits": [
-            "Mejor accesibilidad para lectores de pantalla",
-            "Rendimiento optimizado con next/image",
-            "Mayor seguridad con validación Zod"
-        ],
-        "technicalDetails": [
-            "ARIA labels y focus visible",
-            "Validación con Zod en rutas API",
-            "Paginación implementada en Supabase"
-        ],
-        "impact": "major"
-    },
-    {
-        "version": "2.0.0",
-        "date": "2025-11-29",
-        "time": "15:00",
-        "type": "feature",
-        "title": "Sistema de Paquetes de Publicación",
-        "description": "Paquetes escalonados con diferentes tamaños y visibilidad",
-        "userBenefits": [
-            "5 tamaños de publicaciones para destacar",
-            "Límites de imágenes según el paquete",
-            "Grid responsive que se adapta a cada tamaño"
-        ],
-        "technicalDetails": [
-            "Lógica de spans en CSS Grid para diferentes tamaños",
-            "Script SQL para campo tamaño en Supabase"
-        ],
-        "impact": "major"
-    },
-    {
-        "version": "1.0.0",
-        "date": "2025-11-28",
-        "time": "16:00",
-        "type": "feature",
-        "title": "Lanzamiento Inicial - MVP",
-        "description": "Primera versión funcional de buscadis.com",
-        "userBenefits": [
-            "Publica y busca anuncios en tiempo real",
-            "Filtra por categorías",
-            "Comparte por WhatsApp"
-        ],
-        "technicalDetails": [
-            "Integración inicial con Supabase",
-            "Sistema de cache local",
-            "Diseño responsive minimalista"
-        ],
-        "impact": "major"
-    }
+  {
+    "version": "f8f4645",
+    "date": "2026-02-28",
+    "time": "19:19",
+    "type": "fix",
+    "title": "Compatibilidad con ONNX Runtime y optimización de dependencias",
+    "description": "fix(build): compatibilidad con ONNX Runtime y optimización de dependencias",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: f8f4645",
+      "Fecha commit: 2026-02-27 19:19:25 -0500"
+    ],
+    "impact": "patch"
+  },
+  {
+    "version": "148bf95",
+    "date": "2026-02-28",
+    "time": "11:41",
+    "type": "feature",
+    "title": "Optimize search/infinite-scroll and automate /progreso via git-sync script",
+    "description": "feat: optimize search/infinite-scroll and automate /progreso via git-sync script",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 148bf95",
+      "Fecha commit: 2026-02-28 11:41:17 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "61316a9",
+    "date": "2026-02-28",
+    "time": "11:41",
+    "type": "feature",
+    "title": "Implement project progress tracking with automated commit synchronization and a dedicated display page.",
+    "description": "feat: Implement project progress tracking with automated commit synchronization and a dedicated display page.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 61316a9",
+      "Fecha commit: 2026-02-28 11:41:01 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "9e9a580",
+    "date": "2026-02-28",
+    "time": "11:40",
+    "type": "fix",
+    "title": "Fix more adisos autocharge in category selected",
+    "description": "fix more adisos autocharge in category selected",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 9e9a580",
+      "Fecha commit: 2026-02-28 11:40:38 -0500"
+    ],
+    "impact": "patch"
+  },
+  {
+    "version": "2.4.0",
+    "date": "2026-02-28",
+    "time": "11:30",
+    "type": "feature",
+    "title": "Búsqueda Inteligente y Scroll Infinito Optimizado",
+    "description": "Mejora crítica en la visibilidad del buscador y optimización del scroll infinito con filtrado en servidor",
+    "userBenefits": [
+      "Buscador más visible en modo oscuro con bordes y acentos celestes automáticos",
+      "Listados completos: categorías como Empleos y Servicios ahora cargan todos los anuncios automáticamente",
+      "Búsqueda más rápida gracias al filtrado directo en la base de datos de Supabase",
+      "Navegación fluida: el sistema detecta si necesitas más contenido y lo carga sin que tengas que scrollear si la pantalla está vacía"
+    ],
+    "technicalDetails": [
+      "Buscador: Rediseño con bordes sky-400/30 constantes y efectos de glow en focus",
+      "Supabase: Actualización de getAdisosFromSupabase para soportar filtros de categoría y búsqueda con ilike",
+      "Infinite Scroll: Mejora en el hook useInfiniteScroll para auto-disparar cargas si el sentinel sigue visible",
+      "Page logic: Reseteo inteligente de offset y visibilidad al cambiar de filtros"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "ab2d5eb",
+    "date": "2026-02-28",
+    "time": "11:22",
+    "type": "improvement",
+    "title": "Resalt searchbar",
+    "description": "resalt searchbar",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: ab2d5eb",
+      "Fecha commit: 2026-02-28 11:22:10 -0500"
+    ],
+    "impact": "minor"
+  },
+  {
+    "version": "2.3.5",
+    "date": "2026-02-28",
+    "time": "06:30",
+    "type": "feature",
+    "title": "Experiencia PWA Completa",
+    "description": "Integración de Progressive Web App con capacidades offline y gestos modernos",
+    "userBenefits": [
+      "Instalación como App: ahora puedes instalar Buscadis en tu pantalla de inicio",
+      "Modo Offline: indicador visual de conexión y soporte para ver anuncios guardados sin internet",
+      "Pull-to-refresh: gesto de deslizar hacia abajo para actualizar los anuncios, como en redes sociales",
+      "Carga ultrarrápida gracias al service worker optimizado"
+    ],
+    "technicalDetails": [
+      "Integración de @ducanh2912/next-pwa",
+      "Componentes de UI para estado de conexión (Online/Offline indicator)",
+      "Implementación de pull-to-refresh minimalista",
+      "Service worker con estrategias de cache personalizadas"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "b19e821",
+    "date": "2026-02-28",
+    "time": "06:28",
+    "type": "feature",
+    "title": "Integración de offline indicator, install prompt y pull-to-refresh",
+    "description": "feat(pwa): integración de offline indicator, install prompt y pull-to-refresh",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: b19e821",
+      "Fecha commit: 2026-02-28 06:28:37 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "79066ec",
+    "date": "2026-02-28",
+    "time": "06:19",
+    "type": "feature",
+    "title": "Add Progressive Web App (PWA) support with a new manifest and Next.js PWA configuration.",
+    "description": "feat: Add Progressive Web App (PWA) support with a new manifest and Next.js PWA configuration.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 79066ec",
+      "Fecha commit: 2026-02-28 06:19:35 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "a1eb90c",
+    "date": "2026-02-28",
+    "time": "06:05",
+    "type": "improvement",
+    "title": "Change cards colors gradients",
+    "description": "change cards colors gradients",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: a1eb90c",
+      "Fecha commit: 2026-02-28 06:05:10 -0500"
+    ],
+    "impact": "minor"
+  },
+  {
+    "version": "c7733e4",
+    "date": "2026-02-28",
+    "time": "06:04",
+    "type": "improvement",
+    "title": "Improving design",
+    "description": "improving design",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: c7733e4",
+      "Fecha commit: 2026-02-28 06:04:53 -0500"
+    ],
+    "impact": "minor"
+  },
+  {
+    "version": "b3e8462",
+    "date": "2026-02-27",
+    "time": "18:40",
+    "type": "feature",
+    "title": "Rediseño premium de vista detallada en sidebar y modal móvil",
+    "description": "feat(ui): rediseño premium de vista detallada en sidebar y modal móvil",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: b3e8462",
+      "Fecha commit: 2026-02-27 18:40:02 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "18f0766",
+    "date": "2026-02-27",
+    "time": "18:00",
+    "type": "feature",
+    "title": "Revitalización de Adiso Cards con colores vibrantes y badges premium",
+    "description": "feat(ui): revitalización de Adiso Cards con colores vibrantes y badges premium",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 18f0766",
+      "Fecha commit: 2026-02-27 18:00:26 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "2.3.2",
+    "date": "2026-02-27",
+    "time": "18:00",
+    "type": "ui",
+    "title": "Rediseño Visual Premium",
+    "description": "Transformación estética global con glassmorphism, colores vibrantes y tarjetas dinámicas",
+    "userBenefits": [
+      "Efecto Cristal: Interfaz moderna con fondos desenfocados y bordes elegantes",
+      "Colores Vibrantes: Paleta de colores revitalizada para una experiencia más viva",
+      "Vista Detallada Mejorada: Nuevo diseño de sidebar y modal móvil con curvas suaves y mejor tipografía",
+      "Badges Premium: Etiquetas de anunciante rediseñadas para mayor prestigio"
+    ],
+    "technicalDetails": [
+      "Implementación de clases backdrop-blur-md y gradientes dinámicos",
+      "Refactorización de AdisoCard con layouts de 5 columnas optimizados",
+      "Ajustes de padding y spacing en Header y Toolbar para un diseño más 'aireado'",
+      "Nuevos estilos de badges con rings y sombras sutiles"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "3169ab8",
+    "date": "2026-02-27",
+    "time": "17:58",
+    "type": "feature",
+    "title": "Transformación de toolbar con diseño fluido y controles modernos",
+    "description": "feat(ui): transformación de toolbar con diseño fluido y controles modernos",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 3169ab8",
+      "Fecha commit: 2026-02-27 17:58:22 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "16e5be9",
+    "date": "2026-02-27",
+    "time": "17:54",
+    "type": "feature",
+    "title": "Refinamiento de sidebar con curvas elegantes y separación por color",
+    "description": "feat(ui): refinamiento de sidebar con curvas elegantes y separación por color",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 16e5be9",
+      "Fecha commit: 2026-02-27 17:54:14 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "4bebb1c",
+    "date": "2026-02-27",
+    "time": "17:53",
+    "type": "feature",
+    "title": "Modernización visual con glassmorphism, colores vibrantes y tarjetas dinámicas",
+    "description": "feat(ui): modernización visual con glassmorphism, colores vibrantes y tarjetas dinámicas",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 4bebb1c",
+      "Fecha commit: 2026-02-27 17:53:07 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "76cbb58",
+    "date": "2026-02-27",
+    "time": "17:39",
+    "type": "improvement",
+    "title": "Improve grilla 5 columns",
+    "description": "improve grilla 5 columns",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 76cbb58",
+      "Fecha commit: 2026-02-27 17:39:06 -0500"
+    ],
+    "impact": "minor"
+  },
+  {
+    "version": "ab26bde",
+    "date": "2026-02-27",
+    "time": "17:30",
+    "type": "improvement",
+    "title": "AdisoCard.tsx: Rediseño del badge de anunciante.",
+    "description": "AdisoCard.tsx: Rediseño del badge de anunciante.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: ab26bde",
+      "Fecha commit: 2026-02-27 17:30:46 -0500"
+    ],
+    "impact": "minor"
+  },
+  {
+    "version": "176a8d6",
+    "date": "2026-02-27",
+    "time": "17:29",
+    "type": "improvement",
+    "title": "Uploading more client adisos from the last week",
+    "description": "uploading more client adisos from the last week",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 176a8d6",
+      "Fecha commit: 2026-02-27 17:29:31 -0500"
+    ],
+    "impact": "minor"
+  },
+  {
+    "version": "7753f09",
+    "date": "2026-02-27",
+    "time": "17:26",
+    "type": "improvement",
+    "title": "Change grille to display more adisos at the time in the screen",
+    "description": "change grille to display more adisos at the time in the screen",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 7753f09",
+      "Fecha commit: 2026-02-27 17:26:23 -0500"
+    ],
+    "impact": "minor"
+  },
+  {
+    "version": "9928222",
+    "date": "2026-02-27",
+    "time": "17:22",
+    "type": "improvement",
+    "title": "Change items per page from 100 to 20",
+    "description": "change items per page from 100 to 20",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 9928222",
+      "Fecha commit: 2026-02-27 17:22:21 -0500"
+    ],
+    "impact": "minor"
+  },
+  {
+    "version": "7bee956",
+    "date": "2026-02-26",
+    "time": "19:10",
+    "type": "fix",
+    "title": "Fix details",
+    "description": "fix details",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 7bee956",
+      "Fecha commit: 2026-02-25 19:10:24 -0500"
+    ],
+    "impact": "patch"
+  },
+  {
+    "version": "20dffd4",
+    "date": "2026-02-25",
+    "time": "18:51",
+    "type": "feature",
+    "title": "Add client-side image background removal functionality with a new hook and UI components.",
+    "description": "feat: Add client-side image background removal functionality with a new hook and UI components.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 20dffd4",
+      "Fecha commit: 2026-02-25 18:51:51 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "047ac8a",
+    "date": "2026-02-25",
+    "time": "18:35",
+    "type": "improvement",
+    "title": "Add preventing user fails",
+    "description": "add preventing user fails",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 047ac8a",
+      "Fecha commit: 2026-02-25 18:35:25 -0500"
+    ],
+    "impact": "minor"
+  },
+  {
+    "version": "186b708",
+    "date": "2026-02-25",
+    "time": "18:22",
+    "type": "improvement",
+    "title": "Implement robust test management",
+    "description": "implement robust test management",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 186b708",
+      "Fecha commit: 2026-02-25 18:22:44 -0500"
+    ],
+    "impact": "minor"
+  },
+  {
+    "version": "d696e3b",
+    "date": "2026-02-25",
+    "time": "18:19",
+    "type": "fix",
+    "title": "Fix dark mode cards and delete test adisos",
+    "description": "fix dark mode cards and delete test adisos",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: d696e3b",
+      "Fecha commit: 2026-02-25 18:19:36 -0500"
+    ],
+    "impact": "patch"
+  },
+  {
+    "version": "eba6d9c",
+    "date": "2026-02-25",
+    "time": "17:16",
+    "type": "improvement",
+    "title": "Add new view mode like fb or ig",
+    "description": "add new view mode like fb or ig",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: eba6d9c",
+      "Fecha commit: 2026-02-25 17:16:05 -0500"
+    ],
+    "impact": "minor"
+  },
+  {
+    "version": "f98619e",
+    "date": "2026-02-20",
+    "time": "17:16",
+    "type": "feature",
+    "title": "AI photo enhancement + improved catalog UX",
+    "description": "feat: AI photo enhancement + improved catalog UX",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: f98619e",
+      "Fecha commit: 2026-02-20 22:16:35 +0000"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "0598667",
+    "date": "2026-02-20",
+    "time": "16:04",
+    "type": "fix",
+    "title": "Fixed daerk mode in search main page",
+    "description": "fixed daerk mode in search main page",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 0598667",
+      "Fecha commit: 2026-02-20 16:04:14 -0500"
+    ],
+    "impact": "patch"
+  },
+  {
+    "version": "c19d063",
+    "date": "2026-02-19",
+    "time": "19:24",
+    "type": "improvement",
+    "title": "Always show add button",
+    "description": "always show add button",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: c19d063",
+      "Fecha commit: 2026-02-18 19:24:06 -0500"
+    ],
+    "impact": "minor"
+  },
+  {
+    "version": "9b0d400",
+    "date": "2026-02-19",
+    "time": "08:21",
+    "type": "improvement",
+    "title": "Change api key name",
+    "description": "change api key name",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 9b0d400",
+      "Fecha commit: 2026-02-19 08:21:40 -0500"
+    ],
+    "impact": "minor"
+  },
+  {
+    "version": "ba0c5fc",
+    "date": "2026-02-19",
+    "time": "06:10",
+    "type": "improvement",
+    "title": "Using 2.5 flas model",
+    "description": "using 2.5 flas model",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: ba0c5fc",
+      "Fecha commit: 2026-02-19 06:10:16 -0500"
+    ],
+    "impact": "minor"
+  },
+  {
+    "version": "07fda09",
+    "date": "2026-02-19",
+    "time": "06:06",
+    "type": "improvement",
+    "title": "Change model",
+    "description": "change model",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 07fda09",
+      "Fecha commit: 2026-02-19 06:06:49 -0500"
+    ],
+    "impact": "minor"
+  },
+  {
+    "version": "534d27e",
+    "date": "2026-02-19",
+    "time": "06:04",
+    "type": "improvement",
+    "title": "Trying to solve ai errors",
+    "description": "trying to solve ai errors",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 534d27e",
+      "Fecha commit: 2026-02-19 06:04:10 -0500"
+    ],
+    "impact": "minor"
+  },
+  {
+    "version": "48d0752",
+    "date": "2026-02-19",
+    "time": "05:52",
+    "type": "fix",
+    "title": "Fix iconsparkles",
+    "description": "fix iconsparkles",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 48d0752",
+      "Fecha commit: 2026-02-19 05:52:52 -0500"
+    ],
+    "impact": "patch"
+  },
+  {
+    "version": "6d89193",
+    "date": "2026-02-19",
+    "time": "05:49",
+    "type": "fix",
+    "title": "Fix code",
+    "description": "fix code",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 6d89193",
+      "Fecha commit: 2026-02-19 05:49:09 -0500"
+    ],
+    "impact": "patch"
+  },
+  {
+    "version": "9bd5a1b",
+    "date": "2026-02-19",
+    "time": "05:45",
+    "type": "improvement",
+    "title": "Add new way to add products with AI",
+    "description": "add new way to add products with AI",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 9bd5a1b",
+      "Fecha commit: 2026-02-19 05:45:30 -0500"
+    ],
+    "impact": "minor"
+  },
+  {
+    "version": "f66bc65",
+    "date": "2026-02-18",
+    "time": "15:58",
+    "type": "improvement",
+    "title": "Add infinnity scrolling",
+    "description": "add infinnity scrolling",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: f66bc65",
+      "Fecha commit: 2026-02-18 15:58:14 -0500"
+    ],
+    "impact": "minor"
+  },
+  {
+    "version": "fe12527",
+    "date": "2026-02-17",
+    "time": "18:30",
+    "type": "fix",
+    "title": "Fix build",
+    "description": "fix build",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: fe12527",
+      "Fecha commit: 2026-02-17 18:30:45 -0500"
+    ],
+    "impact": "patch"
+  },
+  {
+    "version": "2df174f",
+    "date": "2026-02-17",
+    "time": "18:29",
+    "type": "fix",
+    "title": "Fix",
+    "description": "fix",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 2df174f",
+      "Fecha commit: 2026-02-17 18:29:06 -0500"
+    ],
+    "impact": "patch"
+  },
+  {
+    "version": "1ec5fb1",
+    "date": "2026-02-17",
+    "time": "18:25",
+    "type": "fix",
+    "title": "Fix build error",
+    "description": "fix build error",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 1ec5fb1",
+      "Fecha commit: 2026-02-17 18:25:57 -0500"
+    ],
+    "impact": "patch"
+  },
+  {
+    "version": "d9854e2",
+    "date": "2026-02-17",
+    "time": "18:23",
+    "type": "improvement",
+    "title": "Error fix",
+    "description": "error fix",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: d9854e2",
+      "Fecha commit: 2026-02-17 18:23:15 -0500"
+    ],
+    "impact": "minor"
+  },
+  {
+    "version": "83d305a",
+    "date": "2026-02-17",
+    "time": "18:17",
+    "type": "fix",
+    "title": "Fixdev error",
+    "description": "fixdev error",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 83d305a",
+      "Fecha commit: 2026-02-17 18:17:13 -0500"
+    ],
+    "impact": "patch"
+  },
+  {
+    "version": "b861522",
+    "date": "2026-02-17",
+    "time": "18:12",
+    "type": "improvement",
+    "title": "Use usetoast fdor improve experience",
+    "description": "use usetoast fdor improve experience",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: b861522",
+      "Fecha commit: 2026-02-17 18:12:08 -0500"
+    ],
+    "impact": "minor"
+  },
+  {
+    "version": "11aeb1d",
+    "date": "2026-02-17",
+    "time": "18:06",
+    "type": "fix",
+    "title": "Fix dev errors",
+    "description": "fix dev errors",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 11aeb1d",
+      "Fecha commit: 2026-02-17 18:06:57 -0500"
+    ],
+    "impact": "patch"
+  },
+  {
+    "version": "02fb826",
+    "date": "2026-02-17",
+    "time": "17:59",
+    "type": "fix",
+    "title": "Fix errors",
+    "description": "fix errors",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 02fb826",
+      "Fecha commit: 2026-02-17 17:59:04 -0500"
+    ],
+    "impact": "patch"
+  },
+  {
+    "version": "0ee3774",
+    "date": "2026-02-17",
+    "time": "17:53",
+    "type": "feature",
+    "title": "Introduce public business profile pages with integrated product catalog and owner editing features.",
+    "description": "feat: introduce public business profile pages with integrated product catalog and owner editing features.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 0ee3774",
+      "Fecha commit: 2026-02-17 17:53:43 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "c658e70",
+    "date": "2026-02-17",
+    "time": "17:23",
+    "type": "improvement",
+    "title": "Add semiheader",
+    "description": "add semiheader",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: c658e70",
+      "Fecha commit: 2026-02-17 17:23:37 -0500"
+    ],
+    "impact": "minor"
+  },
+  {
+    "version": "33952d5",
+    "date": "2026-02-17",
+    "time": "16:41",
+    "type": "improvement",
+    "title": "Improve add to catalog and solve build errors",
+    "description": "improve add to catalog and solve build errors",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 33952d5",
+      "Fecha commit: 2026-02-17 16:41:42 -0500"
+    ],
+    "impact": "minor"
+  },
+  {
+    "version": "4a9e1f4",
+    "date": "2026-02-17",
+    "time": "16:16",
+    "type": "feature",
+    "title": "Intelligent catalog experience - AI organize + guided fix mode",
+    "description": "feat: intelligent catalog experience - AI organize + guided fix mode",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 4a9e1f4",
+      "Fecha commit: 2026-02-17 21:16:01 +0000"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "8e74456",
+    "date": "2026-02-17",
+    "time": "15:58",
+    "type": "fix",
+    "title": "Fix build errors",
+    "description": "fix build errors",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 8e74456",
+      "Fecha commit: 2026-02-17 15:58:41 -0500"
+    ],
+    "impact": "patch"
+  },
+  {
+    "version": "f898232",
+    "date": "2026-02-17",
+    "time": "15:50",
+    "type": "improvement",
+    "title": "Corregido botón \"+\" en el editor: Al hacer clic en el botón de agregar, ahora te lleva correctamente a la sección de \"Catálogo\" y abre un nuevo formulario de producto, en lugar de llevarte a \"Identidad\". Arreglado error de compilación: Eliminé el código duplicado en EditorSteps.tsx  que estaba causando el error de sintaxis Unexpected token div y un error de tipo en page.tsx  relacionado con precios indefinidos. Mejorada visibilidad del botón \"Listo\": En la versión móvil, el botón para cerrar el editor (\"Listo\") ahora es oscuro y resalta más, para que sea obvio cómo volver a ver tu página pública.",
+    "description": "Corregido botón \"+\" en el editor: Al hacer clic en el botón de agregar, ahora te lleva correctamente a la sección de \"Catálogo\" y abre un nuevo formulario de producto, en lugar de llevarte a \"Identidad\". Arreglado error de compilación: Eliminé el código duplicado en EditorSteps.tsx  que estaba causando el error de sintaxis Unexpected token div y un error de tipo en page.tsx  relacionado con precios indefinidos. Mejorada visibilidad del botón \"Listo\": En la versión móvil, el botón para cerrar el editor (\"Listo\") ahora es oscuro y resalta más, para que sea obvio cómo volver a ver tu página pública.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: f898232",
+      "Fecha commit: 2026-02-17 15:50:43 -0500"
+    ],
+    "impact": "minor"
+  },
+  {
+    "version": "b726bfc",
+    "date": "2026-02-17",
+    "time": "15:36",
+    "type": "improvement",
+    "title": "Merge: resolve conflicts keeping catalog improvements",
+    "description": "merge: resolve conflicts keeping catalog improvements",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: b726bfc",
+      "Fecha commit: 2026-02-17 20:36:10 +0000"
+    ],
+    "impact": "minor"
+  },
+  {
+    "version": "30e7fd9",
+    "date": "2026-02-17",
+    "time": "15:30",
+    "type": "feature",
+    "title": "Catalog management overhaul + navbar auto-hide",
+    "description": "feat: catalog management overhaul + navbar auto-hide",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 30e7fd9",
+      "Fecha commit: 2026-02-17 20:30:54 +0000"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "fb010fb",
+    "date": "2026-02-17",
+    "time": "15:10",
+    "type": "improvement",
+    "title": "Commit de emergencia",
+    "description": "commit de emergencia",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: fb010fb",
+      "Fecha commit: 2026-02-17 15:10:03 -0500"
+    ],
+    "impact": "minor"
+  },
+  {
+    "version": "aa827f5",
+    "date": "2026-02-17",
+    "time": "14:33",
+    "type": "improvement",
+    "title": "Improve minors ui behavior",
+    "description": "improve minors ui behavior",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: aa827f5",
+      "Fecha commit: 2026-02-17 14:33:43 -0500"
+    ],
+    "impact": "minor"
+  },
+  {
+    "version": "afffead",
+    "date": "2026-02-17",
+    "time": "14:27",
+    "type": "improvement",
+    "title": "Add header and navbar no business page",
+    "description": "add header and navbar no business page",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: afffead",
+      "Fecha commit: 2026-02-17 14:27:23 -0500"
+    ],
+    "impact": "minor"
+  },
+  {
+    "version": "5a3ddbc",
+    "date": "2026-02-17",
+    "time": "13:57",
+    "type": "fix",
+    "title": "Fix mobile responsiveness",
+    "description": "fix mobile responsiveness",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 5a3ddbc",
+      "Fecha commit: 2026-02-17 13:57:11 -0500"
+    ],
+    "impact": "patch"
+  },
+  {
+    "version": "4f5d6a8",
+    "date": "2026-02-17",
+    "time": "12:50",
+    "type": "improvement",
+    "title": "Improving pdf printing",
+    "description": "improving pdf printing",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 4f5d6a8",
+      "Fecha commit: 2026-02-17 12:50:29 -0500"
+    ],
+    "impact": "minor"
+  },
+  {
+    "version": "666c603",
+    "date": "2026-02-17",
+    "time": "12:49",
+    "type": "feature",
+    "title": "Introduce public business profile page with dynamic product display and comprehensive global styling including dark/light mode support.",
+    "description": "feat: Introduce public business profile page with dynamic product display and comprehensive global styling including dark/light mode support.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 666c603",
+      "Fecha commit: 2026-02-17 12:49:06 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "cb376fc",
+    "date": "2026-02-17",
+    "time": "12:16",
+    "type": "feature",
+    "title": "Create BusinessPublicView component for displaying public business profiles with catalog and owner editing functionality.",
+    "description": "feat: create BusinessPublicView component for displaying public business profiles with catalog and owner editing functionality.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: cb376fc",
+      "Fecha commit: 2026-02-17 12:16:19 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "de84c02",
+    "date": "2026-02-17",
+    "time": "11:56",
+    "type": "fix",
+    "title": "Fix sizes of business page",
+    "description": "fix sizes of business page",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: de84c02",
+      "Fecha commit: 2026-02-17 11:56:00 -0500"
+    ],
+    "impact": "patch"
+  },
+  {
+    "version": "4bd2954",
+    "date": "2026-02-17",
+    "time": "11:51",
+    "type": "fix",
+    "title": "Fix storage cache errors",
+    "description": "fix storage cache errors",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 4bd2954",
+      "Fecha commit: 2026-02-17 11:51:53 -0500"
+    ],
+    "impact": "patch"
+  },
+  {
+    "version": "4decdc7",
+    "date": "2026-02-17",
+    "time": "11:41",
+    "type": "improvement",
+    "title": "Ajust desktop banner size",
+    "description": "ajust desktop banner size",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 4decdc7",
+      "Fecha commit: 2026-02-17 11:41:29 -0500"
+    ],
+    "impact": "minor"
+  },
+  {
+    "version": "3077afa",
+    "date": "2026-02-16",
+    "time": "23:24",
+    "type": "feature",
+    "title": "Add Header component with primary navigation, location display, user menus, and theme/language selectors.",
+    "description": "feat: Add Header component with primary navigation, location display, user menus, and theme/language selectors.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 3077afa",
+      "Fecha commit: 2026-02-15 23:24:54 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "a39e7d9",
+    "date": "2026-02-16",
+    "time": "18:26",
+    "type": "feature",
+    "title": "Introduce core UI components for user authentication, profile management, and site navigation, including UserMenu, Header, main page, and a new modal.",
+    "description": "feat: Introduce core UI components for user authentication, profile management, and site navigation, including UserMenu, Header, main page, and a new modal.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: a39e7d9",
+      "Fecha commit: 2026-02-16 18:26:02 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "f035482",
+    "date": "2026-02-16",
+    "time": "12:59",
+    "type": "feature",
+    "title": "Add business profile and product catalog management functions for Supabase interactions.",
+    "description": "feat: add business profile and product catalog management functions for Supabase interactions.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: f035482",
+      "Fecha commit: 2026-02-16 12:59:38 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "a8f6e36",
+    "date": "2026-02-16",
+    "time": "12:52",
+    "type": "feature",
+    "title": "Establish core application layout with context providers and introduce a multi-step business profile and product editor.",
+    "description": "feat: Establish core application layout with context providers and introduce a multi-step business profile and product editor.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: a8f6e36",
+      "Fecha commit: 2026-02-16 12:52:47 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "f7d3681",
+    "date": "2026-02-16",
+    "time": "12:24",
+    "type": "feature",
+    "title": "Add business profile and product catalog management, including API functions, image uploads, a new product editor component, and database permission fixes.",
+    "description": "feat: Add business profile and product catalog management, including API functions, image uploads, a new product editor component, and database permission fixes.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: f7d3681",
+      "Fecha commit: 2026-02-16 12:24:03 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "0f95ace",
+    "date": "2026-02-16",
+    "time": "12:16",
+    "type": "feature",
+    "title": "Implement public business profile view with product catalog and owner editing capabilities.",
+    "description": "feat: implement public business profile view with product catalog and owner editing capabilities.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 0f95ace",
+      "Fecha commit: 2026-02-16 12:16:20 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "5d263ab",
+    "date": "2026-02-16",
+    "time": "12:02",
+    "type": "feature",
+    "title": "Implement comprehensive business profile management, including CRUD operations, image uploads, catalog fetching, and configure Supabase storage RLS for catalog images.",
+    "description": "feat: Implement comprehensive business profile management, including CRUD operations, image uploads, catalog fetching, and configure Supabase storage RLS for catalog images.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 5d263ab",
+      "Fecha commit: 2026-02-16 12:02:42 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "823b130",
+    "date": "2026-02-16",
+    "time": "10:53",
+    "type": "feature",
+    "title": "Implement Supabase utilities for business profiles and product catalog management.",
+    "description": "feat: Implement Supabase utilities for business profiles and product catalog management.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 823b130",
+      "Fecha commit: 2026-02-16 10:53:19 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "28ce447",
+    "date": "2026-02-16",
+    "time": "10:51",
+    "type": "feature",
+    "title": "Implement a simplified product catalog addition component with quick, complete, and file upload options.",
+    "description": "feat: Implement a simplified product catalog addition component with quick, complete, and file upload options.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 28ce447",
+      "Fecha commit: 2026-02-16 10:51:48 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "a1b36a6",
+    "date": "2026-02-16",
+    "time": "09:30",
+    "type": "feature",
+    "title": "Implement a new business profile builder page featuring chatbot guidance, real-time preview, and inline editing for business details and product catalog.",
+    "description": "feat: Implement a new business profile builder page featuring chatbot guidance, real-time preview, and inline editing for business details and product catalog.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: a1b36a6",
+      "Fecha commit: 2026-02-16 09:30:23 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "0d420d2",
+    "date": "2026-02-16",
+    "time": "09:29",
+    "type": "feature",
+    "title": "Implement a new chatbot-guided business profile editor with real-time preview.",
+    "description": "feat: Implement a new chatbot-guided business profile editor with real-time preview.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 0d420d2",
+      "Fecha commit: 2026-02-16 09:29:58 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "ebf63d2",
+    "date": "2026-02-16",
+    "time": "09:10",
+    "type": "feature",
+    "title": "Introduce catalog management with a table view supporting CRUD, filtering, and bulk operations.",
+    "description": "feat: Introduce catalog management with a table view supporting CRUD, filtering, and bulk operations.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: ebf63d2",
+      "Fecha commit: 2026-02-16 09:10:26 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "43077cd",
+    "date": "2026-02-16",
+    "time": "08:36",
+    "type": "feature",
+    "title": "F ix build errors in multi-step business profile editor with product grouping and catalog management features.",
+    "description": "feat: f ix build errors in multi-step business profile editor with product grouping and catalog management features.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 43077cd",
+      "Fecha commit: 2026-02-16 08:36:43 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "beeec6b",
+    "date": "2026-02-16",
+    "time": "08:06",
+    "type": "feature",
+    "title": "Introduce catalog management page with product listing, search, filtering, and product addition",
+    "description": "feat: introduce catalog management page with product listing, search, filtering, and product addition",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: beeec6b",
+      "Fecha commit: 2026-02-16 08:06:27 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "f3ddbac",
+    "date": "2026-02-16",
+    "time": "07:54",
+    "type": "feature",
+    "title": "Implement AI-powered Excel import for product catalog including parsing, normalization, and duplicate detection.",
+    "description": "feat: Implement AI-powered Excel import for product catalog including parsing, normalization, and duplicate detection.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: f3ddbac",
+      "Fecha commit: 2026-02-16 07:54:31 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "9db0226",
+    "date": "2026-02-16",
+    "time": "07:26",
+    "type": "feature",
+    "title": "Implement a comprehensive product catalog table view with full CRUD, bulk actions, and data import support.",
+    "description": "feat: Implement a comprehensive product catalog table view with full CRUD, bulk actions, and data import support.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 9db0226",
+      "Fecha commit: 2026-02-16 07:26:16 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "ad9ccb8",
+    "date": "2026-02-16",
+    "time": "07:20",
+    "type": "feature",
+    "title": "Implement business profile and product catalog management with public viewing and AI-assisted product processing capabilities.",
+    "description": "feat: Implement business profile and product catalog management with public viewing and AI-assisted product processing capabilities.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: ad9ccb8",
+      "Fecha commit: 2026-02-16 07:20:51 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "a16c4c7",
+    "date": "2026-02-16",
+    "time": "06:47",
+    "type": "feature",
+    "title": "Introduce AI-powered product catalog import and normalization with new business management UI components.",
+    "description": "feat: Introduce AI-powered product catalog import and normalization with new business management UI components.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: a16c4c7",
+      "Fecha commit: 2026-02-16 06:47:58 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "c8008f1",
+    "date": "2026-02-16",
+    "time": "06:31",
+    "type": "feature",
+    "title": "Introduce public business profile view with catalog display, editing capabilities, and supporting AI/import features.",
+    "description": "feat: Introduce public business profile view with catalog display, editing capabilities, and supporting AI/import features.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: c8008f1",
+      "Fecha commit: 2026-02-16 06:31:28 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "7919499",
+    "date": "2026-02-16",
+    "time": "06:15",
+    "type": "feature",
+    "title": "Add a guided chatbot for creating and configuring business pages.",
+    "description": "feat: Add a guided chatbot for creating and configuring business pages.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 7919499",
+      "Fecha commit: 2026-02-16 06:15:30 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "0f8cc16",
+    "date": "2026-02-15",
+    "time": "23:57",
+    "type": "feature",
+    "title": "Implement mobile navigation modal (`ModalNavegacionMobile`) integrating new help, guide, business, and publish pages, along with interactive map and chatbot guide components.",
+    "description": "feat: Implement mobile navigation modal (`ModalNavegacionMobile`) integrating new help, guide, business, and publish pages, along with interactive map and chatbot guide components.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 0f8cc16",
+      "Fecha commit: 2026-02-14 23:57:16 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "893b067",
+    "date": "2026-02-15",
+    "time": "23:44",
+    "type": "feature",
+    "title": "Implement ad publishing functionality with a multi-step form and new pages for publishing, free ads, profile, and progress.",
+    "description": "feat: Implement ad publishing functionality with a multi-step form and new pages for publishing, free ads, profile, and progress.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 893b067",
+      "Fecha commit: 2026-02-14 23:44:31 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "515f150",
+    "date": "2026-02-15",
+    "time": "23:38",
+    "type": "feature",
+    "title": "Implement ad posting functionality with a multi-step form and add a new favorites page.",
+    "description": "feat: Implement ad posting functionality with a multi-step form and add a new favorites page.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 515f150",
+      "Fecha commit: 2026-02-14 23:38:58 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "2885d74",
+    "date": "2026-02-15",
+    "time": "23:31",
+    "type": "feature",
+    "title": "Establish core application structure with new pages and components for classifieds functionality.",
+    "description": "feat: establish core application structure with new pages and components for classifieds functionality.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 2885d74",
+      "Fecha commit: 2026-02-14 23:31:26 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "f0d718c",
+    "date": "2026-02-15",
+    "time": "23:23",
+    "type": "feature",
+    "title": "Implement chat functionality, add new content pages, and introduce core navigation and notification UI components.",
+    "description": "feat: Implement chat functionality, add new content pages, and introduce core navigation and notification UI components.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: f0d718c",
+      "Fecha commit: 2026-02-14 23:23:33 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "39723d5",
+    "date": "2026-02-15",
+    "time": "23:06",
+    "type": "feature",
+    "title": "Introduce core application types, chat and notification features, and foundational UI components.",
+    "description": "feat: Introduce core application types, chat and notification features, and foundational UI components.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 39723d5",
+      "Fecha commit: 2026-02-14 23:06:29 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "436c2ff",
+    "date": "2026-02-15",
+    "time": "22:46",
+    "type": "feature",
+    "title": "Introduce public business profile view, various UI components, and an image management utility.",
+    "description": "feat: Introduce public business profile view, various UI components, and an image management utility.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 436c2ff",
+      "Fecha commit: 2026-02-14 22:46:45 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "f04916d",
+    "date": "2026-02-15",
+    "time": "22:17",
+    "type": "feature",
+    "title": "Implement core application structure with dynamic content loading, search, filtering, and responsive UI, alongside new foundational pages and components.",
+    "description": "feat: Implement core application structure with dynamic content loading, search, filtering, and responsive UI, alongside new foundational pages and components.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: f04916d",
+      "Fecha commit: 2026-02-14 22:17:26 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "64a32cb",
+    "date": "2026-02-15",
+    "time": "22:08",
+    "type": "feature",
+    "title": "Introduce a comprehensive business catalog management system, including product creation, import, and display.",
+    "description": "feat: Introduce a comprehensive business catalog management system, including product creation, import, and display.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 64a32cb",
+      "Fecha commit: 2026-02-14 22:08:00 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "9ff26f3",
+    "date": "2026-02-15",
+    "time": "21:31",
+    "type": "feature",
+    "title": "Implement a mobile navigation modal component with dynamic menu items, user authentication, theme toggling, and language selection.",
+    "description": "feat: Implement a mobile navigation modal component with dynamic menu items, user authentication, theme toggling, and language selection.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 9ff26f3",
+      "Fecha commit: 2026-02-14 21:31:32 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "0d70cac",
+    "date": "2026-02-15",
+    "time": "21:29",
+    "type": "feature",
+    "title": "Implement user menu and core navigation components including header, left sidebar, and mobile navigation.",
+    "description": "feat: Implement user menu and core navigation components including header, left sidebar, and mobile navigation.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 0d70cac",
+      "Fecha commit: 2026-02-14 21:29:31 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "f3935d9",
+    "date": "2026-02-15",
+    "time": "20:58",
+    "type": "feature",
+    "title": "Implement a new optimized favorites system, add geolocation functionality, and introduce a redesigned business editor and core UI components.",
+    "description": "feat: Implement a new optimized favorites system, add geolocation functionality, and introduce a redesigned business editor and core UI components.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: f3935d9",
+      "Fecha commit: 2026-02-14 20:58:07 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "985ffd5",
+    "date": "2026-02-15",
+    "time": "00:08",
+    "type": "improvement",
+    "title": "Solve build errors",
+    "description": "solve build errors",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 985ffd5",
+      "Fecha commit: 2026-02-15 00:08:58 -0500"
+    ],
+    "impact": "minor"
+  },
+  {
+    "version": "1878f87",
+    "date": "2026-02-15",
+    "time": "00:04",
+    "type": "feature",
+    "title": "Add new business creation/editing page with chatbot guide and a publishing page.",
+    "description": "feat: add new business creation/editing page with chatbot guide and a publishing page.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: 1878f87",
+      "Fecha commit: 2026-02-15 00:04:30 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "ec25574",
+    "date": "2026-02-15",
+    "time": "00:02",
+    "type": "feature",
+    "title": "Introduce a chatbot-guided business profile builder with real-time preview, and add new help and guide pages.",
+    "description": "feat: Introduce a chatbot-guided business profile builder with real-time preview, and add new help and guide pages.",
+    "userBenefits": [
+      "Mejora automática detectada"
+    ],
+    "technicalDetails": [
+      "Commit Hash: ec25574",
+      "Fecha commit: 2026-02-15 00:02:20 -0500"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "2.0.0",
+    "date": "2025-11-29",
+    "time": "15:00",
+    "type": "feature",
+    "title": "Sistema de Paquetes de Publicación",
+    "description": "Paquetes escalonados con diferentes tamaños y visibilidad",
+    "userBenefits": [
+      "5 tamaños de publicaciones para destacar",
+      "Límites de imágenes según el paquete",
+      "Grid responsive que se adapta a cada tamaño"
+    ],
+    "technicalDetails": [
+      "Lógica de spans en CSS Grid para diferentes tamaños",
+      "Script SQL para campo tamaño en Supabase"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "1.0.0",
+    "date": "2025-11-28",
+    "time": "16:00",
+    "type": "feature",
+    "title": "Lanzamiento Inicial - MVP",
+    "description": "Primera versión funcional de buscadis.com",
+    "userBenefits": [
+      "Publica y busca anuncios en tiempo real",
+      "Filtra por categorías",
+      "Comparte por WhatsApp"
+    ],
+    "technicalDetails": [
+      "Integración inicial con Supabase",
+      "Sistema de cache local",
+      "Diseño responsive minimalista"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "2.3.0",
+    "date": "2025-01-27",
+    "time": "22:00",
+    "type": "improvement",
+    "title": "Mejoras de Fase 2: Modo Oscuro y SEO",
+    "description": "Implementación de modo oscuro con preferencias del sistema y páginas de categorías para SEO",
+    "userBenefits": [
+      "Modo oscuro: soporte automático según preferencias del sistema",
+      "Navegación más rápida con prefetching de imágenes",
+      "Mejor SEO con páginas dedicadas por categoría"
+    ],
+    "technicalDetails": [
+      "CSS variables con @media (prefers-color-scheme: dark)",
+      "Metadata dinámica en app/categoria/[nombre]/page.tsx",
+      "Sitemap actualizado con rutas de categorías"
+    ],
+    "impact": "major"
+  },
+  {
+    "version": "2.2.0",
+    "date": "2025-01-27",
+    "time": "20:00",
+    "type": "improvement",
+    "title": "Auditoría de Accesibilidad y Rendimiento",
+    "description": "Mejoras críticas en accesibilidad WCAG 2.1 AA y optimización de rendimiento",
+    "userBenefits": [
+      "Mejor accesibilidad para lectores de pantalla",
+      "Rendimiento optimizado con next/image",
+      "Mayor seguridad con validación Zod"
+    ],
+    "technicalDetails": [
+      "ARIA labels y focus visible",
+      "Validación con Zod en rutas API",
+      "Paginación implementada en Supabase"
+    ],
+    "impact": "major"
+  }
 ]
