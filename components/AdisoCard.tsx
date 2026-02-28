@@ -59,84 +59,84 @@ const getCategoriaTheme = (categoria: Categoria) => {
     switch (categoria) {
         case 'empleos':
             return {
-                text: 'text-blue-600 dark:text-blue-400',
-                bg: 'bg-blue-50/50 dark:bg-blue-900/10',
-                border: 'border-blue-100 dark:border-blue-800/30',
+                text: 'text-slate-800 dark:text-slate-200',
+                bg: 'bg-[#2c3e50]/5',
+                border: 'border-slate-200 dark:border-slate-800',
                 gradient: 'from-[#2c3e50] to-[#4b79a1]',
                 iconColor: 'text-white/90',
-                badgeBg: 'bg-[#2c3e50] text-white shadow-lg shadow-blue-900/10'
+                badgeBg: 'bg-[#2c3e50] text-white shadow-lg'
             };
         case 'inmuebles':
             return {
-                text: 'text-emerald-600 dark:text-emerald-400',
-                bg: 'bg-emerald-50/50 dark:bg-emerald-900/10',
-                border: 'border-emerald-100 dark:border-emerald-800/30',
+                text: 'text-[#134E5E] dark:text-emerald-400',
+                bg: 'bg-[#134E5E]/5',
+                border: 'border-emerald-100 dark:border-emerald-900/30',
                 gradient: 'from-[#134E5E] to-[#71B280]',
                 iconColor: 'text-white/90',
-                badgeBg: 'bg-[#134E5E] text-white shadow-lg shadow-emerald-900/10'
+                badgeBg: 'bg-[#134E5E] text-white shadow-lg'
             };
         case 'vehiculos':
             return {
-                text: 'text-violet-600 dark:text-violet-400',
-                bg: 'bg-violet-50/50 dark:bg-violet-900/10',
-                border: 'border-violet-100 dark:border-violet-800/30',
+                text: 'text-[#1A2980] dark:text-indigo-400',
+                bg: 'bg-[#1A2980]/5',
+                border: 'border-indigo-100 dark:border-indigo-900/30',
                 gradient: 'from-[#1A2980] to-[#26D0CE]',
                 iconColor: 'text-white/90',
-                badgeBg: 'bg-[#1A2980] text-white shadow-lg shadow-indigo-900/10'
+                badgeBg: 'bg-[#1A2980] text-white shadow-lg'
             };
         case 'servicios':
             return {
-                text: 'text-amber-600 dark:text-amber-400',
-                bg: 'bg-amber-50/50 dark:bg-amber-900/10',
-                border: 'border-amber-100 dark:border-amber-800/30',
+                text: 'text-[#f2994a] dark:text-amber-400',
+                bg: 'bg-[#f2994a]/5',
+                border: 'border-amber-100 dark:border-amber-900/30',
                 gradient: 'from-[#f2994a] to-[#f2c94c]',
                 iconColor: 'text-white/90',
-                badgeBg: 'bg-[#f2994a] text-white shadow-lg shadow-amber-900/10'
+                badgeBg: 'bg-[#f2994a] text-white shadow-lg'
             };
         case 'productos':
             return {
-                text: 'text-rose-600 dark:text-rose-400',
-                bg: 'bg-rose-50/50 dark:bg-rose-900/10',
-                border: 'border-rose-100 dark:border-rose-800/30',
+                text: 'text-[#b31217] dark:text-rose-400',
+                bg: 'bg-[#b31217]/5',
+                border: 'border-rose-100 dark:border-rose-900/30',
                 gradient: 'from-[#e52d27] to-[#b31217]',
                 iconColor: 'text-white/90',
-                badgeBg: 'bg-[#b31217] text-white shadow-lg shadow-rose-900/10'
+                badgeBg: 'bg-[#b31217] text-white shadow-lg'
             };
         case 'eventos':
             return {
-                text: 'text-indigo-600 dark:text-indigo-400',
-                bg: 'bg-indigo-50/50 dark:bg-indigo-900/10',
-                border: 'border-indigo-100 dark:border-indigo-800/30',
+                text: 'text-[#4facfe] dark:text-sky-400',
+                bg: 'bg-[#4facfe]/5',
+                border: 'border-sky-100 dark:border-sky-900/30',
                 gradient: 'from-[#4facfe] to-[#00f2fe]',
                 iconColor: 'text-white/90',
-                badgeBg: 'bg-[#4facfe] text-white shadow-lg shadow-blue-900/10'
+                badgeBg: 'bg-[#4facfe] text-white shadow-lg'
             };
         case 'negocios':
             return {
-                text: 'text-slate-600 dark:text-slate-400',
-                bg: 'bg-slate-50/50 dark:bg-slate-900/10',
-                border: 'border-slate-100 dark:border-slate-800/30',
+                text: 'text-[#434343] dark:text-slate-400',
+                bg: 'bg-[#434343]/5',
+                border: 'border-slate-200 dark:border-slate-800',
                 gradient: 'from-[#434343] to-[#000000]',
                 iconColor: 'text-white/90',
-                badgeBg: 'bg-[#434343] text-white shadow-lg shadow-slate-900/10'
+                badgeBg: 'bg-[#333333] text-white shadow-lg'
             };
         case 'comunidad':
             return {
-                text: 'text-cyan-600 dark:text-cyan-400',
-                bg: 'bg-cyan-50/50 dark:bg-cyan-900/10',
-                border: 'border-cyan-100 dark:border-cyan-800/30',
+                text: 'text-[#0072ff] dark:text-blue-400',
+                bg: 'bg-[#0072ff]/5',
+                border: 'border-blue-100 dark:border-blue-900/30',
                 gradient: 'from-[#00c6ff] to-[#0072ff]',
                 iconColor: 'text-white/90',
-                badgeBg: 'bg-[#0072ff] text-white shadow-lg shadow-cyan-900/10'
+                badgeBg: 'bg-[#0072ff] text-white shadow-lg'
             };
         default:
             return {
                 text: 'text-zinc-600 dark:text-zinc-400',
-                bg: 'bg-zinc-50/50 dark:bg-zinc-900/10',
-                border: 'border-zinc-100 dark:border-zinc-800/30',
+                bg: 'bg-[#bdc3c7]/5',
+                border: 'border-zinc-200 dark:border-zinc-800',
                 gradient: 'from-[#bdc3c7] to-[#2c3e50]',
                 iconColor: 'text-white/90',
-                badgeBg: 'bg-[#2c3e50] text-white shadow-lg shadow-zinc-900/10'
+                badgeBg: 'bg-[#666666] text-white shadow-lg'
             };
     }
 };

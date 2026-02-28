@@ -21,8 +21,10 @@
   /* ========================================
      PALETA DE MARCA - MÁS VIBRANTE
      ======================================== */
-  --brand-blue: #38bdf8; /* Sky blue más brillante */
-  --brand-yellow: #fbbf24; /* Amber más vivo */
+  --brand-blue: #38bdf8;
+  /* Sky blue más brillante */
+  --brand-yellow: #fbbf24;
+  /* Amber más vivo */
   --brand-primary-rgb: 56, 189, 248;
 
   /* ========================================
@@ -36,13 +38,14 @@
      FONDOS - GLASS & MESH
      ======================================== */
   --bg-primary: #ffffff;
-  --bg-secondary: #fdfdfd; 
+  --bg-secondary: #fdfdfd;
   --bg-tertiary: #f1f5f9;
 
   /* ========================================
      COLORES DE INTERFAZ
      ======================================== */
-  --border-color: rgba(0, 0, 0, 0.04); /* Casi invisible */
+  --border-color: rgba(0, 0, 0, 0.04);
+  /* Casi invisible */
   --border-subtle: rgba(0, 0, 0, 0.02);
   --hover-bg: rgba(56, 189, 248, 0.05);
 
@@ -60,21 +63,22 @@
   --shadow-lg: 0 20px 25px -5px rgba(56, 189, 248, 0.05), 0 10px 10px -5px rgba(56, 189, 248, 0.02);
   --shadow-hover: 0 20px 50px -12px rgba(56, 189, 248, 0.2);
 
-  /* Category Colors */
-  --cat-empleos: #3b82f6;
-  --cat-inmuebles: #10b981;
-  --cat-vehiculos: #8b5cf6;
-  --cat-servicios: #f59e0b;
-  --cat-productos: #ec4899;
-  --cat-eventos: #ef4444;
-  --cat-negocios: #06b6d4;
-  --cat-comunidad: #6366f1;
+  /* Category Colors - More Professional Palette */
+  --cat-empleos: #2c3e50;
+  --cat-inmuebles: #134E5E;
+  --cat-vehiculos: #1A2980;
+  --cat-servicios: #f2994a;
+  --cat-productos: #b31217;
+  --cat-eventos: #4facfe;
+  --cat-negocios: #434343;
+  --cat-comunidad: #0072ff;
 }
 
 /* Modo oscuro vibrant */
 @media (prefers-color-scheme: dark) {
   :root:not(.light-mode) {
-    --bg-primary: #0f172a; /* Navy profundo */
+    --bg-primary: #0f172a;
+    /* Navy profundo */
     --bg-secondary: #0b1120;
     --bg-tertiary: #1e293b;
     --text-primary: #f8fafc;
@@ -141,7 +145,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--bg-secondary);
-  background-image: 
+  background-image:
     radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.05) 0px, transparent 50%),
     radial-gradient(at 100% 0%, rgba(251, 191, 36, 0.05) 0px, transparent 50%),
     radial-gradient(at 100% 100%, rgba(56, 189, 248, 0.03) 0px, transparent 50%),
@@ -229,6 +233,7 @@ a {
   0% {
     background-position: -400px 0;
   }
+
   100% {
     background-position: calc(400px + 100%) 0;
   }
@@ -236,12 +241,10 @@ a {
 
 .skeleton-shimmer {
   background-color: var(--bg-tertiary);
-  background-image: linear-gradient(
-    90deg,
-    var(--bg-tertiary) 0px,
-    var(--bg-secondary) 40px,
-    var(--bg-tertiary) 80px
-  );
+  background-image: linear-gradient(90deg,
+      var(--bg-tertiary) 0px,
+      var(--bg-secondary) 40px,
+      var(--bg-tertiary) 80px);
   background-size: 400px 100%;
   background-repeat: no-repeat;
   animation: skeleton-wave 1.4s ease-in-out infinite;
@@ -253,39 +256,53 @@ a {
 }
 
 @media print {
+
   /* Printable Content Styles */
-  body { visibility: hidden; }
+  body {
+    visibility: hidden;
+  }
+
   #printable-content {
-      visibility: visible;
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
-      margin: 0;
-      padding: 0;
-      z-index: 9999;
-      min-height: 100vh;
-      background: white;
+    visibility: visible;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    z-index: 9999;
+    min-height: 100vh;
+    background: white;
   }
-  
+
   /* Hide non-printable elements */
-  #printable-content > * { display: none !important; }
-  
-  /* Show only the catalog */
-  #printable-content > .printable-catalog { 
-      display: block !important; 
-      visibility: visible !important;
-      position: static !important;
-      top: auto !important;
-      left: auto !important;
-      height: auto !important;
-      overflow: visible !important;
+  #printable-content>* {
+    display: none !important;
   }
-  #printable-content > .printable-catalog * { visibility: visible !important; }
+
+  /* Show only the catalog */
+  #printable-content>.printable-catalog {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    top: auto !important;
+    left: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  #printable-content>.printable-catalog * {
+    visibility: visible !important;
+  }
 
   /* Ensure background graphics are printed */
-  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-  
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
   /* Hide scrollbars */
-  ::-webkit-scrollbar { display: none; }
+  ::-webkit-scrollbar {
+    display: none;
+  }
 }
