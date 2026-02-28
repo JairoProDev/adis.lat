@@ -488,8 +488,14 @@ function HomeContent() {
 
     setAdisosFiltrados(filtradosOrdenados);
     // Resetear visibleCount cuando cambian los filtros para empezar de nuevo
-    setVisibleCount(20);
-  }, [busquedaDebounced, categoriaFiltro, ordenamiento, adisos, filtroUbicacion, profile]);
+    setVisibleCount(ITEMS_POR_PAGINA);
+
+    // IMPORTANTE: Si al filtrar nos quedamos con muy pocos anuncios y todavía hay más en la API,
+    // debemos intentar cargar más automáticamente para llenar el espacio vacío.
+    if (filtradosOrdenados.length < 10 && hayMasAdisos && !cargando && !cargandoMas) {
+      setTimeout(() => cargarMasAdisos(), 100);
+    }
+  }, [busquedaDebounced, categoriaFiltro, ordenamiento, adisos, filtroUbicacion, profile, hayMasAdisos]);
 
   // Actualizar índice del adiso abierto cuando cambian los filtrados o el adiso abierto
   useEffect(() => {
@@ -708,10 +714,28 @@ function HomeContent() {
     setCargandoMas(true);
     try {
       const siguientePagina = paginaActual + 1;
+
+      // Calcular offset real para la categoría/búsqueda actual
+      let offsetActual = adisos.length;
+
+      // Si tenemos filtros activos, el offset de la consulta debe ser coherente
+      // con lo que ya hemos cargado para esos filtros si la API ahora soporta filtrado.
+      if (categoriaFiltro !== 'todos' || busquedaDebounced) {
+        // Si estamos filtrando de verdad en el servidor ahora, 
+        // el offset debería ser cuántos de "estos" ya tenemos.
+        offsetActual = adisos.filter(a => {
+          const matchCat = categoriaFiltro === 'todos' || a.categoria === categoriaFiltro;
+          const matchBus = !busquedaDebounced || a.titulo.toLowerCase().includes(busquedaDebounced.toLowerCase());
+          return matchCat && matchBus;
+        }).length;
+      }
+
       const nuevosAdisos = await getAdisosFromSupabase({
         limit: ITEMS_POR_PAGINA,
-        offset: adisos.length,
-        soloActivos: false
+        offset: offsetActual,
+        soloActivos: false,
+        categoria: categoriaFiltro,
+        busqueda: busquedaDebounced
       });
 
       if (nuevosAdisos.length > 0) {

@@ -181,6 +181,8 @@ export async function getAdisosFromSupabase(options?: {
   limit?: number;
   offset?: number;
   soloActivos?: boolean;
+  categoria?: string;
+  busqueda?: string;
 }): Promise<Adiso[]> {
   if (!supabase) {
     throw new Error('Supabase no está configurado');
@@ -198,18 +200,25 @@ export async function getAdisosFromSupabase(options?: {
       query = query.or('fecha_expiracion.is.null,fecha_expiracion.gt.' + new Date().toISOString());
     }
 
+    // Filtrar por categoría
+    if (options?.categoria && options.categoria !== 'todos') {
+      query = query.eq('categoria', options.categoria);
+    }
+
+    // Filtrar por búsqueda técnica (ilike para búsqueda insensible a mayúsculas/minúsculas)
+    if (options?.busqueda) {
+      query = query.or(`titulo.ilike.%${options.busqueda}%,descripcion.ilike.%${options.busqueda}%`);
+    }
+
     // Ordenar por fecha de publicación (más recientes primero)
     query = query.order('fecha_publicacion', { ascending: false })
       .order('hora_publicacion', { ascending: false });
 
     // Aplicar paginación si se proporciona (optimizado)
     if (options?.limit) {
-      if (options?.offset !== undefined) {
-        // Usar range para paginación eficiente
-        query = query.range(options.offset, options.offset + options.limit - 1);
-      } else {
-        query = query.limit(options.limit);
-      }
+      const from = options.offset || 0;
+      const to = from + options.limit - 1;
+      query = query.range(from, to);
     } else {
       // Por defecto, limitar a 50 para mejor rendimiento
       query = query.limit(50);
