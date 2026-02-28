@@ -9,6 +9,8 @@ import FloatingChatbot from '@/components/FloatingChatbot';
 import { NavigationProvider } from '@/contexts/NavigationContext';
 import { UIProvider } from '@/contexts/UIContext';
 import { FavoritosProvider } from '@/contexts/FavoritosContext';
+import OfflineIndicator from '@/components/pwa/OfflineIndicator';
+import InstallPrompt from '@/components/pwa/InstallPrompt';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://buscadis.com';
 
@@ -119,7 +121,9 @@ export default function RootLayout({
                 <UIProvider>
                   <AdisosGratuitosCacheProvider>
                     <NavigationProvider>
+                      <OfflineIndicator />
                       {children}
+                      <InstallPrompt />
                     </NavigationProvider>
                   </AdisosGratuitosCacheProvider>
                 </UIProvider>

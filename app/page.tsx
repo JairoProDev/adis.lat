@@ -58,6 +58,7 @@ import { ToastContainer } from '@/components/Toast';
 import FeedbackButton from '@/components/FeedbackButton';
 import NavbarMobile from '@/components/NavbarMobile';
 import LeftSidebar from '@/components/LeftSidebar';
+import PullToRefresh from '@/components/pwa/PullToRefresh';
 
 // Lazy load componentes pesados
 const ModalAdiso = dynamicImport(() => import('@/components/ModalAdiso'), {
@@ -159,6 +160,32 @@ function HomeContent() {
     });
     return cleanup;
   }, [error, success]);
+
+  const handleRefresh = async () => {
+    if (!navigator.onLine) {
+      error('No puedes actualizar sin conexión a internet.');
+      return;
+    }
+    setPaginaActual(1);
+    setVisibleCount(20);
+    try {
+      const adisosDesdeAPI = await getAdisosFromSupabase({
+        limit: ITEMS_POR_PAGINA,
+        offset: 0,
+        soloActivos: false
+      });
+      let nuevosFiltrados = adisosDesdeAPI;
+      if (nuevosFiltrados.some(a => TEST_REGEX.test(a.titulo || ''))) {
+        nuevosFiltrados = nuevosFiltrados.filter(a => !TEST_REGEX.test(a.titulo || ''));
+      }
+      setAdisos(nuevosFiltrados);
+      setHayMasAdisos(adisosDesdeAPI.length === ITEMS_POR_PAGINA);
+      success('Buscando anuncios recientes...');
+    } catch (e) {
+      console.error(e);
+      error('Error al actualizar datos.');
+    }
+  };
 
   // Carga inicial: mostrar cache primero (instantáneo), luego actualizar desde API
   useEffect(() => {
@@ -799,405 +826,407 @@ function HomeContent() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-      />
-      <a href="#main-content" className="skip-link">
-        Saltar al contenido principal
-      </a>
-      <Header
-        onToggleLeftSidebar={() => setIsLeftSidebarOpen(!isLeftSidebarOpen)}
-        ubicacion={filtroUbicacion?.distrito || filtroUbicacion?.departamento || 'Perú'}
-        onUbicacionClick={() => setMostrarFiltroUbicacion(true)}
-        seccionActiva={seccionDesktopActiva}
-        onSeccionChange={(seccion) => {
-          setSeccionDesktopActiva(seccion);
-          setIsSidebarMinimizado(false);
-        }}
-      />
-      {/* Category Bar - Horizontal Scroll */}
-      <div
-        className="no-scrollbar"
-        style={{
-          display: 'flex',
-          justifyContent: isDesktop ? 'center' : 'flex-start',
-          overflowX: 'auto',
-          gap: '1.5rem',
-          padding: '1.25rem 1rem',
-          backgroundColor: 'transparent',
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-          WebkitOverflowScrolling: 'touch',
-          alignItems: 'center',
-          width: '100%',
-          maxWidth: isDesktop
-            ? 'calc(100% - var(--sidebar-width, 0px))'
-            : '100%',
-          margin: '0 auto',
-          transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-          ...(isDesktop && { marginRight: 'var(--sidebar-width, 0px)' })
-        }}
-      >
-        {[
-          { id: 'empleos', label: 'Empleos', Icon: IconEmpleos },
-          { id: 'inmuebles', label: 'Inmuebles', Icon: IconInmuebles },
-          { id: 'vehiculos', label: 'Vehículos', Icon: IconVehiculos },
-          { id: 'servicios', label: 'Servicios', Icon: IconServicios },
-          { id: 'productos', label: 'Productos', Icon: IconProductos },
-          { id: 'eventos', label: 'Eventos', Icon: IconEventos },
-          { id: 'negocios', label: 'Negocios', Icon: IconNegocios },
-          { id: 'comunidad', label: 'Comunidad', Icon: IconComunidad },
-        ].map(({ id, label, Icon }) => (
-          <button
-            key={id}
-            onClick={() => {
-              const nuevaCategoria = categoriaFiltro === id ? 'todos' : (id as Categoria);
-              setCategoriaFiltro(nuevaCategoria);
+    <PullToRefresh onRefresh={handleRefresh}>
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
+        <a href="#main-content" className="skip-link">
+          Saltar al contenido principal
+        </a>
+        <Header
+          onToggleLeftSidebar={() => setIsLeftSidebarOpen(!isLeftSidebarOpen)}
+          ubicacion={filtroUbicacion?.distrito || filtroUbicacion?.departamento || 'Perú'}
+          onUbicacionClick={() => setMostrarFiltroUbicacion(true)}
+          seccionActiva={seccionDesktopActiva}
+          onSeccionChange={(seccion) => {
+            setSeccionDesktopActiva(seccion);
+            setIsSidebarMinimizado(false);
+          }}
+        />
+        {/* Category Bar - Horizontal Scroll */}
+        <div
+          className="no-scrollbar"
+          style={{
+            display: 'flex',
+            justifyContent: isDesktop ? 'center' : 'flex-start',
+            overflowX: 'auto',
+            gap: '1.5rem',
+            padding: '1.25rem 1rem',
+            backgroundColor: 'transparent',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            WebkitOverflowScrolling: 'touch',
+            alignItems: 'center',
+            width: '100%',
+            maxWidth: isDesktop
+              ? 'calc(100% - var(--sidebar-width, 0px))'
+              : '100%',
+            margin: '0 auto',
+            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            ...(isDesktop && { marginRight: 'var(--sidebar-width, 0px)' })
+          }}
+        >
+          {[
+            { id: 'empleos', label: 'Empleos', Icon: IconEmpleos },
+            { id: 'inmuebles', label: 'Inmuebles', Icon: IconInmuebles },
+            { id: 'vehiculos', label: 'Vehículos', Icon: IconVehiculos },
+            { id: 'servicios', label: 'Servicios', Icon: IconServicios },
+            { id: 'productos', label: 'Productos', Icon: IconProductos },
+            { id: 'eventos', label: 'Eventos', Icon: IconEventos },
+            { id: 'negocios', label: 'Negocios', Icon: IconNegocios },
+            { id: 'comunidad', label: 'Comunidad', Icon: IconComunidad },
+          ].map(({ id, label, Icon }) => (
+            <button
+              key={id}
+              onClick={() => {
+                const nuevaCategoria = categoriaFiltro === id ? 'todos' : (id as Categoria);
+                setCategoriaFiltro(nuevaCategoria);
 
-              // Actualizar URL sin recargar
-              const params = new URLSearchParams(searchParams.toString());
-              if (nuevaCategoria === 'todos') {
-                params.delete('categoria');
-              } else {
-                params.set('categoria', nuevaCategoria);
-              }
-              // Mantener búsqueda si existe
-              if (busqueda.trim()) {
-                params.set('buscar', busqueda.trim());
-              } else {
-                params.delete('buscar');
-              }
-              router.push(`/?${params.toString()}`, { scroll: false });
-            }}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '0.5rem',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              minWidth: '80px',
-              flexShrink: 0,
-              padding: '4px',
-              borderRadius: '12px',
-              opacity: categoriaFiltro === id ? 1 : 0.8,
-              transform: categoriaFiltro === id ? 'scale(1.05)' : 'scale(1)',
-              transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            }}
-            className="group"
-          >
-            <div style={{
-              width: '48px',
-              height: '48px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: '16px',
-              backgroundColor: categoriaFiltro === id ? 'var(--brand-blue)' : 'var(--bg-primary)',
-              color: categoriaFiltro === id ? 'white' : 'var(--text-secondary)',
-              boxShadow: categoriaFiltro === id
-                ? '0 10px 20px -5px rgba(56, 189, 248, 0.4)'
-                : '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              position: 'relative',
-              overflow: 'hidden'
-            }}
-              className="group-hover:shadow-lg group-hover:-translate-y-1"
+                // Actualizar URL sin recargar
+                const params = new URLSearchParams(searchParams.toString());
+                if (nuevaCategoria === 'todos') {
+                  params.delete('categoria');
+                } else {
+                  params.set('categoria', nuevaCategoria);
+                }
+                // Mantener búsqueda si existe
+                if (busqueda.trim()) {
+                  params.set('buscar', busqueda.trim());
+                } else {
+                  params.delete('buscar');
+                }
+                router.push(`/?${params.toString()}`, { scroll: false });
+              }}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '0.5rem',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                minWidth: '80px',
+                flexShrink: 0,
+                padding: '4px',
+                borderRadius: '12px',
+                opacity: categoriaFiltro === id ? 1 : 0.8,
+                transform: categoriaFiltro === id ? 'scale(1.05)' : 'scale(1)',
+                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+              }}
+              className="group"
             >
-              <Icon size={24} color={categoriaFiltro === id ? 'white' : undefined} />
-            </div>
-            <span style={{
-              fontSize: '0.75rem',
-              fontWeight: categoriaFiltro === id ? 700 : 500,
-              textAlign: 'center',
-              whiteSpace: 'nowrap',
-              color: categoriaFiltro === id ? 'var(--brand-blue)' : 'var(--text-secondary)'
-            }}>
-              {label}
-            </span>
-          </button>
-        ))}
-      </div>
-      <main id="main-content" style={{
-        flex: 1,
-        padding: '1rem',
-        paddingBottom: isDesktop ? '1rem' : '5rem', // Espacio para navbar mobile permanente
-        maxWidth: isDesktop
-          ? 'calc(100% - var(--sidebar-width, 0px))'
-          : '1400px',
-        margin: '0 auto',
-        width: '100%',
-        transition: 'max-width 0.3s ease, margin-right 0.3s ease, padding-bottom 0.3s ease',
-        ...(isDesktop && { marginRight: 'var(--sidebar-width, 0px)' })
-      }}>
-        <div style={{ marginBottom: '1.5rem' }}>
-          <Buscador
-            value={busqueda}
-            onChange={(value) => {
-              setBusqueda(value);
-            }}
-            onAudioSearch={() => alert("Próximamente: Búsqueda por voz")}
-            onVisualSearch={() => alert("Próximamente: Búsqueda visual con cámara/fotos")}
-          />
-        </div>
-
-        {/* Modal de Filtro de Ubicación */}
-        {mostrarFiltroUbicacion && (
-          <FiltroUbicacion
-            filtrosActuales={filtroUbicacion}
-            onAplicar={(filtros) => {
-              setFiltroUbicacion(filtros);
-              setMostrarFiltroUbicacion(false);
-            }}
-            onCerrar={() => setMostrarFiltroUbicacion(false)}
-          />
-        )}
-        {/* ── Toolbar: modern controls ── */}
-        <div style={{
-          marginBottom: '1.25rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '0.5rem 0.25rem',
-          gap: '12px',
-          width: '100%',
-          flexWrap: 'wrap'
-        }}>
-          {/* Left: Count pill */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {cargando ? (
-              <div className="skeleton-shimmer" style={{ width: 120, height: 36, borderRadius: '18px' }} />
-            ) : (
               <div style={{
+                width: '48px',
+                height: '48px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
-                backgroundColor: 'var(--bg-primary)',
-                padding: '4px 12px 4px 6px',
-                borderRadius: '20px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
-                height: '36px'
+                justifyContent: 'center',
+                borderRadius: '16px',
+                backgroundColor: categoriaFiltro === id ? 'var(--brand-blue)' : 'var(--bg-primary)',
+                color: categoriaFiltro === id ? 'white' : 'var(--text-secondary)',
+                boxShadow: categoriaFiltro === id
+                  ? '0 10px 20px -5px rgba(56, 189, 248, 0.4)'
+                  : '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+                className="group-hover:shadow-lg group-hover:-translate-y-1"
+              >
+                <Icon size={24} color={categoriaFiltro === id ? 'white' : undefined} />
+              </div>
+              <span style={{
+                fontSize: '0.75rem',
+                fontWeight: categoriaFiltro === id ? 700 : 500,
+                textAlign: 'center',
+                whiteSpace: 'nowrap',
+                color: categoriaFiltro === id ? 'var(--brand-blue)' : 'var(--text-secondary)'
               }}>
+                {label}
+              </span>
+            </button>
+          ))}
+        </div>
+        <main id="main-content" style={{
+          flex: 1,
+          padding: '1rem',
+          paddingBottom: isDesktop ? '1rem' : '5rem', // Espacio para navbar mobile permanente
+          maxWidth: isDesktop
+            ? 'calc(100% - var(--sidebar-width, 0px))'
+            : '1400px',
+          margin: '0 auto',
+          width: '100%',
+          transition: 'max-width 0.3s ease, margin-right 0.3s ease, padding-bottom 0.3s ease',
+          ...(isDesktop && { marginRight: 'var(--sidebar-width, 0px)' })
+        }}>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <Buscador
+              value={busqueda}
+              onChange={(value) => {
+                setBusqueda(value);
+              }}
+              onAudioSearch={() => alert("Próximamente: Búsqueda por voz")}
+              onVisualSearch={() => alert("Próximamente: Búsqueda visual con cámara/fotos")}
+            />
+          </div>
+
+          {/* Modal de Filtro de Ubicación */}
+          {mostrarFiltroUbicacion && (
+            <FiltroUbicacion
+              filtrosActuales={filtroUbicacion}
+              onAplicar={(filtros) => {
+                setFiltroUbicacion(filtros);
+                setMostrarFiltroUbicacion(false);
+              }}
+              onCerrar={() => setMostrarFiltroUbicacion(false)}
+            />
+          )}
+          {/* ── Toolbar: modern controls ── */}
+          <div style={{
+            marginBottom: '1.25rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '0.5rem 0.25rem',
+            gap: '12px',
+            width: '100%',
+            flexWrap: 'wrap'
+          }}>
+            {/* Left: Count pill */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {cargando ? (
+                <div className="skeleton-shimmer" style={{ width: 120, height: 36, borderRadius: '18px' }} />
+              ) : (
                 <div style={{
-                  backgroundColor: 'var(--brand-blue)',
-                  color: 'white',
-                  height: '24px',
-                  minWidth: '24px',
-                  padding: '0 8px',
-                  borderRadius: '12px',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '0.85rem',
-                  fontWeight: 800
+                  gap: '8px',
+                  backgroundColor: 'var(--bg-primary)',
+                  padding: '4px 12px 4px 6px',
+                  borderRadius: '20px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+                  height: '36px'
                 }}>
-                  {adisosFiltrados.length}
+                  <div style={{
+                    backgroundColor: 'var(--brand-blue)',
+                    color: 'white',
+                    height: '24px',
+                    minWidth: '24px',
+                    padding: '0 8px',
+                    borderRadius: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '0.85rem',
+                    fontWeight: 800
+                  }}>
+                    {adisosFiltrados.length}
+                  </div>
+                  <span style={{
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    color: 'var(--text-secondary)'
+                  }}>
+                    <span className="hidden sm:inline">
+                      {adisosFiltrados.length === 1 ? 'adiso encontrado' : 'adisos encontrados'}
+                    </span>
+                    <span className="sm:hidden inline">
+                      adisos
+                    </span>
+                  </span>
+
+                  {!cargando && (
+                    <button
+                      onClick={async () => {
+                        const url = getBusquedaUrl(categoriaFiltro, busqueda);
+                        try {
+                          await navigator.clipboard.writeText(url);
+                          success('Link de búsqueda copiado');
+                        } catch (err) {
+                          error('Error al copiar link');
+                        }
+                      }}
+                      style={{
+                        marginLeft: '4px',
+                        width: '26px',
+                        height: '26px',
+                        borderRadius: '50%',
+                        border: 'none',
+                        backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                        color: 'var(--brand-blue)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.2s'
+                      }}
+                      className="hover:bg-sky-500 hover:text-white"
+                      title="Compartir búsqueda"
+                    >
+                      <IconShare size={14} />
+                    </button>
+                  )}
                 </div>
-                <span style={{
-                  fontSize: '0.85rem',
-                  fontWeight: 600,
-                  color: 'var(--text-secondary)'
-                }}>
-                  <span className="hidden sm:inline">
-                    {adisosFiltrados.length === 1 ? 'adiso encontrado' : 'adisos encontrados'}
-                  </span>
-                  <span className="sm:hidden inline">
-                    adisos
-                  </span>
-                </span>
+              )}
+            </div>
 
-                {!cargando && (
-                  <button
-                    onClick={async () => {
-                      const url = getBusquedaUrl(categoriaFiltro, busqueda);
-                      try {
-                        await navigator.clipboard.writeText(url);
-                        success('Link de búsqueda copiado');
-                      } catch (err) {
-                        error('Error al copiar link');
-                      }
-                    }}
-                    style={{
-                      marginLeft: '4px',
-                      width: '26px',
-                      height: '26px',
-                      borderRadius: '50%',
-                      border: 'none',
-                      backgroundColor: 'rgba(56, 189, 248, 0.1)',
-                      color: 'var(--brand-blue)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      transition: 'all 0.2s'
-                    }}
-                    className="hover:bg-sky-500 hover:text-white"
-                    title="Compartir búsqueda"
-                  >
-                    <IconShare size={14} />
-                  </button>
-                )}
+            {/* Right: Sort & View Mode */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Ordenamiento
+                valor={ordenamiento}
+                onChange={setOrdenamiento}
+              />
+
+              {/* View Mode Switcher */}
+              <div style={{
+                display: 'flex',
+                backgroundColor: 'var(--bg-primary)',
+                padding: '4px',
+                borderRadius: '14px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+                height: '42px',
+                alignItems: 'center'
+              }}>
+                {[
+                  { id: 'grid', icon: IconGrid, title: 'Cuadrícula' },
+                  { id: 'feed', icon: IconFeed, title: 'Individual' },
+                  { id: 'list', icon: IconList, title: 'Lista' }
+                ].map((m) => {
+                  const Icon = m.icon;
+                  const active = vista === m.id;
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => setVista(m.id as any)}
+                      style={{
+                        width: '34px',
+                        height: '34px',
+                        borderRadius: '10px',
+                        backgroundColor: active ? 'var(--brand-blue)' : 'transparent',
+                        color: active ? 'white' : 'var(--text-tertiary)',
+                        border: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        margin: '0 2px'
+                      }}
+                      title={m.title}
+                    >
+                      <Icon size={18} />
+                    </button>
+                  );
+                })}
               </div>
-            )}
-          </div>
-
-          {/* Right: Sort & View Mode */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Ordenamiento
-              valor={ordenamiento}
-              onChange={setOrdenamiento}
-            />
-
-            {/* View Mode Switcher */}
-            <div style={{
-              display: 'flex',
-              backgroundColor: 'var(--bg-primary)',
-              padding: '4px',
-              borderRadius: '14px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
-              height: '42px',
-              alignItems: 'center'
-            }}>
-              {[
-                { id: 'grid', icon: IconGrid, title: 'Cuadrícula' },
-                { id: 'feed', icon: IconFeed, title: 'Individual' },
-                { id: 'list', icon: IconList, title: 'Lista' }
-              ].map((m) => {
-                const Icon = m.icon;
-                const active = vista === m.id;
-                return (
-                  <button
-                    key={m.id}
-                    onClick={() => setVista(m.id as any)}
-                    style={{
-                      width: '34px',
-                      height: '34px',
-                      borderRadius: '10px',
-                      backgroundColor: active ? 'var(--brand-blue)' : 'transparent',
-                      color: active ? 'white' : 'var(--text-tertiary)',
-                      border: 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                      margin: '0 2px'
-                    }}
-                    title={m.title}
-                  >
-                    <Icon size={18} />
-                  </button>
-                );
-              })}
             </div>
           </div>
-        </div>
 
-        {/* ── Cards: skeleton during first load, grid once ready ── */}
-        {cargando ? (
-          <SkeletonAdisos isDesktop={isDesktop} />
-        ) : (
-          <>
-            <GrillaAdisos
-              adisos={adisosFiltrados.slice(0, visibleCount)}
-              onAbrirAdiso={handleAbrirAdiso}
-              adisoSeleccionadoId={adisoAbierto?.id}
-              espacioAdicional={isSidebarMinimizado ? 360 : 0}
-              cargandoMas={cargandoMas}
-              sentinelRef={sentinelRef}
-              vista={vista}
-            />
-            {adisosFiltrados.length === 0 && !cargando && (
-              <div style={{
-                textAlign: 'center',
-                padding: '3rem 1rem',
-                color: 'var(--text-secondary)'
-              }}>
-                {busqueda || categoriaFiltro !== 'todos'
-                  ? 'No se encontraron adisos con esos filtros'
-                  : 'Aún no hay adisos publicados'}
-              </div>
-            )}
-          </>
+          {/* ── Cards: skeleton during first load, grid once ready ── */}
+          {cargando ? (
+            <SkeletonAdisos isDesktop={isDesktop} />
+          ) : (
+            <>
+              <GrillaAdisos
+                adisos={adisosFiltrados.slice(0, visibleCount)}
+                onAbrirAdiso={handleAbrirAdiso}
+                adisoSeleccionadoId={adisoAbierto?.id}
+                espacioAdicional={isSidebarMinimizado ? 360 : 0}
+                cargandoMas={cargandoMas}
+                sentinelRef={sentinelRef}
+                vista={vista}
+              />
+              {adisosFiltrados.length === 0 && !cargando && (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '3rem 1rem',
+                  color: 'var(--text-secondary)'
+                }}>
+                  {busqueda || categoriaFiltro !== 'todos'
+                    ? 'No se encontraron adisos con esos filtros'
+                    : 'Aún no hay adisos publicados'}
+                </div>
+              )}
+            </>
+          )}
+        </main>
+        <FeedbackButton />
+
+        {/* Sidebar Desktop - siempre visible */}
+        {/* Sidebar Desktop - Controlled via Header */}
+        {isDesktop && (
+          <SidebarDesktop
+            adisoAbierto={adisoAbierto}
+            onCerrarAdiso={handleCerrarAdiso}
+            onAnterior={handleAnterior}
+            onSiguiente={handleSiguiente}
+            puedeAnterior={indiceAdisoActual > 0}
+            puedeSiguiente={indiceAdisoActual < adisosFiltrados.length - 1}
+            onPublicar={handlePublicar}
+            onError={(msg) => error(msg)}
+            onSuccess={(msg) => success(msg)}
+            seccionActiva={seccionDesktopActiva}
+            minimizado={isSidebarMinimizado}
+            onMinimizadoChange={setIsSidebarMinimizado}
+            todosLosAdisos={adisosFiltrados}
+          />
         )}
-      </main>
-      <FeedbackButton />
 
-      {/* Sidebar Desktop - siempre visible */}
-      {/* Sidebar Desktop - Controlled via Header */}
-      {isDesktop && (
-        <SidebarDesktop
-          adisoAbierto={adisoAbierto}
-          onCerrarAdiso={handleCerrarAdiso}
-          onAnterior={handleAnterior}
-          onSiguiente={handleSiguiente}
-          puedeAnterior={indiceAdisoActual > 0}
-          puedeSiguiente={indiceAdisoActual < adisosFiltrados.length - 1}
-          onPublicar={handlePublicar}
-          onError={(msg) => error(msg)}
-          onSuccess={(msg) => success(msg)}
-          seccionActiva={seccionDesktopActiva}
-          minimizado={isSidebarMinimizado}
-          onMinimizadoChange={setIsSidebarMinimizado}
-          todosLosAdisos={adisosFiltrados}
+        {/* Left Sidebar (Desktop/Mobile if requested) */}
+        <LeftSidebar
+          isOpen={isLeftSidebarOpen}
+          onClose={() => setIsLeftSidebarOpen(false)}
         />
-      )}
 
-      {/* Left Sidebar (Desktop/Mobile if requested) */}
-      <LeftSidebar
-        isOpen={isLeftSidebarOpen}
-        onClose={() => setIsLeftSidebarOpen(false)}
-      />
+        {/* Navbar Mobile - siempre visible en mobile */}
+        {!isDesktop && (
+          <NavbarMobile
+            seccionActiva={seccionMobileActiva || (adisoAbierto ? 'adiso' : null)}
+            onCambiarSeccion={handleCambiarSeccionMobile}
+            tieneAdisoAbierto={!!adisoAbierto}
+          />
+        )}
 
-      {/* Navbar Mobile - siempre visible en mobile */}
-      {!isDesktop && (
-        <NavbarMobile
-          seccionActiva={seccionMobileActiva || (adisoAbierto ? 'adiso' : null)}
-          onCambiarSeccion={handleCambiarSeccionMobile}
-          tieneAdisoAbierto={!!adisoAbierto}
-        />
-      )}
+        {/* Modal Adiso Mobile - Standalone Slide Up */}
+        {!isDesktop && adisoAbierto && !seccionMobileActiva && (
+          <ModalAdiso
+            adiso={adisoAbierto}
+            onCerrar={handleCerrarAdiso}
+            onAnterior={handleAnterior}
+            onSiguiente={handleSiguiente}
+            puedeAnterior={indiceAdisoActual > 0}
+            puedeSiguiente={indiceAdisoActual < adisosFiltrados.length - 1}
+            onSuccess={(msg) => success(msg)}
+            onError={(msg) => error(msg)}
+            dentroSidebar={false}
+          />
+        )}
 
-      {/* Modal Adiso Mobile - Standalone Slide Up */}
-      {!isDesktop && adisoAbierto && !seccionMobileActiva && (
-        <ModalAdiso
-          adiso={adisoAbierto}
-          onCerrar={handleCerrarAdiso}
-          onAnterior={handleAnterior}
-          onSiguiente={handleSiguiente}
-          puedeAnterior={indiceAdisoActual > 0}
-          puedeSiguiente={indiceAdisoActual < adisosFiltrados.length - 1}
-          onSuccess={(msg) => success(msg)}
-          onError={(msg) => error(msg)}
-          dentroSidebar={false}
-        />
-      )}
+        {/* Modal Mobile Overlay - solo cuando hay sección activa (EXCEPTO ADISO que va standalone) */}
+        {!isDesktop && seccionMobileActiva && seccionMobileActiva !== 'adiso' && (
+          <ModalNavegacionMobile
+            abierto={!!seccionMobileActiva}
+            onCerrar={handleCerrarSeccionMobile}
+            seccionInicial={seccionMobileActiva || undefined}
+            adisoAbierto={adisoAbierto}
+            onCerrarAdiso={handleCerrarAdiso}
+            onAnterior={handleAnterior}
+            onSiguiente={handleSiguiente}
+            puedeAnterior={indiceAdisoActual > 0}
+            puedeSiguiente={indiceAdisoActual < adisosFiltrados.length - 1}
+            onPublicar={handlePublicar}
+            todosLosAdisos={adisosFiltrados}
+            onError={(msg) => error(msg)}
+            onSuccess={(msg) => success(msg)}
+            onCambiarSeccion={handleCambiarSeccionMobile}
+          />
+        )}
 
-      {/* Modal Mobile Overlay - solo cuando hay sección activa (EXCEPTO ADISO que va standalone) */}
-      {!isDesktop && seccionMobileActiva && seccionMobileActiva !== 'adiso' && (
-        <ModalNavegacionMobile
-          abierto={!!seccionMobileActiva}
-          onCerrar={handleCerrarSeccionMobile}
-          seccionInicial={seccionMobileActiva || undefined}
-          adisoAbierto={adisoAbierto}
-          onCerrarAdiso={handleCerrarAdiso}
-          onAnterior={handleAnterior}
-          onSiguiente={handleSiguiente}
-          puedeAnterior={indiceAdisoActual > 0}
-          puedeSiguiente={indiceAdisoActual < adisosFiltrados.length - 1}
-          onPublicar={handlePublicar}
-          todosLosAdisos={adisosFiltrados}
-          onError={(msg) => error(msg)}
-          onSuccess={(msg) => success(msg)}
-          onCambiarSeccion={handleCambiarSeccionMobile}
-        />
-      )}
-
-      <ToastContainer toasts={toasts} removeToast={removeToast} />
-    </div>
+        <ToastContainer toasts={toasts} removeToast={removeToast} />
+      </div>
+    </PullToRefresh>
   );
 }
 
