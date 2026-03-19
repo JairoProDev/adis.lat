@@ -1,39 +1,38 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { getBusinessProfileBySlug, saveBusinessProfile } from '@/lib/business';
 import { BusinessProfile } from '@/types/business';
-import { Adiso } from '@/types';
 import BusinessPublicView from '@/components/business/BusinessPublicView';
 import { useAuth } from '@/hooks/useAuth';
 import { EditorSteps } from '../../mi-negocio/components/EditorSteps';
-import { IconEdit, IconX, IconEye } from '@/components/Icons';
 import { cn } from '@/lib/utils';
 
 import ChatbotGuide from '@/components/business/ChatbotGuide';
 import { ProductEditor } from '@/components/business/ProductEditor';
 import SimpleCatalogAdd from '@/components/business/SimpleCatalogAdd';
 
-import { useToast } from '@/hooks/useToast'; // Add import
+import { useToast } from '@/hooks/useToast';
+import { useBusinessData } from '@/hooks/useBusinessData';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 
-export default function PublicBusinessPage({ params, searchParams }: { params: { slug: string }, searchParams: { [key: string]: string | string[] | undefined } }) {
-    const router = useRouter();
+export default function PublicBusinessPage({
+    params,
+    searchParams,
+}: {
+    params: { slug: string };
+    searchParams: { [key: string]: string | string[] | undefined };
+}) {
     const slug = params.slug;
     const { user } = useAuth();
     const { success } = useToast();
-
-    const [business, setBusiness] = useState<BusinessProfile | null>(null);
-    const [adisos, setAdisos] = useState<Adiso[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { isOnline, justCameOnline } = useNetworkStatus();
 
     // Editing State
     const [isEditing, setIsEditing] = useState(false);
     const [activeStep, setActiveStep] = useState(0);
     const [saving, setSaving] = useState(false);
     const [editingProduct, setEditingProduct] = useState<any>(null);
-    const [catalogProducts, setCatalogProducts] = useState<any[]>([]);
 
     // Modals state
     const [showProductModal, setShowProductModal] = useState(false);
@@ -42,27 +41,41 @@ export default function PublicBusinessPage({ params, searchParams }: { params: {
     // Chatbot State
     const [chatbotMinimized, setChatbotMinimized] = useState(true);
 
-    // Derived owner check
-    const isOwner = Boolean(user?.id && business?.user_id && user.id === business.user_id);
-
+    // Auto-open editor if requested
     useEffect(() => {
-        if (slug) {
-            loadBusinessData();
-        }
-        // Auto-open editor if requested
         if (searchParams?.edit === 'true') {
             setIsEditing(true);
         }
-    }, [slug, searchParams]);
+    }, [searchParams]);
+
+    // ─────────────────────────────────────────────────────────────────────
+    // DATOS CON CACHÉ OFFLINE (el isOwner real se calcula después de cargar)
+    // Usamos una check provisional de isOwner para el hook (se corrige internamente)
+    // ─────────────────────────────────────────────────────────────────────
+    const {
+        business,
+        adisos,
+        catalogProducts,
+        loading,
+        revalidating,
+        fromCache,
+        isStale,
+        reloadCatalog,
+        updateBusiness,
+    } = useBusinessData(slug, false);
+
+    // Derived owner check (necesita que el business ya esté cargado)
+    const isOwner = Boolean(user?.id && business?.user_id && user.id === business.user_id);
 
     // Reload catalog when ownership is confirmed to ensure drafts are visible
     useEffect(() => {
-        if (business?.id) {
-            loadCatalog(business.id);
+        if (business?.id && isOwner && isOnline) {
+            reloadCatalog(business.id);
         }
-    }, [isOwner, business?.id]);
+    }, [isOwner, business?.id, isOnline]);
 
     const trackEvent = async (eventType: string, businessId: string, productId?: string) => {
+        if (!isOnline) return; // No trackear sin internet
         try {
             await supabase!.from('page_analytics').insert({
                 business_profile_id: businessId,
@@ -70,10 +83,10 @@ export default function PublicBusinessPage({ params, searchParams }: { params: {
                 product_id: productId,
                 session_id: getSessionId(),
                 user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
-                referrer: typeof document !== 'undefined' ? document.referrer : ''
+                referrer: typeof document !== 'undefined' ? document.referrer : '',
             });
         } catch (error) {
-            console.error('Analytics error:', error);
+            // Silenciar errores de analytics offline
         }
     };
 
@@ -87,86 +100,93 @@ export default function PublicBusinessPage({ params, searchParams }: { params: {
         return sessionId;
     };
 
-    const loadBusinessData = async () => {
-        try {
-            const profileData = await getBusinessProfileBySlug(slug);
-
-            if (!profileData) {
-                setLoading(false);
-                return;
-            }
-
-            setBusiness(profileData);
-            loadCatalog(profileData.id);
-            trackEvent('page_view', profileData.id);
-
-        } catch (error) {
-            console.error('Error loading business:', error);
-            setLoading(false);
+    // Trackear vista cuando se carga el negocio
+    useEffect(() => {
+        if (business?.id && isOnline) {
+            trackEvent('page_view', business.id);
         }
-    };
-
-    const loadCatalog = async (businessId: string) => {
-        try {
-            let query = supabase!
-                .from('catalog_products')
-                .select('*')
-                .eq('business_profile_id', businessId)
-                // Sort by creation date descending to show new products first
-                .order('created_at', { ascending: false });
-
-            // If not owner, ONLY show published.
-            if (!isOwner) {
-                query = query.eq('status', 'published');
-            }
-
-            const { data: productsData } = await query;
-
-            let mappedAdisos: Adiso[] = [];
-
-            if (productsData) {
-                mappedAdisos = productsData.map((p: any) => ({
-                    id: p.id,
-                    titulo: p.title || '',
-                    descripcion: p.description || '',
-                    precio: p.price,
-                    imagenesUrls: Array.isArray(p.images)
-                        ? p.images.map((img: any) => typeof img === 'string' ? img : img.url)
-                        : [],
-                    imagenUrl: Array.isArray(p.images) && p.images.length > 0
-                        ? (typeof p.images[0] === 'string' ? p.images[0] : p.images[0].url)
-                        : '',
-                    slug: p.id,
-                    categoria: p.category || 'productos',
-                    user_id: business?.user_id || p.business_profile_id,
-                    contacto: business?.contact_phone || '',
-                    ubicacion: business?.contact_address || '',
-                    fechaPublicacion: p.created_at ? new Date(p.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-                    horaPublicacion: p.created_at ? new Date(p.created_at).toLocaleTimeString() : new Date().toLocaleTimeString(),
-                    status: p.status
-                }));
-            }
-            setAdisos(mappedAdisos);
-            setCatalogProducts(productsData || []);
-        } catch (e) {
-            console.error("Error loading catalog:", e);
-        } finally {
-            setLoading(false);
-        }
-    };
+    }, [business?.id, isOnline]);
 
     const handleProductSave = async (updatedProduct: any) => {
         if (business?.id) {
-            await loadCatalog(business.id);
+            await reloadCatalog(business.id);
             success('Producto guardado correctamente');
         }
         setShowProductModal(false);
         setEditingProduct(null);
     };
 
+    // ─── LOADING STATE ────────────────────────────────────
+    // Solo mostramos loading si no tenemos ningún dato (ni caché ni red)
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="w-12 h-12 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin mx-auto mb-4" />
+                    <p className="text-slate-400 font-medium">Cargando...</p>
+                    {!isOnline && (
+                        <p className="text-sm text-amber-500 mt-2">Sin conexión — buscando datos guardados</p>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    // ─── NOT FOUND STATE ──────────────────────────────────
+    if (!business) {
+        return (
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+                <div className="text-center max-w-sm mx-auto p-8">
+                    {!isOnline ? (
+                        <>
+                            <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <svg className="w-8 h-8 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636a9 9 0 010 12.728M5.636 5.636a9 9 0 000 12.728M8.879 8.879a5 5 0 000 7.072m6.242-7.072a5 5 0 010 7.072" />
+                                </svg>
+                            </div>
+                            <h2 className="text-xl font-bold text-slate-800 mb-2">Sin conexión</h2>
+                            <p className="text-slate-500 text-sm">
+                                No hay datos guardados de este negocio. Conéctate a internet para cargarlo por primera vez.
+                            </p>
+                        </>
+                    ) : (
+                        <>
+                            <h2 className="text-xl font-bold text-slate-800 mb-2">Negocio no encontrado</h2>
+                            <p className="text-slate-500 text-sm">No encontramos ningún negocio con este enlace.</p>
+                        </>
+                    )}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-slate-50 relative flex flex-col md:flex-row overflow-x-hidden">
+
+            {/* ─── BANNERS DE ESTADO ──────────────────────────────────────── */}
+
+            {/* Offline banner: datos del caché */}
+            {!isOnline && fromCache && (
+                <div className="fixed top-0 left-0 right-0 z-[200] bg-amber-500 text-white text-center text-sm py-2 px-4 font-medium animate-in slide-in-from-top duration-300">
+                    📴 Sin conexión — mostrando datos guardados
+                    {isStale && <span className="ml-2 text-amber-100 text-xs">(pueden no estar actualizados)</span>}
+                </div>
+            )}
+
+            {/* Online banner: acaba de reconectarse */}
+            {justCameOnline && (
+                <div className="fixed top-0 left-0 right-0 z-[200] bg-green-500 text-white text-center text-sm py-2 px-4 font-medium animate-in slide-in-from-top duration-300">
+                    ✅ Conexión restaurada — actualizando datos...
+                </div>
+            )}
+
+            {/* Revalidating indicator (subtle) */}
+            {revalidating && isOnline && (
+                <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[200] bg-slate-800/90 text-white text-xs py-1.5 px-4 rounded-full backdrop-blur-sm flex items-center gap-2">
+                    <div className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    Actualizando...
+                </div>
+            )}
 
             {/* --- EDITOR SIDEBAR --- */}
             <div className={cn(
@@ -176,18 +196,24 @@ export default function PublicBusinessPage({ params, searchParams }: { params: {
                 {isEditing && business && (
                     <EditorSteps
                         profile={business}
-                        setProfile={setBusiness}
+                        setProfile={(p) => {
+                            if (typeof p === 'function') {
+                                updateBusiness(prev => (p as any)(prev));
+                            } else {
+                                updateBusiness(() => p as BusinessProfile);
+                            }
+                        }}
                         saving={saving}
                         catalogProducts={catalogProducts}
                         activeStep={activeStep}
                         setActiveStep={setActiveStep}
-                        onAddProduct={() => setShowAddProductModal(true)} // Changed to open SimpleCatalogAdd
+                        onAddProduct={() => setShowAddProductModal(true)}
                         editingProduct={editingProduct}
                         setEditingProduct={(product) => {
                             setEditingProduct(product);
                             setShowProductModal(true);
                         }}
-                        onRefreshCatalog={() => business?.id && loadCatalog(business.id)}
+                        onRefreshCatalog={() => business?.id && reloadCatalog(business.id)}
                         onToggleView={() => setIsEditing(false)}
                         isPublished={!!business?.is_published}
                     />
@@ -202,19 +228,18 @@ export default function PublicBusinessPage({ params, searchParams }: { params: {
                 <BusinessPublicView
                     profile={business}
                     adisos={adisos}
-                    editMode={isEditing || isOwner} // Allow inline edits if owner
+                    editMode={isEditing || isOwner}
                     onEditPart={(part) => {
                         setIsEditing(true);
                         if (part === 'logo' || part === 'visual') setActiveStep(1);
                         if (part === 'add-product') {
                             setActiveStep(2);
-                            setShowAddProductModal(true); // Changed to open SimpleCatalogAdd
+                            setShowAddProductModal(true);
                         }
                     }}
                     onEditProduct={(productAdiso) => {
                         setIsEditing(true);
                         setActiveStep(2);
-                        // Find full product data
                         const fullProduct = catalogProducts.find(p => p.id === productAdiso.id);
                         setEditingProduct(fullProduct || productAdiso);
                         setShowProductModal(true);
@@ -228,7 +253,9 @@ export default function PublicBusinessPage({ params, searchParams }: { params: {
                     <>
                         <ChatbotGuide
                             profile={business}
-                            onUpdate={(field, value) => setBusiness(prev => prev ? ({ ...prev, [field]: value }) : null)}
+                            onUpdate={(field, value) =>
+                                updateBusiness(prev => ({ ...prev, [field]: value }))
+                            }
                             onComplete={() => setChatbotMinimized(true)}
                             isMinimized={chatbotMinimized}
                             onToggleMinimize={() => setChatbotMinimized(!chatbotMinimized)}
@@ -273,7 +300,7 @@ export default function PublicBusinessPage({ params, searchParams }: { params: {
                         <SimpleCatalogAdd
                             businessProfileId={business.id}
                             onSuccess={() => {
-                                loadCatalog(business.id);
+                                reloadCatalog(business.id);
                                 setShowAddProductModal(false);
                                 success('Producto añadido correctamente');
                             }}

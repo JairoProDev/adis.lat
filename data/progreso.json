@@ -16,6 +16,39 @@
     "impact": "patch"
   },
   {
+    "version": "c42a0c2",
+    "date": "2026-02-28",
+    "time": "11:48",
+    "type": "ui",
+    "title": "Automatización inteligente del changelog vía git commits",
+    "description": "Actualización del script de sincronización para parsear cuerpos de commit detallados.",
+    "userBenefits": [
+      "Registro de progreso 100% automático y profesional.",
+      "No más \"Mejora automática detectada\", ahora lee tus beneficios reales."
+    ],
+    "technicalDetails": [
+      "Commit Hash: c42a0c2",
+      "Parseo de buffers de git log con delimitadores de commit multilínea.",
+      "Lógica de extracción de secciones via regex y keywords."
+    ],
+    "impact": "minor"
+  },
+  {
+    "version": "e3f9209",
+    "date": "2026-02-28",
+    "time": "11:48",
+    "type": "feature",
+    "title": "Add `progreso.json` to store project progress and version history.",
+    "description": "feat: Add `progreso.json` to store project progress and version history.",
+    "userBenefits": [
+      "Mejoras constantes en la plataforma"
+    ],
+    "technicalDetails": [
+      "Commit Hash: e3f9209"
+    ],
+    "impact": "major"
+  },
+  {
     "version": "148bf95",
     "date": "2026-02-28",
     "time": "11:41",
