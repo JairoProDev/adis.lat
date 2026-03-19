@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { BusinessProfile, SocialLink, BusinessHours } from '@/types/business';
-import { uploadBusinessImage, deleteAllBusinessProducts } from '@/lib/business';
+import { uploadBusinessImage, deleteAllBusinessProducts, deleteCatalogProduct } from '@/lib/business';
 import {
     IconStore, IconPhone, IconClock, IconShare, IconArrowRight, IconCheck,
     IconStar, IconMegaphone, IconEdit, IconMapMarkerAlt, IconEnvelope,
@@ -59,6 +59,8 @@ export function EditorSteps({
 }: EditorStepsProps) {
     const [uploadingImage, setUploadingImage] = useState<string | null>(null);
     const [catalogSearch, setCatalogSearch] = useState('');
+    const [deletingProductId, setDeletingProductId] = useState<string | null>(null);  // ID en proceso de eliminación
+    const [confirmDeleteProduct, setConfirmDeleteProduct] = useState<any | null>(null); // Producto esperando confirmación
 
     const filteredCatalog = catalogProducts.filter((p: any) =>
         (p.title || '').toLowerCase().includes(catalogSearch.toLowerCase()) ||
@@ -68,6 +70,19 @@ export function EditorSteps({
     const handleRefresh = () => {
         if (onRefreshCatalog) onRefreshCatalog();
         else window.location.reload();
+    };
+
+    const handleDeleteProduct = async (product: any) => {
+        setDeletingProductId(product.id);
+        try {
+            const ok = await deleteCatalogProduct(product.id);
+            if (ok) {
+                onRefreshCatalog?.();
+            }
+        } finally {
+            setDeletingProductId(null);
+            setConfirmDeleteProduct(null);
+        }
     };
 
     const handleNext = () => {
@@ -421,6 +436,17 @@ export function EditorSteps({
                                                                         <Link href={`/negocio/${profile.slug}?product=${p.id}`} target="_blank" className="p-1.5 bg-white text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded shadow-sm border border-slate-100">
                                                                             <IconArrowRight size={12} />
                                                                         </Link>
+                                                                        {/* Botón eliminar individual */}
+                                                                        <button
+                                                                            onClick={() => setConfirmDeleteProduct(p)}
+                                                                            disabled={deletingProductId === p.id}
+                                                                            className="p-1.5 bg-white text-red-400 hover:text-red-600 hover:bg-red-50 rounded shadow-sm border border-red-100 transition-colors disabled:opacity-50"
+                                                                            title="Eliminar producto"
+                                                                        >
+                                                                            {deletingProductId === p.id
+                                                                                ? <div className="w-3 h-3 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+                                                                                : <IconTrash size={12} />}
+                                                                        </button>
                                                                     </div>
                                                                 </div>
                                                             ))}
@@ -565,6 +591,72 @@ export function EditorSteps({
             <div className="p-4 border-t border-slate-100 bg-slate-50 text-center text-xs text-slate-400">
                 <p>Todos los cambios se guardan automáticamente</p>
             </div>
+
+            {/* ── Modal Confirmar Eliminación ──────────────────────────── */}
+            {confirmDeleteProduct && (
+                <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+                        {/* Product preview */}
+                        <div className="p-5 flex items-center gap-4 border-b border-slate-100">
+                            <div className="w-16 h-16 rounded-2xl bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-200">
+                                {confirmDeleteProduct.images?.[0]?.url ? (
+                                    <img src={confirmDeleteProduct.images[0].url} className="w-full h-full object-cover" alt="" />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                        <IconBox size={24} />
+                                    </div>
+                                )}
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-0.5">Eliminar producto</p>
+                                <h3 className="font-bold text-slate-800 truncate">{confirmDeleteProduct.title}</h3>
+                                {confirmDeleteProduct.price && (
+                                    <p className="text-sm text-slate-500">S/ {confirmDeleteProduct.price}</p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Warning */}
+                        <div className="px-5 py-4">
+                            <div className="flex items-start gap-3 bg-red-50 rounded-2xl p-4 mb-4">
+                                <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    <IconTrash size={16} className="text-red-500" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-red-800 mb-1">Esta acción es permanente</p>
+                                    <p className="text-xs text-red-600 leading-relaxed">
+                                        El producto se eliminará del catálogo y no podrá recuperarse. Los clientes ya no podrán verlo.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setConfirmDeleteProduct(null)}
+                                    disabled={deletingProductId !== null}
+                                    className="flex-1 py-3 text-sm font-bold rounded-2xl border-2 border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={() => handleDeleteProduct(confirmDeleteProduct)}
+                                    disabled={deletingProductId !== null}
+                                    className="flex-1 py-3 text-sm font-bold rounded-2xl bg-red-500 hover:bg-red-600 text-white transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
+                                >
+                                    {deletingProductId ? (
+                                        <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                                    ) : (
+                                        <>
+                                            <IconTrash size={16} />
+                                            Sí, eliminar
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

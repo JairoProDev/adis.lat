@@ -10,7 +10,7 @@ import {
     IconInstagram, IconFacebook, IconTiktok,
     IconVerified, IconShareAlt, IconGlobe, IconPhone, IconClock, IconChevronDown,
     IconLinkedin, IconYoutube, IconSearch, IconArrowRight, IconHeart,
-    IconFileAlt, IconEdit, IconPlus, IconBox, IconCheck, IconX,
+    IconFileAlt, IconEdit, IconPlus, IconBox, IconCheck, IconX, IconTrash,
     IconGrid, IconList, IconFeed, IconFilter, IconChevronLeft, IconSparkles
 } from '@/components/Icons';
 import BentoCard from '@/components/BentoCard';
@@ -19,6 +19,8 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import Header from '@/components/Header';
 import NavbarMobile from '@/components/NavbarMobile';
+import { deleteCatalogProduct } from '@/lib/business';
+import { useCatalogPDF } from '@/hooks/useCatalogPDF';
 
 // Helper for Social Icons
 const getSocialIcon = (url: string) => {
@@ -177,6 +179,13 @@ export default function BusinessPublicView({
     const [editingField, setEditingField] = useState<string | null>(null);
     const [tempValue, setTempValue] = useState('');
 
+    // Estado para eliminar productos desde la vista del catálogo (solo dueño)
+    const [confirmDeleteAdiso, setConfirmDeleteAdiso] = useState<Adiso | null>(null);
+    const [deletingAdisoId, setDeletingAdisoId] = useState<string | null>(null);
+
+    // PDF Generator
+    const { generatePDF, generating: generatingPDF, progress: pdfProgress } = useCatalogPDF();
+
     const startEditing = (field: string, value: string) => {
         setEditingField(field);
         setTempValue(value || '');
@@ -190,6 +199,28 @@ export default function BusinessPublicView({
     const cancelEditing = () => {
         setEditingField(null);
         setTempValue('');
+    };
+
+    const handleDeleteAdiso = async (adiso: Adiso) => {
+        setDeletingAdisoId(adiso.id);
+        try {
+            // deleteCatalogProduct works with the product id
+            await deleteCatalogProduct(adiso.id);
+            // Remove from local state immediately for instant feedback
+            setFilteredAdisos(prev => prev.filter(a => a.id !== adiso.id));
+        } finally {
+            setDeletingAdisoId(null);
+            setConfirmDeleteAdiso(null);
+        }
+    };
+
+    const handlePDFDownload = async () => {
+        if (!profile) return;
+        try {
+            await generatePDF(profile, filteredAdisos);
+        } catch (e) {
+            console.error('Error al generar PDF:', e);
+        }
     };
 
     // Derived State
@@ -649,12 +680,25 @@ export default function BusinessPublicView({
                                             <IconList size={18} />
                                         </button>
                                         <div className="w-[1px] h-5 bg-slate-200 mx-1" />
+                                        {/* PDF Button mejorado */}
                                         <button
-                                            onClick={() => window.print()}
-                                            className="p-2.5 text-slate-400 hover:text-slate-600"
-                                            title="Descargar PDF"
+                                            onClick={handlePDFDownload}
+                                            disabled={generatingPDF}
+                                            className="p-2.5 text-slate-400 hover:text-slate-600 relative disabled:cursor-wait"
+                                            title="Descargar catálogo en PDF"
                                         >
-                                            <IconFileAlt size={18} />
+                                            {generatingPDF ? (
+                                                <div className="relative">
+                                                    <div className="w-[18px] h-[18px] border-2 border-slate-200 border-t-[var(--brand-color)] rounded-full animate-spin" />
+                                                    {pdfProgress > 0 && (
+                                                        <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[9px] font-bold text-[var(--brand-color)] whitespace-nowrap">
+                                                            {pdfProgress}%
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <IconFileAlt size={18} />
+                                            )}
                                         </button>
                                     </div>
                                 </div>
@@ -729,15 +773,26 @@ export default function BusinessPublicView({
                                                             <span className="text-sm font-bold text-slate-900">{profile.name}</span>
                                                         </div>
                                                         {showEditControls && (
-                                                            <button
-                                                                onClick={() => {
-                                                                    if (onEditProduct) onEditProduct(adiso);
-                                                                    else onEditPart?.('catalog');
-                                                                }}
-                                                                className="text-slate-400 hover:text-[var(--brand-color)]"
-                                                            >
-                                                                <IconEdit size={16} />
-                                                            </button>
+                                                            <div className="flex items-center gap-1">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        if (onEditProduct) onEditProduct(adiso);
+                                                                        else onEditPart?.('catalog');
+                                                                    }}
+                                                                    className="text-slate-400 hover:text-[var(--brand-color)] p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                                                                >
+                                                                    <IconEdit size={16} />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => setConfirmDeleteAdiso(adiso)}
+                                                                    disabled={deletingAdisoId === adiso.id}
+                                                                    className="text-slate-300 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
+                                                                >
+                                                                    {deletingAdisoId === adiso.id
+                                                                        ? <div className="w-4 h-4 border-2 border-red-300 border-t-transparent rounded-full animate-spin" />
+                                                                        : <IconTrash size={14} />}
+                                                                </button>
+                                                            </div>
                                                         )}
                                                     </div>
 
@@ -812,19 +867,34 @@ export default function BusinessPublicView({
                                                                 {adiso.categoria}
                                                             </span>
                                                         )}
-                                                        {/* Edit button - always visible for owner, no hover dependency */}
+                                                        {/* Edit + Delete buttons for owner */}
                                                         {showEditControls && (
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    if (onEditProduct) onEditProduct(adiso);
-                                                                    else onEditPart?.('catalog');
-                                                                }}
-                                                                className="absolute top-2 right-2 p-1.5 bg-white/95 backdrop-blur-sm rounded-lg shadow-md border border-slate-100 hover:bg-[var(--brand-color)] hover:text-white text-slate-600 transition-colors z-10"
-                                                                title="Editar producto"
-                                                            >
-                                                                <IconEdit size={14} />
-                                                            </button>
+                                                            <div className="absolute top-2 right-2 flex gap-1 z-10">
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        if (onEditProduct) onEditProduct(adiso);
+                                                                        else onEditPart?.('catalog');
+                                                                    }}
+                                                                    className="p-1.5 bg-white/95 backdrop-blur-sm rounded-lg shadow-md border border-slate-100 hover:bg-[var(--brand-color)] hover:text-white text-slate-600 transition-colors"
+                                                                    title="Editar producto"
+                                                                >
+                                                                    <IconEdit size={14} />
+                                                                </button>
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setConfirmDeleteAdiso(adiso);
+                                                                    }}
+                                                                    disabled={deletingAdisoId === adiso.id}
+                                                                    className="p-1.5 bg-white/95 backdrop-blur-sm rounded-lg shadow-md border border-red-100 text-red-400 hover:bg-red-500 hover:text-white transition-colors disabled:opacity-50"
+                                                                    title="Eliminar producto"
+                                                                >
+                                                                    {deletingAdisoId === adiso.id
+                                                                        ? <div className="w-3.5 h-3.5 border-2 border-red-300 border-t-transparent rounded-full animate-spin" />
+                                                                        : <IconTrash size={12} />}
+                                                                </button>
+                                                            </div>
                                                         )}
                                                     </div>
                                                     {/* Content */}
@@ -888,15 +958,29 @@ export default function BusinessPublicView({
                                                         </div>
                                                     </div>
                                                     {showEditControls && (
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                if (onEditProduct) onEditProduct(adiso);
-                                                            }}
-                                                            className="absolute top-2 right-2 p-1.5 bg-slate-100 text-slate-600 rounded-lg hover:bg-[var(--brand-color)] hover:text-white transition-colors"
-                                                        >
-                                                            <IconEdit size={16} />
-                                                        </button>
+                                                        <div className="absolute top-2 right-2 flex gap-1">
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    if (onEditProduct) onEditProduct(adiso);
+                                                                }}
+                                                                className="p-1.5 bg-slate-100 text-slate-600 rounded-lg hover:bg-[var(--brand-color)] hover:text-white transition-colors"
+                                                            >
+                                                                <IconEdit size={16} />
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setConfirmDeleteAdiso(adiso);
+                                                                }}
+                                                                disabled={deletingAdisoId === adiso.id}
+                                                                className="p-1.5 bg-red-50 text-red-400 rounded-lg hover:bg-red-500 hover:text-white transition-colors disabled:opacity-50"
+                                                            >
+                                                                {deletingAdisoId === adiso.id
+                                                                    ? <div className="w-4 h-4 border-2 border-red-300 border-t-transparent rounded-full animate-spin" />
+                                                                    : <IconTrash size={14} />}
+                                                            </button>
+                                                        </div>
                                                     )}
                                                 </div>
                                             )
@@ -1011,9 +1095,79 @@ export default function BusinessPublicView({
             </div >
 
             {/* Branding Footer */}
-            < div className="py-8 text-center text-xs text-[var(--text-tertiary)] print:hidden" >
+            <div className="py-8 text-center text-xs text-[var(--text-tertiary)] print:hidden" >
                 <p>Hecho con <span className="font-bold text-[var(--brand-blue)]">Buscadis Store</span></p>
-            </div >
+            </div>
+
+            {/* ── Modal de Confirmar Eliminación (desde catálogo en vivo) ── */}
+            {confirmDeleteAdiso && (
+                <div className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 print:hidden">
+                    <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+                        {/* Product preview */}
+                        <div className="p-5 flex items-center gap-4 border-b border-slate-100">
+                            <div className="w-16 h-16 rounded-2xl bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-200">
+                                {confirmDeleteAdiso.imagenesUrls?.[0] || confirmDeleteAdiso.imagenUrl ? (
+                                    <img
+                                        src={confirmDeleteAdiso.imagenesUrls?.[0] || confirmDeleteAdiso.imagenUrl || ''}
+                                        className="w-full h-full object-cover"
+                                        alt=""
+                                    />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                        <IconBox size={24} />
+                                    </div>
+                                )}
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-xs font-bold text-red-400 uppercase tracking-wide mb-0.5">Eliminar del catálogo</p>
+                                <h3 className="font-bold text-slate-800 truncate text-base">{confirmDeleteAdiso.titulo}</h3>
+                                {confirmDeleteAdiso.precio && (
+                                    <p className="text-sm font-semibold text-slate-500">S/ {confirmDeleteAdiso.precio}</p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="px-5 py-4">
+                            <div className="flex items-start gap-3 bg-red-50 rounded-2xl p-4 mb-4 border border-red-100">
+                                <div className="w-9 h-9 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <IconTrash size={18} className="text-red-500" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-red-800 mb-1">Esta acción no se puede deshacer</p>
+                                    <p className="text-xs text-red-600 leading-relaxed">
+                                        El producto desaparecerá del catálogo inmediatamente.
+                                        Los clientes ya no podrán verlo ni contactarte por él.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setConfirmDeleteAdiso(null)}
+                                    disabled={deletingAdisoId !== null}
+                                    className="flex-1 py-3 text-sm font-bold rounded-2xl border-2 border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={() => handleDeleteAdiso(confirmDeleteAdiso)}
+                                    disabled={deletingAdisoId !== null}
+                                    className="flex-1 py-3 text-sm font-bold rounded-2xl bg-red-500 hover:bg-red-600 text-white transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2 shadow-lg shadow-red-200"
+                                >
+                                    {deletingAdisoId ? (
+                                        <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                                    ) : (
+                                        <>
+                                            <IconTrash size={16} />
+                                            Sí, eliminar
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* --- PRINTABLE CATALOG (Hidden on Screen) --- */}
             < div className="printable-catalog hidden w-full bg-white p-8" >

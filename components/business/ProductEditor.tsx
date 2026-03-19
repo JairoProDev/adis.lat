@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { IconBox, IconImage, IconTrash, IconCheck, IconX, IconEye, IconSparkles, IconZap } from '@/components/Icons';
-import { uploadProductImage, updateCatalogProduct, createCatalogProduct } from '@/lib/business';
+import { uploadProductImage, updateCatalogProduct, createCatalogProduct, deleteCatalogProduct } from '@/lib/business';
 import { useToast } from '@/hooks/useToast';
 import { supabase } from '@/lib/supabase';
 
@@ -20,6 +20,7 @@ interface ProductEditorProps {
     userId: string;
     onSave: (product: any) => void;
     onCancel: () => void;
+    onDelete?: (productId: string) => void; // Callback al eliminar
     adisos?: Adiso[]; // Added for duplicate check
 }
 
@@ -29,8 +30,10 @@ const getImageUrl = (img: any): string => {
     return img?.url || '';
 };
 
-export function ProductEditor({ product, businessProfileId, userId, onSave, onCancel, adisos = [] }: ProductEditorProps) {
+export function ProductEditor({ product, businessProfileId, userId, onSave, onCancel, onDelete, adisos = [] }: ProductEditorProps) {
     const [loading, setLoading] = useState(false);
+    const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm'>('idle'); // 2-step delete
+    const [deleting, setDeleting] = useState(false);
     const { success, error } = useToast();
 
     const initialFormData = {
@@ -590,30 +593,93 @@ export function ProductEditor({ product, businessProfileId, userId, onSave, onCa
             </div>
 
             {/* ── Footer actions ───────────────────────────────────────────── */}
-            <div className="flex items-center gap-3 px-4 py-3 border-t" style={{ borderColor: 'var(--border-color)' }}>
-                <button
-                    onClick={handleCancel}
-                    disabled={loading}
-                    className="flex-1 py-2.5 text-sm font-bold rounded-xl border-2 transition-colors"
-                    style={{ borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}
-                >
-                    Cancelar
-                </button>
-                <button
-                    onClick={handleSave}
-                    disabled={loading || !formData.title.trim()}
-                    className="flex-1 py-2.5 text-sm font-bold rounded-xl text-white flex items-center justify-center gap-2 transition-all disabled:opacity-50"
-                    style={{ backgroundColor: 'var(--brand-blue)' }}
-                >
-                    {loading ? (
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                        <>
-                            <IconCheck size={16} />
-                            {product?.id ? 'Guardar cambios' : 'Crear producto'}
-                        </>
-                    )}
-                </button>
+            <div className="border-t" style={{ borderColor: 'var(--border-color)' }}>
+
+                {/* Zona de eliminar — solo al editar un producto existente */}
+                {product?.id && (
+                    <div className={`px-4 py-2.5 transition-all duration-200 ${
+                        deleteStep === 'confirm'
+                            ? 'bg-red-50 border-b border-red-100'
+                            : 'border-b border-slate-50'
+                    }`}>
+                        {deleteStep === 'idle' ? (
+                            <button
+                                onClick={() => setDeleteStep('confirm')}
+                                disabled={loading || deleting}
+                                className="flex items-center gap-1.5 text-xs font-bold text-red-400 hover:text-red-600 transition-colors disabled:opacity-40"
+                            >
+                                <IconTrash size={13} />
+                                Eliminar este producto
+                            </button>
+                        ) : (
+                            <div className="flex items-center gap-3">
+                                <span className="text-xs font-bold text-red-600 flex items-center gap-1">
+                                    <IconX size={12} /> ¿Eliminar permanentemente?
+                                </span>
+                                <div className="flex items-center gap-2 ml-auto">
+                                    <button
+                                        onClick={() => setDeleteStep('idle')}
+                                        disabled={deleting}
+                                        className="text-xs px-2.5 py-1 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 transition-colors disabled:opacity-50"
+                                    >
+                                        No
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            setDeleting(true);
+                                            try {
+                                                const ok = await deleteCatalogProduct(product.id);
+                                                if (ok) {
+                                                    success('Producto eliminado');
+                                                    onDelete?.(product.id);
+                                                    onCancel();
+                                                } else {
+                                                    error('Error al eliminar');
+                                                    setDeleteStep('idle');
+                                                }
+                                            } finally {
+                                                setDeleting(false);
+                                            }
+                                        }}
+                                        disabled={deleting}
+                                        className="text-xs px-2.5 py-1 rounded-lg bg-red-500 text-white font-bold hover:bg-red-600 transition-colors disabled:opacity-70 flex items-center gap-1"
+                                    >
+                                        {deleting
+                                            ? <div className="w-3 h-3 border border-white/50 border-t-white rounded-full animate-spin" />
+                                            : <><IconTrash size={10} /> Sí, eliminar</>
+                                        }
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                <div className="flex items-center gap-3 px-4 py-3">
+                    <button
+                        onClick={handleCancel}
+                        disabled={loading}
+                        className="flex-1 py-2.5 text-sm font-bold rounded-xl border-2 transition-colors"
+                        style={{ borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        onClick={handleSave}
+                        disabled={loading || !formData.title.trim()}
+                        className="flex-1 py-2.5 text-sm font-bold rounded-xl text-white flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                        style={{ backgroundColor: 'var(--brand-blue)' }}
+                    >
+                        {loading ? (
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                            <>
+                                <IconCheck size={16} />
+                                {product?.id ? 'Guardar cambios' : 'Crear producto'}
+                            </>
+                        )}
+                    </button>
+                </div>
             </div>
         </div>
     );
