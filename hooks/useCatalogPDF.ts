@@ -8,7 +8,7 @@
  * Soporta múltiples páginas, imágenes, logo y toda la info del negocio.
  */
 
-import { useState, useCall3back } from 'react';
+import { useState, useCallback } from 'react';
 import { BusinessProfile } from '@/types/business';
 import { Adiso } from '@/types';
 

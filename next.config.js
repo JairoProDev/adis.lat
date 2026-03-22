@@ -49,10 +49,17 @@ const nextConfig = {
   webpack: (config, { isServer }) => {
     // Si estamos en el cliente, ignoramos onnxruntime-node
     if (!isServer) {
-      config.resolve.alias = {
-        ...config.resolve.alias,
-        'onnxruntime-node': false,
-      };
+        config.resolve.alias = {
+            ...config.resolve.alias,
+            'onnxruntime-node': false,
+        };
+    } else {
+        // En el servidor, ignoramos onnxruntime-web y sus sub-rutas (como webgpu)
+        config.resolve.alias = {
+            ...config.resolve.alias,
+            'onnxruntime-web': false,
+            'onnxruntime-web/webgpu': false,
+        };
     }
 
     // Manejo de archivos .mjs para evitar errores de import.meta en algunos entornos
