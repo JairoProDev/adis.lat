@@ -166,36 +166,6 @@ export default function CatalogPage() {
 
     // ── data loading ────────────────────────────────────────────────────────
 
-    useEffect(() => { loadBusinessProfile(); }, []);
-
-    useEffect(() => {
-        if (filterOptions.categories.length === 0 && products.length > 0) {
-            const opts = getFilterOptions(products);
-            setFilterOptions(opts as any);
-        }
-    }, [products]);
-
-    const loadBusinessProfile = async () => {
-        try {
-            if (!supabase) throw new Error('Supabase no configurado');
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) { router.push('/auth/login'); return; }
-
-            const { data: profile, error: profileError } = await supabase
-                .from('business_profiles')
-                .select('id')
-                .eq('user_id', user.id)
-                .maybeSingle();
-
-            if (profileError || !profile) { router.push('/mi-negocio'); return; }
-
-            setUserId(user.id);
-            setBusinessProfileId(profile.id);
-            await loadProducts(profile.id);
-        } catch (err: any) {
-            showError('Error al cargar perfil: ' + err.message);
-        }
-    };
 
     const loadProducts = useCallback(async (profileId?: string) => {
         const pid = profileId || businessProfileId;
@@ -218,7 +188,38 @@ export default function CatalogPage() {
         } finally {
             setLoading(false);
         }
-    }, [businessProfileId]);
+    }, [businessProfileId, showError]);
+
+    const loadBusinessProfile = useCallback(async () => {
+        try {
+            if (!supabase) throw new Error('Supabase no configurado');
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) { router.push('/auth/login'); return; }
+
+            const { data: profile, error: profileError } = await supabase
+                .from('business_profiles')
+                .select('id')
+                .eq('user_id', user.id)
+                .maybeSingle();
+
+            if (profileError || !profile) { router.push('/mi-negocio'); return; }
+
+            setUserId(user.id);
+            setBusinessProfileId(profile.id);
+            await loadProducts(profile.id);
+        } catch (err: any) {
+            showError('Error al cargar perfil: ' + err.message);
+        }
+    }, [router, showError, loadProducts]);
+
+    useEffect(() => { loadBusinessProfile(); }, [loadBusinessProfile]);
+
+    useEffect(() => {
+        if (filterOptions.categories.length === 0 && products.length > 0) {
+            const opts = getFilterOptions(products);
+            setFilterOptions(opts as any);
+        }
+    }, [products, filterOptions.categories.length]);
 
     // ── batch operations ────────────────────────────────────────────────────
 

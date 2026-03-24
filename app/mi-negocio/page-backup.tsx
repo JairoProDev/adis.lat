@@ -227,7 +227,7 @@ function BusinessBuilderPageContent() {
         };
 
         autoSave();
-    }, [debouncedProfile, user, profile.id]);
+    }, [debouncedProfile, user, profile.id, profileLoading, lastSavedProfile]);
 
     const handleCopyLink = () => {
         if (!profile.slug) return;

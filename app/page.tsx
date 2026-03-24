@@ -85,6 +85,9 @@ import type { SeccionSidebar } from '@/components/SidebarDesktop';
 
 type SeccionMobile = 'adiso' | 'mapa' | 'publicar' | 'chatbot' | 'gratuitos';
 
+// Expresión regular profesional para limpiar datos de prueba residuales
+const TEST_REGEX = /toyota test|test adiso|test anuncio/i;
+
 function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -103,8 +106,6 @@ function HomeContent() {
   const [categoriaFiltro, setCategoriaFiltro] = useState<Categoria | 'todos'>(categoriaUrl && ['empleos', 'inmuebles', 'vehiculos', 'servicios', 'productos', 'eventos', 'negocios', 'comunidad'].includes(categoriaUrl) ? categoriaUrl : 'todos');
   const [ordenamiento, setOrdenamiento] = useState<TipoOrdenamiento>('recientes');
 
-  // Expresión regular profesional para limpiar datos de prueba residuales
-  const TEST_REGEX = /toyota test|test adiso|test anuncio/i;
 
   const [filtroUbicacion, setFiltroUbicacion] = useState<{
     departamento?: string;
@@ -287,7 +288,7 @@ function HomeContent() {
     };
 
     cargarTodo();
-  }, []);
+  }, [adisoId]);
 
   // Manejar cambios en adisoId cuando ya está cargado (solo actualizar modal, no recargar página)
   useEffect(() => {
@@ -487,7 +488,7 @@ function HomeContent() {
 
 
     setAdisosFiltrados(filtradosOrdenados);
-  }, [busquedaDebounced, categoriaFiltro, ordenamiento, adisos, filtroUbicacion, profile]);
+  }, [busquedaDebounced, categoriaFiltro, ordenamiento, adisos, filtroUbicacion, profile, user?.id]);
 
   // Resetear visibilidad local y estado de paginación SOLO cuando cambian los filtros principales
   // (Esto evita resetear la página actual cuando se cargan más adisos en el mismo filtro)
@@ -585,7 +586,7 @@ function HomeContent() {
 
   const { registrarOpener, desregistrarOpener } = useNavigation();
 
-  const handleAbrirAdiso = (adiso: Adiso) => {
+  const handleAbrirAdiso = useCallback((adiso: Adiso) => {
     const indice = adisosFiltrados.findIndex(a => a.id === adiso.id);
     setIndiceAdisoActual(indice >= 0 ? indice : 0);
     setAdisoAbierto(adiso);
@@ -606,7 +607,7 @@ function HomeContent() {
     const params = new URLSearchParams(searchParams.toString());
     params.set('adiso', adiso.id);
     router.replace(`/?${params.toString()}`, { scroll: false });
-  };
+  }, [adisosFiltrados, isDesktop, router, searchParams]);
 
   // Registrar el manejador de apertura para componentes globales (como el Chatbot)
   useEffect(() => {
@@ -627,7 +628,7 @@ function HomeContent() {
     return () => {
       desregistrarOpener();
     };
-  }, [adisos, registrarOpener, desregistrarOpener, router]);
+  }, [adisos, registrarOpener, desregistrarOpener, router, handleAbrirAdiso]);
 
   const handleCambiarSeccionMobile = (seccion: SeccionSidebar) => {
     // Si selecciona la misma sección que está activa, cerrarla (toggle)
@@ -771,7 +772,7 @@ function HomeContent() {
     } finally {
       setCargandoMas(false);
     }
-  }, [cargandoMas, hayMasAdisos, adisos.length, paginaActual, visibleCount, adisosFiltrados.length]);
+  }, [cargandoMas, hayMasAdisos, adisos, paginaActual, visibleCount, adisosFiltrados.length, busquedaDebounced, categoriaFiltro]);
 
   // Usar hook profesional para infinite scroll
   const { sentinelRef } = useInfiniteScroll({
@@ -831,7 +832,7 @@ function HomeContent() {
         }
       }
     }
-  }, [adisoAbierto?.id, indiceAdisoActual, adisosFiltrados]);
+  }, [adisoAbierto, indiceAdisoActual, adisosFiltrados]);
 
   // Structured data para SEO - usar URL base consistente
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://buscadis.com';

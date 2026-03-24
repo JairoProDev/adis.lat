@@ -35,8 +35,8 @@ export default function SelectorUbicacion({
   const [error, setError] = useState<string | null>(null);
 
   const departamentos = getDepartamentos();
-  const provincias = departamento ? getProvincias(departamento) : [];
-  const distritos = (departamento && provincia) ? getDistritos(departamento, provincia) : [];
+  const provincias = React.useMemo(() => departamento ? getProvincias(departamento) : [], [departamento]);
+  const distritos = React.useMemo(() => (departamento && provincia) ? getDistritos(departamento, provincia) : [], [departamento, provincia]);
 
   // Resetear provincia y distrito cuando cambia el departamento
   useEffect(() => {

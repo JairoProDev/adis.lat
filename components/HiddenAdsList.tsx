@@ -33,13 +33,8 @@ export default function HiddenAdsList({ abierto, onCerrar }: HiddenAdsListProps)
     const [adisoSeleccionado, setAdisoSeleccionado] = useState<Adiso | null>(null);
     const { success, error } = useToast();
 
-    useEffect(() => {
-        if (abierto && user?.id) {
-            cargarOcultos();
-        }
-    }, [abierto, user?.id]);
 
-    const cargarOcultos = async () => {
+    const cargarOcultos = React.useCallback(async () => {
         if (!user?.id) return;
 
         setCargando(true);
@@ -51,7 +46,13 @@ export default function HiddenAdsList({ abierto, onCerrar }: HiddenAdsListProps)
         } finally {
             setCargando(false);
         }
-    };
+    }, [user?.id]);
+
+    useEffect(() => {
+        if (abierto && user?.id) {
+            cargarOcultos();
+        }
+    }, [abierto, user?.id, cargarOcultos]);
 
     const handleRestaurar = async (adisoId: string) => {
         if (!user?.id) return;

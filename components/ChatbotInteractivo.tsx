@@ -390,7 +390,7 @@ export default function ChatbotInteractivo({ onPublicar, onError, onSuccess, onM
             // Remove sensitive or too large objects before saving if needed, but for now it's fine
             // We should filter out components as they can't be serialized
             const saveableMensajes = mensajes.map(m => {
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                // eslint-disable-next-line no-unused-vars
                 const { component, ...rest } = m;
                 return rest;
             });

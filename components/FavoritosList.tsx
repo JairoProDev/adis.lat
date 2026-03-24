@@ -33,13 +33,8 @@ export default function FavoritosList({ abierto, onCerrar }: FavoritosListProps)
   const [cargando, setCargando] = useState(false);
   const [adisoSeleccionado, setAdisoSeleccionado] = useState<Adiso | null>(null);
 
-  useEffect(() => {
-    if (abierto && user?.id) {
-      cargarFavoritos();
-    }
-  }, [abierto, user?.id]);
 
-  const cargarFavoritos = async () => {
+  const cargarFavoritos = React.useCallback(async () => {
     if (!user?.id) return;
 
     setCargando(true);
@@ -67,7 +62,13 @@ export default function FavoritosList({ abierto, onCerrar }: FavoritosListProps)
     } finally {
       setCargando(false);
     }
-  };
+  }, [user, loadFavorites, favoritosIds]);
+
+  useEffect(() => {
+    if (abierto && user?.id) {
+      cargarFavoritos();
+    }
+  }, [abierto, user?.id, cargarFavoritos]);
 
   const handleEliminarFavorito = async (adisoId: string) => {
     if (!user?.id) return;

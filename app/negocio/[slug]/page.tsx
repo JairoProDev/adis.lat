@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { BusinessProfile } from '@/types/business';
 import BusinessPublicView from '@/components/business/BusinessPublicView';
@@ -72,9 +72,9 @@ export default function PublicBusinessPage({
         if (business?.id && isOwner && isOnline) {
             reloadCatalog(business.id);
         }
-    }, [isOwner, business?.id, isOnline]);
+    }, [isOwner, business?.id, isOnline, reloadCatalog]);
 
-    const trackEvent = async (eventType: string, businessId: string, productId?: string) => {
+    const trackEvent = useCallback(async (eventType: string, businessId: string, productId?: string) => {
         if (!isOnline) return; // No trackear sin internet
         try {
             await supabase!.from('page_analytics').insert({
@@ -88,7 +88,7 @@ export default function PublicBusinessPage({
         } catch (error) {
             // Silenciar errores de analytics offline
         }
-    };
+    }, [isOnline]);
 
     const getSessionId = () => {
         if (typeof sessionStorage === 'undefined') return 'ssr-session';
@@ -105,7 +105,7 @@ export default function PublicBusinessPage({
         if (business?.id && isOnline) {
             trackEvent('page_view', business.id);
         }
-    }, [business?.id, isOnline]);
+    }, [business?.id, isOnline, trackEvent]);
 
     const handleProductSave = async (updatedProduct: any) => {
         if (business?.id) {

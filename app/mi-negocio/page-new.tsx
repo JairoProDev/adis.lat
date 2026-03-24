@@ -7,7 +7,7 @@
 
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { createBusinessProfile, getBusinessProfile, updateBusinessProfile } from '@/lib/business';
@@ -58,26 +58,8 @@ function BusinessBuilderPageContent() {
 
     const debouncedProfile = useDebounce(profile, 1000);
 
-    // Load profile on mount
-    useEffect(() => {
-        if (authLoading) return;
 
-        if (!user) {
-            setShowAuthModal(true);
-            setProfileLoading(false);
-            return;
-        }
-
-        loadProfile();
-    }, [user, authLoading]);
-
-    // Auto-save on debounced profile change
-    useEffect(() => {
-        if (!profile.id || profileLoading) return;
-        handleSave(false);
-    }, [debouncedProfile]);
-
-    const loadProfile = async () => {
+    const loadProfile = useCallback(async () => {
         if (!user) return;
 
         try {
@@ -100,9 +82,9 @@ function BusinessBuilderPageContent() {
         } finally {
             setProfileLoading(false);
         }
-    };
+    }, [user, error]);
 
-    const handleSave = async (showNotification = true) => {
+    const handleSave = useCallback(async (showNotification = true) => {
         if (!user || !profile.name) return;
 
         try {
@@ -133,7 +115,25 @@ function BusinessBuilderPageContent() {
         } finally {
             setSaving(false);
         }
-    };
+    }, [user, profile, success, error]);
+
+    useEffect(() => {
+        if (authLoading) return;
+
+        if (!user) {
+            setShowAuthModal(true);
+            setProfileLoading(false);
+            return;
+        }
+
+        loadProfile();
+    }, [user, authLoading, loadProfile]);
+
+    // Auto-save on debounced profile change
+    useEffect(() => {
+        if (!profile.id || profileLoading) return;
+        handleSave(false);
+    }, [debouncedProfile, profile.id, profileLoading, handleSave]);
 
     const handleChatbotUpdate = (field: keyof BusinessProfile, value: any) => {
         setProfile(prev => ({ ...prev, [field]: value }));

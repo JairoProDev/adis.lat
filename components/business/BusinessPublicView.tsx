@@ -763,7 +763,7 @@ export default function BusinessPublicView({
                                                         <div className="flex items-center gap-2">
                                                             <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-100 relative">
                                                                 {profile.logo_url ? (
-                                                                    <img src={profile.logo_url} alt={profile.name} className="w-full h-full object-cover" />
+                                                                    <img src={profile.logo_url} alt={profile.name || "Logo"} className="w-full h-full object-cover" />
                                                                 ) : (
                                                                     <div className="w-full h-full flex items-center justify-center text-xs font-bold text-slate-300">
                                                                         {profile.name?.substring(0, 1) || 'N'}
@@ -937,7 +937,7 @@ export default function BusinessPublicView({
                                                         {adiso.imagenUrl || adiso.imagenesUrls?.[0] ? (
                                                             <img
                                                                 src={adiso.imagenesUrls?.[0] || adiso.imagenUrl || ''}
-                                                                alt={adiso.titulo}
+                                                                alt={adiso.titulo || "Producto"}
                                                                 className="w-full h-full object-contain"
                                                                 loading="lazy"
                                                             />
@@ -1110,7 +1110,7 @@ export default function BusinessPublicView({
                                     <img
                                         src={confirmDeleteAdiso.imagenesUrls?.[0] || confirmDeleteAdiso.imagenUrl || ''}
                                         className="w-full h-full object-cover"
-                                        alt=""
+                                        alt={confirmDeleteAdiso.titulo || "Producto"}
                                     />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-slate-300">
@@ -1198,7 +1198,7 @@ function PrintableCatalog({ profile, adisos }: { profile: Partial<BusinessProfil
             <div className="flex items-center justify-between border-b-2 border-black pb-6 mb-8">
                 <div className="flex items-center gap-6">
                     {profile.logo_url && (
-                        <img src={profile.logo_url} alt="Logo" className="w-24 h-24 object-cover rounded-xl border border-gray-200" />
+                        <img src={profile.logo_url} alt={profile.name || "Logo"} className="w-24 h-24 object-cover rounded-xl border border-gray-200" />
                     )}
                     <div>
                         <h1 className="text-4xl font-black mb-2">{profile.name}</h1>
@@ -1221,7 +1221,7 @@ function PrintableCatalog({ profile, adisos }: { profile: Partial<BusinessProfil
                     <div key={product.id} className="border border-gray-200 rounded-lg p-3 break-inside-avoid page-break-inside-avoid">
                         <div className="w-full h-40 bg-gray-100 rounded-md mb-3 overflow-hidden relative">
                             {product.imagenUrl ? (
-                                <img src={product.imagenUrl} className="w-full h-full object-cover" />
+                                <img src={product.imagenUrl} className="w-full h-full object-cover" alt={product.titulo || "Producto"} />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center text-gray-300 font-bold text-xs uppercase">Sin Foto</div>
                             )}

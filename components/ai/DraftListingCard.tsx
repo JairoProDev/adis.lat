@@ -111,7 +111,7 @@ export function DraftListingCard({
             color: 'var(--text-secondary)',
             marginBottom: '20px'
           }}>
-            Tu aviso "{editedData.titulo}" ya está visible para miles de usuarios.
+            Tu aviso &quot;{editedData.titulo}&quot; ya está visible para miles de usuarios.
           </p>
           <button
             onClick={() => window.open('/mis-avisos', '_blank')}

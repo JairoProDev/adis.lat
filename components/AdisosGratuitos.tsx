@@ -55,7 +55,7 @@ export default function AdisosGratuitos({ onPublicarGratuito, todosLosAdisos = [
   // Cargar adisos solo una vez cuando el componente se monta por primera vez
   useEffect(() => {
     cargarAdisos();
-  }, []); // Solo se ejecuta una vez al montar
+  }, [cargarAdisos]); // Solo se ejecuta una vez al montar
 
   // Función para parsear fecha de adiso de paga
   const parsearFechaPaga = (adiso: Adiso): number => {
@@ -125,7 +125,6 @@ export default function AdisosGratuitos({ onPublicarGratuito, todosLosAdisos = [
     setPublicando(true);
     setFormData({ categoria: 'empleos', titulo: '', contacto: '' });
     setMostrarFormulario(false);
-
     try {
       // Llamada API en background
       const nuevoAdiso = await createAdisoGratuito(datosParaEnviar);

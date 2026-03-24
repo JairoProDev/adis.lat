@@ -270,7 +270,7 @@ export function EditorSteps({
                                                                     <span className="text-[10px] font-bold text-blue-500">Subiendo...</span>
                                                                 </div>
                                                             ) : (previews.logo || profile.logo_url) ? (
-                                                                <img src={previews.logo || profile.logo_url} className="w-full h-full object-cover" />
+                                                                <img src={previews.logo || profile.logo_url} alt="Logo" className="w-full h-full object-cover" />
                                                             ) : (
                                                                 <div className="text-center p-2">
                                                                     <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-2 text-slate-400">
@@ -297,7 +297,7 @@ export function EditorSteps({
                                                                     <span className="text-[10px] font-bold text-purple-500">Subiendo...</span>
                                                                 </div>
                                                             ) : (previews.banner || profile.banner_url) ? (
-                                                                <img src={previews.banner || profile.banner_url} className="w-full h-full object-cover" />
+                                                                <img src={previews.banner || profile.banner_url} alt="Banner" className="w-full h-full object-cover" />
                                                             ) : (
                                                                 <div className="text-center p-2">
                                                                     <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-2 text-slate-400">
@@ -409,7 +409,7 @@ export function EditorSteps({
                                                                 <div key={p.id} className="flex items-center gap-3 p-2 bg-blue-50/50 rounded-lg border border-blue-100/50 group">
                                                                     <div className="w-10 h-10 rounded bg-white overflow-hidden flex-shrink-0 border border-blue-100 relative">
                                                                         {p.images?.[0]?.url ? (
-                                                                            <img src={p.images[0].url} className="w-full h-full object-cover" />
+                                                                            <img src={p.images[0].url} alt={p.title} className="w-full h-full object-cover" />
                                                                         ) : (
                                                                             <div className="w-full h-full flex items-center justify-center text-blue-200">
                                                                                 <IconBox size={16} />
@@ -600,7 +600,7 @@ export function EditorSteps({
                         <div className="p-5 flex items-center gap-4 border-b border-slate-100">
                             <div className="w-16 h-16 rounded-2xl bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-200">
                                 {confirmDeleteProduct.images?.[0]?.url ? (
-                                    <img src={confirmDeleteProduct.images[0].url} className="w-full h-full object-cover" alt="" />
+                                    <img src={confirmDeleteProduct.images[0].url} className="w-full h-full object-cover" alt={confirmDeleteProduct.title} />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-slate-300">
                                         <IconBox size={24} />

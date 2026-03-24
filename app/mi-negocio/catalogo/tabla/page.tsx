@@ -11,7 +11,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     IconPlus, IconGrid, IconList, IconSearch, IconFilter,
@@ -58,41 +58,7 @@ export default function CatalogTablePage() {
         archived: 0
     });
 
-    useEffect(() => {
-        fetchBusinessProfile();
-    }, []);
-
-    useEffect(() => {
-        if (businessProfileId) {
-            fetchProducts();
-        }
-    }, [businessProfileId]);
-
-    useEffect(() => {
-        filterProducts();
-    }, [products, searchQuery, statusFilter, categoryFilter]);
-
-    const fetchBusinessProfile = async () => {
-        try {
-            if (!supabase) throw new Error('Supabase no está configurado');
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) throw new Error('Usuario no autenticado');
-
-            const { data: profile, error: profileError } = await supabase
-                .from('business_profiles')
-                .select('id')
-                .eq('user_id', user.id)
-                .single();
-
-            if (profileError) throw profileError;
-            setUserId(user.id);
-            setBusinessProfileId(profile.id);
-        } catch (err: any) {
-            showError('Error al cargar perfil: ' + err.message);
-        }
-    };
-
-    const fetchProducts = async () => {
+    const fetchProducts = useCallback(async () => {
         try {
             setLoading(true);
 
@@ -124,9 +90,29 @@ export default function CatalogTablePage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [businessProfileId, showError]);
 
-    const filterProducts = () => {
+    const fetchBusinessProfile = useCallback(async () => {
+        try {
+            if (!supabase) throw new Error('Supabase no está configurado');
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error('Usuario no autenticado');
+
+            const { data: profile, error: profileError } = await supabase
+                .from('business_profiles')
+                .select('id')
+                .eq('user_id', user.id)
+                .single();
+
+            if (profileError) throw profileError;
+            setUserId(user.id);
+            setBusinessProfileId(profile.id);
+        } catch (err: any) {
+            showError('Error al cargar perfil: ' + err.message);
+        }
+    }, [showError]);
+
+    const filterProducts = useCallback(() => {
         let filtered = [...products];
 
         // Search
@@ -151,7 +137,22 @@ export default function CatalogTablePage() {
         }
 
         setFilteredProducts(filtered);
-    };
+    }, [products, searchQuery, statusFilter, categoryFilter]);
+
+    useEffect(() => {
+        fetchBusinessProfile();
+    }, [fetchBusinessProfile]);
+
+    useEffect(() => {
+        if (businessProfileId) {
+            fetchProducts();
+        }
+    }, [businessProfileId, fetchProducts]);
+
+    useEffect(() => {
+        filterProducts();
+    }, [filterProducts]);
+
 
     const handleSelectAll = () => {
         if (selectedProducts.size === filteredProducts.length) {

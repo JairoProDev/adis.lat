@@ -119,30 +119,8 @@ function BusinessBuilderPageContent() {
         setEditingProduct(null);
     };
 
-    // Load profile on mount
-    useEffect(() => {
-        if (authLoading) return;
 
-        if (!user) {
-            setShowAuthModal(true);
-            setProfileLoading(false);
-            return;
-        }
-
-        loadProfile();
-    }, [user?.id, authLoading]);
-
-    // Auto-save on debounced profile change
-    useEffect(() => {
-        if (!profile.id || profileLoading) return;
-
-        const currentStr = JSON.stringify(debouncedProfile);
-        if (currentStr === lastSavedProfileStr.current) return;
-
-        handleSave(false);
-    }, [debouncedProfile]);
-
-    const loadProfile = async () => {
+    const loadProfile = React.useCallback(async () => {
         if (!user) return;
 
         try {
@@ -198,9 +176,9 @@ function BusinessBuilderPageContent() {
         } finally {
             setProfileLoading(false);
         }
-    };
+    }, [user, profile, router, error]);
 
-    const handleSave = async (showNotification = true) => {
+    const handleSave = React.useCallback(async (showNotification = true) => {
         if (!user || !profile.name) return;
 
         try {
@@ -237,7 +215,30 @@ function BusinessBuilderPageContent() {
         } finally {
             setSaving(false);
         }
-    };
+    }, [user, profile, success, error]);
+
+    // Load profile on mount
+    useEffect(() => {
+        if (authLoading) return;
+
+        if (!user) {
+            setShowAuthModal(true);
+            setProfileLoading(false);
+            return;
+        }
+
+        loadProfile();
+    }, [user, authLoading, loadProfile]);
+
+    // Auto-save on debounced profile change
+    useEffect(() => {
+        if (!profile.id || profileLoading) return;
+
+        const currentStr = JSON.stringify(debouncedProfile);
+        if (currentStr === lastSavedProfileStr.current) return;
+
+        handleSave(false);
+    }, [debouncedProfile, profile.id, profileLoading, handleSave]);
 
     const handleChatbotUpdate = (field: keyof BusinessProfile, value: any) => {
         setProfile(prev => ({ ...prev, [field]: value }));
