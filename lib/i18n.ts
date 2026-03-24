@@ -6,15 +6,15 @@ let currentLocale: Locale = 'es';
 
 export async function loadMessages(locale: Locale): Promise<void> {
   try {
-    const module = await import(`@/messages/${locale}.json`);
-    messages = module.default || module;
+    const messageModule = await import(`@/messages/${locale}.json`);
+    messages = messageModule.default || messageModule;
     currentLocale = locale;
   } catch (error) {
     console.error(`Error loading messages for locale ${locale}:`, error);
     // Fallback a español
     if (locale !== 'es') {
-      const module = await import('@/messages/es.json');
-      messages = module.default || module;
+      const fallbackModule = await import('@/messages/es.json');
+      messages = fallbackModule.default || fallbackModule;
       currentLocale = 'es';
     }
   }

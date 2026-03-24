@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { IconImage, IconTrash } from '@/components/Icons';
 import { Adiso } from '@/types';
 import { generarIdUnico } from '@/lib/utils';
@@ -65,7 +66,13 @@ export default function FormularioCatalogo({ onSave, onCancel, businessAddress }
                 >
                     {image ? (
                         <>
-                            <img src={image} alt="Product" className="w-full h-full object-cover" />
+                            <Image
+                                src={image}
+                                alt="Product"
+                                fill
+                                className="object-cover"
+                                unoptimized
+                            />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-[2px]">
                                 <IconTrash className="text-white" size={32} onClick={(e) => { e.stopPropagation(); setImage(null); }} />
                             </div>

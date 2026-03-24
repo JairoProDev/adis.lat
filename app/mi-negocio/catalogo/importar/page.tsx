@@ -627,7 +627,7 @@ export default function CatalogImportPage() {
                             </div>
 
                             <p className="text-center text-slate-400 text-sm mt-6">
-                                💡 Tip: Usa el modo "Importar Excel" para subir productos masivamente.
+                                💡 Tip: Usa el modo &quot;Importar Excel&quot; para subir productos masivamente.
                             </p>
                         </div>
                     )}

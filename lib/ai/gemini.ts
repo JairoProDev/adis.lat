@@ -529,7 +529,7 @@ export async function batchGenerateContent(
     return results;
 }
 
-export default {
+const GeminiAI = {
     detectProductsInImage,
     generateProductContent,
     generateProductTitle,
@@ -539,3 +539,5 @@ export default {
     suggestCategories,
     batchGenerateContent
 };
+
+export default GeminiAI;

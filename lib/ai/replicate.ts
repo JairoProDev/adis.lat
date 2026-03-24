@@ -169,10 +169,12 @@ export async function generateLogo(
  * ```
  */
 
-export default {
+const ReplicateAI = {
     upscaleImage,
     removeBackground,
     generateImage,
     generateLogo,
     generateVariations
 };
+
+export default ReplicateAI;

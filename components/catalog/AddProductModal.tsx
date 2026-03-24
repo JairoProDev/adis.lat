@@ -112,7 +112,6 @@ export default function AddProductModal({ isOpen, onClose, businessProfileId, on
     const [excelProcessing, setExcelProcessing] = useState(false);
     const [statusMsg, setStatusMsg] = useState('');
 
-    if (!isOpen) return null;
 
     // ── Reset ───────────────────────────────────────────────────────────────
 
@@ -355,6 +354,8 @@ export default function AddProductModal({ isOpen, onClose, businessProfileId, on
     const confidence = analysis?.confidence || 0;
 
     // ── Render ───────────────────────────────────────────────────────────────
+
+    if (!isOpen) return null;
 
     return (
         <>

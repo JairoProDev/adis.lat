@@ -88,7 +88,7 @@ export function ProductEditor({ product, businessProfileId, userId, onSave, onCa
                 images: product.images || [],
             });
         }
-    }, [product?.id]);
+    }, [product]);
 
     const update = (field: string, value: any) => setFormData(prev => ({ ...prev, [field]: value }));
 
