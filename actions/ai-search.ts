@@ -12,6 +12,7 @@
 import { supabase } from '@/lib/supabase';
 import { generateEmbedding } from '@/lib/ai/embeddings';
 import { Adiso, Categoria } from '@/types';
+import { trackAIEvent } from '@/lib/ai/observability';
 
 export interface HybridSearchParams {
   query: string;
@@ -27,6 +28,17 @@ export interface HybridSearchResult {
   similarity_score: number;
   keyword_rank: number;
   hybrid_score: number;
+  rerank_score?: number;
+}
+
+function calculateFreshnessBoost(fechaPublicacion: string): number {
+  const published = new Date(fechaPublicacion).getTime();
+  if (Number.isNaN(published)) return 0;
+  const days = Math.max(0, (Date.now() - published) / (1000 * 60 * 60 * 24));
+  if (days <= 1) return 0.2;
+  if (days <= 7) return 0.12;
+  if (days <= 30) return 0.05;
+  return 0;
 }
 
 /**
@@ -56,6 +68,7 @@ export async function hybridSearch(
   }
 
   try {
+    const started = Date.now();
     console.log(`🔍 Hybrid Search: "${query}" | Category: ${category || 'all'} | Location: ${location || 'all'}`);
 
     // Step 1: Generate embedding for the search query
@@ -99,7 +112,19 @@ export async function hybridSearch(
 
     if (!data || data.length === 0) {
       console.log('📭 No results found even after relaxation');
-      return [];
+      // Fallback keyword-only query to avoid hard zero results.
+      const { data: fallbackRows } = await supabase
+        .from('adisos')
+        .select('*')
+        .ilike('titulo', `%${query}%`)
+        .limit(maxResults);
+      if (!fallbackRows || fallbackRows.length === 0) return [];
+      data = fallbackRows.map((row: any) => ({
+        ...row,
+        similarity_score: 0,
+        keyword_rank: 0.1,
+        hybrid_score: 0.1,
+      }));
     }
 
     console.log(`✅ Found ${data.length} results`);
@@ -121,6 +146,9 @@ export async function hybridSearch(
       uniqueIds.add(row.id);
       uniqueTitles.add(normalizedTitle);
 
+      const freshness = calculateFreshnessBoost(row.fecha_publicacion || row.created_at);
+      const baseScore = row.hybrid_score || 0;
+      const rerankScore = baseScore + freshness;
       results.push({
         adiso: {
           id: row.id,
@@ -136,12 +164,28 @@ export async function hybridSearch(
         similarity_score: row.similarity_score || 0,
         keyword_rank: row.keyword_rank || 0,
         hybrid_score: row.hybrid_score || 0,
+        rerank_score: rerankScore,
       });
     }
 
+    results.sort((a, b) => (b.rerank_score || b.hybrid_score) - (a.rerank_score || a.hybrid_score));
+    trackAIEvent({
+      name: 'search.executed',
+      status: 'ok',
+      tool: 'hybridSearch',
+      latencyMs: Date.now() - started,
+      metadata: { query, count: results.length, category, location },
+    });
     return results;
   } catch (error: any) {
     console.error('❌ Hybrid search failed:', error);
+    trackAIEvent({
+      name: 'chat.error',
+      level: 'error',
+      status: 'error',
+      tool: 'hybridSearch',
+      metadata: { query, message: error?.message },
+    });
     throw error;
   }
 }

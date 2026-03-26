@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import ChatbotInteractivo from './ChatbotInteractivo';
+import ChatbotIANew from './ChatbotIANew';
 import { AnimatePresence, motion } from 'framer-motion';
 import { FaMagic, FaTimes, FaChevronDown } from 'react-icons/fa';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
@@ -80,7 +80,7 @@ export default function FloatingChatbot() {
                             )}
 
                             <div className="flex-1 overflow-hidden relative">
-                                <ChatbotInteractivo onMinimize={() => setIsOpen(false)} />
+                                <ChatbotIANew onMinimize={() => setIsOpen(false)} />
                             </div>
                         </motion.div>
                     </>

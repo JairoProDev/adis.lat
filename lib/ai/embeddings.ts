@@ -16,6 +16,9 @@ import { Adiso } from '@/types';
  * @returns Vector embedding (1536 dimensions)
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
+  if (!openaiClient) {
+    throw new Error('OPENAI_API_KEY no configurada para generar embeddings');
+  }
   try {
     const response = await openaiClient.embeddings.create({
       model: AI_MODELS.EMBEDDING,
@@ -40,6 +43,9 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 export async function generateEmbeddingsBatch(
   texts: string[]
 ): Promise<number[][]> {
+  if (!openaiClient) {
+    throw new Error('OPENAI_API_KEY no configurada para generar embeddings');
+  }
   try {
     const response = await openaiClient.embeddings.create({
       model: AI_MODELS.EMBEDDING,

@@ -96,7 +96,26 @@ GUIDELINES:
     });
 
     console.log('✅ Image analysis complete');
-    return object;
+    // Guardrails for malformed provider outputs
+    const sanitized = {
+      ...object,
+      title: object.title?.slice(0, 120) || 'Producto sin título',
+      suggestedDescription: object.suggestedDescription?.slice(0, 1200) || '',
+      searchTags: (object.searchTags || []).slice(0, 12),
+      keyFeatures: (object.keyFeatures || []).slice(0, 8),
+      detectedDefects: (object.detectedDefects || []).slice(0, 8),
+      estimatedValue: {
+        min: Math.max(0, Number(object.estimatedValue?.min || 0)),
+        max: Math.max(0, Number(object.estimatedValue?.max || 0)),
+        confidence: object.estimatedValue?.confidence || 'media',
+      },
+    };
+
+    if (sanitized.estimatedValue.max < sanitized.estimatedValue.min) {
+      sanitized.estimatedValue.max = sanitized.estimatedValue.min;
+    }
+
+    return sanitized;
   } catch (error: any) {
     console.error('❌ Image analysis failed:', error);
     throw new Error(`Failed to analyze image: ${error.message}`);

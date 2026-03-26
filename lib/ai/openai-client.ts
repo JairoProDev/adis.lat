@@ -9,23 +9,30 @@ import { openai as vercelOpenAI } from '@ai-sdk/openai';
 import OpenAI from 'openai';
 
 // Validate API key
-if (!process.env.OPENAI_API_KEY) {
-  throw new Error('OPENAI_API_KEY is not set in environment variables');
+const openAIKey = process.env.OPENAI_API_KEY;
+if (!openAIKey) {
+  console.warn('OPENAI_API_KEY is not set. AI premium features will run in fallback mode.');
 }
 
 /**
  * OpenAI client for direct API calls
  * Use this for embeddings, moderation, etc.
  */
-export const openaiClient = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+export const openaiClient = openAIKey
+  ? new OpenAI({
+      apiKey: openAIKey,
+    })
+  : null;
 
 /**
  * Vercel AI SDK OpenAI provider
  * Use this for generateText, streamUI, generateObject
  */
 export const openai = vercelOpenAI;
+
+export function hasOpenAIKey(): boolean {
+  return Boolean(openAIKey);
+}
 
 /**
  * Model configurations

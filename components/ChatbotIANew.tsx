@@ -9,10 +9,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Adiso } from '@/types';
 import { FaPaperPlane, FaSpinner, FaSearch, FaImage, FaMapMarkerAlt, FaTag, FaRobot, FaUser, FaRegCopy, FaExpand, FaCompress } from 'react-icons/fa';
 import { AiOutlineClear } from 'react-icons/ai';
-import { hybridSearch } from '@/actions/ai-search';
 import { nanoid } from 'nanoid';
 import { useNavigation } from '@/contexts/NavigationContext';
 import Image from 'next/image';
+import { AIChatResponse } from '@/lib/ai/contracts';
 
 interface Mensaje {
   id: string;
@@ -31,6 +31,7 @@ interface ChatbotIAProps {
 }
 
 export default function ChatbotIANew({ onPublicar, onError, onSuccess, onMinimize }: ChatbotIAProps) {
+  const useUnifiedChat = process.env.NEXT_PUBLIC_AI_UNIFIED_CHAT !== 'false';
   const { abrirAdiso } = useNavigation();
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
   const [inputMensaje, setInputMensaje] = useState('');
@@ -113,27 +114,40 @@ export default function ChatbotIANew({ onPublicar, onError, onSuccess, onMinimiz
     }
   };
 
-  const procesarBusqueda = async (query: string) => {
-    try {
-      const resultados = await hybridSearch({
-        query,
-        maxResults: 8 // Fewer qualitative results
-      });
+  const callUnifiedChat = async (message: string): Promise<AIChatResponse> => {
+    const response = await fetch('/api/ai/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message,
+        imageUrl: imageUrl || undefined,
+      }),
+    });
 
-      if (resultados.length > 0) {
-        agregarMensaje(
-          'asistente',
-          `Aquí tienes ${resultados.length} opciones relevantes:`,
-          resultados.map(r => r.adiso)
-        );
-      } else {
-        agregarMensaje('asistente', 'No encontré nada exacto con esa descripción. ¿Podrías intentar con otros términos?');
-      }
-    } catch (error: any) {
-      console.error("Error búsqueda:", error);
-      agregarMensaje('asistente', `Tuve un problema buscando. Por favor intenta de nuevo.`);
-      onError?.(error.message);
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data?.error || 'No se pudo procesar tu mensaje');
     }
+    return response.json();
+  };
+
+  const persistDraft = async (sessionId: string, draft: {
+    categoria: any;
+    titulo: string;
+    descripcion: string;
+    precio?: number;
+    ubicacion?: string;
+    contacto?: string;
+    imageUrl?: string;
+  }) => {
+    const res = await fetch('/api/ai/publish-draft', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId, data: draft }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data?.draft?.id as string | null;
   };
 
   const procesarMensaje = async (texto: string) => {
@@ -143,20 +157,47 @@ export default function ChatbotIANew({ onPublicar, onError, onSuccess, onMinimiz
 
 
     try {
-      // Enhanced Intent Detection Logic (Placeholder)
-      const textoLower = texto.toLowerCase();
+      if (!useUnifiedChat) {
+        agregarMensaje('asistente', 'El chat unificado está desactivado en este entorno.');
+        return;
+      }
+      const data = await callUnifiedChat(texto);
 
-      if (textoLower.includes('publicar') || textoLower.includes('vender')) {
-        agregarMensaje('asistente', 'Para publicar, puedes usar el botón de "Publicar" en la barra superior o subir una foto aquí mismo.');
-      } else if (textoLower.includes('hola') || textoLower.includes('buenos dias')) {
-        agregarMensaje('asistente', '¡Hola! ¿Qué estás buscando hoy? Puedo ayudarte a encontrar departamentos, empleos, vehículos y más.');
+      if (data.payload?.type === 'search_results') {
+        agregarMensaje('asistente', data.text, data.payload.items);
+      } else if (data.payload?.type === 'publish_draft') {
+        const draft = data.payload.draft;
+        const savedDraftId = await persistDraft(data.sessionId, {
+          categoria: draft.categoria,
+          titulo: draft.titulo,
+          descripcion: draft.descripcion,
+          precio: draft.precio,
+          ubicacion: draft.ubicacion,
+          contacto: draft.contacto,
+          imageUrl: draft.imageUrl,
+        });
+        const draftText = [
+          data.text,
+          '',
+          `Categoria: ${draft.categoria}`,
+          `Titulo: ${draft.titulo}`,
+          `Descripcion: ${draft.descripcion}`,
+          draft.precio ? `Precio sugerido: S/ ${draft.precio}` : null,
+          savedDraftId ? `Draft ID: ${savedDraftId}` : null,
+        ]
+          .filter(Boolean)
+          .join('\n');
+        agregarMensaje('asistente', draftText);
+      } else if (data.payload?.type === 'recommendations') {
+        agregarMensaje('asistente', data.text, data.payload.items);
       } else {
-        await procesarBusqueda(texto);
+        agregarMensaje('asistente', data.text);
       }
 
       setImageUrl('');
     } catch (error: any) {
       agregarMensaje('asistente', `Lo siento, hubo un error técnico.`);
+      onError?.(error.message);
     } finally {
       setProcesando(false);
     }
