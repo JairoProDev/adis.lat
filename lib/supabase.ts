@@ -205,9 +205,10 @@ export async function getAdisosFromSupabase(options?: {
       query = query.eq('categoria', options.categoria);
     }
 
-    // Filtrar por búsqueda técnica (ilike para búsqueda insensible a mayúsculas/minúsculas)
+    // Filtrar por búsqueda (título, descripción, ubicación texto)
     if (options?.busqueda) {
-      query = query.or(`titulo.ilike.%${options.busqueda}%,descripcion.ilike.%${options.busqueda}%`);
+      const q = options.busqueda;
+      query = query.or(`titulo.ilike.%${q}%,descripcion.ilike.%${q}%,ubicacion.ilike.%${q}%`);
     }
 
     // Ordenar por fecha de publicación (más recientes primero)
@@ -234,6 +235,64 @@ export async function getAdisosFromSupabase(options?: {
     return data ? data.map(dbToAdiso) : [];
   } catch (error: any) {
     // Si es un error de RLS, dar mensaje más claro
+    if (error?.code === 'PGRST301' || error?.message?.includes('permission denied')) {
+      throw new Error('Las políticas de seguridad no están configuradas. Ejecuta el SQL de seguridad en Supabase.');
+    }
+    throw error;
+  }
+}
+
+/** Paginación con conteo total (mismos filtros que getAdisosFromSupabase) para APIs públicas. */
+export async function getAdisosPageFromSupabase(options: {
+  limit: number;
+  offset: number;
+  soloActivos?: boolean;
+  categoria?: string;
+  busqueda?: string;
+}): Promise<{ items: Adiso[]; total: number }> {
+  if (!supabase) {
+    throw new Error('Supabase no está configurado');
+  }
+
+  try {
+    let query = supabase
+      .from('adisos')
+      .select('*', { count: 'exact' });
+
+    if (options.soloActivos === true) {
+      query = query.eq('esta_activo', true);
+      query = query.or('fecha_expiracion.is.null,fecha_expiracion.gt.' + new Date().toISOString());
+    }
+
+    if (options.categoria && options.categoria !== 'todos') {
+      query = query.eq('categoria', options.categoria);
+    }
+
+    if (options.busqueda) {
+      const q = options.busqueda;
+      query = query.or(`titulo.ilike.%${q}%,descripcion.ilike.%${q}%,ubicacion.ilike.%${q}%`);
+    }
+
+    query = query
+      .order('fecha_publicacion', { ascending: false })
+      .order('hora_publicacion', { ascending: false });
+
+    const from = Math.max(0, options.offset);
+    const to = from + Math.max(1, options.limit) - 1;
+    query = query.range(from, to);
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      console.error('Error al obtener página de adisos:', error);
+      throw error;
+    }
+
+    return {
+      items: data ? data.map(dbToAdiso) : [],
+      total: count ?? 0,
+    };
+  } catch (error: any) {
     if (error?.code === 'PGRST301' || error?.message?.includes('permission denied')) {
       throw new Error('Las políticas de seguridad no están configuradas. Ejecuta el SQL de seguridad en Supabase.');
     }

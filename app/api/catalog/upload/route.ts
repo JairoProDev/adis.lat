@@ -4,7 +4,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createServerClient } from '@/lib/supabase-server';
+import { getUserFromRouteRequest } from '@/lib/supabase-route-auth';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_FILE_TYPES = [
@@ -19,24 +20,17 @@ const ALLOWED_FILE_TYPES = [
 
 export async function POST(request: NextRequest) {
     try {
-        if (!supabase) {
-            return NextResponse.json(
-                { success: false, error: 'Supabase no configurado' },
-                { status: 500 }
-            );
-        }
-
-        // Check authentication
-        const { data: { user }, error: authError } = await supabase!.auth.getUser();
-        if (authError || !user) {
+        const user = await getUserFromRouteRequest(request);
+        if (!user) {
             return NextResponse.json(
                 { success: false, error: 'No autenticado' },
                 { status: 401 }
             );
         }
 
-        // Get business profile
-        const { data: profile, error: profileError } = await supabase!
+        const supabase = await createServerClient();
+
+        const { data: profile, error: profileError } = await supabase
             .from('business_profiles')
             .select('id')
             .eq('user_id', user.id)
@@ -49,7 +43,6 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Parse form data
         const formData = await request.formData();
         const files = formData.getAll('files') as File[];
 
@@ -60,7 +53,6 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Validate files
         for (const file of files) {
             if (file.size > MAX_FILE_SIZE) {
                 return NextResponse.json(
@@ -77,7 +69,6 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // Upload files to Supabase Storage
         const uploadedFiles = [];
 
         for (const file of files) {
@@ -85,7 +76,7 @@ export async function POST(request: NextRequest) {
             const fileName = `${profile.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
             const filePath = `catalog-imports/${fileName}`;
 
-            const { data, error: uploadError } = await supabase!.storage
+            const { error: uploadError } = await supabase.storage
                 .from('catalog-files')
                 .upload(filePath, file, {
                     cacheControl: '3600',
@@ -100,8 +91,7 @@ export async function POST(request: NextRequest) {
                 );
             }
 
-            // Get public URL
-            const { data: { publicUrl } } = supabase!.storage
+            const { data: { publicUrl } } = supabase.storage
                 .from('catalog-files')
                 .getPublicUrl(filePath);
 

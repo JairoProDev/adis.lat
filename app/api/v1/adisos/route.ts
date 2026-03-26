@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAdisosFromSupabase } from '@/lib/supabase';
+import { getAdisosPageFromSupabase } from '@/lib/supabase';
 import { requireApiKey } from '@/lib/api-auth';
 
 export const dynamic = 'force-dynamic';
@@ -27,37 +27,22 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Obtener anuncios
-    const adisos = await getAdisosFromSupabase({
+    const { items, total } = await getAdisosPageFromSupabase({
       limit,
       offset,
-      soloActivos: activos
+      soloActivos: activos,
+      categoria: categoria || undefined,
+      busqueda: buscar || undefined,
     });
 
-    // Filtrar por categoría si se especifica
-    let adisosFiltrados = adisos;
-    if (categoria) {
-      adisosFiltrados = adisos.filter(a => a.categoria === categoria);
-    }
-
-    // Filtrar por búsqueda si se especifica
-    if (buscar) {
-      const busquedaLower = buscar.toLowerCase();
-      adisosFiltrados = adisosFiltrados.filter(a =>
-        a.titulo.toLowerCase().includes(busquedaLower) ||
-        a.descripcion?.toLowerCase().includes(busquedaLower) ||
-        (typeof a.ubicacion === 'string' && a.ubicacion.toLowerCase().includes(busquedaLower))
-      );
-    }
-
     return NextResponse.json({
-      data: adisosFiltrados,
+      data: items,
       paginacion: {
-        total: adisosFiltrados.length,
+        total,
         limit,
         offset,
-        hasMore: adisosFiltrados.length === limit
-      }
+        hasMore: offset + items.length < total,
+      },
     });
   } catch (error: any) {
     console.error('Error en API v1/adisos:', error);

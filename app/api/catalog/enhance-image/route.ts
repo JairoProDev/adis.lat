@@ -10,23 +10,13 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
+import { getUserFromRouteRequest } from '@/lib/supabase-route-auth';
+import { rateLimit, getClientIP } from '@/lib/rate-limit';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import sharp from 'sharp';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120;
-
-async function authenticate(request: NextRequest) {
-    const supabase = await createServerClient();
-    const authHeader = request.headers.get('Authorization');
-    const token = authHeader?.split(' ')[1];
-    if (token) {
-        const { data: { user }, error } = await supabase.auth.getUser(token);
-        if (!error && user) return user;
-    }
-    const { data: { user } } = await supabase.auth.getUser();
-    return user;
-}
 
 async function fetchImageAsBase64(url: string): Promise<{ base64: string; mimeType: string }> {
     const resp = await fetch(url, {
@@ -247,7 +237,16 @@ Responde ÚNICAMENTE con JSON en este formato exacto (sin markdown):
 
 export async function POST(request: NextRequest) {
     try {
-        const user = await authenticate(request);
+        const ip = getClientIP(request);
+        const limited = rateLimit(`enhance-image-${ip}`, {
+            windowMs: 60 * 1000,
+            maxRequests: 12,
+        });
+        if (!limited.allowed) {
+            return NextResponse.json({ error: 'Demasiadas solicitudes. Espera un momento.' }, { status: 429 });
+        }
+
+        const user = await getUserFromRouteRequest(request);
         if (!user) {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
         }

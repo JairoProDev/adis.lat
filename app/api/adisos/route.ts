@@ -7,6 +7,7 @@ import { Adiso } from '@/types';
 import { generarIdUnico } from '@/lib/utils';
 import { createAdisoSchema, sanitizeText } from '@/lib/validations';
 import { rateLimit, getClientIP } from '@/lib/rate-limit';
+import { validarImagenesSegunPaquete } from '@/lib/adiso-paquete-server';
 
 export const dynamic = 'force-dynamic';
 
@@ -215,11 +216,24 @@ export async function POST(request: NextRequest) {
         imagenesUrls: sanitizedData.imagenesUrls || undefined,
         // Compatibilidad hacia atrás
         imagenUrl: sanitizedData.imagenUrl || sanitizedData.imagenesUrls?.[0] || undefined,
-        esGratuito: ('esGratuito' in body ? body.esGratuito : false) as boolean,
+        // Los gratuitos van por /api/adisos-gratuitos; aquí solo anuncios de pago
+        esGratuito: false,
         // Ensure user ID is passed to DB function
         user_id: sanitizedData.user_id,
         usuario_id: sanitizedData.usuario_id
       };
+    }
+
+    // Misma regla de negocio para cuerpos “completos” enviados por el cliente
+    nuevoAdiso.esGratuito = false;
+
+    const imgCheck = validarImagenesSegunPaquete(
+      nuevoAdiso.tamaño,
+      nuevoAdiso.imagenesUrls,
+      nuevoAdiso.imagenUrl
+    );
+    if (!imgCheck.ok) {
+      return NextResponse.json({ error: imgCheck.message }, { status: 400 });
     }
 
     const adisoCreado = await createAdisoInSupabase(nuevoAdiso);

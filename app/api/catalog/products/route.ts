@@ -1,60 +1,65 @@
 /**
- * API Route: CRUD for Catalog Products
+ * API Route: CRUD for Catalog Products (sesión servidor + RLS)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createServerClient } from '@/lib/supabase-server';
+import { getUserFromRouteRequest } from '@/lib/supabase-route-auth';
 
-// Helper to check auth and get profile
-async function checkAuthAndGetProfile() {
-    if (!supabase) {
-        throw new Error('Supabase no configurado');
-    }
+const UPDATABLE_FIELDS = [
+    'title',
+    'description',
+    'price',
+    'compare_at_price',
+    'currency',
+    'category',
+    'tags',
+    'attributes',
+    'images',
+    'sku',
+    'barcode',
+    'stock',
+    'track_inventory',
+    'status',
+    'ai_metadata',
+] as const;
 
-    const { data: { user }, error: authError } = await supabase!.auth.getUser();
-    if (authError || !user) {
-        return { error: 'No autenticado', status: 401 };
-    }
-
-    const { data: profile } = await supabase!
+async function getProfileForUser(
+    supabase: Awaited<ReturnType<typeof createServerClient>>,
+    userId: string
+) {
+    const { data: profile, error } = await supabase
         .from('business_profiles')
         .select('id')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .single();
-
-    if (!profile) {
-        return { error: 'Perfil de negocio no encontrado', status: 404 };
-    }
-
-    return { user, profile };
+    return { profile, error };
 }
-
-// ============================================================
-// GET: List Products
-// ============================================================
 
 export async function GET(request: NextRequest) {
     try {
-        const auth = await checkAuthAndGetProfile();
-        if ('error' in auth) {
+        const user = await getUserFromRouteRequest(request);
+        if (!user) {
+            return NextResponse.json({ success: false, error: 'No autenticado' }, { status: 401 });
+        }
+
+        const supabase = await createServerClient();
+        const { profile, error: profileError } = await getProfileForUser(supabase, user.id);
+        if (profileError || !profile) {
             return NextResponse.json(
-                { success: false, error: auth.error },
-                { status: auth.status }
+                { success: false, error: 'Perfil de negocio no encontrado' },
+                { status: 404 }
             );
         }
 
-        const { profile } = auth;
         const { searchParams } = new URL(request.url);
-
-        // Parse filters
         const status = searchParams.get('status');
         const category = searchParams.get('category');
         const search = searchParams.get('search');
-        const page = parseInt(searchParams.get('page') || '1');
-        const perPage = parseInt(searchParams.get('per_page') || '20');
+        const page = parseInt(searchParams.get('page') || '1', 10);
+        const perPage = parseInt(searchParams.get('per_page') || '20', 10);
 
-        // Build query
-        let query = supabase!
+        let query = supabase
             .from('catalog_products')
             .select('*', { count: 'exact' })
             .eq('business_profile_id', profile.id);
@@ -62,25 +67,20 @@ export async function GET(request: NextRequest) {
         if (status) {
             query = query.eq('status', status);
         }
-
         if (category) {
             query = query.eq('category', category);
         }
-
         if (search) {
             query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
         }
 
-        // Pagination
-        const from = (page - 1) * perPage;
-        const to = from + perPage - 1;
+        const from = (Math.max(1, page) - 1) * Math.min(100, Math.max(1, perPage));
+        const limit = Math.min(100, Math.max(1, perPage));
+        const to = from + limit - 1;
 
-        query = query
-            .order('created_at', { ascending: false })
-            .range(from, to);
+        query = query.order('created_at', { ascending: false }).range(from, to);
 
         const { data: products, error, count } = await query;
-
         if (error) {
             throw error;
         }
@@ -89,11 +89,10 @@ export async function GET(request: NextRequest) {
             success: true,
             items: products || [],
             total: count || 0,
-            page,
-            per_page: perPage,
-            has_more: count ? (page * perPage) < count : false
+            page: Math.max(1, page),
+            per_page: limit,
+            has_more: count != null ? from + limit < count : false,
         });
-
     } catch (error: any) {
         console.error('Get products error:', error);
         return NextResponse.json(
@@ -103,24 +102,23 @@ export async function GET(request: NextRequest) {
     }
 }
 
-// ============================================================
-// POST: Create Product
-// ============================================================
-
 export async function POST(request: NextRequest) {
     try {
-        const auth = await checkAuthAndGetProfile();
-        if ('error' in auth) {
+        const user = await getUserFromRouteRequest(request);
+        if (!user) {
+            return NextResponse.json({ success: false, error: 'No autenticado' }, { status: 401 });
+        }
+
+        const supabase = await createServerClient();
+        const { profile, error: profileError } = await getProfileForUser(supabase, user.id);
+        if (profileError || !profile) {
             return NextResponse.json(
-                { success: false, error: auth.error },
-                { status: auth.status }
+                { success: false, error: 'Perfil de negocio no encontrado' },
+                { status: 404 }
             );
         }
 
-        const { profile } = auth;
         const body = await request.json();
-
-        // Validate required fields
         if (!body.title) {
             return NextResponse.json(
                 { success: false, error: 'El título es requerido' },
@@ -128,8 +126,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Create product
-        const { data: product, error } = await supabase!
+        const { data: product, error } = await supabase
             .from('catalog_products')
             .insert({
                 business_profile_id: profile.id,
@@ -147,7 +144,7 @@ export async function POST(request: NextRequest) {
                 stock: body.stock,
                 track_inventory: body.track_inventory || false,
                 status: body.status || 'draft',
-                ai_metadata: body.ai_metadata || {}
+                ai_metadata: body.ai_metadata || {},
             })
             .select()
             .single();
@@ -159,9 +156,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
             success: true,
             data: product,
-            message: 'Producto creado correctamente'
+            message: 'Producto creado correctamente',
         });
-
     } catch (error: any) {
         console.error('Create product error:', error);
         return NextResponse.json(
@@ -171,23 +167,24 @@ export async function POST(request: NextRequest) {
     }
 }
 
-// ============================================================
-// PUT: Update Product
-// ============================================================
-
 export async function PUT(request: NextRequest) {
     try {
-        const auth = await checkAuthAndGetProfile();
-        if ('error' in auth) {
+        const user = await getUserFromRouteRequest(request);
+        if (!user) {
+            return NextResponse.json({ success: false, error: 'No autenticado' }, { status: 401 });
+        }
+
+        const supabase = await createServerClient();
+        const { profile, error: profileError } = await getProfileForUser(supabase, user.id);
+        if (profileError || !profile) {
             return NextResponse.json(
-                { success: false, error: auth.error },
-                { status: auth.status }
+                { success: false, error: 'Perfil de negocio no encontrado' },
+                { status: 404 }
             );
         }
 
         const { searchParams } = new URL(request.url);
         const productId = searchParams.get('id');
-
         if (!productId) {
             return NextResponse.json(
                 { success: false, error: 'ID de producto requerido' },
@@ -196,28 +193,44 @@ export async function PUT(request: NextRequest) {
         }
 
         const body = await request.json();
+        const patch: Record<string, unknown> = {};
+        for (const key of UPDATABLE_FIELDS) {
+            if (key in body) {
+                patch[key] = body[key];
+            }
+        }
+        patch.updated_at = new Date().toISOString();
 
-        // Update product
-        const { data: product, error } = await supabase!
+        if (Object.keys(patch).length <= 1) {
+            return NextResponse.json(
+                { success: false, error: 'No hay campos permitidos para actualizar' },
+                { status: 400 }
+            );
+        }
+
+        const { data: product, error } = await supabase
             .from('catalog_products')
-            .update({
-                ...body,
-                updated_at: new Date().toISOString()
-            })
+            .update(patch)
             .eq('id', productId)
+            .eq('business_profile_id', profile.id)
             .select()
             .single();
 
         if (error) {
             throw error;
         }
+        if (!product) {
+            return NextResponse.json(
+                { success: false, error: 'Producto no encontrado' },
+                { status: 404 }
+            );
+        }
 
         return NextResponse.json({
             success: true,
             data: product,
-            message: 'Producto actualizado correctamente'
+            message: 'Producto actualizado correctamente',
         });
-
     } catch (error: any) {
         console.error('Update product error:', error);
         return NextResponse.json(
@@ -227,23 +240,24 @@ export async function PUT(request: NextRequest) {
     }
 }
 
-// ============================================================
-// DELETE: Delete Product
-// ============================================================
-
 export async function DELETE(request: NextRequest) {
     try {
-        const auth = await checkAuthAndGetProfile();
-        if ('error' in auth) {
+        const user = await getUserFromRouteRequest(request);
+        if (!user) {
+            return NextResponse.json({ success: false, error: 'No autenticado' }, { status: 401 });
+        }
+
+        const supabase = await createServerClient();
+        const { profile, error: profileError } = await getProfileForUser(supabase, user.id);
+        if (profileError || !profile) {
             return NextResponse.json(
-                { success: false, error: auth.error },
-                { status: auth.status }
+                { success: false, error: 'Perfil de negocio no encontrado' },
+                { status: 404 }
             );
         }
 
         const { searchParams } = new URL(request.url);
         const productId = searchParams.get('id');
-
         if (!productId) {
             return NextResponse.json(
                 { success: false, error: 'ID de producto requerido' },
@@ -251,21 +265,27 @@ export async function DELETE(request: NextRequest) {
             );
         }
 
-        // Delete product
-        const { error } = await supabase!
+        const { data: deletedRows, error } = await supabase
             .from('catalog_products')
             .delete()
-            .eq('id', productId);
+            .eq('id', productId)
+            .eq('business_profile_id', profile.id)
+            .select('id');
 
         if (error) {
             throw error;
         }
+        if (!deletedRows?.length) {
+            return NextResponse.json(
+                { success: false, error: 'Producto no encontrado' },
+                { status: 404 }
+            );
+        }
 
         return NextResponse.json({
             success: true,
-            message: 'Producto eliminado correctamente'
+            message: 'Producto eliminado correctamente',
         });
-
     } catch (error: any) {
         console.error('Delete product error:', error);
         return NextResponse.json(

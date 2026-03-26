@@ -8,8 +8,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { getUserFromRouteRequest } from '@/lib/supabase-route-auth';
+import { rateLimit, getClientIP } from '@/lib/rate-limit';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export const runtime = 'nodejs';
@@ -26,33 +27,6 @@ interface ProductRow {
 interface CategorySuggestion {
     category: string;
     products: { id: string; title: string; currentCategory: string | null }[];
-}
-
-// ── Auth helper (mirrors the import route) ─────────────────────────────────
-async function authenticate(request: NextRequest) {
-    const supabase = await createServerClient();
-    const authHeader = request.headers.get('Authorization');
-    const token = authHeader?.split(' ')[1];
-
-    if (token && token !== 'undefined') {
-        try {
-            const { data: sessionData, error } = await supabase.auth.setSession({
-                access_token: token,
-                refresh_token: token,
-            });
-            if (error) {
-                const { data: { user } } = await supabase.auth.getUser(token);
-                return user;
-            }
-            return sessionData.user;
-        } catch {
-            const { data: { user } } = await supabase.auth.getUser(token);
-            return user;
-        }
-    } else {
-        const { data: { user } } = await supabase.auth.getUser();
-        return user;
-    }
 }
 
 // ── Gemini categorize (batched for large catalogs) ─────────────────────────
@@ -118,7 +92,16 @@ Responde SOLO con JSON válido, sin texto adicional:
 // ── POST handler ───────────────────────────────────────────────────────────
 export async function POST(request: NextRequest) {
     try {
-        const user = await authenticate(request);
+        const ip = getClientIP(request);
+        const limited = rateLimit(`ai-categorize-${ip}`, {
+            windowMs: 60 * 1000,
+            maxRequests: 6,
+        });
+        if (!limited.allowed) {
+            return NextResponse.json({ error: 'Demasiadas solicitudes. Intenta en un momento.' }, { status: 429 });
+        }
+
+        const user = await getUserFromRouteRequest(request);
         if (!user) {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
         }
@@ -207,7 +190,16 @@ export async function POST(request: NextRequest) {
 // ── PATCH: apply selected suggestions ─────────────────────────────────────
 export async function PATCH(request: NextRequest) {
     try {
-        const user = await authenticate(request);
+        const ip = getClientIP(request);
+        const limited = rateLimit(`ai-categorize-patch-${ip}`, {
+            windowMs: 60 * 1000,
+            maxRequests: 10,
+        });
+        if (!limited.allowed) {
+            return NextResponse.json({ error: 'Demasiadas solicitudes. Intenta en un momento.' }, { status: 429 });
+        }
+
+        const user = await getUserFromRouteRequest(request);
         if (!user) {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
         }

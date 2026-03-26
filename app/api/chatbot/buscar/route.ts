@@ -1,8 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { buscarEnTOON, buscarMultiplesTerminos } from '@/lib/busqueda-toon';
+import { rateLimit, getClientIP } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = getClientIP(request);
+    const limited = rateLimit(`chatbot-buscar-${ip}`, {
+      windowMs: 60 * 1000,
+      maxRequests: 45,
+    });
+    if (!limited.allowed) {
+      return NextResponse.json(
+        { error: 'Demasiadas búsquedas. Intenta en un momento.' },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const { consulta, limite = 10, terminos } = body;
     

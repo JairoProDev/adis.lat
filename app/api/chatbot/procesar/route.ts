@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { buscarEnTOON } from '@/lib/busqueda-toon';
+import { rateLimit, getClientIP } from '@/lib/rate-limit';
 import { Categoria } from '@/types';
 
 interface DatosPublicacion {
@@ -191,6 +192,18 @@ function generarRespuestaPublicacion(datos: DatosPublicacion, paso: number): { r
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = getClientIP(request);
+    const limited = rateLimit(`chatbot-procesar-${ip}`, {
+      windowMs: 60 * 1000,
+      maxRequests: 30,
+    });
+    if (!limited.allowed) {
+      return NextResponse.json(
+        { error: 'Demasiados mensajes. Intenta en un momento.' },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const { mensaje, datosPublicacion = {}, modoPublicacion = false } = body;
 

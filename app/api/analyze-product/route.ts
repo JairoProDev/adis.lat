@@ -1,31 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { createServerClient } from '@/lib/supabase-server';
+import { getUserFromRouteRequest } from '@/lib/supabase-route-auth';
+import { rateLimit, getClientIP } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs'; // or 'edge' if preferred, but nodejs is safer for fetch/buffer
 export const maxDuration = 60; // 1 minute should be enough
 
 const MODEL_NAME = 'gemini-2.5-flash';
 
-// Helper to authenticate
-async function authenticate(request: NextRequest) {
-    const supabase = await createServerClient();
-    const authHeader = request.headers.get('Authorization');
-    const token = authHeader?.split(' ')[1];
-
-    if (token) {
-        const { data: { user }, error } = await supabase.auth.getUser(token);
-        if (!error && user) return user;
-    }
-
-    // Fallback to cookie session
-    const { data: { user } } = await supabase.auth.getUser();
-    return user;
-}
-
 export async function POST(request: NextRequest) {
     try {
-        const user = await authenticate(request);
+        const ip = getClientIP(request);
+        const limited = rateLimit(`analyze-product-${ip}`, {
+            windowMs: 60 * 1000,
+            maxRequests: 15,
+        });
+        if (!limited.allowed) {
+            return NextResponse.json({ error: 'Demasiadas solicitudes. Espera un momento.' }, { status: 429 });
+        }
+
+        const user = await getUserFromRouteRequest(request);
         if (!user) {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
         }

@@ -14,6 +14,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
+import { getUserFromRouteRequest } from '@/lib/supabase-route-auth';
 import { ExcelParser } from '@/lib/ai/excel-parser';
 import { ProductNormalizer } from '@/lib/ai/product-normalizer';
 import { DuplicateDetector } from '@/lib/ai/duplicate-detector';
@@ -31,46 +32,7 @@ interface ImportStats {
 
 export async function POST(request: NextRequest) {
     try {
-        const supabase = await createServerClient();
-
-        // 1. Verify authentication
-        const authHeader = request.headers.get('Authorization');
-        const token = authHeader?.split(' ')[1];
-
-        let user;
-        // Check if token exists and is not the string "undefined"
-        if (token && token !== 'undefined') {
-            try {
-                // Try setSession first to authenticate the client instance
-                const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-                    access_token: token,
-                    refresh_token: token // Use token as placeholder for refresh_token if needed
-                });
-
-                if (sessionError) {
-                    // Fallback: Just verify user and we'll handle DB authorization differently if needed
-                    const { data: { user: verifiedUser }, error: authError } = await supabase.auth.getUser(token);
-                    if (authError || !verifiedUser) {
-                        return NextResponse.json({ error: 'Unauthorized: Invalid token' }, { status: 401 });
-                    }
-                    user = verifiedUser;
-                } else {
-                    user = sessionData.user;
-                }
-            } catch (err) {
-                console.error('Session setup error:', err);
-                const { data: { user: verifiedUser } } = await supabase.auth.getUser(token);
-                user = verifiedUser;
-            }
-        } else {
-            // Try cookie-based auth
-            const { data: { user: cookieUser }, error: authError } = await supabase.auth.getUser();
-            if (authError || !cookieUser) {
-                return NextResponse.json({ error: 'Unauthorized: No session found' }, { status: 401 });
-            }
-            user = cookieUser;
-        }
-
+        const user = await getUserFromRouteRequest(request);
         if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
@@ -323,7 +285,22 @@ export async function POST(request: NextRequest) {
 // GET endpoint to check status of an import
 export async function GET(request: NextRequest) {
     try {
+        const user = await getUserFromRouteRequest(request);
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const supabase = await createServerClient();
+        const { data: profile, error: profileError } = await supabase
+            .from('business_profiles')
+            .select('id')
+            .eq('user_id', user.id)
+            .single();
+
+        if (profileError || !profile) {
+            return NextResponse.json({ error: 'Business profile not found' }, { status: 404 });
+        }
+
         const { searchParams } = new URL(request.url);
         const sessionId = searchParams.get('sessionId');
 
@@ -348,6 +325,10 @@ export async function GET(request: NextRequest) {
             .single();
 
         if (error || !session) {
+            return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+        }
+
+        if (session.business_profile_id !== profile.id) {
             return NextResponse.json({ error: 'Session not found' }, { status: 404 });
         }
 

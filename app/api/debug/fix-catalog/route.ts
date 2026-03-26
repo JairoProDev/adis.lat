@@ -1,10 +1,13 @@
-
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { guardDebugRoute } from '@/lib/debug-route-guard';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+    const denied = guardDebugRoute(request);
+    if (denied) return denied;
+
     try {
         console.log('Starting fix-catalog script...');
 

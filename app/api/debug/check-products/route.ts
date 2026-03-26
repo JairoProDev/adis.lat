@@ -1,10 +1,13 @@
-
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { guardDebugRoute } from '@/lib/debug-route-guard';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+    const denied = guardDebugRoute(request);
+    if (denied) return denied;
+
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
     const slug = searchParams.get('slug');

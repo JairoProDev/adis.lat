@@ -4,33 +4,50 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createServerClient } from '@/lib/supabase-server';
+import { getUserFromRouteRequest } from '@/lib/supabase-route-auth';
+import { rateLimit, getClientIP } from '@/lib/rate-limit';
 import {
     extractProductsFromPDF,
     detectProductsInImage,
     generateProductContent
 } from '@/lib/ai/gemini';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+async function getBackgroundSupabase(): Promise<SupabaseClient | null> {
+    if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        const { supabaseAdmin } = await import('@/lib/supabase-admin');
+        return supabaseAdmin;
+    }
+    const { supabase } = await import('@/lib/supabase');
+    return supabase;
+}
 
 export async function POST(request: NextRequest) {
-    try {
-        if (!supabase) {
-            return NextResponse.json(
-                { success: false, error: 'Supabase no configurado' },
-                { status: 500 }
-            );
-        }
+    const ip = getClientIP(request);
+    const limitResult = rateLimit(`catalog-process-${ip}`, {
+        windowMs: 60 * 1000,
+        maxRequests: 8,
+    });
+    if (!limitResult.allowed) {
+        return NextResponse.json(
+            { success: false, error: 'Demasiadas solicitudes. Espera un momento.' },
+            { status: 429 }
+        );
+    }
 
-        // Check authentication
-        const { data: { user }, error: authError } = await supabase!.auth.getUser();
-        if (authError || !user) {
+    try {
+        const user = await getUserFromRouteRequest(request);
+        if (!user) {
             return NextResponse.json(
                 { success: false, error: 'No autenticado' },
                 { status: 401 }
             );
         }
 
-        // Get business profile
-        const { data: profile, error: profileError } = await supabase!
+        const supabase = await createServerClient();
+
+        const { data: profile, error: profileError } = await supabase
             .from('business_profiles')
             .select('id')
             .eq('user_id', user.id)
@@ -53,8 +70,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Create import record
-        const { data: importRecord, error: importError } = await supabase!
+        const { data: importRecord, error: importError } = await supabase
             .from('catalog_imports')
             .insert({
                 business_profile_id: profile.id,
@@ -75,14 +91,13 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Process files asynchronously (don't wait)
         processFilesInBackground(importRecord.id, profile.id, files, options);
 
         return NextResponse.json({
             success: true,
             importId: importRecord.id,
             message: 'Procesamiento iniciado. Puedes consultar el progreso.',
-            estimatedTime: files.length * 10 // ~10 seconds per file
+            estimatedTime: files.length * 10
         });
 
     } catch (error: any) {
@@ -94,23 +109,19 @@ export async function POST(request: NextRequest) {
     }
 }
 
-// ============================================================
-// BACKGROUND PROCESSING
-// ============================================================
-
 async function processFilesInBackground(
     importId: string,
     businessProfileId: string,
     files: any[],
     options: any
 ) {
+    const supabase = await getBackgroundSupabase();
     if (!supabase) {
-        console.error('Supabase not configured');
+        console.error('Supabase not configured for background import');
         return;
     }
 
     try {
-        // Update status
         await supabase
             .from('catalog_imports')
             .update({
@@ -123,10 +134,9 @@ async function processFilesInBackground(
         let allProducts: any[] = [];
         let totalTokens = 0;
 
-        // Process each file
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
-            const progress = Math.round(((i + 1) / files.length) * 80); // 80% for extraction
+            const progress = Math.round(((i + 1) / files.length) * 80);
 
             await supabase
                 .from('catalog_imports')
@@ -137,24 +147,19 @@ async function processFilesInBackground(
                 let products: any[] = [];
 
                 if (file.type === 'application/pdf') {
-                    // Extract from PDF
                     products = await extractProductsFromPDF(file.url);
                 } else if (file.type.startsWith('image/')) {
-                    // Extract from image
                     products = await detectProductsInImage(file.url);
                 }
-                // TODO: Handle Excel files
 
                 allProducts.push(...products);
-                totalTokens += 1000; // Estimate, should be tracked properly
+                totalTokens += 1000;
 
             } catch (error: any) {
                 console.error(`Error processing file ${file.name}:`, error);
-                // Continue with other files
             }
         }
 
-        // Update progress: extracting complete
         await supabase
             .from('catalog_imports')
             .update({
@@ -164,8 +169,7 @@ async function processFilesInBackground(
             })
             .eq('id', importId);
 
-        // Generate additional content if requested
-        if (options?.generate_descriptions) {
+        if (options?.generate_descriptions && allProducts.length > 0) {
             for (let i = 0; i < allProducts.length; i++) {
                 const product = allProducts[i];
 
@@ -179,7 +183,6 @@ async function processFilesInBackground(
                     }
                 }
 
-                // Update progress
                 const progress = 80 + Math.round(((i + 1) / allProducts.length) * 15);
                 await supabase
                     .from('catalog_imports')
@@ -188,7 +191,6 @@ async function processFilesInBackground(
             }
         }
 
-        // Save products to catalog_products
         await supabase
             .from('catalog_imports')
             .update({
@@ -224,7 +226,6 @@ async function processFilesInBackground(
             throw insertError;
         }
 
-        // Mark as completed
         await supabase
             .from('catalog_imports')
             .update({
@@ -232,7 +233,7 @@ async function processFilesInBackground(
                 progress: 100,
                 products_imported: insertedProducts?.length || 0,
                 ai_tokens_used: totalTokens,
-                ai_cost_estimate: totalTokens * 0.000075 / 1000, // Gemini pricing
+                ai_cost_estimate: totalTokens * 0.000075 / 1000,
                 completed_at: new Date().toISOString()
             })
             .eq('id', importId);
@@ -240,7 +241,6 @@ async function processFilesInBackground(
     } catch (error: any) {
         console.error('Background processing error:', error);
 
-        // Mark as failed
         await supabase
             .from('catalog_imports')
             .update({
@@ -257,16 +257,28 @@ function getFileType(mimeType: string): 'pdf' | 'image' | 'excel' {
     return 'excel';
 }
 
-// ============================================================
-// GET: Check Import Status
-// ============================================================
-
 export async function GET(request: NextRequest) {
     try {
-        if (!supabase) {
+        const user = await getUserFromRouteRequest(request);
+        if (!user) {
             return NextResponse.json(
-                { success: false, error: 'Supabase no configurado' },
-                { status: 500 }
+                { success: false, error: 'No autenticado' },
+                { status: 401 }
+            );
+        }
+
+        const supabase = await createServerClient();
+
+        const { data: profile, error: profileError } = await supabase
+            .from('business_profiles')
+            .select('id')
+            .eq('user_id', user.id)
+            .single();
+
+        if (profileError || !profile) {
+            return NextResponse.json(
+                { success: false, error: 'Perfil de negocio no encontrado' },
+                { status: 404 }
             );
         }
 
@@ -293,7 +305,13 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // If completed, also return products
+        if (importRecord.business_profile_id !== profile.id) {
+            return NextResponse.json(
+                { success: false, error: 'Importación no encontrada' },
+                { status: 404 }
+            );
+        }
+
         let products = [];
         if (importRecord.status === 'completed') {
             const { data: productsData } = await supabase
