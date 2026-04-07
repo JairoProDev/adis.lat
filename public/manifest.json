@@ -1,20 +1,32 @@
 {
-    "name": "Buscadis",
-    "short_name": "Buscadis",
-    "description": "El catálogo más grande de ofertas y oportunidades en Perú.",
-    "start_url": "/",
-    "display": "standalone",
-    "background_color": "#ffffff",
-    "theme_color": "#38bdf8",
-    "dir": "ltr",
-    "lang": "es-PE",
-    "orientation": "portrait-primary",
-    "icons": [
-        {
-            "src": "/logo.png",
-            "sizes": "192x192 512x512",
-            "type": "image/png",
-            "purpose": "any maskable"
-        }
-    ]
+  "name": "Buscadis",
+  "short_name": "Buscadis",
+  "description": "Publica y encuentra adisos clasificados en Perú.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#38bdf8",
+  "dir": "ltr",
+  "lang": "es-PE",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
 }

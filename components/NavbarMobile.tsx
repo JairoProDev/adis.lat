@@ -5,14 +5,10 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { usePathname, useRouter } from 'next/navigation';
 import { SeccionSidebar } from './SidebarDesktop';
 import {
-  IconAdiso,
   IconMap,
   IconMegaphone,
   IconChatbot,
-  IconGratuitos,
   IconStore,
-  IconGlobe,
-  IconRobot,
   IconSearch
 } from './Icons';
 
@@ -65,10 +61,10 @@ export default function NavbarMobile({
   if (isDesktop) return null;
 
   const secciones = [
-    { id: 'feed', icono: IconGlobe, label: 'Feed', href: '/feed' },
+    { id: 'negocio', icono: IconStore, label: 'Mi Negocio', href: '/mi-negocio' },
     { id: 'adiso', icono: IconSearch, label: 'Buscar', href: '/' },
     { id: 'publicar', icono: IconMegaphone, label: 'Publicar', href: '/publicar' },
-    { id: 'mapa', icono: IconMap, label: 'Mapa', href: '/mapa' }, // Added Map to mobile nav? User asked for Map page.
+    { id: 'mapa', icono: IconMap, label: 'Mapa', href: '/mapa' },
     { id: 'chatbot', icono: IconChatbot, label: 'Asistente', href: '/chat' },
   ];
 

@@ -3,7 +3,7 @@
 import React from 'react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import {
-  FaHome, FaSearch, FaMap, FaBullhorn, FaStore, FaGift,
+  FaSearch, FaMap, FaBullhorn, FaStore, FaGift,
   FaRobot, FaHeart, FaEyeSlash, FaUserCircle, FaCog,
   FaChartLine, FaBook, FaQuestionCircle, FaSignOutAlt,
   FaTimes
@@ -97,10 +97,10 @@ export default function ModalNavegacionMobile({
       title: '🔍 Explorar',
       items: [
         {
-          id: 'feed',
-          label: 'Feed',
-          icon: FaHome,
-          href: '/feed'
+          id: 'negocio',
+          label: 'Mi Negocio',
+          icon: FaStore,
+          href: '/mi-negocio'
         },
         {
           id: 'buscar',

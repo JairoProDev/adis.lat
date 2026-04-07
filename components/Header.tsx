@@ -25,7 +25,6 @@ import {
   IconStore,
   IconGratuitos,
   IconLocation,
-  IconGlobe,
   IconRobot,
   IconSearch
 } from './Icons';
@@ -282,7 +281,7 @@ export default function Header({
         {isDesktop && (
           <div style={{ display: 'flex', gap: '8px', height: '100%' }}>
             {[
-              { id: 'feed', icon: IconGlobe, label: 'Feed', href: '/feed' },
+              { id: 'negocio', icon: IconStore, label: 'Mi Negocio', href: '/mi-negocio' },
               { id: 'adiso', icon: IconSearch, label: 'Buscar', href: '/' },
               { id: 'publicar', icon: IconMegaphone, label: 'Publicar', href: '/publicar' },
               { id: 'mapa', icon: IconMap, label: 'Mapa', href: '/mapa' },
