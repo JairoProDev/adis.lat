@@ -65,7 +65,16 @@ export const metadata: Metadata = {
     // Agregar cuando tengas Google Search Console
     // google: 'verification-code',
   },
-  manifest: '/manifest.json',
+  manifest: '/site.webmanifest',
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+    shortcut: ['/favicon.ico'],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -85,6 +94,11 @@ export default function RootLayout({
     <html lang={defaultLocale} suppressHydrationWarning>
       <head>
         <link rel="canonical" href={siteUrl} />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32" />
+        <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="manifest" href="/site.webmanifest" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#3c6997" />
         <script

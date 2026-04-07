@@ -180,7 +180,7 @@ export default function Header({
               overflow: 'hidden'
             }}>
               <img
-                src="/logo.png"
+                src="/logo.svg"
                 alt="Buscadis"
                 style={{
                   height: '100%',
@@ -194,24 +194,26 @@ export default function Header({
                   if (parent && !parent.querySelector('.logo-fallback')) {
                     const span = document.createElement('span');
                     span.className = 'logo-fallback';
-                    span.innerText = 'ADIS.LAT';
-                    span.style.fontWeight = '900';
-                    span.style.fontSize = isDesktop ? '1.2rem' : '1.4rem';
+                    span.innerText = 'Buscadis';
+                    span.style.fontWeight = '800';
+                    span.style.fontSize = isDesktop ? '1.28rem' : '1.12rem';
                     span.style.color = 'var(--brand-blue)';
-                    span.style.letterSpacing = '-0.5px';
+                    span.style.letterSpacing = '0.01em';
+                    span.style.fontFamily = '"Plus Jakarta Sans", "Avenir Next", "Segoe UI", sans-serif';
                     parent.appendChild(span);
                   }
                 }}
               />
               <span style={{
-                fontSize: isDesktop ? '1.5rem' : '1.2rem',
-                fontWeight: 900,
-                color: 'var(--text-primary)',
-                letterSpacing: '-1px',
-                marginLeft: '2px',
-                fontFamily: 'var(--font-display), sans-serif'
+                fontSize: isDesktop ? '1.72rem' : '1.16rem',
+                fontWeight: 800,
+                color: 'var(--brand-blue)',
+                letterSpacing: '0.01em',
+                marginLeft: '8px',
+                lineHeight: 1,
+                fontFamily: '"Plus Jakarta Sans", "Avenir Next", "Segoe UI", sans-serif'
               }}>
-                Buscadis<span style={{ color: 'var(--brand-blue)' }}>.</span>
+                Buscadis
               </span>
             </div>
           </a>
