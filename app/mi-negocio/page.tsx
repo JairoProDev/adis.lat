@@ -8,9 +8,10 @@
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { createBusinessProfile, getBusinessProfile, updateBusinessProfile, getBusinessCatalog } from '@/lib/business';
+import { createBusinessProfile, listBusinessProfilesForUser, updateBusinessProfile, getBusinessCatalog } from '@/lib/business';
+import { hasPermission, type BusinessMemberRole, type BusinessWithRole } from '@/lib/business-access';
 import { BusinessProfile } from '@/types/business';
 import { Adiso } from '@/types';
 import { IconEye, IconEdit, IconX, IconCheck } from '@/components/Icons';
@@ -26,7 +27,12 @@ import { ProductEditor } from '@/components/business/ProductEditor';
 function BusinessBuilderPageContent() {
     const { user, loading: authLoading } = useAuth();
     const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
     const { success, error } = useToast();
+
+    const [businessOptions, setBusinessOptions] = useState<BusinessWithRole[]>([]);
+    const [memberRole, setMemberRole] = useState<BusinessMemberRole | null>(null);
 
     const [profileLoading, setProfileLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -125,9 +131,39 @@ function BusinessBuilderPageContent() {
 
         try {
             setProfileLoading(true);
-            const existingProfile = await getBusinessProfile(user.id);
+            const memberships = await listBusinessProfilesForUser(user.id);
+            setBusinessOptions(memberships);
 
-            if (existingProfile) {
+            const forceNew = searchParams.get('new') === '1';
+            if (forceNew) {
+                setMemberRole(null);
+                setIsFirstTime(true);
+                setChatbotMinimized(false);
+                setCatalogProducts([]);
+                setAdisos([]);
+                setProfile((prev) => ({
+                    ...prev,
+                    id: undefined as any,
+                    name: '',
+                    slug: '',
+                    user_id: user.id,
+                    is_published: false,
+                }));
+                lastSavedProfileStr.current = '';
+                setProfileLoading(false);
+                return;
+            }
+
+            const paramBusinessId = searchParams.get('business');
+            const picked =
+                (paramBusinessId && memberships.find((m) => m.profile.id === paramBusinessId)) ||
+                memberships[0] ||
+                null;
+
+            if (picked) {
+                const existingProfile = picked.profile;
+                setMemberRole(picked.role);
+
                 // If the business already has a slug, redirect to the public page editor (Unified Experience)
                 if (existingProfile.slug) {
                     router.push(`/negocio/${existingProfile.slug}?edit=true`);
@@ -164,10 +200,10 @@ function BusinessBuilderPageContent() {
                 }
             } else {
                 // Primera vez: mostrar chatbot
+                setMemberRole(null);
                 setIsFirstTime(true);
                 setChatbotMinimized(false);
-                const initialProfile = { ...profile, user_id: user.id };
-                setProfile(initialProfile);
+                setProfile((prev) => ({ ...prev, user_id: user.id }));
                 // Don't set lastSavedProfileStr here so it saves on first meaningful change or creation
             }
         } catch (err) {
@@ -176,10 +212,15 @@ function BusinessBuilderPageContent() {
         } finally {
             setProfileLoading(false);
         }
-    }, [user, profile, router, error]);
+    }, [user, router, error, searchParams]);
 
     const handleSave = React.useCallback(async (showNotification = true) => {
         if (!user || !profile.name) return;
+
+        if (profile.id && memberRole && !hasPermission(memberRole, 'business:write')) {
+            error('No tienes permiso para editar este negocio');
+            return;
+        }
 
         try {
             setSaving(true);
@@ -189,11 +230,12 @@ function BusinessBuilderPageContent() {
 
             let savedProfile;
             if (profile.id) {
-                savedProfile = await updateBusinessProfile(user.id, profile);
+                savedProfile = await updateBusinessProfile(profile.id, profile);
             } else {
                 savedProfile = await createBusinessProfile({
                     ...profile,
                     user_id: user.id,
+                    created_by: user.id,
                     slug: profile.slug || profile.name.toLowerCase().replace(/\s+/g, '-')
                 } as BusinessProfile);
             }
@@ -202,6 +244,10 @@ function BusinessBuilderPageContent() {
                 setProfile(savedProfile);
                 lastSavedProfileStr.current = JSON.stringify(savedProfile);
                 setLastSavedTime(new Date());
+
+                if (!profile.id && savedProfile.id) {
+                    router.replace(`${pathname}?business=${savedProfile.id}`);
+                }
 
                 if (showNotification) {
                     success('¡Cambios guardados!');
@@ -215,7 +261,7 @@ function BusinessBuilderPageContent() {
         } finally {
             setSaving(false);
         }
-    }, [user, profile, success, error]);
+    }, [user, profile, memberRole, success, error, router, pathname]);
 
     // Load profile on mount
     useEffect(() => {
@@ -285,7 +331,12 @@ function BusinessBuilderPageContent() {
 
         try {
             setSaving(true);
-            const updated = await updateBusinessProfile(user.id, {
+            if (!profile.id || !memberRole || !hasPermission(memberRole, 'business:publish')) {
+                error('No tienes permiso para publicar este negocio');
+                return;
+            }
+
+            const updated = await updateBusinessProfile(profile.id, {
                 ...profile,
                 is_published: !profile.is_published
             });
@@ -350,7 +401,7 @@ function BusinessBuilderPageContent() {
                         >
                             <IconX size={20} color="var(--text-secondary)" />
                         </button>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                             <div className="flex flex-col items-start gap-0.5 ml-2">
                                 <h1 className="font-bold text-base md:text-lg text-slate-800 leading-tight">Editar Página</h1>
                                 {/* Auto-save Indicator */}
@@ -370,6 +421,30 @@ function BusinessBuilderPageContent() {
                                     )}
                                 </div>
                             </div>
+                            {businessOptions.length > 0 && (
+                                <div className="flex items-center gap-2 ml-2 flex-wrap">
+                                    <label className="text-xs text-slate-500 font-medium">Negocio</label>
+                                    <select
+                                        className="text-sm border border-slate-200 rounded-lg px-2 py-1 bg-white text-slate-800 max-w-[200px]"
+                                        value={profile.id || ''}
+                                        onChange={(e) => {
+                                            const id = e.target.value;
+                                            if (id) router.push(`${pathname}?business=${id}`);
+                                        }}
+                                    >
+                                        {businessOptions.map(({ profile: p }) => (
+                                            <option key={p.id} value={p.id}>{p.name || p.slug || p.id}</option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        type="button"
+                                        className="text-xs font-semibold text-blue-600 hover:underline"
+                                        onClick={() => router.push(`${pathname}?new=1`)}
+                                    >
+                                        + Nuevo negocio
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -397,7 +472,12 @@ function BusinessBuilderPageContent() {
 
                         <button
                             onClick={handlePublish}
-                            disabled={saving || !profile.id}
+                            disabled={
+                                saving ||
+                                !profile.id ||
+                                !memberRole ||
+                                !hasPermission(memberRole, 'business:publish')
+                            }
                             className="px-4 md:px-6 py-2 rounded-lg font-bold text-white flex items-center gap-2 hover:shadow-lg transition-all disabled:opacity-50 text-sm"
                             style={{ backgroundColor: profile.is_published ? '#10b981' : 'var(--brand-blue)' }}
                         >

@@ -10,7 +10,7 @@
 import React, { useState, useEffect, Suspense, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { createBusinessProfile, getBusinessProfile, updateBusinessProfile } from '@/lib/business';
+import { createBusinessProfile, listBusinessProfilesForUser, updateBusinessProfile } from '@/lib/business';
 import { BusinessProfile } from '@/types/business';
 import { IconEye, IconEdit, IconX, IconCheck } from '@/components/Icons';
 import AuthModal from '@/components/AuthModal';
@@ -64,7 +64,8 @@ function BusinessBuilderPageContent() {
 
         try {
             setProfileLoading(true);
-            const existingProfile = await getBusinessProfile(user.id);
+            const memberships = await listBusinessProfilesForUser(user.id);
+            const existingProfile = memberships[0]?.profile ?? null;
 
             if (existingProfile) {
                 setProfile(existingProfile);
@@ -92,11 +93,12 @@ function BusinessBuilderPageContent() {
 
             let savedProfile;
             if (profile.id) {
-                savedProfile = await updateBusinessProfile(user.id, profile);
+                savedProfile = await updateBusinessProfile(profile.id!, profile);
             } else {
                 savedProfile = await createBusinessProfile({
                     ...profile,
                     user_id: user.id,
+                    created_by: user.id,
                     slug: profile.slug || profile.name.toLowerCase().replace(/\s+/g, '-')
                 } as BusinessProfile);
             }
@@ -153,7 +155,7 @@ function BusinessBuilderPageContent() {
 
         try {
             setSaving(true);
-            const updated = await updateBusinessProfile(user.id, {
+            const updated = await updateBusinessProfile(profile.id!, {
                 ...profile,
                 is_published: !profile.is_published
             });

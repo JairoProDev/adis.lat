@@ -1,24 +1,66 @@
 import { supabase } from './supabase';
 import { BusinessProfile } from '@/types/business';
+import type { BusinessMemberRole, BusinessWithRole } from './business-access';
 
 export const BUSINESS_TABLE = 'business_profiles';
 
-export async function getBusinessProfile(userId: string): Promise<BusinessProfile | null> {
-    if (!supabase) return null;
+/**
+ * All businesses the user can access (membership / RBAC).
+ * Ordered by business created_at ascending (stable default).
+ */
+export async function listBusinessProfilesForUser(userId: string): Promise<BusinessWithRole[]> {
+    if (!supabase) return [];
 
     const { data, error } = await supabase
-        .from(BUSINESS_TABLE)
-        .select('*')
+        .from('business_members')
+        .select(`
+      role,
+      business_profiles (*)
+    `)
         .eq('user_id', userId)
-        .single();
+        .eq('status', 'active');
 
     if (error) {
-        if (error.code === 'PGRST116') return null; // Not found
-        console.error('Error fetching business profile:', error);
-        return null;
+        console.error('Error listing business profiles for user:', error);
+        return [];
     }
 
-    return data as BusinessProfile;
+    const out: BusinessWithRole[] = [];
+    for (const row of data || []) {
+        const raw = row as {
+            role: BusinessMemberRole;
+            business_profiles: BusinessProfile | BusinessProfile[] | null;
+        };
+        const bp = Array.isArray(raw.business_profiles)
+            ? raw.business_profiles[0]
+            : raw.business_profiles;
+        if (bp) {
+            out.push({ profile: bp, role: raw.role });
+        }
+    }
+
+    out.sort(
+        (a, b) =>
+            new Date(a.profile.created_at).getTime() - new Date(b.profile.created_at).getTime()
+    );
+    return out;
+}
+
+/**
+ * @deprecated Prefer listBusinessProfilesForUser — kept for backward compatibility:
+ * returns the first business the user belongs to (oldest).
+ */
+export async function getBusinessProfile(userId: string): Promise<BusinessProfile | null> {
+    const list = await listBusinessProfilesForUser(userId);
+    return list[0]?.profile ?? null;
+}
+
+export async function getBusinessProfileByIdForUser(
+    businessId: string,
+    userId: string
+): Promise<BusinessWithRole | null> {
+    const list = await listBusinessProfilesForUser(userId);
+    return list.find((x) => x.profile.id === businessId) ?? null;
 }
 
 export async function getBusinessProfileBySlug(slug: string): Promise<BusinessProfile | null> {
@@ -55,16 +97,19 @@ export async function createBusinessProfile(profile: Partial<BusinessProfile>): 
     return data as BusinessProfile;
 }
 
-export async function updateBusinessProfile(userId: string, updates: Partial<BusinessProfile>): Promise<BusinessProfile | null> {
+export async function updateBusinessProfile(
+    businessId: string,
+    updates: Partial<BusinessProfile>
+): Promise<BusinessProfile | null> {
     if (!supabase) return null;
 
     // Remove fields that shouldn't be updated directly or are read-only
-    const { id, created_at, updated_at, ...cleanUpdates } = updates as any;
+    const { id, created_at, updated_at, user_id, ...cleanUpdates } = updates as any;
 
     const { data, error } = await supabase
         .from(BUSINESS_TABLE)
         .update({ ...cleanUpdates, updated_at: new Date().toISOString() })
-        .eq('user_id', userId)
+        .eq('id', businessId)
         .select()
         .single();
 
@@ -77,7 +122,10 @@ export async function updateBusinessProfile(userId: string, updates: Partial<Bus
 }
 
 export async function saveBusinessProfile(profile: BusinessProfile): Promise<BusinessProfile | null> {
-    return updateBusinessProfile(profile.user_id, profile);
+    if (!profile.id) {
+        throw new Error('saveBusinessProfile requires profile.id');
+    }
+    return updateBusinessProfile(profile.id, profile);
 }
 
 export async function checkSlugAvailability(slug: string): Promise<boolean> {

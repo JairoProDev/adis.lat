@@ -25,7 +25,9 @@ export interface CustomBlock {
 
 export interface BusinessProfile {
     id: string;
+    /** Creator / legacy primary account; team access is in business_members */
     user_id: string;
+    created_by?: string;
     slug: string;
     name: string;
     description?: string;

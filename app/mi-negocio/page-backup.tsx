@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
-import { createBusinessProfile, getBusinessProfile, updateBusinessProfile, checkSlugAvailability } from '@/lib/business';
+import { createBusinessProfile, listBusinessProfilesForUser, updateBusinessProfile, checkSlugAvailability } from '@/lib/business';
 import { BusinessProfile } from '@/types/business';
 import { cn } from '@/lib/utils';
 import {
@@ -66,7 +66,8 @@ function BusinessBuilderPageContent() {
 
         async function loadProfile() {
             try {
-                const existing = await getBusinessProfile(user!.id);
+                const memberships = await listBusinessProfilesForUser(user!.id);
+                const existing = memberships[0]?.profile ?? null;
                 if (existing) {
                     setProfile(existing);
                 }
@@ -96,12 +97,12 @@ function BusinessBuilderPageContent() {
             let result;
             if (profile.id) {
                 // Update existing
-                result = await updateBusinessProfile(user.id, profile);
+                result = await updateBusinessProfile(profile.id!, profile);
                 // We DO NOT setProfile(result) here to avoid overwriting user's typing with old server state
                 // unless we returned specific computed fields, but for now we trust local state.
             } else {
                 // Create new
-                result = await createBusinessProfile({ ...profile, user_id: user.id });
+                result = await createBusinessProfile({ ...profile, user_id: user.id, created_by: user.id });
                 // For creation, we MUST update to get the ID.
                 if (result) {
                     setProfile(result);
@@ -138,9 +139,9 @@ function BusinessBuilderPageContent() {
         try {
             let result;
             if (profile.id) {
-                result = await updateBusinessProfile(user.id, updatedProfile);
+                result = await updateBusinessProfile(profile.id!, updatedProfile);
             } else {
-                result = await createBusinessProfile({ ...updatedProfile, user_id: user.id });
+                result = await createBusinessProfile({ ...updatedProfile, user_id: user.id, created_by: user.id });
             }
 
             if (result) {
@@ -216,7 +217,7 @@ function BusinessBuilderPageContent() {
             setSaving(true);
             try {
                 if (profile.id) {
-                    await updateBusinessProfile(user.id, debouncedProfile);
+                    await updateBusinessProfile(profile.id!, debouncedProfile);
                     setLastSavedProfile(currentProfileStr);
                 }
             } catch (e) {

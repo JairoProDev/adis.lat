@@ -18,7 +18,7 @@ import { useToast } from '@/hooks/useToast';
 import { ToastContainer } from '@/components/Toast';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import { getBusinessProfile } from '@/lib/business';
+import { listBusinessProfilesForUser } from '@/lib/business';
 import { useAuth } from '@/hooks/useAuth';
 
 interface ImportResult {
@@ -229,7 +229,8 @@ export default function CatalogImportPage() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error('No se encontró el usuario');
 
-            const profile = await getBusinessProfile(user.id);
+            const memberships = await listBusinessProfilesForUser(user.id);
+            const profile = memberships[0]?.profile;
             if (!profile) throw new Error('No tienes un perfil de negocio creado');
 
             const { error: insertError } = await supabase
