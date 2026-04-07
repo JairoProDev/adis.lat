@@ -67,6 +67,13 @@ interface ModalAdisoProps {
   onError?: (message: string) => void; // Callback para mensajes de error
 }
 
+function getSellerDisplayName(adiso: Adiso): string | null {
+  const rawName = adiso.vendedor?.nombre?.trim();
+  if (!rawName) return null;
+  if (rawName.toLowerCase() === 'anunciante') return null;
+  return rawName;
+}
+
 export default function ModalAdiso({
   adiso,
   onCerrar,
@@ -104,6 +111,7 @@ export default function ModalAdiso({
 
   const [vistasLocales, setVistasLocales] = useState(adiso.vistas || 0);
   const [contactosLocales, setContactosLocales] = useState(adiso.contactos || 0);
+  const sellerName = getSellerDisplayName(adiso);
   const viewSignal = getViewSignal({
     vistas: vistasLocales,
     fechaPublicacion: adiso.fechaPublicacion,
@@ -537,10 +545,12 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
               </div>
             )}
           </div>
-          <div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Publicado por</div>
-            <div style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>{adiso.vendedor?.nombre || 'Anunciante'}</div>
-          </div>
+          {sellerName && (
+            <div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Publicado por</div>
+              <div style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>{sellerName}</div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -610,10 +620,12 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
         <div style={{ height: '1px', backgroundColor: 'var(--border-subtle)', margin: '4px 0' }} />
 
         <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ opacity: 0.7 }}>👁️</span>
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{viewSignal.label}</span>
-          </div>
+          {viewSignal && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ opacity: 0.7 }}>👁️</span>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{viewSignal.label}</span>
+            </div>
+          )}
           {contactSignal && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ opacity: 0.7 }}>💬</span>

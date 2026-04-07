@@ -164,6 +164,13 @@ interface AdisoCardProps {
     vista?: 'grid' | 'list' | 'feed';
 }
 
+function getSellerDisplayName(adiso: Adiso): string | null {
+    const rawName = adiso.vendedor?.nombre?.trim();
+    if (!rawName) return null;
+    if (rawName.toLowerCase() === 'anunciante') return null;
+    return rawName;
+}
+
 const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, estaSeleccionado, isDesktop = true, vista = 'grid' }, ref) => {
     const { isFavorite, isHidden, toggleFav, markNotInterested } = useAdInteraction(adiso.id);
     const IconComponent = getCategoriaIcon(adiso.categoria);
@@ -197,6 +204,7 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
         horaPublicacion: adiso.horaPublicacion
     });
     const interestSignal = getInterestSignal(adiso.contactos);
+    const sellerName = getSellerDisplayName(adiso);
 
     // Precio Logic
     let displayPrice = 'Contactar';
@@ -273,9 +281,11 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
                             )}
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-sm font-bold text-gray-900 dark:text-platinum-50 leading-none mb-1">
-                                {adiso.vendedor?.nombre || 'Anunciante'}
-                            </span>
+                            {sellerName && (
+                                <span className="text-sm font-bold text-gray-900 dark:text-platinum-50 leading-none mb-1">
+                                    {sellerName}
+                                </span>
+                            )}
                             <div className="flex items-center gap-1 text-[11px] text-gray-400 font-medium">
                                 <IconLocation size={10} />
                                 <span>{locationString}</span>
@@ -383,9 +393,11 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
                                         )}
                                     </div>
                                     {/* Compact Name Only */}
-                                    <span className="text-[10px] font-bold text-white leading-none pr-1.5 truncate max-w-[80px]">
-                                        {adiso.vendedor?.nombre || 'Anunciante'}
-                                    </span>
+                                    {sellerName && (
+                                        <span className="text-[10px] font-bold text-white leading-none pr-1.5 truncate max-w-[80px]">
+                                            {sellerName}
+                                        </span>
+                                    )}
                                 </div>
                             ) : (
                                 // Mobile: Minimal Circular Badge
@@ -475,12 +487,14 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
                         <IconClock size={11} className="text-sky-400 opacity-70" />
                         <span>{timeAgo}</span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                        <IconEye size={11} className={`opacity-70 ${viewSignal.tone === 'highlight' ? 'text-sky-400' : 'text-amber-400'}`} />
-                        <span className={viewSignal.tone === 'highlight' ? 'text-sky-500' : ''}>
-                            {viewSignal.label}
-                        </span>
-                    </div>
+                    {viewSignal && (
+                        <div className="flex items-center gap-1.5">
+                            <IconEye size={11} className={`opacity-70 ${viewSignal.tone === 'highlight' ? 'text-sky-400' : 'text-amber-400'}`} />
+                            <span className={viewSignal.tone === 'highlight' ? 'text-sky-500' : ''}>
+                                {viewSignal.label}
+                            </span>
+                        </div>
+                    )}
                 </div>
 
             </div>

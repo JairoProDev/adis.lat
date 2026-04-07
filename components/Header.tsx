@@ -6,10 +6,10 @@ import {
   FaBars,
   FaBell,
   FaFacebookMessenger,
-  FaCog,
-  FaChartLine
+  FaChartLine,
+  FaMoon,
+  FaSun
 } from 'react-icons/fa';
-import ThemeToggle from './ThemeToggle';
 import LanguageSelector from './LanguageSelector';
 import UserMenu from './UserMenu';
 import NotificationsPopover from './NotificationsPopover';
@@ -89,9 +89,36 @@ export default function Header({
   const [showMobileSettings, setShowMobileSettings] = useState(false);
   const [activePopover, setActivePopover] = useState<'notifications' | 'messages' | null>(null);
   const [hoveredItem, setHoveredItem] = useState<SeccionSidebar | null>(null);
+  const [themeMode, setThemeMode] = useState<'light' | 'dark' | 'auto'>('auto');
   const { user } = useAuth();
   const { openChat } = useUI();
   const isAuthenticated = !!user;
+
+  const applyTheme = (mode: 'light' | 'dark' | 'auto') => {
+    const root = document.documentElement;
+    root.classList.remove('light-mode', 'dark-mode', 'dark');
+    if (mode === 'auto') {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      root.classList.add(prefersDark ? 'dark-mode' : 'light-mode');
+      if (prefersDark) root.classList.add('dark');
+      return;
+    }
+    root.classList.add(mode === 'dark' ? 'dark-mode' : 'light-mode');
+    if (mode === 'dark') root.classList.add('dark');
+  };
+
+  useEffect(() => {
+    if (!mounted) return;
+    const saved = (localStorage.getItem('theme') as 'light' | 'dark' | 'auto' | null) || 'auto';
+    setThemeMode(saved);
+  }, [mounted]);
+
+  const toggleTheme = () => {
+    const next = themeMode === 'dark' ? 'light' : 'dark';
+    setThemeMode(next);
+    localStorage.setItem('theme', next);
+    applyTheme(next);
+  };
 
   if (!mounted) return null;
 
@@ -343,6 +370,27 @@ export default function Header({
 
       {/* RIGHT: Actions */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', minWidth: isDesktop ? '280px' : 'auto', gap: '8px' }}>
+        <button
+          onClick={toggleTheme}
+          style={{
+            width: '40px',
+            height: '40px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: '50%',
+            background: 'var(--bg-secondary)',
+            color: 'var(--text-primary)',
+            border: 'none',
+            cursor: 'pointer'
+          }}
+          className="hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors hover:text-[var(--brand-blue)]"
+          title={themeMode === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+          aria-label={themeMode === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+        >
+          {themeMode === 'dark' ? <FaSun size={16} /> : <FaMoon size={16} />}
+        </button>
+
         {isAuthenticated && ( // Only show these actions if logged in
           <>
             {/* Helper Action: Changelog */}

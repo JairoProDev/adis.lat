@@ -26,16 +26,11 @@ export function formatCompactNumber(value: number): string {
   return new Intl.NumberFormat('es-PE', { notation: 'compact', maximumFractionDigits: 1 }).format(value);
 }
 
-export function getViewSignal(adiso: Pick<Adiso, 'vistas' | 'fechaPublicacion' | 'horaPublicacion'>): SocialSignal {
+export function getViewSignal(adiso: Pick<Adiso, 'vistas' | 'fechaPublicacion' | 'horaPublicacion'>): SocialSignal | null {
   const views = Math.max(0, adiso.vistas || 0);
   const ageHours = getAgeInHours(adiso);
-
-  if (views < 20) {
-    if (ageHours !== null && ageHours <= 48) {
-      return { label: 'Nuevo', tone: 'highlight' };
-    }
-    return { label: 'Actividad reciente', tone: 'neutral' };
-  }
+  if (views < 20 && ageHours !== null && ageHours <= 12) return null;
+  if (views < 20) return null;
 
   if (views < 50) return { label: '+20 vistas', tone: 'neutral' };
   if (views < 100) return { label: '+50 vistas', tone: 'neutral' };
