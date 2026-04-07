@@ -21,6 +21,7 @@ import {
 } from '@/components/Icons';
 import { useAdInteraction } from '@/hooks/useAdInteraction';
 import TrustBadge from '@/components/trust/TrustBadge';
+import { getInterestSignal, getViewSignal } from '@/lib/social-proof';
 
 // --- DATE FORMATTER (RELATIVE) ---
 function getTimeAgo(dateString: string | undefined): string {
@@ -190,6 +191,12 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
     }
 
     const timeAgo = getTimeAgo(fechaRaw || (adiso as any).created_at);
+    const viewSignal = getViewSignal({
+        vistas: adiso.vistas,
+        fechaPublicacion: adiso.fechaPublicacion,
+        horaPublicacion: adiso.horaPublicacion
+    });
+    const interestSignal = getInterestSignal(adiso.contactos);
 
     // Precio Logic
     let displayPrice = 'Contactar';
@@ -403,6 +410,11 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
                                     ⭐ Destacado
                                 </span>
                             )}
+                            {interestSignal && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] uppercase tracking-wider font-extrabold backdrop-blur-md bg-emerald-400 text-emerald-950 border border-emerald-300/50 shadow-sm transition-all hover:scale-105 active:scale-95">
+                                    🔥 {interestSignal.label}
+                                </span>
+                            )}
                         </div>
                     )}
 
@@ -464,10 +476,9 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
                         <span>{timeAgo}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                        <IconEye size={11} className="text-amber-400 opacity-70" />
-                        <span>
-                            {adiso.vistas || 0}
-                            {isDesktop ? ' vistas' : ''}
+                        <IconEye size={11} className={`opacity-70 ${viewSignal.tone === 'highlight' ? 'text-sky-400' : 'text-amber-400'}`} />
+                        <span className={viewSignal.tone === 'highlight' ? 'text-sky-500' : ''}>
+                            {viewSignal.label}
                         </span>
                     </div>
                 </div>

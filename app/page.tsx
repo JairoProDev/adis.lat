@@ -59,6 +59,7 @@ import FeedbackButton from '@/components/FeedbackButton';
 import NavbarMobile from '@/components/NavbarMobile';
 import LeftSidebar from '@/components/LeftSidebar';
 import PullToRefresh from '@/components/pwa/PullToRefresh';
+import { getMarketplacePulse } from '@/lib/social-proof';
 
 // Lazy load componentes pesados
 const ModalAdiso = dynamicImport(() => import('@/components/ModalAdiso'), {
@@ -142,6 +143,7 @@ function HomeContent() {
   const [vista, setVista] = useState<'grid' | 'list' | 'feed'>('grid');
   const [isSidebarMinimizado, setIsSidebarMinimizado] = useState(false);
   const { toasts, removeToast, success, error } = useToast();
+  const marketplacePulse = getMarketplacePulse(adisosFiltrados);
   const [isOnlineState, setIsOnlineState] = useState(() => {
     if (typeof window !== 'undefined') {
       return navigator.onLine;
@@ -1023,7 +1025,7 @@ function HomeContent() {
             flexWrap: 'wrap'
           }}>
             {/* Left: Count pill */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               {cargando ? (
                 <div className="skeleton-shimmer" style={{ width: 120, height: 36, borderRadius: '18px' }} />
               ) : (
@@ -1096,6 +1098,23 @@ function HomeContent() {
                       <IconShare size={14} />
                     </button>
                   )}
+                </div>
+              )}
+              {!cargando && marketplacePulse && (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    backgroundColor: 'rgba(56, 189, 248, 0.08)',
+                    color: 'var(--brand-blue)',
+                    padding: '6px 10px',
+                    borderRadius: '999px',
+                    fontSize: '0.75rem',
+                    fontWeight: 700
+                  }}
+                >
+                  🔵 {marketplacePulse}
                 </div>
               )}
             </div>

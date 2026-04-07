@@ -34,6 +34,7 @@ import {
 } from './Icons';
 import { Categoria, UbicacionDetallada } from '@/types';
 import { getAdisoUrl } from '@/lib/url';
+import { getInterestSignal, getViewSignal } from '@/lib/social-proof';
 
 // Función helper para formatear ubicación
 function formatearUbicacion(ubicacion: any): { texto: string; coordenadas: { lat: number; lng: number } | null } {
@@ -103,6 +104,12 @@ export default function ModalAdiso({
 
   const [vistasLocales, setVistasLocales] = useState(adiso.vistas || 0);
   const [contactosLocales, setContactosLocales] = useState(adiso.contactos || 0);
+  const viewSignal = getViewSignal({
+    vistas: vistasLocales,
+    fechaPublicacion: adiso.fechaPublicacion,
+    horaPublicacion: adiso.horaPublicacion
+  });
+  const contactSignal = getInterestSignal(contactosLocales);
 
   // Cuando cambia el adiso, reiniciamos el estado local con los valores del nuevo adiso
   useEffect(() => {
@@ -602,15 +609,17 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
 
         <div style={{ height: '1px', backgroundColor: 'var(--border-subtle)', margin: '4px 0' }} />
 
-        <div style={{ display: 'flex', gap: '1.25rem' }}>
+        <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span style={{ opacity: 0.7 }}>👁️</span>
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{vistasLocales} Vistas</span>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{viewSignal.label}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ opacity: 0.7 }}>💬</span>
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{contactosLocales} Interesados</span>
-          </div>
+          {contactSignal && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ opacity: 0.7 }}>💬</span>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{contactSignal.label}</span>
+            </div>
+          )}
         </div>
       </div>
 
