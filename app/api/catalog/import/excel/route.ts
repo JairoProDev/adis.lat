@@ -15,6 +15,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import { getUserFromRouteRequest } from '@/lib/supabase-route-auth';
+import { getBusinessIdFromRequest, resolveBusinessForUser } from '@/lib/business-server-auth';
+import { hasPermission } from '@/lib/business-access';
 import { ExcelParser } from '@/lib/ai/excel-parser';
 import { ProductNormalizer } from '@/lib/ai/product-normalizer';
 import { DuplicateDetector } from '@/lib/ai/duplicate-detector';
@@ -37,20 +39,21 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // 2. Get business profile (Using admin to ensure we find it correctly)
-        const { data: profile, error: profileError } = await supabaseAdmin
-            .from('business_profiles')
-            .select('id')
-            .eq('user_id', user.id)
-            .single();
-
-        if (profileError || !profile) {
-            console.error('Profile not found:', profileError);
-            return NextResponse.json({ error: 'Business profile not found' }, { status: 404 });
+        const supabase = await createServerClient();
+        const formData = await request.formData();
+        const businessIdRaw = formData.get('business_id') ?? formData.get('business_profile_id');
+        const businessId =
+            typeof businessIdRaw === 'string' && businessIdRaw.length > 0 ? businessIdRaw : null;
+        const ctx = await resolveBusinessForUser(supabase, user.id, businessId);
+        if (!ctx || !hasPermission(ctx.role, 'catalog:write')) {
+            return NextResponse.json(
+                { error: ctx ? 'Forbidden' : 'Business profile not found' },
+                { status: ctx ? 403 : 404 }
+            );
         }
+        const profile = { id: ctx.id };
 
         // 3. Get file from form data
-        const formData = await request.formData();
         const file = formData.get('file') as File;
 
         if (!file) {
@@ -291,17 +294,17 @@ export async function GET(request: NextRequest) {
         }
 
         const supabase = await createServerClient();
-        const { data: profile, error: profileError } = await supabase
-            .from('business_profiles')
-            .select('id')
-            .eq('user_id', user.id)
-            .single();
-
-        if (profileError || !profile) {
-            return NextResponse.json({ error: 'Business profile not found' }, { status: 404 });
-        }
-
         const { searchParams } = new URL(request.url);
+        const businessId = getBusinessIdFromRequest(request, null);
+        const ctx = await resolveBusinessForUser(supabase, user.id, businessId);
+        if (!ctx || !hasPermission(ctx.role, 'catalog:read')) {
+            return NextResponse.json(
+                { error: ctx ? 'Forbidden' : 'Business profile not found' },
+                { status: ctx ? 403 : 404 }
+            );
+        }
+        const profile = { id: ctx.id };
+
         const sessionId = searchParams.get('sessionId');
 
         if (!sessionId) {

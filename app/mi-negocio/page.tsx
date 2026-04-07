@@ -8,6 +8,7 @@
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
+import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { createBusinessProfile, listBusinessProfilesForUser, updateBusinessProfile, getBusinessCatalog } from '@/lib/business';
@@ -443,6 +444,14 @@ function BusinessBuilderPageContent() {
                                     >
                                         + Nuevo negocio
                                     </button>
+                                    {profile.id && (
+                                        <Link
+                                            href={`/mi-negocio/equipo?business=${profile.id}`}
+                                            className="text-xs font-semibold text-slate-600 hover:underline"
+                                        >
+                                            Equipo
+                                        </Link>
+                                    )}
                                 </div>
                             )}
                         </div>

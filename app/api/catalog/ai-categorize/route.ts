@@ -8,8 +8,11 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { createServerClient } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getUserFromRouteRequest } from '@/lib/supabase-route-auth';
+import { getBusinessIdFromRequest, resolveBusinessForUser } from '@/lib/business-server-auth';
+import { hasPermission } from '@/lib/business-access';
 import { rateLimit, getClientIP } from '@/lib/rate-limit';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
@@ -106,17 +109,18 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
         }
 
-        const { data: profile, error: profileError } = await supabaseAdmin
-            .from('business_profiles')
-            .select('id')
-            .eq('user_id', user.id)
-            .single();
-
-        if (profileError || !profile) {
-            return NextResponse.json({ error: 'Perfil de negocio no encontrado' }, { status: 404 });
-        }
-
+        const supabase = await createServerClient();
         const body = await request.json().catch(() => ({}));
+        const businessId = getBusinessIdFromRequest(request, body);
+        const ctx = await resolveBusinessForUser(supabase, user.id, businessId);
+        if (!ctx || !hasPermission(ctx.role, 'catalog:write')) {
+            return NextResponse.json(
+                { error: 'Perfil de negocio no encontrado o sin permiso' },
+                { status: ctx ? 403 : 404 }
+            );
+        }
+        const profile = { id: ctx.id };
+
         const { all = false, sector } = body as { all?: boolean; sector?: string };
 
         // Get products to categorize

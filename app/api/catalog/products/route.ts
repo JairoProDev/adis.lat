@@ -5,6 +5,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import { getUserFromRouteRequest } from '@/lib/supabase-route-auth';
+import { getBusinessIdFromRequest, resolveBusinessForUser } from '@/lib/business-server-auth';
+import { hasPermission } from '@/lib/business-access';
 
 const UPDATABLE_FIELDS = [
     'title',
@@ -24,16 +26,21 @@ const UPDATABLE_FIELDS = [
     'ai_metadata',
 ] as const;
 
-async function getProfileForUser(
+type CatalogPerm = 'catalog:read' | 'catalog:write';
+
+async function resolveCatalogBusiness(
+    request: NextRequest,
     supabase: Awaited<ReturnType<typeof createServerClient>>,
-    userId: string
+    userId: string,
+    body: Record<string, unknown> | null | undefined,
+    minPerm: CatalogPerm
 ) {
-    const { data: profile, error } = await supabase
-        .from('business_profiles')
-        .select('id')
-        .eq('user_id', userId)
-        .single();
-    return { profile, error };
+    const businessId = getBusinessIdFromRequest(request, body ?? null);
+    const ctx = await resolveBusinessForUser(supabase, userId, businessId);
+    if (!ctx || !hasPermission(ctx.role, minPerm)) {
+        return { profile: null as { id: string } | null, error: ctx ? 'forbidden' : 'not_found' };
+    }
+    return { profile: { id: ctx.id }, error: null as string | null };
 }
 
 export async function GET(request: NextRequest) {
@@ -44,12 +51,21 @@ export async function GET(request: NextRequest) {
         }
 
         const supabase = await createServerClient();
-        const { profile, error: profileError } = await getProfileForUser(supabase, user.id);
-        if (profileError || !profile) {
+        const { profile, error: profileError } = await resolveCatalogBusiness(
+            request,
+            supabase,
+            user.id,
+            null,
+            'catalog:read'
+        );
+        if (profileError === 'not_found' || !profile) {
             return NextResponse.json(
-                { success: false, error: 'Perfil de negocio no encontrado' },
+                { success: false, error: 'Perfil de negocio no encontrado o sin acceso' },
                 { status: 404 }
             );
+        }
+        if (profileError === 'forbidden') {
+            return NextResponse.json({ success: false, error: 'Sin permiso para el catálogo' }, { status: 403 });
         }
 
         const { searchParams } = new URL(request.url);
@@ -110,15 +126,23 @@ export async function POST(request: NextRequest) {
         }
 
         const supabase = await createServerClient();
-        const { profile, error: profileError } = await getProfileForUser(supabase, user.id);
-        if (profileError || !profile) {
+        const body = await request.json().catch(() => ({}));
+        const { profile, error: profileError } = await resolveCatalogBusiness(
+            request,
+            supabase,
+            user.id,
+            body,
+            'catalog:write'
+        );
+        if (profileError === 'not_found' || !profile) {
             return NextResponse.json(
-                { success: false, error: 'Perfil de negocio no encontrado' },
+                { success: false, error: 'Perfil de negocio no encontrado o sin acceso' },
                 { status: 404 }
             );
         }
-
-        const body = await request.json();
+        if (profileError === 'forbidden') {
+            return NextResponse.json({ success: false, error: 'Sin permiso para el catálogo' }, { status: 403 });
+        }
         if (!body.title) {
             return NextResponse.json(
                 { success: false, error: 'El título es requerido' },
@@ -175,12 +199,22 @@ export async function PUT(request: NextRequest) {
         }
 
         const supabase = await createServerClient();
-        const { profile, error: profileError } = await getProfileForUser(supabase, user.id);
-        if (profileError || !profile) {
+        const body = await request.json().catch(() => ({}));
+        const { profile, error: profileError } = await resolveCatalogBusiness(
+            request,
+            supabase,
+            user.id,
+            body,
+            'catalog:write'
+        );
+        if (profileError === 'not_found' || !profile) {
             return NextResponse.json(
-                { success: false, error: 'Perfil de negocio no encontrado' },
+                { success: false, error: 'Perfil de negocio no encontrado o sin acceso' },
                 { status: 404 }
             );
+        }
+        if (profileError === 'forbidden') {
+            return NextResponse.json({ success: false, error: 'Sin permiso para el catálogo' }, { status: 403 });
         }
 
         const { searchParams } = new URL(request.url);
@@ -191,8 +225,6 @@ export async function PUT(request: NextRequest) {
                 { status: 400 }
             );
         }
-
-        const body = await request.json();
         const patch: Record<string, unknown> = {};
         for (const key of UPDATABLE_FIELDS) {
             if (key in body) {
@@ -248,12 +280,21 @@ export async function DELETE(request: NextRequest) {
         }
 
         const supabase = await createServerClient();
-        const { profile, error: profileError } = await getProfileForUser(supabase, user.id);
-        if (profileError || !profile) {
+        const { profile, error: profileError } = await resolveCatalogBusiness(
+            request,
+            supabase,
+            user.id,
+            null,
+            'catalog:write'
+        );
+        if (profileError === 'not_found' || !profile) {
             return NextResponse.json(
-                { success: false, error: 'Perfil de negocio no encontrado' },
+                { success: false, error: 'Perfil de negocio no encontrado o sin acceso' },
                 { status: 404 }
             );
+        }
+        if (profileError === 'forbidden') {
+            return NextResponse.json({ success: false, error: 'Sin permiso para el catálogo' }, { status: 403 });
         }
 
         const { searchParams } = new URL(request.url);

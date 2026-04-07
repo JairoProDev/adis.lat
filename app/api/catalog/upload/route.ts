@@ -6,6 +6,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import { getUserFromRouteRequest } from '@/lib/supabase-route-auth';
+import { resolveBusinessForUser } from '@/lib/business-server-auth';
+import { hasPermission } from '@/lib/business-access';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_FILE_TYPES = [
@@ -29,21 +31,18 @@ export async function POST(request: NextRequest) {
         }
 
         const supabase = await createServerClient();
-
-        const { data: profile, error: profileError } = await supabase
-            .from('business_profiles')
-            .select('id')
-            .eq('user_id', user.id)
-            .single();
-
-        if (profileError || !profile) {
+        const formData = await request.formData();
+        const businessIdRaw = formData.get('business_id') ?? formData.get('business_profile_id');
+        const businessId =
+            typeof businessIdRaw === 'string' && businessIdRaw.length > 0 ? businessIdRaw : null;
+        const ctx = await resolveBusinessForUser(supabase, user.id, businessId);
+        if (!ctx || !hasPermission(ctx.role, 'catalog:write')) {
             return NextResponse.json(
-                { success: false, error: 'Perfil de negocio no encontrado' },
-                { status: 404 }
+                { success: false, error: 'Perfil de negocio no encontrado o sin permiso' },
+                { status: ctx ? 403 : 404 }
             );
         }
-
-        const formData = await request.formData();
+        const profile = { id: ctx.id };
         const files = formData.getAll('files') as File[];
 
         if (!files || files.length === 0) {

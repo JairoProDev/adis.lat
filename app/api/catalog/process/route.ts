@@ -6,6 +6,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import { getUserFromRouteRequest } from '@/lib/supabase-route-auth';
+import { getBusinessIdFromRequest, resolveBusinessForUser } from '@/lib/business-server-auth';
+import { hasPermission } from '@/lib/business-access';
 import { rateLimit, getClientIP } from '@/lib/rate-limit';
 import {
     extractProductsFromPDF,
@@ -46,21 +48,17 @@ export async function POST(request: NextRequest) {
         }
 
         const supabase = await createServerClient();
-
-        const { data: profile, error: profileError } = await supabase
-            .from('business_profiles')
-            .select('id')
-            .eq('user_id', user.id)
-            .single();
-
-        if (profileError || !profile) {
+        const body = await request.json();
+        const businessId = getBusinessIdFromRequest(request, body);
+        const ctx = await resolveBusinessForUser(supabase, user.id, businessId);
+        if (!ctx || !hasPermission(ctx.role, 'catalog:write')) {
             return NextResponse.json(
-                { success: false, error: 'Perfil de negocio no encontrado' },
-                { status: 404 }
+                { success: false, error: 'Perfil de negocio no encontrado o sin permiso' },
+                { status: ctx ? 403 : 404 }
             );
         }
+        const profile = { id: ctx.id };
 
-        const body = await request.json();
         const { files, options } = body;
 
         if (!files || files.length === 0) {
@@ -268,21 +266,17 @@ export async function GET(request: NextRequest) {
         }
 
         const supabase = await createServerClient();
-
-        const { data: profile, error: profileError } = await supabase
-            .from('business_profiles')
-            .select('id')
-            .eq('user_id', user.id)
-            .single();
-
-        if (profileError || !profile) {
+        const { searchParams } = new URL(request.url);
+        const businessId = getBusinessIdFromRequest(request, null);
+        const ctx = await resolveBusinessForUser(supabase, user.id, businessId);
+        if (!ctx || !hasPermission(ctx.role, 'catalog:read')) {
             return NextResponse.json(
-                { success: false, error: 'Perfil de negocio no encontrado' },
-                { status: 404 }
+                { success: false, error: 'Perfil de negocio no encontrado o sin permiso' },
+                { status: ctx ? 403 : 404 }
             );
         }
+        const profile = { id: ctx.id };
 
-        const { searchParams } = new URL(request.url);
         const importId = searchParams.get('importId');
 
         if (!importId) {
