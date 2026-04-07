@@ -853,6 +853,7 @@ function HomeContent() {
   };
 
   return (
+    <>
     <PullToRefresh onRefresh={handleRefresh}>
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <script
@@ -1207,15 +1208,6 @@ function HomeContent() {
           onClose={() => setIsLeftSidebarOpen(false)}
         />
 
-        {/* Navbar Mobile - siempre visible en mobile */}
-        {!isDesktop && (
-          <NavbarMobile
-            seccionActiva={seccionMobileActiva || (adisoAbierto ? 'adiso' : null)}
-            onCambiarSeccion={handleCambiarSeccionMobile}
-            tieneAdisoAbierto={!!adisoAbierto}
-          />
-        )}
-
         {/* Modal Adiso Mobile - Standalone Slide Up */}
         {!isDesktop && adisoAbierto && !seccionMobileActiva && (
           <ModalAdiso
@@ -1254,6 +1246,14 @@ function HomeContent() {
         <ToastContainer toasts={toasts} removeToast={removeToast} />
       </div>
     </PullToRefresh>
+    {!isDesktop && (
+      <NavbarMobile
+        seccionActiva={seccionMobileActiva || (adisoAbierto ? 'adiso' : null)}
+        onCambiarSeccion={handleCambiarSeccionMobile}
+        tieneAdisoAbierto={!!adisoAbierto}
+      />
+    )}
+    </>
   );
 }
 
