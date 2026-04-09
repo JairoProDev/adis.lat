@@ -208,17 +208,19 @@ export async function PATCH(request: NextRequest) {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
         }
 
-        const { data: profile } = await supabaseAdmin
-            .from('business_profiles')
-            .select('id')
-            .eq('user_id', user.id)
-            .single();
-
-        if (!profile) {
-            return NextResponse.json({ error: 'Perfil no encontrado' }, { status: 404 });
+        const supabase = await createServerClient();
+        const body = await request.json().catch(() => ({}));
+        const businessId = getBusinessIdFromRequest(request, body);
+        const ctx = await resolveBusinessForUser(supabase, user.id, businessId);
+        if (!ctx || !hasPermission(ctx.role, 'catalog:write')) {
+            return NextResponse.json(
+                { error: 'Perfil no encontrado o sin permiso' },
+                { status: ctx ? 403 : 404 }
+            );
         }
+        const profile = { id: ctx.id };
 
-        const { assignments } = await request.json() as {
+        const { assignments } = body as {
             assignments: { productId: string; category: string }[];
         };
 

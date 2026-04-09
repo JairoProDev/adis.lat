@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
     IconPlus, IconGrid, IconList, IconSearch, IconFilter, IconSparkles,
@@ -18,6 +18,7 @@ import AddProductModal from '@/components/catalog/AddProductModal';
 import { SectorSelectorModal } from '@/components/catalog/SectorSelectorModal';
 import { groupProducts, getFilterOptions, type GroupedProduct } from '@/lib/catalog/product-grouping';
 import { ProductEditor } from '@/components/business/ProductEditor';
+import { listBusinessProfilesForUser } from '@/lib/business';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -75,8 +76,10 @@ function getFirstImageUrl(product: CatalogProduct | GroupedProduct): string {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-export default function CatalogPage() {
+function CatalogPageContent() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const businessParam = searchParams.get('business');
     const { success, error: showError, toasts, removeToast } = useToast();
 
     const [products, setProducts] = useState<CatalogProduct[]>([]);
@@ -118,6 +121,7 @@ export default function CatalogPage() {
     // Business Sector
     const [showSectorSelector, setShowSectorSelector] = useState(false);
     const [businessSector, setBusinessSector] = useState<string | null>(null);
+    const [businessPickList, setBusinessPickList] = useState<{ id: string; name: string }[]>([]);
 
     // ── computed stats ──────────────────────────────────────────────────────
 
@@ -196,21 +200,26 @@ export default function CatalogPage() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) { router.push('/auth/login'); return; }
 
-            const { data: profile, error: profileError } = await supabase
-                .from('business_profiles')
-                .select('id')
-                .eq('user_id', user.id)
-                .maybeSingle();
+            const memberships = await listBusinessProfilesForUser(user.id);
+            if (!memberships.length) { router.push('/mi-negocio'); return; }
 
-            if (profileError || !profile) { router.push('/mi-negocio'); return; }
+            setBusinessPickList(
+                memberships.map((m) => ({
+                    id: m.profile.id,
+                    name: m.profile.name || m.profile.slug || m.profile.id,
+                }))
+            );
+
+            const pick = businessParam ? memberships.find((m) => m.profile.id === businessParam) : null;
+            const chosen = pick ?? memberships[0];
 
             setUserId(user.id);
-            setBusinessProfileId(profile.id);
-            await loadProducts(profile.id);
+            setBusinessProfileId(chosen.profile.id);
+            await loadProducts(chosen.profile.id);
         } catch (err: any) {
             showError('Error al cargar perfil: ' + err.message);
         }
-    }, [router, showError, loadProducts]);
+    }, [router, showError, loadProducts, businessParam]);
 
     useEffect(() => { loadBusinessProfile(); }, [loadBusinessProfile]);
 
@@ -318,7 +327,11 @@ export default function CatalogPage() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${session?.access_token}`,
                 },
-                body: JSON.stringify({ all, sector: sectorToUse }),
+                body: JSON.stringify({
+                    all,
+                    sector: sectorToUse,
+                    business_id: businessProfileId,
+                }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Error de IA');
@@ -349,7 +362,7 @@ export default function CatalogPage() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${session?.access_token}`,
                 },
-                body: JSON.stringify({ assignments }),
+                body: JSON.stringify({ assignments, business_id: businessProfileId }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error);
@@ -443,11 +456,35 @@ export default function CatalogPage() {
                                         </span>
                                     )}
                                 </p>
+                                {businessPickList.length > 0 && (
+                                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                                        <span className="text-xs font-semibold" style={{ color: 'var(--text-tertiary)' }}>
+                                            Negocio
+                                        </span>
+                                        <select
+                                            className="text-sm border border-slate-200 rounded-lg px-2 py-1 bg-white max-w-[220px]"
+                                            value={businessProfileId || ''}
+                                            onChange={(e) =>
+                                                router.push(`/mi-negocio/catalogo?business=${e.target.value}`)
+                                            }
+                                        >
+                                            {businessPickList.map((b) => (
+                                                <option key={b.id} value={b.id}>
+                                                    {b.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="flex items-center gap-2 flex-shrink-0">
                                 <Link
-                                    href="/mi-negocio/catalogo/importar"
+                                    href={
+                                        businessProfileId
+                                            ? `/mi-negocio/catalogo/importar?business=${businessProfileId}`
+                                            : '/mi-negocio/catalogo/importar'
+                                    }
                                     className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold border-2 transition-all hover:shadow-sm"
                                     style={{
                                         borderColor: 'var(--brand-blue)',
@@ -868,6 +905,20 @@ export default function CatalogPage() {
                 );
             })()}
         </div>
+    );
+}
+
+export default function CatalogPage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--bg-secondary)' }}>
+                    <div className="w-10 h-10 border-2 rounded-full animate-spin border-blue-500 border-t-transparent" />
+                </div>
+            }
+        >
+            <CatalogPageContent />
+        </Suspense>
     );
 }
 

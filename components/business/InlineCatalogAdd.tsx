@@ -245,6 +245,7 @@ export default function InlineCatalogAdd({ businessProfileId, onSuccess, onCance
 
             const formData = new FormData();
             formData.append('file', aiFile);
+            formData.append('business_id', businessProfileId);
 
             if (!supabase) throw new Error('Supabase no está configurado');
             const { data: session } = await supabase.auth.getSession();

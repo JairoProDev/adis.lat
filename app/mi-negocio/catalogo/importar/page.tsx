@@ -5,8 +5,8 @@
 
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useRef, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useDropzone } from 'react-dropzone';
 import {
     IconUpload, IconSparkles, IconCheck, IconX,
@@ -86,8 +86,10 @@ const SECTOR_TEMPLATES: Record<string, { label: string; emoji: string; categorie
     }
 };
 
-export default function CatalogImportPage() {
+function CatalogImportPageContent() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const { user, loading: authLoading } = useAuth();
     const { success: showSuccess, error: showError, toasts, removeToast } = useToast();
 
     // Sector selection
@@ -102,6 +104,9 @@ export default function CatalogImportPage() {
     const [results, setResults] = useState<ImportResult | null>(null);
     const [uploadProgress, setUploadProgress] = useState(0);
 
+    const [businessOptions, setBusinessOptions] = useState<{ id: string; name: string }[]>([]);
+    const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null);
+
     // Manual Add State
     const [manualLoading, setManualLoading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -113,30 +118,34 @@ export default function CatalogImportPage() {
         imagePreview: null as string | null
     });
 
+    useEffect(() => {
+        if (authLoading || !user) return;
+        (async () => {
+            const list = await listBusinessProfilesForUser(user.id);
+            const opts = list.map((m) => ({
+                id: m.profile.id,
+                name: m.profile.name || m.profile.slug || m.profile.id,
+            }));
+            setBusinessOptions(opts);
+            const param = searchParams.get('business');
+            const id = param && opts.some((o) => o.id === param) ? param : opts[0]?.id ?? null;
+            setSelectedBusinessId(id);
+        })();
+    }, [user, authLoading, searchParams]);
+
     // --- EXCEL LOGIC ---
-    const onDrop = useCallback(async (acceptedFiles: File[]) => {
-        if (acceptedFiles.length === 0) return;
-        const file = acceptedFiles[0];
-        await handleUpload(file);
-    }, []);
-
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({
-        onDrop,
-        accept: {
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-            'application/vnd.ms-excel': ['.xls'],
-            'text/csv': ['.csv']
-        },
-        maxFiles: 1
-    });
-
     const handleUpload = async (file: File) => {
         try {
+            if (!selectedBusinessId) {
+                showError('Selecciona o espera a que cargue tu negocio.');
+                return;
+            }
             setUploading(true);
             setUploadProgress(0);
 
             const formData = new FormData();
             formData.append('file', file);
+            formData.append('business_id', selectedBusinessId);
             if (selectedSector) formData.append('sector', selectedSector);
 
             // Simulate progress
@@ -177,6 +186,19 @@ export default function CatalogImportPage() {
             setTimeout(() => setUploadProgress(0), 1000);
         }
     };
+
+    const { getRootProps, getInputProps, isDragActive } = useDropzone({
+        onDrop: async (acceptedFiles) => {
+            if (acceptedFiles.length === 0) return;
+            await handleUpload(acceptedFiles[0]);
+        },
+        accept: {
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+            'application/vnd.ms-excel': ['.xls'],
+            'text/csv': ['.csv']
+        },
+        maxFiles: 1
+    });
 
     // --- MANUAL ADD LOGIC ---
     const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -229,14 +251,12 @@ export default function CatalogImportPage() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error('No se encontró el usuario');
 
-            const memberships = await listBusinessProfilesForUser(user.id);
-            const profile = memberships[0]?.profile;
-            if (!profile) throw new Error('No tienes un perfil de negocio creado');
+            if (!selectedBusinessId) throw new Error('Selecciona un negocio');
 
             const { error: insertError } = await supabase
                 .from('catalog_products')
                 .insert({
-                    business_profile_id: profile.id,
+                    business_profile_id: selectedBusinessId,
                     title: manualForm.title,
                     price: manualForm.price ? parseFloat(manualForm.price) : null,
                     sku: manualForm.sku || null,
@@ -291,6 +311,28 @@ export default function CatalogImportPage() {
                                 <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>
                                     Importa en lote o agrega uno a uno
                                 </p>
+                                {businessOptions.length > 0 && (
+                                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                                        <label className="text-xs font-bold" style={{ color: 'var(--text-tertiary)' }}>
+                                            Negocio
+                                        </label>
+                                        <select
+                                            className="text-sm border border-slate-200 rounded-lg px-2 py-1.5 bg-white max-w-[240px]"
+                                            value={selectedBusinessId || ''}
+                                            onChange={(e) => {
+                                                const id = e.target.value;
+                                                setSelectedBusinessId(id);
+                                                router.replace(`/mi-negocio/catalogo/importar?business=${id}`);
+                                            }}
+                                        >
+                                            {businessOptions.map((o) => (
+                                                <option key={o.id} value={o.id}>
+                                                    {o.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -635,5 +677,19 @@ export default function CatalogImportPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function CatalogImportPage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="min-h-screen flex items-center justify-center bg-[var(--bg-secondary)]">
+                    <div className="w-10 h-10 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                </div>
+            }
+        >
+            <CatalogImportPageContent />
+        </Suspense>
     );
 }

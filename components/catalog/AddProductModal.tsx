@@ -331,6 +331,7 @@ export default function AddProductModal({ isOpen, onClose, businessProfileId, on
         try {
             const formData = new FormData();
             formData.append('file', file);
+            formData.append('business_id', businessProfileId);
             const headers = await getAuthHeaders();
             const res = await fetch('/api/catalog/import/excel', {
                 method: 'POST',

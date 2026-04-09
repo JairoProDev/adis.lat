@@ -7,6 +7,7 @@ import { resolveBusinessForUser } from '@/lib/business-server-auth';
 import { hasPermission } from '@/lib/business-access';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { sendBusinessTeamInviteEmail, getInvitationAcceptUrl } from '@/lib/email-business-invite';
+import { rateLimit, getClientIP } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,6 +41,18 @@ export async function POST(request: NextRequest, context: { params: { businessId
         const user = await getUserFromRouteRequest(request);
         if (!user) {
             return NextResponse.json({ success: false, error: 'No autenticado' }, { status: 401 });
+        }
+
+        const ip = getClientIP(request);
+        const limited = rateLimit(`business-invite-${ip}-${user.id}`, {
+            windowMs: 60 * 60 * 1000,
+            maxRequests: 25,
+        });
+        if (!limited.allowed) {
+            return NextResponse.json(
+                { success: false, error: 'Demasiadas invitaciones en esta hora. Intenta más tarde.' },
+                { status: 429 }
+            );
         }
 
         const { businessId } = context.params;

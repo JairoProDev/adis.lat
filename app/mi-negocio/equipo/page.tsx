@@ -25,11 +25,31 @@ type Invitation = {
     expires_at: string;
 };
 
+type AuditItem = {
+    id: string;
+    actor_user_id: string | null;
+    action: string;
+    target_user_id: string | null;
+    metadata: Record<string, unknown>;
+    created_at: string;
+};
+
 const ROLE_LABELS: Record<string, string> = {
     owner: 'Propietario',
     admin: 'Administrador',
     editor: 'Editor',
     viewer: 'Solo lectura',
+};
+
+const ACTION_LABELS: Record<string, string> = {
+    member_added: 'Miembro agregado',
+    member_removed: 'Miembro eliminado',
+    role_changed: 'Rol cambiado',
+    member_status_changed: 'Estado del miembro',
+    invite_created: 'Invitación creada',
+    invite_status_changed: 'Invitación actualizada',
+    invite_deleted: 'Invitación eliminada',
+    owner_transferred: 'Propiedad transferida',
 };
 
 function EquipoPageContent() {
@@ -48,6 +68,9 @@ function EquipoPageContent() {
     const [inviteRole, setInviteRole] = useState<'admin' | 'editor' | 'viewer'>('editor');
     const [saving, setSaving] = useState(false);
     const [showAuth, setShowAuth] = useState(false);
+    const [auditItems, setAuditItems] = useState<AuditItem[]>([]);
+    const [auditLoading, setAuditLoading] = useState(false);
+    const [transferTargetId, setTransferTargetId] = useState('');
 
     const loadBusinesses = useCallback(async () => {
         if (!user) return;
@@ -92,6 +115,31 @@ function EquipoPageContent() {
         fetchTeam();
     }, [user, businessId, fetchTeam]);
 
+    const fetchAudit = useCallback(async () => {
+        if (!businessId || (yourRole !== 'owner' && yourRole !== 'admin')) return;
+        setAuditLoading(true);
+        try {
+            const res = await fetch(`/api/business/${businessId}/audit?limit=40`, {
+                credentials: 'include',
+            });
+            const json = await res.json();
+            if (res.ok) setAuditItems(json.items || []);
+        } catch {
+            setAuditItems([]);
+        } finally {
+            setAuditLoading(false);
+        }
+    }, [businessId, yourRole]);
+
+    useEffect(() => {
+        if (loading || !businessId) return;
+        if (yourRole !== 'owner' && yourRole !== 'admin') {
+            setAuditItems([]);
+            return;
+        }
+        fetchAudit();
+    }, [loading, businessId, yourRole, fetchAudit]);
+
     const canInvite = yourRole && hasPermission(yourRole, 'team:invite');
     const canManageRoles = yourRole && hasPermission(yourRole, 'team:change_role');
     const canRemove = yourRole && hasPermission(yourRole, 'team:remove');
@@ -114,7 +162,8 @@ function EquipoPageContent() {
                 console.info('Dev invitation link:', json.acceptUrl);
             }
             setInviteEmail('');
-            fetchTeam();
+            await fetchTeam();
+            await fetchAudit();
         } catch (err: any) {
             toastError(err.message);
         } finally {
@@ -133,7 +182,8 @@ function EquipoPageContent() {
             const json = await res.json();
             if (!res.ok) throw new Error(json.error);
             success('Invitación cancelada');
-            fetchTeam();
+            await fetchTeam();
+            await fetchAudit();
         } catch (e: any) {
             toastError(e.message);
         } finally {
@@ -154,7 +204,8 @@ function EquipoPageContent() {
             const json = await res.json();
             if (!res.ok) throw new Error(json.error);
             success('Rol actualizado');
-            fetchTeam();
+            await fetchTeam();
+            await fetchAudit();
         } catch (e: any) {
             toastError(e.message);
         } finally {
@@ -173,7 +224,39 @@ function EquipoPageContent() {
             const json = await res.json();
             if (!res.ok) throw new Error(json.error);
             success('Miembro eliminado');
-            fetchTeam();
+            await fetchTeam();
+            await fetchAudit();
+        } catch (e: any) {
+            toastError(e.message);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const transferOwnership = async () => {
+        if (!businessId || !transferTargetId || yourRole !== 'owner') return;
+        if (
+            !confirm(
+                'Transferirás la propiedad de este negocio. Pasarás a rol Administrador y no podrás deshacer esto desde aquí. ¿Continuar?'
+            )
+        ) {
+            return;
+        }
+        setSaving(true);
+        try {
+            const res = await fetch(`/api/business/${businessId}/transfer-owner`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ newOwnerUserId: transferTargetId }),
+            });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error || 'Error');
+            success('Propiedad transferida');
+            setTransferTargetId('');
+            await loadBusinesses();
+            await fetchTeam();
+            await fetchAudit();
         } catch (e: any) {
             toastError(e.message);
         } finally {
@@ -329,6 +412,83 @@ function EquipoPageContent() {
                                         </li>
                                     ))}
                                 </ul>
+                            </section>
+                        )}
+
+                        {yourRole === 'owner' && members.length > 0 && (
+                            <section className="bg-amber-50 rounded-xl border border-amber-200 p-6 shadow-sm">
+                                <h2 className="font-semibold text-amber-950 mb-2">Transferir propiedad</h2>
+                                <p className="text-xs text-amber-900/80 mb-3">
+                                    El nuevo propietario debe ser miembro del equipo. Tú quedarás como administrador.
+                                </p>
+                                <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+                                    <select
+                                        className="flex-1 border border-amber-200 rounded-lg px-3 py-2 text-sm bg-white"
+                                        value={transferTargetId}
+                                        onChange={(e) => setTransferTargetId(e.target.value)}
+                                    >
+                                        <option value="">Elige un miembro…</option>
+                                        {members
+                                            .filter((m) => m.user_id !== user.id && m.role !== 'owner')
+                                            .map((m) => (
+                                                <option key={m.user_id} value={m.user_id}>
+                                                    {m.email || m.user_id.slice(0, 8) + '…'} ({ROLE_LABELS[m.role]})
+                                                </option>
+                                            ))}
+                                    </select>
+                                    <button
+                                        type="button"
+                                        disabled={saving || !transferTargetId}
+                                        onClick={transferOwnership}
+                                        className="px-4 py-2 rounded-lg bg-amber-700 text-white text-sm font-semibold disabled:opacity-50"
+                                    >
+                                        Transferir
+                                    </button>
+                                </div>
+                            </section>
+                        )}
+
+                        {(yourRole === 'owner' || yourRole === 'admin') && (
+                            <section className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h2 className="font-semibold text-slate-900">Registro de actividad</h2>
+                                    <button
+                                        type="button"
+                                        className="text-xs text-blue-600 font-medium"
+                                        onClick={() => fetchAudit()}
+                                        disabled={auditLoading}
+                                    >
+                                        Actualizar
+                                    </button>
+                                </div>
+                                {auditLoading && (
+                                    <p className="text-xs text-slate-500">Cargando…</p>
+                                )}
+                                {!auditLoading && auditItems.length === 0 && (
+                                    <p className="text-xs text-slate-500">Sin eventos recientes.</p>
+                                )}
+                                {!auditLoading && auditItems.length > 0 && (
+                                    <ul className="space-y-2 max-h-72 overflow-y-auto text-xs">
+                                        {auditItems.map((a) => (
+                                            <li
+                                                key={a.id}
+                                                className="border border-slate-100 rounded-lg px-3 py-2 flex flex-col gap-0.5"
+                                            >
+                                                <span className="font-semibold text-slate-800">
+                                                    {ACTION_LABELS[a.action] || a.action}
+                                                </span>
+                                                <span className="text-slate-500">
+                                                    {new Date(a.created_at).toLocaleString()}
+                                                </span>
+                                                {Object.keys(a.metadata || {}).length > 0 && (
+                                                    <span className="text-slate-400 font-mono truncate">
+                                                        {JSON.stringify(a.metadata)}
+                                                    </span>
+                                                )}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
                             </section>
                         )}
 
