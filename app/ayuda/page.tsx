@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import Header from '@/components/Header';
 import { FaQuestionCircle, FaSearch, FaBook, FaEnvelope, FaWhatsapp } from 'react-icons/fa';
 import NavbarMobile from '@/components/NavbarMobile';
@@ -47,6 +48,19 @@ export default function HelpCenterPage() {
                         title="Ventas y Pagos"
                         description="Gestión de transacciones, seguridad en pagos y cómo destacar tus anuncios."
                     />
+                </div>
+
+                <div className="mb-12 rounded-2xl border border-gray-200 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-800">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Privacidad y eliminacion de cuenta</h3>
+                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                        Si quieres solicitar eliminar tu cuenta o algunos datos personales, usa este formulario oficial.
+                    </p>
+                    <Link
+                        href="/account-deletion"
+                        className="mt-3 inline-block rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white dark:bg-white dark:text-black"
+                    >
+                        Ir a solicitud de eliminacion
+                    </Link>
                 </div>
 
                 <div className="bg-blue-600 rounded-3xl p-8 text-white text-center shadow-xl shadow-blue-500/20">
