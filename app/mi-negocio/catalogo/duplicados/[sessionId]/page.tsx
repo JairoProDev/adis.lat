@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import {
@@ -48,11 +48,7 @@ export default function DuplicateReviewPage() {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [resolving, setResolving] = useState(false);
 
-    useEffect(() => {
-        if (sessionId) fetchDuplicates();
-    }, [sessionId]);
-
-    const fetchDuplicates = async () => {
+    const fetchDuplicates = useCallback(async () => {
         try {
             setLoading(true);
 
@@ -84,7 +80,13 @@ export default function DuplicateReviewPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [router, sessionId, showError, success]);
+
+    useEffect(() => {
+        if (sessionId) {
+            void fetchDuplicates();
+        }
+    }, [sessionId, fetchDuplicates]);
 
     const handleResolve = async (action: 'skip' | 'replace' | 'keep_both') => {
         const current = duplicates[currentIndex];

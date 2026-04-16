@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { FaArrowLeft, FaCheck, FaTimes, FaEye, FaEyeSlash, FaChartBar, FaLightbulb, FaExclamationTriangle } from 'react-icons/fa';
 import Header from '@/components/Header';
@@ -43,11 +43,7 @@ export default function AdminFeedbackPage() {
   const [filtroTipo, setFiltroTipo] = useState<'todos' | 'sugerencia' | 'problema'>('todos');
   const [filtroLeido, setFiltroLeido] = useState<'todos' | 'leidos' | 'noLeidos'>('todos');
 
-  useEffect(() => {
-    cargarFeedbacks();
-  }, []);
-
-  const cargarFeedbacks = async () => {
+  const cargarFeedbacks = useCallback(async () => {
     try {
       setCargando(true);
       const response = await fetch('/api/admin/feedback');
@@ -56,14 +52,26 @@ export default function AdminFeedbackPage() {
       }
       const data = await response.json();
       setFeedbacks(data.feedbacks || []);
-      setEstadisticas(data.estadisticas || estadisticas);
+      setEstadisticas(
+        data.estadisticas || {
+          total: 0,
+          sugerencias: 0,
+          problemas: 0,
+          noLeidos: 0,
+          leidos: 0,
+        }
+      );
     } catch (err: any) {
       console.error('Error al cargar feedbacks:', err);
       error('Error al cargar feedbacks. Verifica la conexión.');
     } finally {
       setCargando(false);
     }
-  };
+  }, [error]);
+
+  useEffect(() => {
+    void cargarFeedbacks();
+  }, [cargarFeedbacks]);
 
   const marcarComoLeido = async (id: string, leido: boolean) => {
     try {

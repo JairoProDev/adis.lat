@@ -4,7 +4,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import Header from '@/components/Header';
@@ -20,11 +20,7 @@ export default function EditProductPage() {
     const [product, setProduct] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        if (id) fetchProduct();
-    }, [id]);
-
-    const fetchProduct = async () => {
+    const fetchProduct = useCallback(async () => {
         try {
             if (!supabase) throw new Error('Supabase no está configurado');
             setLoading(true);
@@ -44,7 +40,13 @@ export default function EditProductPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id, showError]);
+
+    useEffect(() => {
+        if (id) {
+            void fetchProduct();
+        }
+    }, [id, fetchProduct]);
 
     if (loading) {
         return (

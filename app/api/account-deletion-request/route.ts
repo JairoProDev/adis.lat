@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { getClientIP, rateLimit } from '@/lib/rate-limit';
 
 const bodySchema = z.object({
   email: z.string().trim().email().max(254),
@@ -17,6 +18,21 @@ function getClientIp(request: NextRequest): string | null {
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = getClientIP(request);
+    const limit = rateLimit(`account-deletion:${ip}`, {
+      windowMs: 60 * 60 * 1000, // 1 hour
+      maxRequests: 5,
+    });
+    if (!limit.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Too many requests. Please try again later.',
+          resetTime: new Date(limit.resetTime).toISOString(),
+        },
+        { status: 429 }
+      );
+    }
+
     const json = (await request.json()) as unknown;
     const parsed = bodySchema.safeParse(json);
     if (!parsed.success) {
@@ -33,7 +49,7 @@ export async function POST(request: NextRequest) {
       request_type: requestType,
       full_name: fullName || null,
       details: details || null,
-      requester_ip: getClientIp(request),
+      requester_ip: getClientIp(request) ?? ip,
       user_agent: request.headers.get('user-agent')?.slice(0, 512) ?? null,
       source: 'public_account_deletion_page',
     });
