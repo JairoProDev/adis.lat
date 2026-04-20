@@ -1,11 +1,9 @@
 'use client';
 
 /**
- * 📄 useCatalogPDF - Genera un PDF profesional del catálogo de productos
- *
- * Estrategia: Genera el PDF directamente con jsPDF dibujando los datos,
- * sin depender de html2canvas (más rápido y mejor para catálogos grandes).
- * Soporta múltiples páginas, imágenes, logo y toda la info del negocio.
+ * 📄 useCatalogPDF — Catálogo PDF (jsPDF).
+ * Título y descripción se dibujan línea a línea con la misma métrica que la altura de la tarjeta
+ * para evitar solapes. Imagen contenida en el slot (clip o escala) sin invadir el texto.
  */
 
 import { useState, useCallback } from 'react';
@@ -20,6 +18,57 @@ interface PDFOptions {
   layoutMode?: 'grid' | 'feed' | 'list';
 }
 
+const PLACEHOLDER_IMG_H_MM = 18;
+const MAX_FEED_IMAGE_H_MM = 95;
+const MAX_GRID_ROW_IMAGE_H_MM = 48;
+const GAP_AFTER_IMAGE_MM = 3;
+const GAP_BEFORE_DESC_MM = 1.5;
+const PRICE_ROW_MM = 7;
+const CARD_TOP_PAD_MM = 2;
+const CARD_BOTTOM_PAD_MM = 4;
+
+type ProductMeasure = {
+  imgData: string | null;
+  naturalImgH: number;
+  titleLines: string[];
+  descLines: string[];
+};
+
+function titleLineHeightMm(isFeed: boolean): number {
+  return isFeed ? 4.2 : 3.6;
+}
+
+function descLineHeightMm(isFeed: boolean): number {
+  return isFeed ? 3.6 : 3.1;
+}
+
+/** Solo bloque texto (título + descripción + precio), sin hueco bajo la imagen */
+function measureTextBodyHeight(
+  m: ProductMeasure,
+  includeDescription: boolean,
+  isFeed: boolean,
+  hasPrice: boolean
+): number {
+  const tLh = titleLineHeightMm(isFeed);
+  const dLh = descLineHeightMm(isFeed);
+  let h = m.titleLines.length * tLh + GAP_BEFORE_DESC_MM;
+  if (includeDescription && m.descLines.length > 0) {
+    h += m.descLines.length * dLh;
+  }
+  h += hasPrice ? PRICE_ROW_MM : 2;
+  return h;
+}
+
+function computeCardHeight(
+  includeImages: boolean,
+  imageSlotH: number,
+  textBodyH: number
+): number {
+  const gapUnderImg =
+    includeImages && imageSlotH > 0 ? GAP_AFTER_IMAGE_MM : 0;
+  return CARD_TOP_PAD_MM + imageSlotH + gapUnderImg + textBodyH + CARD_BOTTOM_PAD_MM;
+}
+
 export function useCatalogPDF() {
   const [generating, setGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -32,7 +81,6 @@ export function useCatalogPDF() {
     const {
       includeImages = true,
       includeDescription = true,
-      productsPerPage,
       orientation = 'portrait',
       layoutMode = 'grid',
     } = options;
@@ -41,7 +89,6 @@ export function useCatalogPDF() {
     setProgress(5);
 
     try {
-      // Dynamic import to avoid SSR issues
       const jsPDFModule = await import('jspdf');
       const jsPDF = jsPDFModule.default;
 
@@ -57,17 +104,14 @@ export function useCatalogPDF() {
       const pageH = orientation === 'portrait' ? 297 : 210;
       const margin = 14;
       const contentW = pageW - margin * 2;
+      const pageContentBottom = pageH - 24;
 
-      // ─── Colores del negocio ─────────────────────────────────────
       const brandHex = profile.theme_color || '#3c6997';
       const brandRgb = hexToRgb(brandHex) || { r: 60, g: 105, b: 151 };
 
-      // ─── PORTADA ─────────────────────────────────────────────────
-      // Fondo header
       doc.setFillColor(brandRgb.r, brandRgb.g, brandRgb.b);
       doc.rect(0, 0, pageW, 55, 'F');
 
-      // Logo del negocio (si existe)
       let logoLoaded = false;
       if (profile.logo_url && includeImages) {
         try {
@@ -76,20 +120,18 @@ export function useCatalogPDF() {
             doc.addImage(logoData, 'JPEG', margin, 8, 35, 35, undefined, 'FAST');
             logoLoaded = true;
           }
-        } catch (e) {
-          // Logo failed to load, skip
+        } catch {
+          // skip
         }
       }
 
       const nameX = logoLoaded ? margin + 40 : margin;
 
-      // Nombre del negocio
       doc.setTextColor(255, 255, 255);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(22);
       doc.text(profile.name || 'Catálogo', nameX, 24);
 
-      // Descripción corta
       if (profile.description) {
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
@@ -97,7 +139,6 @@ export function useCatalogPDF() {
         doc.text(descLines.slice(0, 2), nameX, 33);
       }
 
-      // Contacto en el header
       let contactY = 43;
       doc.setFontSize(8);
       if (profile.contact_phone) {
@@ -108,8 +149,6 @@ export function useCatalogPDF() {
         doc.text(`Dir: ${profile.contact_address}`, nameX, contactY);
       }
 
-      // Etiqueta CATÁLOGO (derecha)
-      doc.setFillColor(255, 255, 255, 0.2);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
       doc.text('CATÁLOGO DE PRODUCTOS', pageW - margin, 18, { align: 'right' });
@@ -121,123 +160,258 @@ export function useCatalogPDF() {
 
       setProgress(20);
 
-      // ─── PRODUCT GRID / FEED ─────────────────────────────────────
       const isFeedLayout = layoutMode === 'feed';
+      const isListMode = layoutMode === 'list';
       const cols = isFeedLayout ? 1 : orientation === 'landscape' ? 4 : 3;
       const cardW = isFeedLayout ? contentW : (contentW - (cols - 1) * 4) / cols;
-      const imgH = includeImages ? (isFeedLayout ? 62 : 35) : 0;
-      const textH = includeDescription ? (isFeedLayout ? 20 : 28) : (isFeedLayout ? 14 : 18);
-      const cardH = imgH + textH + (isFeedLayout ? 10 : 4);
-      const rowsPerPage = Math.max(1, Math.floor((pageH - 70) / (cardH + 5)));
-      const prodsPerPage = Math.max(
-        1,
-        typeof productsPerPage === 'number' && productsPerPage > 0
-          ? productsPerPage
-          : cols * rowsPerPage
-      );
+      const innerW = cardW - 2;
 
       let currentY = 65;
-      let productIndex = 0;
       let pageNum = 1;
 
-      const totalPages = Math.ceil(products.length / prodsPerPage);
+      const drawContinuationHeader = () => {
+        doc.setFillColor(brandRgb.r, brandRgb.g, brandRgb.b);
+        doc.rect(0, 0, pageW, 14, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.text(profile.name || 'Catálogo', margin, 9);
+        doc.text('CATALOGO', pageW - margin, 9, { align: 'right' });
+      };
 
-      for (let i = 0; i < products.length; i++) {
-        const product = products[i];
+      const newPage = () => {
+        drawPageFooter(doc, pageNum, pageW, pageH, profile.name || '');
+        doc.addPage();
+        pageNum++;
+        currentY = 20;
+        drawContinuationHeader();
+      };
 
-        // Calcular posición en la rejilla
-        const posInPage = productIndex % prodsPerPage;
-        const col = posInPage % cols;
-        const row = Math.floor(posInPage / cols);
-
-        // ¿Nueva página?
-        if (posInPage === 0 && productIndex > 0) {
-          // Footer de página
-          drawPageFooter(doc, pageNum, totalPages, pageW, pageH, profile.name || '');
-          doc.addPage();
-          pageNum++;
-          currentY = 20;
-
-          // Mini header en páginas subsiguientes
-          doc.setFillColor(brandRgb.r, brandRgb.g, brandRgb.b);
-          doc.rect(0, 0, pageW, 14, 'F');
-          doc.setTextColor(255, 255, 255);
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(9);
-          doc.text(profile.name || 'Catálogo', margin, 9);
-          doc.text('CATALOGO', pageW - margin, 9, { align: 'right' });
+      const ensureSpace = (needH: number) => {
+        while (currentY + needH > pageContentBottom) {
+          newPage();
         }
+      };
 
-        const cardX = margin + col * (cardW + 4);
-        const cardY = currentY + row * (cardH + 5);
+      const measureProduct = async (product: Adiso): Promise<ProductMeasure> => {
+        let imgData: string | null = null;
+        let naturalImgH = 0;
 
-        // Fondo de tarjeta
-        doc.setFillColor(248, 250, 252);
-        doc.setDrawColor(226, 232, 240);
-        doc.roundedRect(cardX, cardY, cardW, cardH, 2, 2, 'FD');
-
-        let innerY = cardY + 2;
-
-        // Imagen del producto
         if (includeImages) {
           const imgUrl = product.imagenesUrls?.[0] || product.imagenUrl;
           if (imgUrl) {
             try {
-              const imgData = await loadImageAsBase64(imgUrl);
+              imgData = await loadImageAsBase64(imgUrl);
               if (imgData) {
-                await addImageFitted(doc, imgData, cardX + 1, innerY, cardW - 2, imgH - 1, 'contain');
+                naturalImgH = await naturalHeightMmForFullWidth(imgData, innerW);
               } else {
-                drawNoImagePlaceholder(doc, cardX, innerY, cardW, imgH - 1);
+                naturalImgH = PLACEHOLDER_IMG_H_MM;
               }
-            } catch (e) {
-              drawNoImagePlaceholder(doc, cardX, innerY, cardW, imgH - 1);
+            } catch {
+              naturalImgH = PLACEHOLDER_IMG_H_MM;
             }
           } else {
-            drawNoImagePlaceholder(doc, cardX, innerY, cardW, imgH - 1);
+            naturalImgH = PLACEHOLDER_IMG_H_MM;
           }
-          innerY += imgH;
         }
 
-        // Nombre del producto
+        const titleFont = isFeedLayout ? 10 : 7;
+        const descFont = isFeedLayout ? 7 : 5.5;
+        const maxTitleLines = isFeedLayout ? 3 : 2;
+        const maxDescLines = isFeedLayout ? 3 : 2;
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(titleFont);
+        const titleLines = doc.splitTextToSize(product.titulo || 'Producto sin titulo', innerW - 1).slice(0, maxTitleLines);
+
+        let descLines: string[] = [];
+        if (includeDescription && product.descripcion) {
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(descFont);
+          const desc = (product.descripcion || '').replace('Precio:', '').trim().substring(0, isFeedLayout ? 200 : 85);
+          descLines = doc.splitTextToSize(desc, innerW - 1).slice(0, maxDescLines);
+        }
+
+        return {
+          imgData,
+          naturalImgH,
+          titleLines,
+          descLines,
+        };
+      };
+
+      const drawTextBlocks = (
+        product: Adiso,
+        textStartY: number,
+        cardX: number,
+        cardH: number,
+        cardY: number,
+        m: ProductMeasure
+      ): void => {
+        const tLh = titleLineHeightMm(isFeedLayout);
+        const dLh = descLineHeightMm(isFeedLayout);
+        let y = textStartY;
+
         doc.setTextColor(15, 23, 42);
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(isFeedLayout ? 10 : 7);
-        const titleLines = doc.splitTextToSize(product.titulo || 'Producto sin titulo', cardW - 3);
-        doc.text(titleLines.slice(0, isFeedLayout ? 3 : 2), cardX + 1.5, innerY + (isFeedLayout ? 5 : 4));
-        innerY += titleLines.slice(0, isFeedLayout ? 3 : 2).length * (isFeedLayout ? 4 : 3.5) + 2;
+        for (let li = 0; li < m.titleLines.length; li++) {
+          doc.text(m.titleLines[li], cardX + 1.5, y);
+          y += tLh;
+        }
 
-        // Descripción (opcional)
-        if (includeDescription && product.descripcion) {
+        y += GAP_BEFORE_DESC_MM;
+
+        if (includeDescription && m.descLines.length > 0) {
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(isFeedLayout ? 7 : 5.5);
           doc.setTextColor(100, 116, 139);
-          const desc = (product.descripcion || '').replace('Precio:', '').trim().substring(0, isFeedLayout ? 180 : 80);
-          const descLines = doc.splitTextToSize(desc, cardW - 3);
-          const maxDescLines = isFeedLayout ? 3 : 2;
-          doc.text(descLines.slice(0, maxDescLines), cardX + 1.5, innerY + 1);
-          innerY += Math.min(descLines.length, maxDescLines) * (isFeedLayout ? 3.5 : 3) + 1;
+          for (let di = 0; di < m.descLines.length; di++) {
+            doc.text(m.descLines[di], cardX + 1.5, y);
+            y += dLh;
+          }
         }
 
-        // Precio
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(isFeedLayout ? 11 : 8.5);
         if (product.precio) {
           doc.setTextColor(brandRgb.r, brandRgb.g, brandRgb.b);
-          doc.text(`S/ ${product.precio}`, cardX + 1.5, cardY + cardH - 3);
+          const priceY = Math.min(y + 2, cardY + cardH - 2.5);
+          doc.text(`S/ ${product.precio}`, cardX + 1.5, priceY);
+        }
+      };
+
+      const drawProductCard = (
+        product: Adiso,
+        cardX: number,
+        cardY: number,
+        m: ProductMeasure,
+        imageSlotH: number,
+        cardH: number
+      ) => {
+        doc.setFillColor(248, 250, 252);
+        doc.setDrawColor(226, 232, 240);
+        doc.roundedRect(cardX, cardY, cardW, cardH, 2, 2, 'FD');
+
+        const contentTop = cardY + CARD_TOP_PAD_MM;
+        let textStartY = contentTop;
+
+        if (includeImages && imageSlotH > 0) {
+          const imgUrl = product.imagenesUrls?.[0] || product.imagenUrl;
+          if (m.imgData) {
+            addImageInSlotSafe(doc, m.imgData, cardX + 1, contentTop, innerW, imageSlotH, m.naturalImgH);
+          } else if (imgUrl) {
+            drawNoImagePlaceholder(doc, cardX, contentTop, cardW, imageSlotH);
+          } else {
+            drawNoImagePlaceholder(doc, cardX, contentTop, cardW, imageSlotH);
+          }
+          textStartY = contentTop + imageSlotH + GAP_AFTER_IMAGE_MM;
+        } else if (includeImages) {
+          textStartY = contentTop + GAP_AFTER_IMAGE_MM;
+        } else {
+          textStartY = contentTop + 1;
         }
 
-        productIndex++;
+        drawTextBlocks(product, textStartY, cardX, cardH, cardY, m);
+      };
 
-        // Update progress
-        setProgress(20 + Math.round((i / products.length) * 70));
+      if (isListMode) {
+        for (let i = 0; i < products.length; i++) {
+          const product = products[i];
+          const m = await measureProduct(product);
+          const slotH = m.naturalImgH;
+          const textBody = measureTextBodyHeight(m, includeDescription, isFeedLayout, !!product.precio);
+          const cardH = computeCardHeight(includeImages, slotH, textBody);
+          ensureSpace(cardH + 3);
+          drawProductCard(product, margin, currentY, m, slotH, cardH);
+          currentY += cardH + 4;
+          setProgress(20 + Math.round((i / products.length) * 70));
+        }
+      } else if (isFeedLayout) {
+        for (let i = 0; i < products.length; i++) {
+          const product = products[i];
+          const m = await measureProduct(product);
+          const textBody = measureTextBodyHeight(m, includeDescription, true, !!product.precio);
+
+          let slotH = Math.min(m.naturalImgH, MAX_FEED_IMAGE_H_MM);
+          let cardH = computeCardHeight(includeImages, slotH, textBody);
+
+          const shrinkToFit = () => {
+            const avail = pageContentBottom - currentY;
+            if (cardH <= avail) return;
+            const minImg = 12;
+            const gapImg = includeImages ? GAP_AFTER_IMAGE_MM : 0;
+            const maxSlot = avail - CARD_TOP_PAD_MM - gapImg - textBody - CARD_BOTTOM_PAD_MM;
+            slotH = Math.max(minImg, Math.min(slotH, maxSlot));
+            cardH = computeCardHeight(includeImages, slotH, textBody);
+          };
+
+          shrinkToFit();
+          if (cardH > pageContentBottom - currentY) {
+            newPage();
+            shrinkToFit();
+          }
+
+          ensureSpace(cardH + 3);
+          drawProductCard(product, margin, currentY, m, slotH, cardH);
+          currentY += cardH + 4;
+          setProgress(20 + Math.round((i / products.length) * 70));
+        }
+      } else {
+        for (let i = 0; i < products.length; i += cols) {
+          const slice = products.slice(i, i + cols);
+          const measures = await Promise.all(slice.map((p) => measureProduct(p)));
+
+          const rawRowImg = Math.max(...measures.map((m) => m.naturalImgH));
+          let rowImgSlotH = Math.min(MAX_GRID_ROW_IMAGE_H_MM, rawRowImg);
+
+          const textBodies = measures.map((m, idx) =>
+            measureTextBodyHeight(m, includeDescription, false, !!slice[idx]?.precio)
+          );
+
+          const rowHeightForSlot = (slot: number) =>
+            Math.max(
+              ...measures.map((_, idx) =>
+                computeCardHeight(includeImages, slot, textBodies[idx])
+              )
+            );
+
+          let rowH = rowHeightForSlot(rowImgSlotH);
+          const spaceAvail = () => pageContentBottom - currentY;
+
+          while (rowH > spaceAvail() && rowImgSlotH > 11) {
+            rowImgSlotH -= 2;
+            rowH = rowHeightForSlot(rowImgSlotH);
+          }
+
+          if (rowH > spaceAvail()) {
+            newPage();
+            while (rowH > spaceAvail() && rowImgSlotH > 11) {
+              rowImgSlotH -= 2;
+              rowH = rowHeightForSlot(rowImgSlotH);
+            }
+          }
+
+          ensureSpace(rowH + 3);
+
+          const cardHeights = measures.map((_, idx) =>
+            computeCardHeight(includeImages, rowImgSlotH, textBodies[idx])
+          );
+
+          for (let col = 0; col < slice.length; col++) {
+            const cardX = margin + col * (cardW + 4);
+            drawProductCard(slice[col], cardX, currentY, measures[col], rowImgSlotH, cardHeights[col]);
+          }
+
+          currentY += rowH + 4;
+          setProgress(20 + Math.round((i / products.length) * 70));
+        }
       }
 
-      // Footer última página
-      drawPageFooter(doc, pageNum, totalPages, pageW, pageH, profile.name || '');
+      drawPageFooter(doc, pageNum, pageW, pageH, profile.name || '');
 
       setProgress(95);
 
-      // Guardar PDF
       const filename = `catalogo-${(profile.slug || profile.name || 'negocio').toLowerCase().replace(/\s+/g, '-')}-${new Date().toLocaleDateString('es-PE').replace(/\//g,'-')}.pdf`;
       doc.save(filename);
 
@@ -254,8 +428,6 @@ export function useCatalogPDF() {
 
   return { generatePDF, generating, progress };
 }
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -291,14 +463,14 @@ function drawNoImagePlaceholder(doc: any, x: number, y: number, w: number, h: nu
   doc.text('SIN FOTO', x + w / 2, y + h / 2 + 1, { align: 'center' });
 }
 
-function drawPageFooter(doc: any, pageNum: number, totalPages: number, pageW: number, pageH: number, businessName: string) {
+function drawPageFooter(doc: any, pageNum: number, pageW: number, pageH: number, businessName: string) {
   doc.setDrawColor(226, 232, 240);
   doc.line(14, pageH - 10, pageW - 14, pageH - 10);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
   doc.setTextColor(148, 163, 184);
   doc.text(`${businessName} • Precios sujetos a cambios sin previo aviso`, 14, pageH - 6);
-  doc.text(`Pág. ${pageNum} / ${totalPages}`, pageW - 14, pageH - 6, { align: 'right' });
+  doc.text(`Pág. ${pageNum}`, pageW - 14, pageH - 6, { align: 'right' });
 }
 
 function getImageFormatFromDataUrl(dataUrl: string): 'PNG' | 'JPEG' {
@@ -315,46 +487,74 @@ function getImageDimensionsFromDataUrl(dataUrl: string): Promise<{ width: number
   });
 }
 
-async function addImageFitted(
+async function naturalHeightMmForFullWidth(dataUrl: string, innerWmm: number): Promise<number> {
+  const { width, height } = await getImageDimensionsFromDataUrl(dataUrl);
+  if (width <= 0 || height <= 0) return PLACEHOLDER_IMG_H_MM;
+  return innerWmm * (height / width);
+}
+
+function addImageInSlotSafe(
   doc: any,
   dataUrl: string,
   x: number,
   y: number,
-  boxW: number,
-  boxH: number,
-  mode: 'cover' | 'contain'
+  innerW: number,
+  slotH: number,
+  naturalHmm: number
 ) {
-  const { width: imgW, height: imgH } = await getImageDimensionsFromDataUrl(dataUrl);
-  const imgRatio = imgW / imgH;
-  const boxRatio = boxW / boxH;
+  const format = getImageFormatFromDataUrl(dataUrl);
 
-  let drawW = boxW;
-  let drawH = boxH;
-  let offsetX = x;
-  let offsetY = y;
-
-  if (mode === 'contain') {
-    if (imgRatio > boxRatio) {
-      drawW = boxW;
-      drawH = boxW / imgRatio;
-      offsetY = y + (boxH - drawH) / 2;
-    } else {
-      drawH = boxH;
-      drawW = boxH * imgRatio;
-      offsetX = x + (boxW - drawW) / 2;
-    }
-  } else {
-    if (imgRatio > boxRatio) {
-      drawH = boxH;
-      drawW = boxH * imgRatio;
-      offsetX = x - (drawW - boxW) / 2;
-    } else {
-      drawW = boxW;
-      drawH = boxW / imgRatio;
-      offsetY = y - (drawH - boxH) / 2;
-    }
+  if (naturalHmm <= slotH + 0.05) {
+    doc.addImage(dataUrl, format, x, y, innerW, naturalHmm, undefined, 'FAST');
+    return;
   }
 
-  const format = getImageFormatFromDataUrl(dataUrl);
-  doc.addImage(dataUrl, format, offsetX, offsetY, drawW, drawH, undefined, 'FAST');
+  const drawW = innerW;
+  const drawH = naturalHmm;
+  const offsetY = y - (drawH - slotH) / 2;
+
+  const canClip =
+    typeof doc.saveGraphicsState === 'function' &&
+    typeof doc.clip === 'function' &&
+    typeof doc.restoreGraphicsState === 'function';
+
+  if (canClip) {
+    try {
+      doc.saveGraphicsState();
+      doc.rect(x, y, innerW, slotH);
+      doc.clip();
+      doc.addImage(dataUrl, format, x, offsetY, drawW, drawH, undefined, 'FAST');
+      return;
+    } catch {
+      // continuar con escala segura
+    } finally {
+      doc.restoreGraphicsState();
+    }
+    addImageScaledToSlot(doc, dataUrl, format, x, y, innerW, slotH, naturalHmm);
+    return;
+  }
+
+  addImageScaledToSlot(doc, dataUrl, format, x, y, innerW, slotH, naturalHmm);
+}
+
+/** Escala uniforme para caber en innerW×slotH, alineada arriba (sin deformar). */
+function addImageScaledToSlot(
+  doc: any,
+  dataUrl: string,
+  format: 'PNG' | 'JPEG',
+  x: number,
+  y: number,
+  innerW: number,
+  slotH: number,
+  naturalHmm: number
+) {
+  let drawW = innerW;
+  let drawH = naturalHmm;
+  if (drawH > slotH) {
+    const s = slotH / drawH;
+    drawW *= s;
+    drawH = slotH;
+  }
+  const ox = x + (innerW - drawW) / 2;
+  doc.addImage(dataUrl, format, ox, y, drawW, drawH, undefined, 'FAST');
 }
