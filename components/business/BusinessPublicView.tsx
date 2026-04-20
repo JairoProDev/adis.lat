@@ -217,7 +217,12 @@ export default function BusinessPublicView({
     const handlePDFDownload = async () => {
         if (!profile) return;
         try {
-            await generatePDF(profile, filteredAdisos);
+            await generatePDF(profile, filteredAdisos, {
+                layoutMode: viewMode === 'feed' ? 'feed' : 'grid',
+                orientation: viewMode === 'feed' ? 'portrait' : 'landscape',
+                includeImages: true,
+                includeDescription: true,
+            });
         } catch (e) {
             console.error('Error al generar PDF:', e);
         }

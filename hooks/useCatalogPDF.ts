@@ -15,8 +15,9 @@ import { Adiso } from '@/types';
 interface PDFOptions {
   includeImages?: boolean;
   includeDescription?: boolean;
-  productsPerPage?: number; // default: 12 (grid 3x4)
+  productsPerPage?: number;
   orientation?: 'portrait' | 'landscape';
+  layoutMode?: 'grid' | 'feed' | 'list';
 }
 
 export function useCatalogPDF() {
@@ -31,8 +32,9 @@ export function useCatalogPDF() {
     const {
       includeImages = true,
       includeDescription = true,
-      productsPerPage = 12,
+      productsPerPage,
       orientation = 'portrait',
+      layoutMode = 'grid',
     } = options;
 
     setGenerating(true);
@@ -99,11 +101,11 @@ export function useCatalogPDF() {
       let contactY = 43;
       doc.setFontSize(8);
       if (profile.contact_phone) {
-        doc.text(`📞 ${profile.contact_phone}`, nameX, contactY);
+        doc.text(`Tel: ${profile.contact_phone}`, nameX, contactY);
         contactY += 5;
       }
       if (profile.contact_address) {
-        doc.text(`📍 ${profile.contact_address}`, nameX, contactY);
+        doc.text(`Dir: ${profile.contact_address}`, nameX, contactY);
       }
 
       // Etiqueta CATÁLOGO (derecha)
@@ -119,14 +121,20 @@ export function useCatalogPDF() {
 
       setProgress(20);
 
-      // ─── GRID DE PRODUCTOS ───────────────────────────────────────
-      const cols = orientation === 'landscape' ? 4 : 3;
-      const cardW = (contentW - (cols - 1) * 4) / cols;
-      const imgH = includeImages ? 35 : 0;
-      const textH = includeDescription ? 28 : 18;
-      const cardH = imgH + textH + 4;
-      const rowsPerPage = Math.floor((pageH - 70) / (cardH + 5));
-      const prodsPerPage = cols * rowsPerPage;
+      // ─── PRODUCT GRID / FEED ─────────────────────────────────────
+      const isFeedLayout = layoutMode === 'feed';
+      const cols = isFeedLayout ? 1 : orientation === 'landscape' ? 4 : 3;
+      const cardW = isFeedLayout ? contentW : (contentW - (cols - 1) * 4) / cols;
+      const imgH = includeImages ? (isFeedLayout ? 62 : 35) : 0;
+      const textH = includeDescription ? (isFeedLayout ? 20 : 28) : (isFeedLayout ? 14 : 18);
+      const cardH = imgH + textH + (isFeedLayout ? 10 : 4);
+      const rowsPerPage = Math.max(1, Math.floor((pageH - 70) / (cardH + 5)));
+      const prodsPerPage = Math.max(
+        1,
+        typeof productsPerPage === 'number' && productsPerPage > 0
+          ? productsPerPage
+          : cols * rowsPerPage
+      );
 
       let currentY = 65;
       let productIndex = 0;
@@ -157,7 +165,7 @@ export function useCatalogPDF() {
           doc.setFont('helvetica', 'bold');
           doc.setFontSize(9);
           doc.text(profile.name || 'Catálogo', margin, 9);
-          doc.text('CATÁLOGO', pageW - margin, 9, { align: 'right' });
+          doc.text('CATALOGO', pageW - margin, 9, { align: 'right' });
         }
 
         const cardX = margin + col * (cardW + 4);
@@ -177,7 +185,7 @@ export function useCatalogPDF() {
             try {
               const imgData = await loadImageAsBase64(imgUrl);
               if (imgData) {
-                doc.addImage(imgData, 'JPEG', cardX + 1, innerY, cardW - 2, imgH - 1, undefined, 'FAST');
+                await addImageFitted(doc, imgData, cardX + 1, innerY, cardW - 2, imgH - 1, 'contain');
               } else {
                 drawNoImagePlaceholder(doc, cardX, innerY, cardW, imgH - 1);
               }
@@ -193,38 +201,29 @@ export function useCatalogPDF() {
         // Nombre del producto
         doc.setTextColor(15, 23, 42);
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(7);
-        const titleLines = doc.splitTextToSize(product.titulo, cardW - 3);
-        doc.text(titleLines.slice(0, 2), cardX + 1.5, innerY + 4);
-        innerY += titleLines.slice(0, 2).length * 3.5 + 2;
+        doc.setFontSize(isFeedLayout ? 10 : 7);
+        const titleLines = doc.splitTextToSize(product.titulo || 'Producto sin titulo', cardW - 3);
+        doc.text(titleLines.slice(0, isFeedLayout ? 3 : 2), cardX + 1.5, innerY + (isFeedLayout ? 5 : 4));
+        innerY += titleLines.slice(0, isFeedLayout ? 3 : 2).length * (isFeedLayout ? 4 : 3.5) + 2;
 
         // Descripción (opcional)
         if (includeDescription && product.descripcion) {
           doc.setFont('helvetica', 'normal');
-          doc.setFontSize(5.5);
+          doc.setFontSize(isFeedLayout ? 7 : 5.5);
           doc.setTextColor(100, 116, 139);
-          const desc = product.descripcion.replace('Precio:', '').trim().substring(0, 80);
+          const desc = (product.descripcion || '').replace('Precio:', '').trim().substring(0, isFeedLayout ? 180 : 80);
           const descLines = doc.splitTextToSize(desc, cardW - 3);
-          doc.text(descLines.slice(0, 2), cardX + 1.5, innerY + 1);
-          innerY += Math.min(descLines.length, 2) * 3 + 1;
+          const maxDescLines = isFeedLayout ? 3 : 2;
+          doc.text(descLines.slice(0, maxDescLines), cardX + 1.5, innerY + 1);
+          innerY += Math.min(descLines.length, maxDescLines) * (isFeedLayout ? 3.5 : 3) + 1;
         }
 
         // Precio
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(8.5);
+        doc.setFontSize(isFeedLayout ? 11 : 8.5);
         if (product.precio) {
           doc.setTextColor(brandRgb.r, brandRgb.g, brandRgb.b);
           doc.text(`S/ ${product.precio}`, cardX + 1.5, cardY + cardH - 3);
-        } else {
-          doc.setTextColor(148, 163, 184);
-          doc.text('Consultar', cardX + 1.5, cardY + cardH - 3);
-        }
-
-        // Categoría (badge derecha)
-        if (product.categoria) {
-          doc.setFontSize(5);
-          doc.setTextColor(100, 116, 139);
-          doc.text(product.categoria.toUpperCase(), cardX + cardW - 1.5, cardY + cardH - 3, { align: 'right' });
         }
 
         productIndex++;
@@ -300,4 +299,62 @@ function drawPageFooter(doc: any, pageNum: number, totalPages: number, pageW: nu
   doc.setTextColor(148, 163, 184);
   doc.text(`${businessName} • Precios sujetos a cambios sin previo aviso`, 14, pageH - 6);
   doc.text(`Pág. ${pageNum} / ${totalPages}`, pageW - 14, pageH - 6, { align: 'right' });
+}
+
+function getImageFormatFromDataUrl(dataUrl: string): 'PNG' | 'JPEG' {
+  const mime = dataUrl.split(';')[0].toLowerCase();
+  return mime.includes('png') ? 'PNG' : 'JPEG';
+}
+
+function getImageDimensionsFromDataUrl(dataUrl: string): Promise<{ width: number; height: number }> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve({ width: img.width || 1, height: img.height || 1 });
+    img.onerror = () => resolve({ width: 1, height: 1 });
+    img.src = dataUrl;
+  });
+}
+
+async function addImageFitted(
+  doc: any,
+  dataUrl: string,
+  x: number,
+  y: number,
+  boxW: number,
+  boxH: number,
+  mode: 'cover' | 'contain'
+) {
+  const { width: imgW, height: imgH } = await getImageDimensionsFromDataUrl(dataUrl);
+  const imgRatio = imgW / imgH;
+  const boxRatio = boxW / boxH;
+
+  let drawW = boxW;
+  let drawH = boxH;
+  let offsetX = x;
+  let offsetY = y;
+
+  if (mode === 'contain') {
+    if (imgRatio > boxRatio) {
+      drawW = boxW;
+      drawH = boxW / imgRatio;
+      offsetY = y + (boxH - drawH) / 2;
+    } else {
+      drawH = boxH;
+      drawW = boxH * imgRatio;
+      offsetX = x + (boxW - drawW) / 2;
+    }
+  } else {
+    if (imgRatio > boxRatio) {
+      drawH = boxH;
+      drawW = boxH * imgRatio;
+      offsetX = x - (drawW - boxW) / 2;
+    } else {
+      drawW = boxW;
+      drawH = boxW / imgRatio;
+      offsetY = y - (drawH - boxH) / 2;
+    }
+  }
+
+  const format = getImageFormatFromDataUrl(dataUrl);
+  doc.addImage(dataUrl, format, offsetX, offsetY, drawW, drawH, undefined, 'FAST');
 }
