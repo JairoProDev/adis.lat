@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BusinessProfile } from '@/types/business';
 import { Adiso } from '@/types';
@@ -21,6 +21,7 @@ import Header from '@/components/Header';
 import NavbarMobile from '@/components/NavbarMobile';
 import { deleteCatalogProduct } from '@/lib/business';
 import { useCatalogPDF } from '@/hooks/useCatalogPDF';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 
 // Helper for Social Icons
 const getSocialIcon = (url: string) => {
@@ -120,6 +121,11 @@ export default function BusinessPublicView({
         }
     };
 
+    const { isOnline } = useNetworkStatus();
+    /** Sin red: mostrar todo el catálogo y pedir imágenes en eager para usar caché del SW/navegador */
+    const showEntireCatalogOffline = !isOnline;
+    const catalogImgLoading = showEntireCatalogOffline ? ('eager' as const) : ('lazy' as const);
+
     // Infinite Scroll State
     const [visibleCount, setVisibleCount] = useState(24);
 
@@ -146,9 +152,14 @@ export default function BusinessPublicView({
         setVisibleCount(24); // Reset visible count on filter change
     }, [searchQuery, selectedCategory, adisos]);
 
-    // Calculate display items
-    const displayedAdisos = filteredAdisos.slice(0, visibleCount);
-    const hasMore = visibleCount < filteredAdisos.length;
+    const displayedAdisos = useMemo(
+        () =>
+            showEntireCatalogOffline
+                ? filteredAdisos
+                : filteredAdisos.slice(0, visibleCount),
+        [showEntireCatalogOffline, filteredAdisos, visibleCount]
+    );
+    const hasMore = !showEntireCatalogOffline && visibleCount < filteredAdisos.length;
 
     // Infinite Scroll Observer
     const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -808,7 +819,7 @@ export default function BusinessPublicView({
                                                                 src={adiso.imagenesUrls?.[0] || adiso.imagenUrl || ''}
                                                                 alt={adiso.titulo}
                                                                 className="w-full h-full object-contain"
-                                                                loading="lazy"
+                                                                loading={catalogImgLoading}
                                                             />
                                                         ) : (
                                                             <div className="w-full h-full flex items-center justify-center text-slate-200">
@@ -859,7 +870,7 @@ export default function BusinessPublicView({
                                                                 src={adiso.imagenesUrls?.[0] || adiso.imagenUrl || ''}
                                                                 alt={adiso.titulo}
                                                                 className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
-                                                                loading="lazy"
+                                                                loading={catalogImgLoading}
                                                             />
                                                         ) : (
                                                             <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-slate-200">
@@ -944,7 +955,7 @@ export default function BusinessPublicView({
                                                                 src={adiso.imagenesUrls?.[0] || adiso.imagenUrl || ''}
                                                                 alt={adiso.titulo || "Producto"}
                                                                 className="w-full h-full object-contain"
-                                                                loading="lazy"
+                                                                loading={catalogImgLoading}
                                                             />
                                                         ) : (
                                                             <div className="w-full h-full flex items-center justify-center text-slate-200">

@@ -19,6 +19,7 @@ import {
   CacheKeys,
   CACHE_TTL,
 } from '@/lib/offline-cache';
+import { prefetchCatalogProductImages } from '@/lib/catalog-image-prefetch';
 import { useNetworkStatus } from './useNetworkStatus';
 
 interface BusinessDataState {
@@ -75,6 +76,13 @@ export function useBusinessData(slug: string, isOwner: boolean) {
       const profileData = await getBusinessProfileBySlug(slug);
       if (profileData) {
         cacheSet(CacheKeys.businessProfile(slug), profileData, CACHE_TTL.BUSINESS_PROFILE);
+        if (typeof navigator !== 'undefined' && navigator.onLine && profileData.logo_url) {
+          queueMicrotask(() => {
+            const im = new Image();
+            im.decoding = 'async';
+            im.src = profileData.logo_url as string;
+          });
+        }
       }
       return profileData;
     } catch (e) {
@@ -105,6 +113,10 @@ export function useBusinessData(slug: string, isOwner: boolean) {
       // Guardar siempre los published en caché (no los drafts del owner)
       const publishedOnly = products.filter((p: any) => p.status === 'published');
       cacheSet(CacheKeys.businessCatalog(businessId), publishedOnly, CACHE_TTL.CATALOG_PRODUCTS);
+
+      if (typeof navigator !== 'undefined' && navigator.onLine) {
+        queueMicrotask(() => prefetchCatalogProductImages(publishedOnly));
+      }
 
       return products;
     } catch (e) {
@@ -255,17 +267,32 @@ export function useBusinessData(slug: string, isOwner: boolean) {
 // HELPERS
 // ============================================
 
+function normalizeProductImages(raw: unknown): any[] {
+  if (raw == null) return [];
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return Array.isArray(raw) ? raw : [];
+}
+
 function mapProductsToAdisos(products: any[], business: BusinessProfile | null): Adiso[] {
-  return products.map((p: any) => ({
+  return products.map((p: any) => {
+    const imgs = normalizeProductImages(p.images);
+    return {
     id: p.id,
     titulo: p.title || '',
     descripcion: p.description || '',
     precio: p.price,
-    imagenesUrls: Array.isArray(p.images)
-      ? p.images.map((img: any) => typeof img === 'string' ? img : img.url)
-      : [],
-    imagenUrl: Array.isArray(p.images) && p.images.length > 0
-      ? (typeof p.images[0] === 'string' ? p.images[0] : p.images[0].url)
+    imagenesUrls: imgs
+      .map((img: any) => (typeof img === 'string' ? img : img?.url))
+      .filter(Boolean),
+    imagenUrl: imgs.length > 0
+      ? (typeof imgs[0] === 'string' ? imgs[0] : imgs[0]?.url || '')
       : '',
     slug: p.id,
     categoria: p.category || 'productos',
@@ -279,5 +306,6 @@ function mapProductsToAdisos(products: any[], business: BusinessProfile | null):
       ? new Date(p.created_at).toLocaleTimeString()
       : new Date().toLocaleTimeString(),
     status: p.status,
-  }));
+  };
+  });
 }

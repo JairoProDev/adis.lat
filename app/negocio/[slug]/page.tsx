@@ -228,7 +228,7 @@ export default function PublicBusinessPage({
                 <BusinessPublicView
                     profile={business}
                     adisos={adisos}
-                    editMode={isEditing || isOwner}
+                    editMode={isEditing}
                     onEditPart={(part) => {
                         setIsEditing(true);
                         if (part === 'logo' || part === 'visual') setActiveStep(1);

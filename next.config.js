@@ -81,6 +81,23 @@ const withPwa = require('@ducanh2912/next-pwa').default({
   disable: process.env.NODE_ENV === 'development',
   workboxOptions: {
     disableDevLogs: true,
+    runtimeCaching: [
+      {
+        urlPattern: ({ url }) =>
+          /^https:\/\/[^/]+\.supabase\.co\/storage\/v1\//i.test(url.href),
+        handler: 'StaleWhileRevalidate',
+        options: {
+          cacheName: 'supabase-catalog-images',
+          expiration: {
+            maxEntries: 500,
+            maxAgeSeconds: 7 * 24 * 60 * 60,
+          },
+          cacheableResponse: {
+            statuses: [0, 200],
+          },
+        },
+      },
+    ],
   },
 });
 
