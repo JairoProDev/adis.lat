@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { BusinessProfile } from '@/types/business';
 import BusinessPublicView from '@/components/business/BusinessPublicView';
@@ -15,6 +15,9 @@ import SimpleCatalogAdd from '@/components/business/SimpleCatalogAdd';
 import { useToast } from '@/hooks/useToast';
 import { useBusinessData } from '@/hooks/useBusinessData';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { updateBusinessProfile } from '@/lib/business';
+import { useDebounce } from '@/hooks/useDebounce';
+import { IconCheck, IconEdit, IconEye, IconX } from '@/components/Icons';
 
 export default function PublicBusinessPage({
     params,
@@ -25,14 +28,19 @@ export default function PublicBusinessPage({
 }) {
     const slug = params.slug;
     const { user } = useAuth();
-    const { success } = useToast();
+    const { success, error: showError } = useToast();
     const { isOnline, justCameOnline } = useNetworkStatus();
 
     // Editing State
     const [isEditing, setIsEditing] = useState(false);
     const [activeStep, setActiveStep] = useState(0);
     const [saving, setSaving] = useState(false);
+    const [lastSavedTime, setLastSavedTime] = useState<Date | null>(null);
     const [editingProduct, setEditingProduct] = useState<any>(null);
+
+    // Local profile state for editing (separate from the cached read-only version)
+    const [localProfile, setLocalProfile] = useState<Partial<BusinessProfile> | null>(null);
+    const lastSavedStr = useRef<string>('');
 
     // Modals state
     const [showProductModal, setShowProductModal] = useState(false);
@@ -48,10 +56,6 @@ export default function PublicBusinessPage({
         }
     }, [searchParams]);
 
-    // ─────────────────────────────────────────────────────────────────────
-    // DATOS CON CACHÉ OFFLINE (el isOwner real se calcula después de cargar)
-    // Usamos una check provisional de isOwner para el hook (se corrige internamente)
-    // ─────────────────────────────────────────────────────────────────────
     const {
         business,
         adisos,
@@ -67,6 +71,14 @@ export default function PublicBusinessPage({
     // Derived owner check (necesita que el business ya esté cargado)
     const isOwner = Boolean(user?.id && business?.user_id && user.id === business.user_id);
 
+    // When business loads, initialize local editing profile
+    useEffect(() => {
+        if (business && !localProfile) {
+            setLocalProfile(business);
+            lastSavedStr.current = JSON.stringify(business);
+        }
+    }, [business]);
+
     // Reload catalog when ownership is confirmed to ensure drafts are visible
     useEffect(() => {
         if (business?.id && isOwner && isOnline) {
@@ -74,8 +86,65 @@ export default function PublicBusinessPage({
         }
     }, [isOwner, business?.id, isOnline, reloadCatalog]);
 
+    // ─── REAL SAVE TO SUPABASE ────────────────────────────────────────
+    const handleSave = useCallback(async (profileToSave: Partial<BusinessProfile>, showNotification = false) => {
+        if (!profileToSave.id) return;
+        try {
+            setSaving(true);
+            const saved = await updateBusinessProfile(profileToSave.id, profileToSave);
+            if (saved) {
+                setLocalProfile(saved);
+                lastSavedStr.current = JSON.stringify(saved);
+                setLastSavedTime(new Date());
+                // Also update the cached view so preview reflects changes
+                updateBusiness(() => saved);
+                if (showNotification) success('¡Cambios guardados!');
+            }
+        } catch (err: any) {
+            showError('Error al guardar: ' + err.message);
+        } finally {
+            setSaving(false);
+        }
+    }, [updateBusiness, success, showError]);
+
+    // ─── AUTO-SAVE: debounce profile changes ─────────────────────────
+    const debouncedProfile = useDebounce(localProfile, 1200);
+
+    useEffect(() => {
+        if (!debouncedProfile?.id) return;
+        const currentStr = JSON.stringify(debouncedProfile);
+        if (currentStr === lastSavedStr.current) return;
+        handleSave(debouncedProfile, false);
+    }, [debouncedProfile]);
+
+    // ─── PUBLISH TOGGLE ───────────────────────────────────────────────
+    const handlePublish = useCallback(async () => {
+        if (!localProfile?.id || !isOwner) {
+            showError('No tienes permiso para publicar este negocio');
+            return;
+        }
+        try {
+            setSaving(true);
+            const newState = !localProfile.is_published;
+            const saved = await updateBusinessProfile(localProfile.id, {
+                ...localProfile,
+                is_published: newState,
+            });
+            if (saved) {
+                setLocalProfile(saved);
+                lastSavedStr.current = JSON.stringify(saved);
+                updateBusiness(() => saved);
+                success(newState ? '¡Página publicada! 🎉' : 'Página despublicada');
+            }
+        } catch (err: any) {
+            showError('Error al publicar: ' + err.message);
+        } finally {
+            setSaving(false);
+        }
+    }, [localProfile, isOwner, updateBusiness, success, showError]);
+
     const trackEvent = useCallback(async (eventType: string, businessId: string, productId?: string) => {
-        if (!isOnline) return; // No trackear sin internet
+        if (!isOnline) return;
         try {
             await supabase!.from('page_analytics').insert({
                 business_profile_id: businessId,
@@ -100,7 +169,6 @@ export default function PublicBusinessPage({
         return sessionId;
     };
 
-    // Trackear vista cuando se carga el negocio
     useEffect(() => {
         if (business?.id && isOnline) {
             trackEvent('page_view', business.id);
@@ -117,7 +185,6 @@ export default function PublicBusinessPage({
     };
 
     // ─── LOADING STATE ────────────────────────────────────
-    // Solo mostramos loading si no tenemos ningún dato (ni caché ni red)
     if (loading) {
         return (
             <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -160,27 +227,87 @@ export default function PublicBusinessPage({
         );
     }
 
+    // The profile used for editing (local state) or the cached one for preview
+    const editableProfile = localProfile || business;
+
     return (
-        <div className="min-h-screen bg-slate-50 relative flex flex-col md:flex-row overflow-x-hidden">
+        <div className="min-h-screen bg-slate-50 relative flex flex-col overflow-x-hidden">
 
-            {/* ─── BANNERS DE ESTADO ──────────────────────────────────────── */}
+            {/* ─── TOP BAR (only for owner in edit mode) ─────────────────────── */}
+            {isOwner && isEditing && (
+                <div className="sticky top-0 z-[70] bg-white border-b border-slate-200 shadow-sm h-14 flex items-center px-4 gap-3">
+                    {/* Left: close + title */}
+                    <button
+                        onClick={() => setIsEditing(false)}
+                        className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                        title="Cerrar editor"
+                    >
+                        <IconX size={18} color="var(--text-secondary, #64748b)" />
+                    </button>
+                    <div className="flex flex-col">
+                        <span className="font-bold text-sm text-slate-800 leading-tight">Editar Página</span>
+                        <div className="flex items-center gap-1.5">
+                            {saving ? (
+                                <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                                    <div className="w-2 h-2 border border-slate-400 border-t-transparent rounded-full animate-spin" />
+                                    Guardando...
+                                </span>
+                            ) : lastSavedTime ? (
+                                <span className="text-[10px] text-green-600 flex items-center gap-1 bg-green-50 px-1.5 rounded-full">
+                                    <IconCheck size={8} />
+                                    Autoguardado
+                                </span>
+                            ) : (
+                                <span className="text-[10px] text-slate-400">Los cambios se guardan solos</span>
+                            )}
+                        </div>
+                    </div>
 
-            {/* Offline banner: datos del caché */}
+                    <div className="ml-auto flex items-center gap-2">
+                        {/* View/Edit toggle */}
+                        <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200 shadow-inner">
+                            <button
+                                onClick={() => setIsEditing(false)}
+                                className="px-2 py-1 rounded-md text-xs font-bold transition-all flex items-center gap-1 text-slate-500 hover:text-slate-700"
+                            >
+                                <IconEye size={13} />
+                                <span>Ver</span>
+                            </button>
+                            <button
+                                className="px-2 py-1 rounded-md text-xs font-bold transition-all flex items-center gap-1 bg-white shadow-sm text-blue-600"
+                            >
+                                <IconEdit size={13} />
+                                <span>Editar</span>
+                            </button>
+                        </div>
+
+                        {/* Publish button */}
+                        <button
+                            onClick={handlePublish}
+                            disabled={saving}
+                            className={cn(
+                                "px-4 py-1.5 rounded-lg font-bold text-white text-sm flex items-center gap-2 transition-all hover:shadow-md disabled:opacity-50",
+                                editableProfile.is_published ? "bg-emerald-500 hover:bg-emerald-600" : "bg-[var(--brand-blue,#53acc5)] hover:brightness-110"
+                            )}
+                        >
+                            {editableProfile.is_published ? '✓ Publicado' : 'Publicar'}
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* ─── STATUS BANNERS ────────────────────────────────────────────── */}
             {!isOnline && fromCache && (
                 <div className="fixed top-0 left-0 right-0 z-[200] bg-amber-500 text-white text-center text-sm py-2 px-4 font-medium animate-in slide-in-from-top duration-300">
                     📴 Sin conexión — mostrando datos guardados
                     {isStale && <span className="ml-2 text-amber-100 text-xs">(pueden no estar actualizados)</span>}
                 </div>
             )}
-
-            {/* Online banner: acaba de reconectarse */}
             {justCameOnline && (
                 <div className="fixed top-0 left-0 right-0 z-[200] bg-green-500 text-white text-center text-sm py-2 px-4 font-medium animate-in slide-in-from-top duration-300">
                     ✅ Conexión restaurada — actualizando datos...
                 </div>
             )}
-
-            {/* Revalidating indicator (subtle) */}
             {revalidating && isOnline && (
                 <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[200] bg-slate-800/90 text-white text-xs py-1.5 px-4 rounded-full backdrop-blur-sm flex items-center gap-2">
                     <div className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
@@ -188,92 +315,110 @@ export default function PublicBusinessPage({
                 </div>
             )}
 
-            {/* --- EDITOR SIDEBAR --- */}
-            <div className={cn(
-                "fixed inset-y-0 left-0 z-[60] w-full md:w-[450px] bg-white shadow-2xl transform transition-transform duration-300 ease-in-out border-r border-slate-200",
-                isEditing ? "translate-x-0" : "-translate-x-full"
-            )}>
-                {isEditing && business && (
-                    <EditorSteps
-                        profile={business}
-                        setProfile={(p) => {
-                            if (typeof p === 'function') {
-                                updateBusiness(prev => (p as any)(prev));
-                            } else {
-                                updateBusiness(() => p as BusinessProfile);
+            {/* ─── LAYOUT: sidebar + content ────────────────────────────────── */}
+            <div className="flex flex-1 relative">
+
+                {/* EDITOR SIDEBAR */}
+                <div className={cn(
+                    "fixed inset-y-0 left-0 z-[60] w-full md:w-[450px] bg-white shadow-2xl transform transition-transform duration-300 ease-in-out border-r border-slate-200",
+                    isOwner && isEditing ? "translate-x-0" : "-translate-x-full"
+                )}
+                    style={{ top: isOwner && isEditing ? '3.5rem' : '0' }}
+                >
+                    {isEditing && isOwner && (
+                        <EditorSteps
+                            profile={editableProfile as any}
+                            setProfile={(p: any) => {
+                                if (typeof p === 'function') {
+                                    setLocalProfile(prev => prev ? (p as any)(prev) : prev);
+                                } else {
+                                    setLocalProfile(p);
+                                }
+                            }}
+                            saving={saving}
+                            catalogProducts={catalogProducts}
+                            activeStep={activeStep}
+                            setActiveStep={setActiveStep}
+                            onAddProduct={() => setShowAddProductModal(true)}
+                            editingProduct={editingProduct}
+                            setEditingProduct={(product: any) => {
+                                setEditingProduct(product);
+                                setShowProductModal(true);
+                            }}
+                            onRefreshCatalog={() => business?.id && reloadCatalog(business.id)}
+                            onToggleView={() => setIsEditing(false)}
+                            isPublished={!!editableProfile.is_published}
+                            onPublish={handlePublish}
+                        />
+                    )}
+                </div>
+
+                {/* MAIN CONTENT */}
+                <div className={cn(
+                    "flex-1 min-w-0 transition-all duration-300",
+                    isOwner && isEditing ? "md:ml-[450px]" : ""
+                )}>
+                    <BusinessPublicView
+                        profile={editableProfile as any}
+                        adisos={adisos}
+                        editMode={isOwner && isEditing}
+                        onEditPart={(part) => {
+                            setIsEditing(true);
+                            if (part === 'logo' || part === 'visual') setActiveStep(1);
+                            if (part === 'add-product') {
+                                setActiveStep(2);
+                                setShowAddProductModal(true);
                             }
                         }}
-                        saving={saving}
-                        catalogProducts={catalogProducts}
-                        activeStep={activeStep}
-                        setActiveStep={setActiveStep}
-                        onAddProduct={() => setShowAddProductModal(true)}
-                        editingProduct={editingProduct}
-                        setEditingProduct={(product) => {
-                            setEditingProduct(product);
+                        onEditProduct={(productAdiso) => {
+                            setIsEditing(true);
+                            setActiveStep(2);
+                            const fullProduct = catalogProducts.find(p => p.id === productAdiso.id);
+                            setEditingProduct(fullProduct || productAdiso);
                             setShowProductModal(true);
                         }}
-                        onRefreshCatalog={() => business?.id && reloadCatalog(business.id)}
-                        onToggleView={() => setIsEditing(false)}
-                        isPublished={!!business?.is_published}
+                        chatbotMinimized={chatbotMinimized}
+                        onToggleChatbot={() => setChatbotMinimized(!chatbotMinimized)}
                     />
-                )}
-            </div>
 
-            {/* --- MAIN CONTENT --- */}
-            <div className={cn(
-                "flex-1 min-w-0 transition-all duration-300",
-                isEditing ? "md:ml-[450px]" : ""
-            )}>
-                <BusinessPublicView
-                    profile={business}
-                    adisos={adisos}
-                    editMode={isEditing}
-                    onEditPart={(part) => {
-                        setIsEditing(true);
-                        if (part === 'logo' || part === 'visual') setActiveStep(1);
-                        if (part === 'add-product') {
-                            setActiveStep(2);
-                            setShowAddProductModal(true);
-                        }
-                    }}
-                    onEditProduct={(productAdiso) => {
-                        setIsEditing(true);
-                        setActiveStep(2);
-                        const fullProduct = catalogProducts.find(p => p.id === productAdiso.id);
-                        setEditingProduct(fullProduct || productAdiso);
-                        setShowProductModal(true);
-                    }}
-                    chatbotMinimized={chatbotMinimized}
-                    onToggleChatbot={() => setChatbotMinimized(!chatbotMinimized)}
-                />
+                    {/* "Editar página" floating button for owner (when not editing) */}
+                    {isOwner && !isEditing && (
+                        <button
+                            onClick={() => setIsEditing(true)}
+                            className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 bg-slate-800 text-white rounded-full shadow-xl font-bold text-sm hover:bg-slate-700 transition-all hover:scale-105 active:scale-95"
+                        >
+                            <IconEdit size={16} />
+                            Editar página
+                        </button>
+                    )}
 
-                {/* --- CHATBOT GUIDE --- */}
-                {isOwner && (
-                    <>
-                        <ChatbotGuide
-                            profile={business}
-                            onUpdate={(field, value) =>
-                                updateBusiness(prev => ({ ...prev, [field]: value }))
-                            }
-                            onComplete={() => setChatbotMinimized(true)}
-                            isMinimized={chatbotMinimized}
-                            onToggleMinimize={() => setChatbotMinimized(!chatbotMinimized)}
-                            hideTriggerButton={true}
-                        />
-                    </>
-                )}
+                    {/* CHATBOT GUIDE */}
+                    {isOwner && (
+                        <>
+                            <ChatbotGuide
+                                profile={editableProfile as any}
+                                onUpdate={(field, value) =>
+                                    setLocalProfile(prev => prev ? { ...prev, [field]: value } : prev)
+                                }
+                                onComplete={() => setChatbotMinimized(true)}
+                                isMinimized={chatbotMinimized}
+                                onToggleMinimize={() => setChatbotMinimized(!chatbotMinimized)}
+                                hideTriggerButton={true}
+                            />
+                        </>
+                    )}
+                </div>
             </div>
 
             {/* Overlay for mobile when editing */}
-            {isEditing && (
+            {isOwner && isEditing && (
                 <div
                     className="fixed inset-0 bg-black/20 z-40 md:hidden backdrop-blur-sm"
                     onClick={() => setIsEditing(false)}
                 />
             )}
 
-            {/* Product Edit Modal Overlay */}
+            {/* Product Edit Modal */}
             {(showProductModal || editingProduct) && user && business?.id && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
                     <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">

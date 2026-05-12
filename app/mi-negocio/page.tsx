@@ -165,16 +165,16 @@ function BusinessBuilderPageContent() {
                 const existingProfile = picked.profile;
                 setMemberRole(picked.role);
 
-                // If the business already has a slug, redirect to the public page editor (Unified Experience)
+                setProfile(existingProfile);
+                lastSavedProfileStr.current = JSON.stringify(existingProfile);
+                setIsFirstTime(false);
+                setChatbotMinimized(true);
+
+                // If business has a slug, redirect to the unified page editor
                 if (existingProfile.slug) {
                     router.push(`/negocio/${existingProfile.slug}?edit=true`);
                     return;
                 }
-
-                setProfile(existingProfile);
-                lastSavedProfileStr.current = JSON.stringify(existingProfile);
-                setIsFirstTime(false);
-                setChatbotMinimized(true); // Usuario existente: chatbot minimizado
 
                 // Load Catalog
                 if (existingProfile.id) {
@@ -330,13 +330,17 @@ function BusinessBuilderPageContent() {
             return;
         }
 
+        // Allow if owner by user_id OR has publish permission via memberRole
+        const canPublish = profile.user_id === user.id || 
+            (memberRole && hasPermission(memberRole, 'business:publish'));
+
+        if (!canPublish) {
+            error('No tienes permiso para publicar este negocio');
+            return;
+        }
+
         try {
             setSaving(true);
-            if (!profile.id || !memberRole || !hasPermission(memberRole, 'business:publish')) {
-                error('No tienes permiso para publicar este negocio');
-                return;
-            }
-
             const updated = await updateBusinessProfile(profile.id, {
                 ...profile,
                 is_published: !profile.is_published
@@ -481,12 +485,7 @@ function BusinessBuilderPageContent() {
 
                         <button
                             onClick={handlePublish}
-                            disabled={
-                                saving ||
-                                !profile.id ||
-                                !memberRole ||
-                                !hasPermission(memberRole, 'business:publish')
-                            }
+                            disabled={saving || !profile.id}
                             className="px-4 md:px-6 py-2 rounded-lg font-bold text-white flex items-center gap-2 hover:shadow-lg transition-all disabled:opacity-50 text-sm"
                             style={{ backgroundColor: profile.is_published ? '#10b981' : 'var(--brand-blue)' }}
                         >
