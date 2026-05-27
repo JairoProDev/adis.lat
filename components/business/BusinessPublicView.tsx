@@ -42,6 +42,8 @@ const getWhatsappUrl = (phone: string, businessName: string) => {
 interface BusinessPublicViewProps {
     profile: Partial<BusinessProfile> | null;
     adisos?: Adiso[];
+    /** Filas crudas del catálogo (para firma del PDF en caché) */
+    catalogProducts?: { id: string; updated_at?: string; images?: unknown }[];
     isPreview?: boolean;
     onEditPart?: (part: string) => void;
     editMode?: boolean;
@@ -56,6 +58,7 @@ const DEFAULT_ADISOS: Adiso[] = [];
 export default function BusinessPublicView({
     profile,
     adisos = DEFAULT_ADISOS,
+    catalogProducts = [],
     isPreview = false,
     onEditPart,
     editMode = false,
@@ -195,7 +198,7 @@ export default function BusinessPublicView({
     const [deletingAdisoId, setDeletingAdisoId] = useState<string | null>(null);
 
     // PDF Generator
-    const { generatePDF, generating: generatingPDF, progress: pdfProgress } = useCatalogPDF();
+    const { openCatalogPdf, generating: generatingPDF, progress: pdfProgress } = useCatalogPDF();
 
     const startEditing = (field: string, value: string) => {
         setEditingField(field);
@@ -228,12 +231,11 @@ export default function BusinessPublicView({
     const handlePDFDownload = async () => {
         if (!profile) return;
         try {
-            await generatePDF(profile, filteredAdisos, {
-                layoutMode: viewMode === 'feed' ? 'feed' : 'grid',
-                orientation: viewMode === 'feed' ? 'portrait' : 'landscape',
-                includeImages: true,
-                includeDescription: true,
-            });
+            const rows =
+                catalogProducts.length > 0
+                    ? catalogProducts
+                    : filteredAdisos.map((a) => ({ id: a.id, images: a.imagenesUrls }));
+            await openCatalogPdf(profile, filteredAdisos, rows);
         } catch (e) {
             console.error('Error al generar PDF:', e);
         }
