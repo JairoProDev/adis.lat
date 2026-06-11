@@ -6,7 +6,6 @@ import { Adiso, Categoria, PAQUETES } from '@/types';
 import {
     IconEye,
     IconLocation,
-    IconClock,
     IconEmpleos,
     IconInmuebles,
     IconVehiculos,
@@ -22,6 +21,9 @@ import {
 import { useAdInteraction } from '@/hooks/useAdInteraction';
 import TrustBadge from '@/components/trust/TrustBadge';
 import { getInterestSignal, getViewSignal } from '@/lib/social-proof';
+
+/** Oculto hasta tener más volumen real de anuncios en el marketplace */
+const SHOW_MARKETPLACE_ADISO_TIME = false;
 
 // --- DATE FORMATTER (RELATIVE) ---
 function getTimeAgo(dateString: string | undefined): string {
@@ -197,7 +199,9 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
         fechaRaw = `${fechaRaw}T${horaRaw}`;
     }
 
-    const timeAgo = getTimeAgo(fechaRaw || (adiso as any).created_at);
+    const timeAgo = SHOW_MARKETPLACE_ADISO_TIME
+        ? getTimeAgo(fechaRaw || (adiso as any).created_at)
+        : '';
     const viewSignal = getViewSignal({
         vistas: adiso.vistas,
         fechaPublicacion: adiso.fechaPublicacion,
@@ -481,21 +485,24 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(({ adiso, onClick, 
                     </p>
                 )}
 
-                {/* Footer: Time & Stats */}
-                <div className="flex justify-between items-center pt-2.5 mt-auto text-[10px] uppercase tracking-widest text-slate-400 dark:text-obsidian-400 font-bold w-full border-t border-slate-100 dark:border-obsidian-800/50">
-                    <div className="flex items-center gap-1.5">
-                        <IconClock size={11} className="text-sky-400 opacity-70" />
-                        <span>{timeAgo}</span>
+                {/* Footer: vistas (tiempo oculto hasta más actividad en el marketplace) */}
+                {(SHOW_MARKETPLACE_ADISO_TIME || viewSignal) && (
+                    <div className={`flex items-center pt-2.5 mt-auto text-[10px] uppercase tracking-widest text-slate-400 dark:text-obsidian-400 font-bold w-full border-t border-slate-100 dark:border-obsidian-800/50 ${SHOW_MARKETPLACE_ADISO_TIME ? 'justify-between' : 'justify-end'}`}>
+                        {SHOW_MARKETPLACE_ADISO_TIME && timeAgo && (
+                            <div className="flex items-center gap-1.5">
+                                <span>{timeAgo}</span>
+                            </div>
+                        )}
+                        {viewSignal && (
+                            <div className="flex items-center gap-1.5">
+                                <IconEye size={11} className={`opacity-70 ${viewSignal.tone === 'highlight' ? 'text-sky-400' : 'text-amber-400'}`} />
+                                <span className={viewSignal.tone === 'highlight' ? 'text-sky-500' : ''}>
+                                    {viewSignal.label}
+                                </span>
+                            </div>
+                        )}
                     </div>
-                    {viewSignal && (
-                        <div className="flex items-center gap-1.5">
-                            <IconEye size={11} className={`opacity-70 ${viewSignal.tone === 'highlight' ? 'text-sky-400' : 'text-amber-400'}`} />
-                            <span className={viewSignal.tone === 'highlight' ? 'text-sky-500' : ''}>
-                                {viewSignal.label}
-                            </span>
-                        </div>
-                    )}
-                </div>
+                )}
 
             </div>
         </div>
