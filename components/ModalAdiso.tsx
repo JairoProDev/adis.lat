@@ -559,6 +559,13 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
         {adiso.titulo}
       </h2>
 
+      {/* Descripción — justo bajo el título */}
+      {adiso.descripcion?.trim() && (
+        <div style={{ fontSize: '1rem', lineHeight: 1.6, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap' }}>
+          {adiso.descripcion}
+        </div>
+      )}
+
       {/* Imágenes */}
       {(() => {
         const imagenes = adiso.imagenesUrls && adiso.imagenesUrls.length > 0 ? adiso.imagenesUrls : adiso.imagenUrl ? [adiso.imagenUrl] : [];
@@ -633,11 +640,6 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
             </div>
           )}
         </div>
-      </div>
-
-      {/* Descripción */}
-      <div style={{ fontSize: '1rem', lineHeight: 1.6, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap' }}>
-        {adiso.descripcion}
       </div>
     </div >
   );
