@@ -4,7 +4,7 @@
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
 
-import { Suspense, useState, useEffect, useRef, useCallback, type CSSProperties } from 'react';
+import { Suspense, useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Adiso, Categoria } from '@/types';
 import { getAdisos, getAdisoById, saveAdiso, getAdisosCache } from '@/lib/storage';
@@ -46,9 +46,11 @@ import {
   browseFiltersToSearchParams,
   DEFAULT_BROWSE_FILTERS,
   BrowseFilterState,
+  FilterLayoutMode,
 } from '@/lib/filters';
 import Buscador from '@/components/Buscador';
 import BrowseFilters from '@/components/filters/BrowseFilters';
+import FilterSidePanel from '@/components/filters/FilterSidePanel';
 import Ordenamiento, { TipoOrdenamiento } from '@/components/Ordenamiento';
 import FiltroUbicacion from '@/components/FiltroUbicacion';
 import GrillaAdisos from '@/components/GrillaAdisos';
@@ -88,32 +90,15 @@ type SeccionMobile = 'adiso' | 'mapa' | 'publicar' | 'chatbot' | 'gratuitos';
 // Expresión regular profesional para limpiar datos de prueba residuales
 const TEST_REGEX = /toyota test|test adiso|test anuncio/i;
 
-const filterChipStyle: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: '6px',
-  padding: '6px 12px',
-  borderRadius: '999px',
-  border: '1px solid var(--border-color)',
-  backgroundColor: 'var(--bg-primary)',
-  color: 'var(--text-primary)',
-  fontSize: '0.8rem',
-  fontWeight: 600,
-  cursor: 'pointer',
-  minHeight: '32px',
-};
-
 function getBrowseCountLabel(
-  count: number,
   categoria: Categoria | 'todos',
   filtro?: { distrito?: string; departamento?: string }
 ): string {
   const ubic = filtro?.distrito || filtro?.departamento || 'Cusco';
-  const noun = count === 1 ? 'anuncio' : 'anuncios';
   if (categoria !== 'todos') {
-    return `${noun} · ${getCategoriaLabel(categoria)}`;
+    return `· ${getCategoriaLabel(categoria)}`;
   }
-  return `${noun} en ${ubic}`;
+  return `en ${ubic}`;
 }
 
 function HomeContent() {
@@ -169,6 +154,8 @@ function HomeContent() {
   }, [seccionUrl, isDesktop]);
   const [vista, setVista] = useState<'grid' | 'list' | 'feed'>('grid');
   const [browseScrolled, setBrowseScrolled] = useState(false);
+  const [filterLayoutMode, setFilterLayoutMode] = useState<FilterLayoutMode>('inline');
+  const [filterSidebarCollapsed, setFilterSidebarCollapsed] = useState(false);
   const [isSidebarMinimizado, setIsSidebarMinimizado] = useState(true);
   const { toasts, removeToast, success, error } = useToast();
   const marketplacePulse = getMarketplacePulse(adisosFiltrados);
@@ -961,26 +948,49 @@ function HomeContent() {
             onChange={setBrowseFilters}
             adisos={adisos}
             busqueda={busquedaDebounced}
-            resultCount={adisosFiltrados.length}
             isDesktop={isDesktop}
             userLat={profile?.latitud}
             userLng={profile?.longitud}
             onOpenUbicacion={() => setMostrarFiltroUbicacion(true)}
+            layoutMode={filterLayoutMode}
+            onLayoutModeChange={setFilterLayoutMode}
           />
         </div>
         </div>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            flex: 1,
+            width: '100%',
+            maxWidth: isDesktop ? 'calc(100% - var(--sidebar-width, 0px))' : '100%',
+            margin: '0 auto',
+            ...(isDesktop && { marginRight: 'var(--sidebar-width, 0px)' }),
+          }}
+        >
+        {isDesktop && filterLayoutMode === 'panel' && (
+          <FilterSidePanel
+            categoria={categoriaFiltro}
+            filters={browseFilters}
+            onChange={setBrowseFilters}
+            adisos={adisos}
+            busqueda={busquedaDebounced}
+            collapsed={filterSidebarCollapsed}
+            onToggleCollapse={() => setFilterSidebarCollapsed((c) => !c)}
+            onOpenUbicacion={() => setMostrarFiltroUbicacion(true)}
+            userLat={profile?.latitud}
+            userLng={profile?.longitud}
+            resultCount={adisosFiltrados.length}
+          />
+        )}
         <main id="main-content" style={{
           flex: 1,
+          minWidth: 0,
           padding: '1rem',
           paddingTop: browseScrolled ? '0.5rem' : '0.25rem',
-          paddingBottom: isDesktop ? '1rem' : '5rem', // Espacio para navbar mobile permanente
-          maxWidth: isDesktop
-            ? 'calc(100% - var(--sidebar-width, 0px))'
-            : '1400px',
-          margin: '0 auto',
+          paddingBottom: isDesktop ? '1rem' : '5rem',
           width: '100%',
-          transition: 'max-width 0.3s ease, margin-right 0.3s ease, padding-bottom 0.3s ease, padding-top 0.3s ease',
-          ...(isDesktop && { marginRight: 'var(--sidebar-width, 0px)' })
+          transition: 'padding-bottom 0.3s ease, padding-top 0.3s ease',
         }}>
 
           {/* Modal de Filtro de Ubicación */}
@@ -994,59 +1004,63 @@ function HomeContent() {
               onCerrar={() => setMostrarFiltroUbicacion(false)}
             />
           )}
-          {/* ── Toolbar: modern controls ── */}
+          {/* ── Toolbar: una sola línea ── */}
           <div style={{
-            marginBottom: '1.25rem',
+            marginBottom: '1rem',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            padding: '0.5rem 0.25rem',
-            gap: '12px',
+            padding: '0.25rem 0',
+            gap: '8px',
             width: '100%',
-            flexWrap: 'wrap'
+            flexWrap: 'nowrap',
+            overflow: 'hidden',
           }}>
-            {/* Left: Count pill */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, flexShrink: 1, overflow: 'hidden' }}>
               {cargando ? (
-                <div className="skeleton-shimmer" style={{ width: 120, height: 36, borderRadius: '18px' }} />
+                <div className="skeleton-shimmer" style={{ width: 100, height: 36, borderRadius: '18px', flexShrink: 0 }} />
               ) : (
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px',
+                  gap: '6px',
                   backgroundColor: 'var(--bg-primary)',
-                  padding: '4px 12px 4px 6px',
+                  padding: '4px 10px 4px 5px',
                   borderRadius: '20px',
                   boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
-                  height: '36px'
+                  height: '36px',
+                  flexShrink: 0,
                 }}>
                   <div style={{
                     backgroundColor: 'var(--brand-blue)',
                     color: 'white',
                     height: '24px',
                     minWidth: '24px',
-                    padding: '0 8px',
+                    padding: '0 7px',
                     borderRadius: '12px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '0.85rem',
+                    fontSize: '0.8rem',
                     fontWeight: 800,
                     boxShadow: '0 0 0 2px var(--brand-yellow)',
                   }}>
                     {adisosFiltrados.length}
                   </div>
                   <span style={{
-                    fontSize: '0.875rem',
+                    fontSize: '0.8rem',
                     fontWeight: 600,
                     color: 'var(--text-secondary)',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
                   }}>
-                    {getBrowseCountLabel(adisosFiltrados.length, categoriaFiltro, browseFilters.ubicacion)}
+                    {getBrowseCountLabel(categoriaFiltro, browseFilters.ubicacion)}
                   </span>
 
                   {!cargando && (
                     <button
-                      className="hidden md:flex hover:opacity-90"
+                      className="hidden lg:flex hover:opacity-90"
                       onClick={async () => {
                         const url = getBusquedaUrl(categoriaFiltro, busqueda);
                         try {
@@ -1079,8 +1093,8 @@ function HomeContent() {
               )}
               {!cargando && marketplacePulse && (
                 <div
+                  className="hidden xl:flex"
                   style={{
-                    display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
                     backgroundColor: 'rgba(var(--brand-yellow-rgb), 0.14)',
@@ -1088,19 +1102,21 @@ function HomeContent() {
                     border: '1px solid rgba(var(--brand-yellow-rgb), 0.28)',
                     padding: '6px 10px',
                     borderRadius: '999px',
-                    fontSize: '0.75rem',
+                    fontSize: '0.7rem',
                     fontWeight: 600,
                     height: '32px',
+                    flexShrink: 1,
+                    minWidth: 0,
+                    overflow: 'hidden',
                   }}
                 >
                   <IconEye size={14} aria-hidden="true" color="var(--brand-yellow)" />
-                  <span>{marketplacePulse}</span>
+                  <span className="truncate">{marketplacePulse}</span>
                 </div>
               )}
             </div>
 
-            {/* Right: Sort & View Mode */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
               <Ordenamiento
                 valor={ordenamiento}
                 onChange={setOrdenamiento}
@@ -1151,44 +1167,6 @@ function HomeContent() {
             </div>
           </div>
 
-          {(categoriaFiltro !== 'todos' || busquedaDebounced.trim()) && (
-            <div
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '8px',
-                marginBottom: '0.75rem',
-                alignItems: 'center',
-              }}
-            >
-              {categoriaFiltro !== 'todos' && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCategoriaFiltro('todos');
-                    const params = new URLSearchParams(searchParams.toString());
-                    params.delete('categoria');
-                    router.push(params.toString() ? `/?${params.toString()}` : '/', { scroll: false });
-                  }}
-                  style={filterChipStyle}
-                >
-                  {getCategoriaLabel(categoriaFiltro)}
-                  <IconClose size={12} />
-                </button>
-              )}
-              {busquedaDebounced.trim() && (
-                <button
-                  type="button"
-                  onClick={() => setBusqueda('')}
-                  style={filterChipStyle}
-                >
-                  &quot;{busquedaDebounced.trim()}&quot;
-                  <IconClose size={12} />
-                </button>
-              )}
-            </div>
-          )}
-
           {/* ── Cards: skeleton during first load, grid once ready ── */}
           {cargando ? (
             <SkeletonAdisos isDesktop={isDesktop} />
@@ -1237,6 +1215,7 @@ function HomeContent() {
             </>
           )}
         </main>
+        </div>
         <FeedbackButton />
 
         {/* Left Sidebar (Desktop/Mobile if requested) */}

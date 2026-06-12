@@ -107,8 +107,8 @@ export default function Ordenamiento({ valor, onChange }: OrdenamientoProps) {
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '0.5rem',
-          padding: '0 0.875rem',
+          gap: isMobile ? '0.25rem' : '0.5rem',
+          padding: isMobile ? '0 10px' : '0 0.875rem',
           border: 'none',
           borderRadius: '14px',
           backgroundColor: 'var(--bg-primary)',
@@ -118,13 +118,13 @@ export default function Ordenamiento({ valor, onChange }: OrdenamientoProps) {
           fontSize: '0.85rem',
           fontWeight: 600,
           height: '40px',
+          minWidth: isMobile ? '40px' : undefined,
         }}
         className="hover:shadow-md motion-reduce:hover:translate-y-0 hover:-translate-y-0.5"
       >
         <CurrentIcon size={16} aria-hidden="true" className="text-[var(--brand-blue)]" />
-        <span className="hidden sm:inline">{t(opcionActual.labelKey)}</span>
-        <span className="sm:hidden">Ordenar</span>
-        <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginLeft: '4px', opacity: 0.5 }}>▼</span>
+        <span className="hidden md:inline max-w-[120px] truncate">{t(opcionActual.labelKey)}</span>
+        <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginLeft: '2px', opacity: 0.6 }} aria-hidden>▼</span>
       </button>
 
       {isOpen && !isMobile && (
