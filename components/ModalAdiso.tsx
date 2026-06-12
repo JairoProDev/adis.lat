@@ -4,7 +4,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { Adiso } from '@/types';
-import { formatFecha, getWhatsAppUrl, copiarLink, compartirNativo } from '@/lib/utils';
+import { getWhatsAppUrl, copiarLink, compartirNativo } from '@/lib/utils';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { isMyAdiso } from '@/lib/storage';
 import { useAuth } from '@/hooks/useAuth';
@@ -19,7 +19,6 @@ import {
   IconWhatsApp,
   IconCheck,
   IconLocation,
-  IconCalendar,
   IconEmpleos,
   IconInmuebles,
   IconVehiculos,
@@ -34,7 +33,14 @@ import {
 } from './Icons';
 import { Categoria, UbicacionDetallada } from '@/types';
 import { getAdisoUrl } from '@/lib/url';
-import { getInterestSignal, getViewSignal } from '@/lib/social-proof';
+import {
+  pickSocialBadge,
+  getCtaLabelPorCategoria,
+  sanitizeAdisoDescripcion,
+  toDisplayTitle,
+  formatPrecioDisplay,
+  getCategoriaLabel,
+} from '@/lib/adiso-display';
 
 // Función helper para formatear ubicación
 function formatearUbicacion(ubicacion: any): { texto: string; coordenadas: { lat: number; lng: number } | null } {
@@ -91,6 +97,7 @@ export default function ModalAdiso({
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [imagenAmpliada, setImagenAmpliada] = useState<{ url: string; index: number } | null>(null);
+  const [galleryIndex, setGalleryIndex] = useState(0);
   const [mostrarConfirmarEliminar, setMostrarConfirmarEliminar] = useState(false);
   const [eliminando, setEliminando] = useState(false);
   const [esFavoritoState, setEsFavoritoState] = useState(false);
@@ -112,17 +119,28 @@ export default function ModalAdiso({
   const [vistasLocales, setVistasLocales] = useState(adiso.vistas || 0);
   const [contactosLocales, setContactosLocales] = useState(adiso.contactos || 0);
   const sellerName = getSellerDisplayName(adiso);
-  const viewSignal = getViewSignal({
+  const socialBadge = pickSocialBadge({
+    ...adiso,
     vistas: vistasLocales,
-    fechaPublicacion: adiso.fechaPublicacion,
-    horaPublicacion: adiso.horaPublicacion
+    contactos: contactosLocales,
   });
-  const contactSignal = getInterestSignal(contactosLocales);
+  const ctaLabel = getCtaLabelPorCategoria(adiso.categoria);
+  const displayTitle = toDisplayTitle(adiso.titulo);
+  const displayDescription = sanitizeAdisoDescripcion(adiso.descripcion);
+  const priceLabel = formatPrecioDisplay(adiso);
+
+  const imagenesGaleria =
+    adiso.imagenesUrls && adiso.imagenesUrls.length > 0
+      ? adiso.imagenesUrls.filter(Boolean)
+      : adiso.imagenUrl
+        ? [adiso.imagenUrl]
+        : [];
 
   // Cuando cambia el adiso, reiniciamos el estado local con los valores del nuevo adiso
   useEffect(() => {
     setVistasLocales(adiso.vistas || 0);
     setContactosLocales(adiso.contactos || 0);
+    setGalleryIndex(0);
   }, [adiso.id, adiso.vistas, adiso.contactos]);
 
   // Registrar visualización del adiso (Optimistic + Backend)
@@ -479,7 +497,7 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
             backgroundImage: 'linear-gradient(135deg, var(--brand-blue) 0%, #2563eb 100%)'
           }}
         >
-          <IconWhatsApp size={22} /> Consultar disponibilidad
+          <IconWhatsApp size={22} /> {ctaLabel}
         </button>
       )
     }
@@ -520,128 +538,119 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
         }}
       >
         <IconWhatsApp size={22} />
-        Contactar por WhatsApp
+        {ctaLabel}
       </button>
     );
   };
 
+  const galleryNavBtnStyle: React.CSSProperties = {
+    width: '36px',
+    height: '36px',
+    borderRadius: '10px',
+    border: '1px solid var(--border-color)',
+    backgroundColor: 'var(--bg-primary)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+  };
+
   const ContentBody = () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-      {/* Vendedor Info Header within content */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          <div style={{
-            width: '46px', height: '46px', borderRadius: '14px', overflow: 'hidden',
-            boxShadow: '0 8px 16px rgba(0,0,0,0.06)', position: 'relative',
-            backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)'
-          }}>
-            {adiso.vendedor?.avatarUrl ? (
-              <Image src={adiso.vendedor.avatarUrl} alt={adiso.vendedor.nombre} fill style={{ objectFit: 'cover' }} />
-            ) : (
-              <div
-                className={`w-full h-full bg-gradient-to-br ${theme.iconBg} flex items-center justify-center text-white`}
-              >
-                {(() => { const Icon = getCategoriaIcon(adiso.categoria); return <Icon size={22} />; })()}
-              </div>
-            )}
+      {imagenesGaleria.length > 0 && (
+        <div>
+          <div
+            onClick={() => setImagenAmpliada({ url: imagenesGaleria[galleryIndex], index: galleryIndex })}
+            style={{
+              position: 'relative',
+              width: '100%',
+              height: '280px',
+              borderRadius: '16px',
+              overflow: 'hidden',
+              cursor: 'zoom-in',
+            }}
+          >
+            <Image
+              src={imagenesGaleria[galleryIndex]}
+              alt={displayTitle}
+              fill
+              style={{ objectFit: 'cover' }}
+            />
           </div>
-          {sellerName && (
-            <div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Publicado por</div>
-              <div style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>{sellerName}</div>
+          {imagenesGaleria.length > 1 && (
+            <div style={{ display: 'flex', gap: '8px', marginTop: '10px', alignItems: 'center', justifyContent: 'center' }}>
+              <button
+                type="button"
+                onClick={() => setGalleryIndex((i) => Math.max(0, i - 1))}
+                disabled={galleryIndex === 0}
+                style={galleryNavBtnStyle}
+                aria-label="Imagen anterior"
+              >
+                <IconArrowLeft size={16} />
+              </button>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                {galleryIndex + 1} / {imagenesGaleria.length}
+              </span>
+              <button
+                type="button"
+                onClick={() => setGalleryIndex((i) => Math.min(imagenesGaleria.length - 1, i + 1))}
+                disabled={galleryIndex >= imagenesGaleria.length - 1}
+                style={galleryNavBtnStyle}
+                aria-label="Imagen siguiente"
+              >
+                <IconArrowRight size={16} />
+              </button>
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Título */}
-      <h2 style={{ fontSize: '1.5rem', fontWeight: 700, lineHeight: 1.2, color: 'var(--text-primary)' }}>
-        {adiso.titulo}
-      </h2>
-
-      {/* Descripción — justo bajo el título */}
-      {adiso.descripcion?.trim() && (
-        <div style={{ fontSize: '1rem', lineHeight: 1.6, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap' }}>
-          {adiso.descripcion}
         </div>
       )}
 
-      {/* Imágenes */}
-      {(() => {
-        const imagenes = adiso.imagenesUrls && adiso.imagenesUrls.length > 0 ? adiso.imagenesUrls : adiso.imagenUrl ? [adiso.imagenUrl] : [];
-        if (imagenes.length === 0) return null;
-        return (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: imagenes.length === 1 ? '1fr' : 'repeat(auto-fill, minmax(140px, 1fr))',
-            gap: '12px',
-            borderRadius: '24px',
-            overflow: 'hidden'
-          }}>
-            {imagenes.map((url, idx) => (
-              <div key={idx}
-                onClick={() => setImagenAmpliada({ url, index: idx })}
-                style={{
-                  aspectRatio: '1',
-                  position: 'relative',
-                  cursor: 'zoom-in',
-                  height: imagenes.length === 1 ? '300px' : 'auto'
-                }}>
-                <Image src={url} alt={`Imagen ${idx}`} fill style={{ objectFit: 'cover' }} />
-              </div>
-            ))}
-          </div>
-        );
-      })()}
+      <h2 style={{ fontSize: '1.25rem', fontWeight: 700, lineHeight: 1.25, color: 'var(--text-primary)' }}>
+        {displayTitle}
+      </h2>
 
-      {/* Detalles e Info (Premium Card) */}
+      {displayDescription && (
+        <div style={{ fontSize: '0.9375rem', lineHeight: 1.55, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap' }}>
+          {displayDescription}
+        </div>
+      )}
+
       <div style={{
-        padding: '1.5rem',
+        padding: '1rem 1.25rem',
         backgroundColor: 'var(--bg-primary)',
-        borderRadius: '24px',
-        gap: '12px',
+        borderRadius: '16px',
+        gap: '10px',
         display: 'flex',
         flexDirection: 'column',
-        boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
         border: '1px solid var(--border-subtle)',
-        position: 'relative',
-        overflow: 'hidden'
       }}>
-        {/* Subtle background accent */}
-        <div style={{
-          position: 'absolute',
-          top: 0, right: 0, width: '100px', height: '100px',
-          background: `radial-gradient(circle at top right, ${theme.color}15, transparent 70%)`,
-          pointerEvents: 'none'
-        }} />
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ color: theme.color }}><IconLocation size={20} /></div>
-          <span style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 600 }}>{formatearUbicacion(adiso.ubicacion).texto}</span>
+        <div style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', fontWeight: 600 }}>
+          {getCategoriaLabel(adiso.categoria)}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ color: theme.color }}><IconCalendar size={20} /></div>
-          <span style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 500 }}>{formatFecha(adiso.fechaPublicacion, adiso.horaPublicacion)}</span>
+          <div style={{ color: theme.color }}>
+            <IconLocation size={18} />
+          </div>
+          <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 600 }}>
+            {formatearUbicacion(adiso.ubicacion).texto}
+          </span>
         </div>
-
-        <div style={{ height: '1px', backgroundColor: 'var(--border-subtle)', margin: '4px 0' }} />
-
-        <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap' }}>
-          {viewSignal && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ opacity: 0.7 }}>👁️</span>
-              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{viewSignal.label}</span>
-            </div>
-          )}
-          {contactSignal && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ opacity: 0.7 }}>💬</span>
-              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{contactSignal.label}</span>
-            </div>
-          )}
-        </div>
+        {priceLabel && (
+          <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--brand-blue)' }}>{priceLabel}</div>
+        )}
+        {sellerName && (
+          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+            Publicado por <strong>{sellerName}</strong>
+          </div>
+        )}
       </div>
-    </div >
+
+      {socialBadge && (
+        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+          {socialBadge.label}
+        </div>
+      )}
+    </div>
   );
 
   // --- MOBILE SHEET VIEW ---
