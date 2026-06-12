@@ -1093,6 +1093,17 @@ function HomeContent() {
               value={busqueda}
               onChange={setBusqueda}
               compact={browseScrolled}
+              onCategoryDetected={(categoria) => {
+                setCategoriaFiltro(categoria);
+                const params = new URLSearchParams(searchParams.toString());
+                params.set('categoria', categoria);
+                router.replace(`/?${params.toString()}`, { scroll: false });
+              }}
+              onNotify={(message, type) => {
+                if (type === 'error') error(message);
+                else if (type === 'success') success(message);
+                else success(message);
+              }}
             />
           </div>
 

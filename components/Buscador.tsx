@@ -1,34 +1,141 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useRef, useState } from 'react';
 import { FaSearch } from 'react-icons/fa';
 import { useTranslation } from '@/hooks/useTranslation';
-import {
-  IconMapMarkerAlt,
-  IconMicrophone,
-  IconGoogleLens
-} from './Icons';
+import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
+import { IconMicrophone, IconGoogleLens } from './Icons';
+import { Categoria } from '@/types';
 
 interface BuscadorProps {
   value: string;
   onChange: (value: string) => void;
   compact?: boolean;
-  onAudioSearch?: () => void;
-  onVisualSearch?: () => void;
+  onCategoryDetected?: (categoria: Categoria) => void;
+  onNotify?: (message: string, type?: 'info' | 'error' | 'success') => void;
+}
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error('No se pudo leer la imagen'));
+    reader.readAsDataURL(file);
+  });
 }
 
 export default function Buscador({
   value,
   onChange,
   compact = false,
-  onAudioSearch,
-  onVisualSearch,
+  onCategoryDetected,
+  onNotify,
 }: BuscadorProps) {
   const { t } = useTranslation();
-  const showAdvanced = Boolean(onAudioSearch && onVisualSearch);
+  const { isListening, isSupported, start: startVoice, stop: stopVoice } = useSpeechRecognition('es-PE');
+  const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  const notify = (message: string, type: 'info' | 'error' | 'success' = 'info') => {
+    onNotify?.(message, type);
+  };
+
+  const handleVoiceSearch = () => {
+    if (isListening) {
+      stopVoice();
+      return;
+    }
+
+    if (!isSupported) {
+      notify('Tu navegador no soporta búsqueda por voz. Usa Chrome o Edge en desktop/Android.', 'error');
+      return;
+    }
+
+    startVoice(
+      (transcript) => {
+        onChange(transcript);
+        notify(`Buscando: "${transcript}"`, 'success');
+      },
+      (message) => notify(message, 'error')
+    );
+  };
+
+  const handleImageSelected = async (file: File | null | undefined) => {
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      notify('Selecciona un archivo de imagen (JPG, PNG, WebP).', 'error');
+      return;
+    }
+
+    if (file.size > 8 * 1024 * 1024) {
+      notify('La imagen es muy grande. Usa una menor a 8 MB.', 'error');
+      return;
+    }
+
+    setIsAnalyzingImage(true);
+    notify('Analizando imagen…', 'info');
+
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      const response = await fetch('/api/ai/visual-search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: dataUrl }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        if (response.status === 503 && data.fallback) {
+          notify('IA visual no disponible aquí. Escribe en el buscador qué viste en la foto.', 'error');
+          return;
+        }
+        throw new Error(data.error || 'Error al analizar la imagen');
+      }
+
+      if (data.query) {
+        onChange(String(data.query));
+        if (data.category && onCategoryDetected) {
+          onCategoryDetected(data.category as Categoria);
+        }
+        notify(`Búsqueda visual: "${data.query}"`, 'success');
+        return;
+      }
+
+      notify('No encontramos palabras clave en la imagen. Prueba con otra foto.', 'error');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'No se pudo analizar la imagen';
+      notify(message, 'error');
+    } finally {
+      setIsAnalyzingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (cameraInputRef.current) cameraInputRef.current.value = '';
+    }
+  };
+
+  const actionBtnClass =
+    'p-2 rounded-full transition-all min-w-[44px] min-h-[44px] flex items-center justify-center disabled:opacity-50 disabled:pointer-events-none';
 
   return (
     <div className={`-mx-4 px-4 ${compact ? 'py-1' : 'py-2'} md:mx-0 md:px-0 transition-all duration-300`}>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => handleImageSelected(e.target.files?.[0])}
+      />
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={(e) => handleImageSelected(e.target.files?.[0])}
+      />
+
       <div className="relative group z-30">
         <div
           className={`
@@ -40,39 +147,53 @@ export default function Buscador({
             focus-within:shadow-[0_8px_24px_rgba(56,189,248,0.2)] focus-within:ring-2 focus-within:ring-sky-400/40 dark:focus-within:ring-sky-400/60
           `}
         >
-          {/* Search Icon */}
           <FaSearch className="w-5 h-5 text-sky-500 dark:text-sky-400 mr-3 flex-shrink-0 transition-transform group-focus-within:scale-110" />
 
-          {/* Search Input */}
           <input
             type="search"
-            placeholder={t('search.placeholder') || "¿Qué estás buscando?"}
+            placeholder={t('search.placeholder') || '¿Qué estás buscando?'}
             value={value}
             onChange={(e) => onChange(e.target.value)}
             className="flex-1 min-w-0 border-none outline-none text-[16px] text-gray-700 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 bg-transparent truncate h-full py-1"
           />
 
-          {showAdvanced && (
-            <div className="flex items-center gap-2 ml-2 pl-2 border-l border-gray-100 dark:border-sky-400/20">
-              <button
-                type="button"
-                onClick={onAudioSearch}
-                className="p-2 text-sky-600/70 dark:text-sky-400/70 hover:text-sky-500 dark:hover:text-sky-300 hover:bg-sky-50 dark:hover:bg-sky-500/10 rounded-full transition-all min-w-[44px] min-h-[44px] flex items-center justify-center"
-                title="Búsqueda por voz"
-              >
-                <IconMicrophone size={20} />
-              </button>
+          <div className="flex items-center gap-1 ml-2 pl-2 border-l border-gray-100 dark:border-sky-400/20">
+            <button
+              type="button"
+              onClick={handleVoiceSearch}
+              disabled={isAnalyzingImage}
+              className={`${actionBtnClass} ${
+                isListening
+                  ? 'text-red-500 bg-red-50 dark:bg-red-500/10 animate-pulse'
+                  : 'text-sky-600/80 dark:text-sky-400/80 hover:text-sky-500 hover:bg-sky-50 dark:hover:bg-sky-500/10'
+              }`}
+              title={isListening ? 'Escuchando… (tocar para detener)' : 'Búsqueda por voz'}
+              aria-label={isListening ? 'Detener búsqueda por voz' : 'Búsqueda por voz'}
+              aria-pressed={isListening}
+            >
+              <IconMicrophone size={20} />
+            </button>
 
-              <button
-                type="button"
-                onClick={onVisualSearch}
-                className="p-2 text-gray-500 dark:text-gray-400 hover:text-[var(--brand-blue)] hover:bg-blue-50 dark:hover:bg-sky-500/10 rounded-full transition-all min-w-[44px] min-h-[44px] flex items-center justify-center"
-                title="Búsqueda visual"
-              >
-                <IconGoogleLens size={20} />
-              </button>
-            </div>
-          )}
+            <button
+              type="button"
+              onClick={() => {
+                const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
+                if (isMobile && cameraInputRef.current) {
+                  cameraInputRef.current.click();
+                } else if (fileInputRef.current) {
+                  fileInputRef.current.click();
+                }
+              }}
+              disabled={isAnalyzingImage || isListening}
+              className={`${actionBtnClass} text-gray-500 dark:text-gray-400 hover:text-[var(--brand-blue)] hover:bg-blue-50 dark:hover:bg-sky-500/10 ${
+                isAnalyzingImage ? 'animate-pulse text-sky-500' : ''
+              }`}
+              title="Búsqueda visual (foto)"
+              aria-label="Búsqueda visual con foto"
+            >
+              <IconGoogleLens size={20} />
+            </button>
+          </div>
         </div>
       </div>
     </div>
