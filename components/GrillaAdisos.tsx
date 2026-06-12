@@ -6,6 +6,7 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useAuth } from '@/hooks/useAuth';
 import { registrarClick } from '@/lib/analytics';
 import AdisoCard from './AdisoCard';
+import { SkeletonCard } from './SkeletonAdisos';
 
 interface GrillaAdisosProps {
   adisos: Adiso[];
@@ -17,6 +18,12 @@ interface GrillaAdisosProps {
   vista?: 'grid' | 'list' | 'feed';
 }
 
+function isElementInViewport(el: HTMLElement): boolean {
+  const rect = el.getBoundingClientRect();
+  const vh = window.innerHeight || document.documentElement.clientHeight;
+  return rect.top >= 0 && rect.bottom <= vh;
+}
+
 export default function GrillaAdisos({
   adisos,
   onAbrirAdiso,
@@ -24,31 +31,32 @@ export default function GrillaAdisos({
   espacioAdicional = 0,
   cargandoMas = false,
   sentinelRef,
-  vista = 'grid'
+  vista = 'grid',
 }: GrillaAdisosProps) {
   const adisoRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const { user } = useAuth();
+  const columnMin = espacioAdicional > 0 ? 240 : 200;
 
   const handleClickAdiso = (adiso: Adiso) => {
     registrarClick(user?.id, adiso.id, adiso.categoria);
     onAbrirAdiso(adiso);
   };
 
-  // Scroll automático cuando cambia el adiso seleccionado
   useEffect(() => {
-    if (adisoSeleccionadoId && adisoRefs.current[adisoSeleccionadoId]) {
-      const elemento = adisoRefs.current[adisoSeleccionadoId];
-      if (elemento) {
-        setTimeout(() => {
-          elemento.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center',
-            inline: 'nearest'
-          });
-        }, 100);
-      }
-    }
+    if (!adisoSeleccionadoId) return;
+    const elemento = adisoRefs.current[adisoSeleccionadoId];
+    if (!elemento || isElementInViewport(elemento)) return;
+
+    const timer = setTimeout(() => {
+      elemento.scrollIntoView({
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+        block: 'center',
+        inline: 'nearest',
+      });
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, [adisoSeleccionadoId]);
 
   return (
@@ -56,35 +64,40 @@ export default function GrillaAdisos({
       <style jsx>{`
         .grilla-adisos {
           display: grid;
-          /* Mobile: 2 columns fixed */
           grid-template-columns: repeat(2, 1fr);
-          gap: 0.75rem;
+          gap: var(--space-3, 12px);
           grid-auto-rows: auto;
-          grid-auto-flow: dense;
         }
 
         .grilla-adisos.vista-list {
           grid-template-columns: 1fr !important;
-          gap: 1rem;
+          gap: var(--space-4, 16px);
         }
 
         .grilla-adisos.vista-feed {
           grid-template-columns: 1fr !important;
-          gap: 1.5rem;
-          max-width: 600px;
+          gap: var(--space-6, 24px);
+          max-width: 480px;
           margin: 0 auto;
         }
-        
+
         @media (min-width: 768px) {
-             .grilla-adisos {
-                /* Desktop: Limit to ~6 columns on standard laptops by increasing min-width */
-                grid-template-columns: repeat(auto-fill, minmax(225px, 1fr));
-                gap: 1.25rem;
-             }
+          .grilla-adisos {
+            grid-template-columns: repeat(auto-fill, minmax(${columnMin}px, 1fr));
+            gap: var(--space-6, 24px);
+          }
+
+          .grilla-adisos.vista-feed {
+            max-width: 560px;
+          }
         }
       `}</style>
 
-      <div className={`grilla-adisos pb-20 ${vista === 'list' ? 'vista-list' : vista === 'feed' ? 'vista-feed' : ''}`}>
+      <div
+        className={`grilla-adisos pb-20 ${
+          vista === 'list' ? 'vista-list' : vista === 'feed' ? 'vista-feed' : ''
+        }`}
+      >
         {adisos.map((adiso) => (
           <AdisoCard
             key={adiso.id}
@@ -99,39 +112,25 @@ export default function GrillaAdisos({
           />
         ))}
 
-        {/* Sentinel para scroll infinito */}
+        {cargandoMas &&
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={`skeleton-${i}`} style={{ gridColumn: vista === 'grid' ? 'span 1' : '1 / -1' }}>
+              <SkeletonCard />
+            </div>
+          ))}
+
         <div
           ref={sentinelRef}
           style={{
-            gridColumn: `1 / -1`,
+            gridColumn: '1 / -1',
             minHeight: '20px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: cargandoMas ? '1rem' : '0.5rem',
-            transition: 'padding 0.2s'
+            padding: cargandoMas ? '0.5rem' : '0.25rem',
           }}
-        >
-          {cargandoMas && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              fontSize: '0.875rem',
-              color: 'var(--text-secondary)'
-            }}>
-              <div style={{
-                width: '16px',
-                height: '16px',
-                border: '2px solid var(--border-color)',
-                borderTopColor: 'var(--accent-color)',
-                borderRadius: '50%',
-                animation: 'spin 0.8s linear infinite'
-              }} />
-              <span>Cargando más anuncios...</span>
-            </div>
-          )}
-        </div>
+          aria-hidden={!cargandoMas}
+        />
       </div>
     </>
   );

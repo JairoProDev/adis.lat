@@ -8,14 +8,14 @@
  */
 
 // Single card skeleton - matches AdisoCard layout 1:1
-function SkeletonCard() {
+export function SkeletonCard() {
   return (
     <div
       className="skeleton-card"
       style={{
         backgroundColor: 'var(--bg-primary)',
         border: '1px solid var(--border-color)',
-        borderRadius: '12px',
+        borderRadius: 'var(--card-radius, 16px)',
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
@@ -157,9 +157,9 @@ export default function SkeletonAdisos({ count, isDesktop, showToolbar = false }
         style={{
           display: 'grid',
           gridTemplateColumns: isDesktop
-            ? 'repeat(auto-fill, minmax(250px, 1fr))'
+            ? 'repeat(auto-fill, minmax(200px, 1fr))'
             : 'repeat(2, 1fr)',
-          gap: isDesktop ? '1.5rem' : '0.75rem',
+          gap: isDesktop ? 'var(--space-6, 24px)' : 'var(--space-3, 12px)',
         }}
       >
         {Array.from({ length: cardCount }).map((_, i) => (
