@@ -130,6 +130,8 @@ function HomeContent() {
   const buscarUrl = searchParams.get('buscar') || '';
   const seccionUrl = searchParams.get('seccion') as SeccionSidebar | null;
   const cargadoInicialmente = useRef(false);
+  const adisosRef = useRef<Adiso[]>([]);
+  const ultimoErrorAdisoRef = useRef<string | null>(null);
 
   const [adisos, setAdisos] = useState<Adiso[]>([]);
   const [adisosFiltrados, setAdisosFiltrados] = useState<Adiso[]>([]);
@@ -191,6 +193,16 @@ function HomeContent() {
     onScroll();
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  useEffect(() => {
+    adisosRef.current = adisos;
+  }, [adisos]);
+
+  useEffect(() => {
+    if (isDesktop && seccionDesktopActiva === 'adiso' && !adisoAbierto && !adisoId) {
+      setIsSidebarMinimizado(true);
+    }
+  }, [isDesktop, seccionDesktopActiva, adisoAbierto, adisoId]);
 
   // Detectar cambios en el estado de conexión
   useEffect(() => {
@@ -335,9 +347,10 @@ function HomeContent() {
 
   // Manejar cambios en adisoId cuando ya está cargado (solo actualizar modal, no recargar página)
   useEffect(() => {
-    if (cargando) return; // Esperar a que termine la carga inicial
+    if (cargando) return;
 
     if (!adisoId) {
+      ultimoErrorAdisoRef.current = null;
       setAdisoAbierto(null);
       if (isDesktop) {
         setIsSidebarMinimizado(true);
@@ -345,43 +358,53 @@ function HomeContent() {
       return;
     }
 
-    // Mostrar desde cache mientras se verifica en el servidor
-    const adisoLocal = adisos.find(a => a.id === adisoId);
-    if (adisoLocal) {
-      setAdisoAbierto(adisoLocal);
+    let cancelled = false;
+    const adisoEnLista = adisosRef.current.find((a) => a.id === adisoId);
+
+    if (adisoEnLista) {
+      setAdisoAbierto(adisoEnLista);
       if (isDesktop) {
         setIsSidebarMinimizado(false);
       }
     }
 
-    // Siempre confirmar contra el servidor (evita adisos fantasma solo en localStorage)
-    getAdisoById(adisoId).then(adiso => {
+    getAdisoById(adisoId).then((adiso) => {
+      if (cancelled) return;
+
       if (adiso) {
         setAdisoAbierto(adiso);
         if (isDesktop) {
           setIsSidebarMinimizado(false);
         }
-        setAdisos(prev => {
-          if (!prev.find(a => a.id === adisoId)) {
+        setAdisos((prev) => {
+          if (!prev.find((a) => a.id === adisoId)) {
             return [adiso, ...prev];
           }
-          return prev.map(a => a.id === adisoId ? adiso : a);
+          return prev.map((a) => (a.id === adisoId ? adiso : a));
         });
         return;
       }
 
-      // El enlace apunta a un adiso que no existe en el servidor
-      setAdisos(prev => prev.filter(a => a.id !== adisoId));
-      setAdisoAbierto(null);
-      if (isDesktop) {
-        setIsSidebarMinimizado(true);
+      // Solo cerrar y avisar si el anuncio no estaba en la grilla (enlace directo fantasma)
+      if (!adisoEnLista) {
+        setAdisoAbierto(null);
+        if (isDesktop) {
+          setIsSidebarMinimizado(true);
+        }
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete('adiso');
+        router.replace(params.toString() ? `/?${params.toString()}` : '/', { scroll: false });
+        if (ultimoErrorAdisoRef.current !== adisoId) {
+          ultimoErrorAdisoRef.current = adisoId;
+          error('Este anuncio no está disponible. Puede que no se haya guardado correctamente.');
+        }
       }
-      const params = new URLSearchParams(searchParams.toString());
-      params.delete('adiso');
-      router.replace(params.toString() ? `/?${params.toString()}` : '/', { scroll: false });
-      error('Este anuncio no está disponible. Puede que no se haya guardado correctamente.');
     }).catch(console.error);
-  }, [adisoId, adisos, cargando, isDesktop, error, router, searchParams]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [adisoId, cargando, isDesktop, error, router, searchParams]);
 
   // Filtrado y ordenamiento
   useEffect(() => {
@@ -431,8 +454,9 @@ function HomeContent() {
       filtrados = filtrados.filter(a => a.categoria === categoriaFiltro);
     }
 
-    if (ocultarHistoricos) {
-      filtrados = filtrados.filter(a => !a.esHistorico);
+    const hayAnunciosActivos = filtrados.some((a) => !a.esHistorico);
+    if (ocultarHistoricos && hayAnunciosActivos) {
+      filtrados = filtrados.filter((a) => !a.esHistorico);
     }
 
     if (soloConFotos) {
@@ -718,7 +742,9 @@ function HomeContent() {
     if (isDesktop) {
       setIsSidebarMinimizado(true);
     }
-    router.push('/', { scroll: false });
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('adiso');
+    router.replace(params.toString() ? `/?${params.toString()}` : '/', { scroll: false });
   };
 
   const handleAnterior = () => {
@@ -926,6 +952,8 @@ function HomeContent() {
             setSeccionDesktopActiva(seccion);
             if (seccion !== 'adiso') {
               setIsSidebarMinimizado(false);
+            } else if (!adisoAbierto) {
+              setIsSidebarMinimizado(true);
             }
           }}
         />
@@ -1348,9 +1376,29 @@ function HomeContent() {
                   padding: '3rem 1rem',
                   color: 'var(--text-secondary)'
                 }}>
-                  {busqueda || categoriaFiltro !== 'todos'
+                  {busqueda || categoriaFiltro !== 'todos' || soloConFotos || filtroUbicacion
                     ? 'No se encontraron adisos con esos filtros'
-                    : 'Aún no hay adisos publicados'}
+                    : ocultarHistoricos && adisos.some((a) => a.esHistorico)
+                      ? (
+                        <span>
+                          Los anuncios disponibles están en el archivo histórico.{' '}
+                          <button
+                            type="button"
+                            onClick={() => setOcultarHistoricos(false)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: 'var(--brand-blue)',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              textDecoration: 'underline',
+                            }}
+                          >
+                            Ver archivo histórico
+                          </button>
+                        </span>
+                      )
+                      : 'Aún no hay adisos publicados'}
                 </div>
               )}
             </>

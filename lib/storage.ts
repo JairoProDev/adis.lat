@@ -182,16 +182,39 @@ export const getAdisoById = async (id: string): Promise<Adiso | null> => {
   if (typeof window !== 'undefined') {
     try {
       const { fetchAdisoById } = await import('./api');
-      const adiso = await fetchAdisoById(id);
-      if (adiso) {
-        saveAdisoLocal(adiso);
-        return adiso;
+      const result = await fetchAdisoById(id);
+      if (result.status === 'ok') {
+        saveAdisoLocal(result.adiso);
+        return result.adiso;
       }
-      // No existe en el servidor: quitar entradas fantasma de publicaciones fallidas
-      if (cacheAdiso) {
-        removeAdisoFromLocalCache(id);
+      if (result.status === 'not_found') {
+        try {
+          const { getAdisoByIdFromSupabase } = await import('./supabase');
+          const desdeSupabase = await getAdisoByIdFromSupabase(id);
+          if (desdeSupabase) {
+            saveAdisoLocal(desdeSupabase);
+            return desdeSupabase;
+          }
+        } catch {
+          // ignorar y seguir con flujo not_found
+        }
+        if (cacheAdiso) {
+          removeAdisoFromLocalCache(id);
+        }
+        return null;
       }
-      return null;
+      // Error de red/servidor: intentar Supabase directo, luego cache
+      try {
+        const { getAdisoByIdFromSupabase } = await import('./supabase');
+        const desdeSupabase = await getAdisoByIdFromSupabase(id);
+        if (desdeSupabase) {
+          saveAdisoLocal(desdeSupabase);
+          return desdeSupabase;
+        }
+      } catch {
+        // ignorar
+      }
+      return cacheAdiso;
     } catch (error) {
       console.error('Error al cargar desde API:', error);
       return cacheAdiso;

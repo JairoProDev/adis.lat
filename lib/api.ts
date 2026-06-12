@@ -70,20 +70,28 @@ export async function fetchAdisos(page: number = 1, limit: number = 50): Promise
   }
 }
 
-export async function fetchAdisoById(id: string): Promise<Adiso | null> {
+export type FetchAdisoByIdResult =
+  | { status: 'ok'; adiso: Adiso }
+  | { status: 'not_found' }
+  | { status: 'error' };
+
+export async function fetchAdisoById(id: string): Promise<FetchAdisoByIdResult> {
   try {
     const response = await fetch(`${API_URL}/adisos/${id}`, {
       cache: 'no-store',
-      next: { revalidate: 0 }
+      next: { revalidate: 0 },
     });
-    if (!response.ok) {
-      if (response.status === 404) return null;
-      throw new Error('Error al obtener adiso');
+    if (response.status === 404) {
+      return { status: 'not_found' };
     }
-    return await response.json();
+    if (!response.ok) {
+      return { status: 'error' };
+    }
+    const adiso = await response.json();
+    return { status: 'ok', adiso };
   } catch (error) {
     console.error('Error fetching adiso:', error);
-    return null;
+    return { status: 'error' };
   }
 }
 

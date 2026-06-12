@@ -820,11 +820,25 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
             <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>Detalle de Adiso</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <ActionButtons />
-              {!isSidebar && (
-                <button onClick={onCerrar} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: 'var(--bg-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <IconClose />
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={onCerrar}
+                aria-label="Cerrar detalle"
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  border: '1px solid var(--border-color)',
+                  background: 'var(--bg-secondary)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <IconClose size={18} />
+              </button>
             </div>
           </div>
 

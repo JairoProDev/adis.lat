@@ -136,8 +136,6 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(
                     gridRow: vista === 'list' || vista === 'feed' ? 'auto' : `span ${gridRowSpan}`,
                     height: '100%',
                     minHeight: vista === 'list' ? (isDesktop ? '96px' : '96px') : 'auto',
-                    borderLeftWidth: '3px',
-                    borderLeftColor: themeTokens.accent,
                 }}
             >
                 {vista === 'feed' && (
@@ -174,23 +172,25 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(
                     </div>
                 )}
 
-                <div
-                    className={`absolute top-2 right-2 flex gap-1 z-30 ${showDismiss || isDesktop ? '' : ''}`}
-                >
+                <div className="absolute top-1.5 right-1.5 flex gap-2 z-30">
                     <button
                         type="button"
                         onClick={(e) => {
                             e.stopPropagation();
                             toggleFav();
                         }}
-                        className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-black/40 backdrop-blur-sm border border-white/20 hover:bg-black/55 transition-colors"
+                        className={`min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full bg-transparent border-0 transition-transform hover:scale-110 active:scale-95 ${
+                            imagenUrl
+                                ? 'text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.85)]'
+                                : 'text-[var(--text-secondary)]'
+                        }`}
                         title={isFavorite ? 'Quitar de favoritos' : 'Guardar para más tarde'}
                         aria-label={isFavorite ? 'Quitar de favoritos' : 'Guardar para más tarde'}
                     >
                         {isFavorite ? (
-                            <IconHeart size={18} className="text-red-500" />
+                            <IconHeart size={20} className="text-red-500 drop-shadow-sm" />
                         ) : (
-                            <IconHeartOutline size={18} className="text-white" />
+                            <IconHeartOutline size={20} />
                         )}
                     </button>
 
@@ -202,11 +202,15 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(
                                 markNotInterested();
                                 setShowDismiss(false);
                             }}
-                            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-black/40 backdrop-blur-sm border border-white/20 hover:bg-black/55 transition-colors"
+                            className={`min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full bg-transparent border-0 transition-transform hover:scale-110 active:scale-95 ${
+                                imagenUrl
+                                    ? 'text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.85)]'
+                                    : 'text-[var(--text-tertiary)]'
+                            }`}
                             title="No me interesa (Ocultar)"
                             aria-label="No me interesa"
                         >
-                            <IconClose size={18} className="text-white" />
+                            <IconClose size={18} />
                         </button>
                     )}
                 </div>
