@@ -8,6 +8,7 @@ import { generarIdUnico } from '@/lib/utils';
 import { createAdisoSchema, sanitizeText } from '@/lib/validations';
 import { rateLimit, getClientIP } from '@/lib/rate-limit';
 import { validarImagenesSegunPaquete } from '@/lib/adiso-paquete-server';
+import { UBICACION_DEFAULT_CUSCO } from '@/lib/publish-helpers';
 
 export const dynamic = 'force-dynamic';
 
@@ -155,8 +156,14 @@ export async function POST(request: NextRequest) {
 
     const validatedData = validationResult.data;
 
+    const ubicacionBody = body.ubicacion ?? validatedData.ubicacion;
+    const ubicacionOriginal =
+      ubicacionBody &&
+      (typeof ubicacionBody === 'string' ? ubicacionBody.trim() : ubicacionBody.distrito?.trim())
+        ? ubicacionBody
+        : UBICACION_DEFAULT_CUSCO;
+
     // Preservar ubicación original del body (puede ser objeto o string)
-    const ubicacionOriginal = body.ubicacion;
     const tieneUbicacionDetallada = typeof ubicacionOriginal === 'object' &&
       ubicacionOriginal !== null &&
       'departamento' in ubicacionOriginal;
@@ -170,7 +177,9 @@ export async function POST(request: NextRequest) {
       // Preservar objeto de ubicación si existe, sino sanitizar el string
       ubicacion: tieneUbicacionDetallada
         ? ubicacionOriginal
-        : (typeof validatedData.ubicacion === 'string' ? sanitizeText(validatedData.ubicacion) : ''),
+        : (typeof ubicacionOriginal === 'string' && ubicacionOriginal.trim()
+          ? sanitizeText(ubicacionOriginal)
+          : UBICACION_DEFAULT_CUSCO),
       // El contacto ya está normalizado por el transform de Zod, solo sanitizar si es necesario
       contacto: validatedData.contacto, // Ya está normalizado (sin espacios)
     };

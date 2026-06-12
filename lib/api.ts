@@ -1,4 +1,5 @@
 import { Adiso, AdisoGratuito } from '@/types';
+import { parseAdisoApiError } from '@/lib/publish-helpers';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
@@ -106,14 +107,12 @@ export async function createAdiso(adiso: Omit<Adiso, 'id' | 'fechaPublicacion' |
     });
 
     if (!response.ok) {
-      // Intentar obtener el mensaje de error del servidor
-      let errorMessage = 'Error al crear adiso';
+      let errorMessage = `Error ${response.status}: ${response.statusText}`;
       try {
         const errorData = await response.json();
-        errorMessage = `${errorData.error || ''} [${errorData.code || 'UNKNOWN'}] - ${errorData.message || ''} - ${errorData.details || ''}`;
+        errorMessage = parseAdisoApiError(errorData);
       } catch {
-        // Si no se puede parsear el error, usar el status
-        errorMessage = `Error ${response.status}: ${response.statusText}`;
+        // mantener mensaje por status
       }
 
       // Si el error es 409 (conflict), el adiso ya existe, intentar actualizar

@@ -4,6 +4,8 @@ import React, { useState, FormEvent, useRef, useEffect } from 'react';
 import { Adiso, AdisoFormData, Categoria, TamañoPaquete, PAQUETES, PaqueteInfo } from '@/types';
 import { saveAdiso } from '@/lib/storage';
 import { LIMITS, formatPhoneNumber, validatePhoneNumber, generarIdUnico } from '@/lib/utils';
+import { normalizeContactoForApi, resolveUbicacionForPublish } from '@/lib/publish-helpers';
+import { useAuth } from '@/hooks/useAuth';
 import {
   IconEmpleos,
   IconInmuebles,
@@ -109,8 +111,15 @@ export default function FormularioPublicar({
   });
   const [imagenesPreviews, setImagenesPreviews] = useState<ImagenPreview[]>([]);
   const [enviando, setEnviando] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Partial<Record<keyof AdisoFormData, string>>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user } = useAuth();
+
+  const reportPublishError = (message: string) => {
+    setPublishError(message);
+    onError?.(message);
+  };
 
   const totalPasos = modoGratuito ? PASOS_TOTALES_GRATUITO : PASOS_TOTALES;
   const progreso = (pasoActual / totalPasos) * 100;
@@ -291,12 +300,21 @@ export default function FormularioPublicar({
       });
 
       if (!uploadResponse.ok) {
-        throw new Error('No se pudo subir una de las imágenes. Revisa tu conexión e intenta de nuevo.');
+        let uploadMsg = 'No se pudo subir una de las imágenes. Revisa tu conexión e intenta de nuevo.';
+        try {
+          const errBody = await uploadResponse.json();
+          if (errBody?.error) uploadMsg = errBody.error;
+        } catch {
+          // usar mensaje por defecto
+        }
+        throw new Error(uploadMsg);
       }
 
       const uploadData = await uploadResponse.json();
       if (uploadData.url) {
         urls.push(uploadData.url);
+      } else {
+        throw new Error('La subida de imagen no devolvió una URL válida.');
       }
     }
 
@@ -309,10 +327,11 @@ export default function FormularioPublicar({
     if (enviando) return;
 
     if (!validarPaso(6)) {
-      onError?.('Por favor completa todos los campos requeridos');
+      reportPublishError('Por favor completa todos los campos requeridos');
       return;
     }
 
+    setPublishError(null);
     setEnviando(true);
 
     try {
@@ -321,58 +340,51 @@ export default function FormularioPublicar({
       const hora = ahora.toTimeString().split(' ')[0].substring(0, 5);
       const idUnico = generarIdUnico();
       const paqueteSeleccionado = PAQUETES[formData.tamaño || 'miniatura'];
+      const contactoNormalizado = normalizeContactoForApi(formData.contacto);
 
-      const ubicacionFinal = formData.ubicacion
-        ? (formData.ubicacion.distrito
-          ? `${formData.ubicacion.distrito}, ${formData.ubicacion.provincia}, ${formData.ubicacion.departamento}${formData.ubicacion.direccion ? `, ${formData.ubicacion.direccion}` : ''}`
-          : formData.ubicacion as any)
-        : '';
+      if (!validatePhoneNumber(contactoNormalizado)) {
+        throw new Error('Ingresa un número de WhatsApp válido (mínimo 8 dígitos).');
+      }
 
       let imagenesUrls: string[] | undefined;
       if (imagenesPreviews.length > 0) {
         if (paqueteSeleccionado.maxImagenes === 0) {
-          onError?.('El paquete Miniatura no permite imágenes. Elige otro paquete o quita las fotos.');
-          return;
+          throw new Error('El paquete Miniatura no permite imágenes. Elige otro paquete o quita las fotos.');
         }
         imagenesUrls = await subirImagenesAdiso(imagenesPreviews);
-        if (imagenesUrls.length === 0) {
-          throw new Error('No se pudieron subir las imágenes. Intenta de nuevo.');
-        }
       }
 
       const nuevoAdiso: Adiso = {
         id: idUnico,
         categoria: formData.categoria,
-        titulo: formData.titulo,
-        descripcion: formData.descripcion,
-        contacto: formData.contacto,
-        ubicacion: formData.ubicacion || ubicacionFinal,
+        titulo: formData.titulo.trim(),
+        descripcion: formData.descripcion.trim(),
+        contacto: contactoNormalizado,
+        ubicacion: resolveUbicacionForPublish(formData.ubicacion),
         tamaño: formData.tamaño || 'miniatura',
         imagenesUrls,
+        imagenUrl: imagenesUrls?.[0],
         fechaPublicacion: fecha,
-        horaPublicacion: hora
+        horaPublicacion: hora,
+        estaActivo: true,
+        esHistorico: false,
+        user_id: user?.id,
+        usuario_id: user?.id,
       };
 
-      await saveAdiso(nuevoAdiso);
-      onPublicar(nuevoAdiso);
+      const adisoGuardado = await saveAdiso(nuevoAdiso);
+      onPublicar(adisoGuardado);
       onSuccess?.('¡Adiso publicado con éxito!');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error al publicar:', error);
-      let errorMessage = 'No se pudo publicar el adiso. Por favor intenta nuevamente.';
+      const err = error as { message?: string };
+      let errorMessage = err?.message || 'No se pudo publicar el adiso. Por favor intenta nuevamente.';
 
-      if (error?.message?.includes('conexión') || error?.message?.includes('network') || error?.message?.includes('fetch failed')) {
+      if (errorMessage.includes('fetch failed') || errorMessage.includes('network')) {
         errorMessage = 'Sin conexión a internet. Conéctate e intenta publicar de nuevo.';
-      } else if (error?.message?.includes('validación') || error?.message?.includes('inválido') || error?.message?.includes('inválidos')) {
-        errorMessage = 'Revisa que todos los campos estén correctos (teléfono, ubicación, paquete).';
-      } else if (error?.message?.includes('imagen') || error?.message?.includes('upload') || error?.message?.includes('Miniatura')) {
-        errorMessage = error.message;
-      } else if (error?.message?.includes('Supabase') || error?.message?.includes('guardar adiso')) {
-        errorMessage = error.message.replace(/^Error al guardar adiso en Supabase:\s*/i, '');
-      } else if (error?.message) {
-        errorMessage = error.message;
       }
 
-      onError?.(errorMessage);
+      reportPublishError(errorMessage);
     } finally {
       setEnviando(false);
     }
@@ -1483,9 +1495,30 @@ export default function FormularioPublicar({
     </div>
   );
 
+  const renderPublishError = () =>
+    publishError ? (
+      <div
+        role="alert"
+        style={{
+          marginBottom: '1rem',
+          padding: '0.875rem 1rem',
+          borderRadius: '10px',
+          backgroundColor: 'rgba(239, 68, 68, 0.08)',
+          border: '1px solid rgba(239, 68, 68, 0.35)',
+          color: '#b91c1c',
+          fontSize: '0.875rem',
+          lineHeight: 1.5,
+          fontWeight: 500,
+        }}
+      >
+        {publishError}
+      </div>
+    ) : null;
+
   const renderForm = () => (
     <form onSubmit={handleSubmit}>
       {renderProgreso()}
+      {renderPublishError()}
       {renderPaso()}
       {renderControles()}
     </form>

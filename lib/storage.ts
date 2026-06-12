@@ -125,33 +125,42 @@ export const removeAdisoFromLocalCache = (id: string): void => {
   }
 };
 
-export const saveAdiso = async (adiso: Adiso): Promise<void> => {
+export const saveAdiso = async (adiso: Adiso): Promise<Adiso> => {
   if (USE_LOCAL_STORAGE) {
     saveAdisoLocal(adiso);
-    return;
+    markAdisoAsOwn(adiso.id);
+    return adiso;
   }
 
   // Guardar en Supabase primero; el cache local solo si el servidor confirma
   if (typeof window !== 'undefined') {
     try {
-      const { createAdiso, updateAdiso } = await import('./api');
-      // Intentar crear, si falla por duplicado, actualizar
+      const { createAdiso, updateAdiso, fetchAdisoById } = await import('./api');
+      let resultado: Adiso;
+
       try {
-        const resultado = await createAdiso(adiso);
-        console.log('✅ Adiso guardado en Supabase:', resultado.id);
-        saveAdisoLocal(resultado);
-        markAdisoAsOwn(resultado.id);
+        resultado = await createAdiso(adiso);
       } catch (error: any) {
-        // Si el error es 409 (conflict) o el adiso ya existe, actualizar
         if (error?.message?.includes('ya existe') || error?.message?.includes('duplicado') || error?.response?.status === 409) {
-          const resultado = await updateAdiso(adiso);
-          console.log('✅ Adiso actualizado en Supabase:', resultado.id);
-          saveAdisoLocal(resultado);
+          resultado = await updateAdiso(adiso);
         } else {
-          // Re-lanzar el error para que se maneje arriba
           throw error;
         }
       }
+
+      if (!resultado?.id) {
+        throw new Error('El servidor no confirmó el guardado del anuncio.');
+      }
+
+      const verificacion = await fetchAdisoById(resultado.id);
+      if (verificacion.status !== 'ok') {
+        throw new Error('El anuncio no quedó disponible en el servidor. Revisa tu conexión e intenta de nuevo.');
+      }
+
+      console.log('✅ Adiso guardado en Supabase:', resultado.id);
+      saveAdisoLocal(verificacion.adiso);
+      markAdisoAsOwn(verificacion.adiso.id);
+      return verificacion.adiso;
     } catch (error: any) {
       // Log detallado del error
       console.error('❌ Error al guardar en API:', error);
@@ -165,9 +174,11 @@ export const saveAdiso = async (adiso: Adiso): Promise<void> => {
 
       // Lanzar el error para que el componente pueda manejarlo
       // Esto es importante para que el usuario sepa que hubo un problema
-      throw new Error(`Error al guardar adiso en Supabase: ${error?.message || 'Error desconocido'}`);
+      throw new Error(error?.message || 'Error al guardar adiso en Supabase');
     }
   }
+
+  throw new Error('No se pudo guardar el anuncio en este entorno.');
 };
 
 export const getAdisoById = async (id: string): Promise<Adiso | null> => {

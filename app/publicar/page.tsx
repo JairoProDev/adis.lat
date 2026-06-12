@@ -7,6 +7,8 @@ import LeftSidebar from '@/components/LeftSidebar';
 import { useNavigation } from '@/contexts/NavigationContext';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
+import { ToastContainer } from '@/components/Toast';
+import { useToast } from '@/hooks/useToast';
 
 const FormularioPublicar = dynamic(() => import('@/components/FormularioPublicar'), {
     loading: () => <div className="p-8 text-center">Cargando formulario...</div>,
@@ -16,6 +18,7 @@ const FormularioPublicar = dynamic(() => import('@/components/FormularioPublicar
 export default function PublicarPage() {
     const router = useRouter();
     const { setSidebarExpanded } = useNavigation();
+    const { toasts, removeToast, success, error } = useToast();
     const [sidebarOpen, setSidebarOpen] = React.useState(false);
 
     React.useEffect(() => {
@@ -38,9 +41,11 @@ export default function PublicarPage() {
                         <FormularioPublicar
                             esPaginaCompleta={true}
                             onPublicar={(adiso) => {
-                                // Redirect to home and open the new ad
+                                success('¡Anuncio publicado! Redirigiendo…');
                                 router.push(`/?adiso=${adiso.id}`);
                             }}
+                            onError={(msg) => error(msg)}
+                            onSuccess={(msg) => success(msg)}
                         />
                     </div>
                 </div>
@@ -56,6 +61,7 @@ export default function PublicarPage() {
                     onCambiarSeccion={() => { }}
                 />
             </div>
+            <ToastContainer toasts={toasts} removeToast={removeToast} />
         </div>
     );
 }

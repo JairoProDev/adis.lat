@@ -96,18 +96,35 @@ export const adisoGratuitoSchema = z.object({
     }),
 });
 
+const ubicacionSchema = z.union([
+  z.string()
+    .min(1, 'La ubicación es requerida')
+    .max(100, 'La ubicación no puede exceder 100 caracteres')
+    .trim(),
+  z.object({
+    pais: z.string().optional(),
+    departamento: z.string(),
+    provincia: z.string(),
+    distrito: z.string(),
+    direccion: z.string().optional(),
+    latitud: z.number().optional(),
+    longitud: z.number().optional(),
+  }),
+]);
+
 // Schema para crear adiso (acepta adisos completos o parciales)
 export const createAdisoSchema = adisoSchema
   .omit({
     fechaPublicacion: true,
     horaPublicacion: true,
+    ubicacion: true,
   })
   .extend({
-    // Permitir id opcional - si no se proporciona, se generará en el servidor
     id: z.string().min(1).optional(),
-    // Permitir fechaPublicacion y horaPublicacion opcionales - si no se proporcionan, se generarán en el servidor
     fechaPublicacion: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato de fecha inválido (debe ser YYYY-MM-DD)').optional(),
     horaPublicacion: z.string().regex(/^\d{2}:\d{2}$/, 'Formato de hora inválido (debe ser HH:MM)').optional(),
+    // Opcional en el formulario; el servidor aplica Cusco por defecto
+    ubicacion: ubicacionSchema.optional(),
   });
 
 // Schema para crear adiso gratuito
