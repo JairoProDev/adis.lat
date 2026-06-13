@@ -48,7 +48,7 @@ import {
   BrowseFilterState,
   FilterLayoutMode,
 } from '@/lib/filters';
-import Buscador from '@/components/Buscador';
+import UnifiedSearchComposer from '@/components/UnifiedSearchComposer';
 import StoriesBar from '@/components/StoriesBar';
 import BrowseFilters from '@/components/filters/BrowseFilters';
 import FilterSidePanel from '@/components/filters/FilterSidePanel';
@@ -938,7 +938,7 @@ function HomeContent() {
                 transition: 'padding 0.3s ease',
               }}
             >
-              <Buscador
+              <UnifiedSearchComposer
                 value={busqueda}
                 onChange={setBusqueda}
                 compact={browseScrolled}

@@ -12,7 +12,7 @@ import { motion } from 'framer-motion';
 import { Categoria } from '@/types';
 
 export interface DraftListingData {
-  imageUrl: string;
+  imageUrl?: string;
   categoria: Categoria;
   titulo: string;
   descripcion: string;
