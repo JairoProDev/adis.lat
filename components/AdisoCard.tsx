@@ -19,6 +19,7 @@ import {
     IconDismiss,
 } from '@/components/Icons';
 import { useAdInteraction } from '@/hooks/useAdInteraction';
+import DismissedCardPlaceholder from '@/components/DismissedCardPlaceholder';
 import { useDarkMode } from '@/hooks/useDarkMode';
 import { getCategoriaThemeTokens } from '@/lib/categoria-theme';
 import {
@@ -68,14 +69,12 @@ function getMediaAspectClass(tamaño: string, vista: string): string {
 }
 
 const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(
-    ({ adiso, onClick, estaSeleccionado, isDesktop = true, vista = 'grid' }, ref) => {
-        const { isFavorite, isHidden, toggleFav, markNotInterested } = useAdInteraction(adiso.id);
+    ({ adiso, onClick, estaSeleccionado, vista = 'grid' }, ref) => {
+        const { isFavorite, isHidden, toggleFav, markNotInterested, giveFeedback, undoHide } = useAdInteraction(adiso);
         const isDark = useDarkMode();
         const IconComponent = getCategoriaIcon(adiso.categoria);
         const themeTokens = getCategoriaThemeTokens(adiso.categoria);
         const placeholderBg = isDark ? themeTokens.placeholderBgDark : themeTokens.placeholderBg;
-
-        if (isHidden) return null;
 
         const imagenUrl = adiso.imagenesUrls?.[0] || adiso.imagenUrl;
         const extraFotos = Math.max(0, (adiso.imagenesUrls?.length ?? 0) - 1);
@@ -90,6 +89,21 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(
 
         const gridColumnSpan = paquete.columnas;
         const gridRowSpan = paquete.filas;
+        const gridColumn = vista === 'list' || vista === 'feed' ? '1 / -1' : `span ${gridColumnSpan}`;
+        const gridRow = vista === 'list' || vista === 'feed' ? 'auto' : `span ${gridRowSpan}`;
+        const minHeight = vista === 'list' ? '96px' : undefined;
+
+        if (isHidden) {
+            return (
+                <DismissedCardPlaceholder
+                    gridColumn={gridColumn}
+                    gridRow={gridRow}
+                    minHeight={minHeight}
+                    onUndo={undoHide}
+                    onFeedback={giveFeedback}
+                />
+            );
+        }
 
         return (
             <div
@@ -118,10 +132,10 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(
                     ${vista === 'feed' ? 'w-full' : ''}
                 `}
                 style={{
-                    gridColumn: vista === 'list' || vista === 'feed' ? '1 / -1' : `span ${gridColumnSpan}`,
-                    gridRow: vista === 'list' || vista === 'feed' ? 'auto' : `span ${gridRowSpan}`,
+                    gridColumn,
+                    gridRow,
                     height: '100%',
-                    minHeight: vista === 'list' ? (isDesktop ? '96px' : '96px') : 'auto',
+                    minHeight: minHeight || 'auto',
                 }}
             >
                 {vista === 'feed' && (

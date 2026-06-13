@@ -107,7 +107,7 @@ export default function ModalAdiso({
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const esMiAdiso = isMyAdiso(adiso.id);
   const { user } = useAuth();
-  const { isFavorite, toggleFav } = useAdInteraction(adiso.id);
+  const { isFavorite, toggleFav } = useAdInteraction(adiso);
   const categoryAccent = getCategoriaThemeTokens(adiso.categoria).accent;
 
   const minSwipeDistance = 50;

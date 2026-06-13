@@ -1,13 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useFavoritos } from '@/contexts/FavoritosContext';
-import { registrarInteraccion } from '@/lib/interactions';
+import {
+    registrarInteraccion,
+    recordInterestSignal,
+    setInteractionReason,
+    restaurarAdisoOculto,
+    DismissReason,
+} from '@/lib/interactions';
 import { useToast } from '@/hooks/useToast';
 import { useUI } from '@/contexts/UIContext';
+import { Adiso } from '@/types';
 
 const GUEST_HIDDEN_KEY = 'guest_hidden';
 
-export function useAdInteraction(adisoId: string) {
+export function useAdInteraction(adiso: Adiso) {
+    const adisoId = adiso.id;
     const { user } = useAuth();
     const { isFavorite: checkIsFavorite, toggleFavorite } = useFavoritos();
     const [isHidden, setIsHidden] = useState(false);
@@ -36,6 +44,7 @@ export function useAdInteraction(adisoId: string) {
 
             if (user?.id && newState) {
                 registrarInteraccion(user.id, adisoId, 'favorite');
+                recordInterestSignal(user.id, adiso, 1);
             }
 
             success(newState ? 'Añadido a favoritos' : 'Eliminado de favoritos');
@@ -58,18 +67,52 @@ export function useAdInteraction(adisoId: string) {
         if (user?.id) {
             try {
                 await registrarInteraccion(user.id, adisoId, 'not_interested');
-                success('Anuncio ocultado.');
+                recordInterestSignal(user.id, adiso, -1);
             } catch (err) {
                 setIsHidden(false);
             }
         } else {
-            const localHidden = JSON.parse(localStorage.getItem(GUEST_HIDDEN_KEY) || '[]');
-            if (!localHidden.includes(adisoId)) {
-                localHidden.push(adisoId);
-                localStorage.setItem(GUEST_HIDDEN_KEY, JSON.stringify(localHidden));
+            try {
+                const localHidden = JSON.parse(localStorage.getItem(GUEST_HIDDEN_KEY) || '[]');
+                if (!localHidden.includes(adisoId)) {
+                    localHidden.push(adisoId);
+                    localStorage.setItem(GUEST_HIDDEN_KEY, JSON.stringify(localHidden));
+                }
+            } catch (e) {
+                console.error("Error writing local storage", e);
             }
-            success('Anuncio ocultado.');
-            openAuthModal();
+        }
+    };
+
+    const giveFeedback = async (reason: DismissReason) => {
+        if (user?.id) {
+            try {
+                await setInteractionReason(user.id, adisoId, reason);
+                await recordInterestSignal(user.id, adiso, -1, reason);
+            } catch (err) {
+                console.error('Error al guardar motivo de descarte:', err);
+            }
+        }
+        success('Gracias, ajustaremos tus recomendaciones.');
+    };
+
+    const undoHide = async () => {
+        setIsHidden(false);
+
+        if (user?.id) {
+            try {
+                await restaurarAdisoOculto(user.id, adisoId);
+            } catch (err) {
+                console.error('Error al restaurar adiso:', err);
+            }
+        } else {
+            try {
+                const localHidden = JSON.parse(localStorage.getItem(GUEST_HIDDEN_KEY) || '[]');
+                const updated = localHidden.filter((id: string) => id !== adisoId);
+                localStorage.setItem(GUEST_HIDDEN_KEY, JSON.stringify(updated));
+            } catch (e) {
+                console.error("Error writing local storage", e);
+            }
         }
     };
 
@@ -78,6 +121,8 @@ export function useAdInteraction(adisoId: string) {
         isHidden,
         toggleFav,
         markNotInterested,
+        giveFeedback,
+        undoHide,
         loading
     };
 }

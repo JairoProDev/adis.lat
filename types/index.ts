@@ -366,6 +366,7 @@ export interface UserAdInteraction {
   user_id: string;
   adiso_id: string;
   interaction_type: AdInteractionType;
+  reason?: string;
   created_at: string;
 }
 
