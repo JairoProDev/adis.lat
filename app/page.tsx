@@ -171,7 +171,7 @@ function HomeContent() {
   });
 
   useEffect(() => {
-    const onScroll = () => setBrowseScrolled(window.scrollY > 80);
+    const onScroll = () => setBrowseScrolled(window.scrollY > 120);
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
     return () => window.removeEventListener('scroll', onScroll);
@@ -940,12 +940,8 @@ function HomeContent() {
             <div
               className="no-scrollbar"
               style={{
-                overflow: 'hidden',
-                maxHeight: browseScrolled ? 0 : 100,
-                opacity: browseScrolled ? 0 : 1,
-                padding: browseScrolled ? '0 1rem' : '0 1rem 0.5rem',
-                transition: 'max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease',
-                pointerEvents: browseScrolled ? 'none' : 'auto',
+                overflowX: 'auto',
+                padding: '0 1rem 0.5rem',
               }}
             >
               <StoriesBar />

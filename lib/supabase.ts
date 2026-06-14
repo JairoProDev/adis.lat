@@ -444,8 +444,8 @@ async function clearExpiredPromotions(): Promise<void> {
 }
 
 /**
+ * @deprecated Usar POST /api/adisos/promote (órdenes + pago). Solo para scripts internos con service role.
  * Promociona un adiso propio a un tier (destacada/premium) por N días.
- * Valida la propiedad en el servidor vía fn_promote_adiso.
  */
 export async function promoteAdisoInSupabase(
   adisoId: string,

@@ -42,7 +42,13 @@ export default function StoriesBar() {
     setShowUpload(true);
   };
 
-  if (loaded && groups.length === 0 && !user) return null;
+  if (!loaded) {
+    return (
+      <div className="flex items-center gap-3 overflow-x-auto no-scrollbar px-1 pb-2 min-h-[72px]">
+        <div className="w-14 h-14 rounded-full bg-[var(--bg-tertiary)] animate-pulse flex-shrink-0" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center gap-3 overflow-x-auto no-scrollbar px-1 pb-2">
