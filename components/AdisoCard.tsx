@@ -277,6 +277,17 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(
                         vista === 'feed' ? 'p-4' : 'p-3'
                     } ${vista === 'list' ? 'py-2 pr-2' : ''}`}
                 >
+                    {(adiso.promotionTier === 'destacada' || adiso.promotionTier === 'premium') && (
+                        <span
+                            className={`inline-flex items-center gap-1 self-start mb-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${
+                                adiso.promotionTier === 'premium'
+                                    ? 'bg-gradient-to-r from-[var(--brand-blue)] to-[var(--brand-yellow)] text-white'
+                                    : 'bg-[rgba(var(--brand-yellow-rgb),0.18)] text-[#b8860b] dark:text-[var(--brand-yellow)]'
+                            }`}
+                        >
+                            {adiso.promotionTier === 'premium' ? '👑 Premium' : '⭐ Destacado'}
+                        </span>
+                    )}
                     <h3
                         className={`
                             font-semibold text-[var(--text-primary)] leading-tight line-clamp-2 mb-1

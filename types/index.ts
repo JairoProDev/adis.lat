@@ -150,6 +150,40 @@ export interface StoryGroup {
   topTier: StoryPromotionTier;
 }
 
+export type AdisoPromotionTier = 'gratis' | 'destacada' | 'premium';
+
+export interface AdisoPromotionTierInfo {
+  tier: AdisoPromotionTier;
+  nombre: string;
+  precioPorDia: number;
+  duracionDiasSugerida: number;
+  descripcion: string;
+}
+
+export const ADISO_PROMOTION_TIERS: Record<AdisoPromotionTier, AdisoPromotionTierInfo> = {
+  gratis: {
+    tier: 'gratis',
+    nombre: 'Gratis',
+    precioPorDia: 0,
+    duracionDiasSugerida: 0,
+    descripcion: 'Orden estándar, según fecha de publicación',
+  },
+  destacada: {
+    tier: 'destacada',
+    nombre: 'Destacada',
+    precioPorDia: 2,
+    duracionDiasSugerida: 7,
+    descripcion: 'Aparece antes que los anuncios gratuitos, con etiqueta "Destacado"',
+  },
+  premium: {
+    tier: 'premium',
+    nombre: 'Premium',
+    precioPorDia: 5,
+    duracionDiasSugerida: 7,
+    descripcion: 'Primeros lugares en resultados y categoría, con etiqueta "Premium"',
+  },
+};
+
 export interface Adiso {
   id: string;
   categoria: Categoria;
@@ -180,6 +214,9 @@ export interface Adiso {
   moneda?: 'PEN' | 'USD';
   tipoPrecio?: 'fijo' | 'a_convenir' | 'gratis';
   esDestacado?: boolean;
+  promotionTier?: AdisoPromotionTier;
+  promotionRank?: number;
+  promotionExpiresAt?: string;
   vistas?: number;
   contactos?: number;
 

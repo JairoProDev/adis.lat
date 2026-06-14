@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { Adiso, AdisoGratuito, InteresAnuncioCaducado } from '@/types';
+import { Adiso, AdisoGratuito, AdisoPromotionTier, InteresAnuncioCaducado } from '@/types';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -88,6 +88,11 @@ export function dbToAdiso(row: any): Adiso {
     contactosMultiples: contactosMultiples || undefined,
     vistas: row.vistas || 0,
     contactos: row.contactos || 0,
+    // Anuncios destacados/promocionados
+    promotionTier: row.promotion_tier || 'gratis',
+    promotionRank: row.promotion_rank || 0,
+    promotionExpiresAt: row.promotion_expires_at || undefined,
+    esDestacado: Boolean(row.promotion_tier && row.promotion_tier !== 'gratis'),
     // Add user ID mapping
     usuario_id: row.user_id || row.usuario_id || undefined,
     user_id: row.user_id || row.usuario_id || undefined
@@ -189,6 +194,8 @@ export async function getAdisosFromSupabase(options?: {
   }
 
   try {
+    await clearExpiredPromotions();
+
     let query = supabase
       .from('adisos')
       .select('*');
@@ -211,8 +218,9 @@ export async function getAdisosFromSupabase(options?: {
       query = query.or(`titulo.ilike.%${q}%,descripcion.ilike.%${q}%,ubicacion.ilike.%${q}%`);
     }
 
-    // Ordenar por fecha de publicación (más recientes primero)
-    query = query.order('fecha_publicacion', { ascending: false })
+    // Ordenar por promoción (premium/destacados primero) y luego por fecha
+    query = query.order('promotion_rank', { ascending: false })
+      .order('fecha_publicacion', { ascending: false })
       .order('hora_publicacion', { ascending: false });
 
     // Aplicar paginación si se proporciona (optimizado)
@@ -255,6 +263,8 @@ export async function getAdisosPageFromSupabase(options: {
   }
 
   try {
+    await clearExpiredPromotions();
+
     let query = supabase
       .from('adisos')
       .select('*', { count: 'exact' });
@@ -274,6 +284,7 @@ export async function getAdisosPageFromSupabase(options: {
     }
 
     query = query
+      .order('promotion_rank', { ascending: false })
       .order('fecha_publicacion', { ascending: false })
       .order('hora_publicacion', { ascending: false });
 
@@ -414,6 +425,47 @@ export async function updateAdisoInSupabase(adiso: Adiso): Promise<Adiso> {
 
     return dbToAdiso(data);
   } catch (error: any) {
+    throw error;
+  }
+}
+
+/**
+ * Resetea promociones (destacada/premium) que ya expiraron, para que el
+ * ordenamiento del feed sea correcto sin depender de un cron externo.
+ * Es de "mejor esfuerzo": si falla no debe bloquear la carga del feed.
+ */
+async function clearExpiredPromotions(): Promise<void> {
+  if (!supabase) return;
+  try {
+    await supabase.rpc('fn_clear_expired_promotions');
+  } catch {
+    // Ignorar: no es crítico para mostrar el feed
+  }
+}
+
+/**
+ * Promociona un adiso propio a un tier (destacada/premium) por N días.
+ * Valida la propiedad en el servidor vía fn_promote_adiso.
+ */
+export async function promoteAdisoInSupabase(
+  adisoId: string,
+  userId: string,
+  tier: AdisoPromotionTier,
+  days: number
+): Promise<void> {
+  if (!supabase) {
+    throw new Error('Supabase no está configurado');
+  }
+
+  const { error } = await supabase.rpc('fn_promote_adiso', {
+    p_adiso_id: adisoId,
+    p_user_id: userId,
+    p_tier: tier,
+    p_days: days,
+  });
+
+  if (error) {
+    console.error('Error al promocionar adiso:', error);
     throw error;
   }
 }

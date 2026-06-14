@@ -152,6 +152,9 @@ export function applyBrowseFilters({
   return [...filtrados].sort((a, b) => {
     switch (ordenamiento) {
     case 'recientes': {
+      const ra = a.promotionRank ?? 0;
+      const rb = b.promotionRank ?? 0;
+      if (ra !== rb) return rb - ra;
       const fa = parsearFecha(a.fechaPublicacion, a.horaPublicacion);
       const fb = parsearFecha(b.fechaPublicacion, b.horaPublicacion);
       const c = fb - fa;

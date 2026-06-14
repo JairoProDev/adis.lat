@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
-import { Adiso } from '@/types';
+import { Adiso, AdisoPromotionTier } from '@/types';
 import { getWhatsAppUrl, copiarLink, compartirNativo } from '@/lib/utils';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { isMyAdiso } from '@/lib/storage';
@@ -11,6 +11,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { registrarVisualizacion, registrarClick, registrarContacto } from '@/lib/analytics';
 import { useAdInteraction } from '@/hooks/useAdInteraction';
 import { getCategoriaThemeTokens } from '@/lib/categoria-theme';
+import PromoteAdisoModal from '@/components/PromoteAdisoModal';
+import { IconZap } from './Icons';
 import {
   IconClose,
   IconArrowLeft,
@@ -114,6 +116,9 @@ export default function ModalAdiso({
 
   const [vistasLocales, setVistasLocales] = useState(adiso.vistas || 0);
   const [contactosLocales, setContactosLocales] = useState(adiso.contactos || 0);
+  const [promotionTier, setPromotionTier] = useState<AdisoPromotionTier>(adiso.promotionTier || 'gratis');
+  const [mostrarPromocionar, setMostrarPromocionar] = useState(false);
+  const esPropietario = Boolean(user?.id && (adiso.usuario_id === user.id || adiso.user_id === user.id));
   const sellerName = getSellerDisplayName(adiso);
   const socialBadge = pickSocialBadge({
     ...adiso,
@@ -137,7 +142,8 @@ export default function ModalAdiso({
     setVistasLocales(adiso.vistas || 0);
     setContactosLocales(adiso.contactos || 0);
     setGalleryIndex(0);
-  }, [adiso.id, adiso.vistas, adiso.contactos]);
+    setPromotionTier(adiso.promotionTier || 'gratis');
+  }, [adiso.id, adiso.vistas, adiso.contactos, adiso.promotionTier]);
 
   // Registrar visualización del adiso (Optimistic + Backend)
   useEffect(() => {
@@ -579,6 +585,29 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
         </div>
       )}
 
+      {(promotionTier === 'destacada' || promotionTier === 'premium') && (
+        <span
+          style={{
+            display: 'inline-flex',
+            alignSelf: 'flex-start',
+            alignItems: 'center',
+            gap: '4px',
+            padding: '4px 10px',
+            borderRadius: '999px',
+            fontSize: '0.7rem',
+            fontWeight: 800,
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            color: promotionTier === 'premium' ? '#fff' : '#b8860b',
+            background: promotionTier === 'premium'
+              ? 'linear-gradient(135deg, var(--brand-blue), var(--brand-yellow))'
+              : 'rgba(var(--brand-yellow-rgb), 0.18)',
+          }}
+        >
+          {promotionTier === 'premium' ? '👑 Premium' : '⭐ Destacado'}
+        </span>
+      )}
+
       <h2 style={{ fontSize: '1.25rem', fontWeight: 700, lineHeight: 1.25, color: 'var(--text-primary)' }}>
         {displayTitle}
       </h2>
@@ -623,6 +652,30 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
         <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
           {socialBadge.label}
         </div>
+      )}
+
+      {esPropietario && (
+        <button
+          type="button"
+          onClick={() => setMostrarPromocionar(true)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            padding: '0.75rem 1rem',
+            borderRadius: '14px',
+            border: '1px solid var(--border-color)',
+            background: 'var(--bg-secondary)',
+            color: 'var(--text-primary)',
+            fontSize: '0.9rem',
+            fontWeight: 700,
+            cursor: 'pointer',
+          }}
+        >
+          <IconZap size={16} color="var(--brand-yellow)" />
+          {promotionTier === 'gratis' ? 'Promocionar este anuncio' : 'Gestionar promoción'}
+        </button>
       )}
     </div>
   );
@@ -744,6 +797,17 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
             <img src={imagenAmpliada.url} alt="Full screen" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
           </div>
         )}
+
+        {mostrarPromocionar && (
+          <PromoteAdisoModal
+            adiso={adiso}
+            onClose={() => setMostrarPromocionar(false)}
+            onPromoted={(tier) => {
+              setPromotionTier(tier);
+              setMostrarPromocionar(false);
+            }}
+          />
+        )}
       </>
     );
   }
@@ -840,6 +904,17 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
           </button>
           <img src={imagenAmpliada.url} alt="Full screen" style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain', borderRadius: '8px', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }} />
         </div>
+      )}
+
+      {mostrarPromocionar && (
+        <PromoteAdisoModal
+          adiso={adiso}
+          onClose={() => setMostrarPromocionar(false)}
+          onPromoted={(tier) => {
+            setPromotionTier(tier);
+            setMostrarPromocionar(false);
+          }}
+        />
       )}
     </>
   );
