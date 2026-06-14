@@ -291,13 +291,29 @@ a {
 }
 
 .brand-search-shell {
-  border-color: rgba(var(--brand-primary-rgb), 0.22);
+  background-color: var(--search-bg, var(--bg-primary));
+  border: 1px solid var(--search-border, var(--border-color));
+  box-shadow: var(--search-shadow, var(--shadow-sm));
+  color: var(--text-primary);
 }
 
 .dark-mode .brand-search-shell,
 html.dark .brand-search-shell {
-  border-color: rgba(var(--brand-primary-rgb), 0.38);
-  background-color: rgba(15, 23, 42, 0.45);
+  --search-bg: var(--bg-tertiary);
+  --search-border: rgba(var(--brand-primary-rgb), 0.28);
+  --search-shadow: 0 4px 20px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.brand-search-input {
+  color: var(--text-primary);
+}
+
+.brand-search-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.brand-search-divider {
+  border-color: var(--border-color);
 }
 
 /* Borde animado celeste/amarillo que rodea el buscador principal */
@@ -317,6 +333,14 @@ html.dark .brand-search-shell {
   background: conic-gradient(from var(--search-glow-angle, 0deg),
       var(--brand-blue), var(--brand-yellow), var(--brand-blue));
   animation: search-glow-rotate 5s linear infinite;
+}
+
+.dark-mode .brand-search-glow,
+html.dark .brand-search-glow {
+  background: conic-gradient(from var(--search-glow-angle, 0deg),
+      rgba(var(--brand-primary-rgb), 0.55),
+      rgba(var(--brand-yellow-rgb), 0.4),
+      rgba(var(--brand-primary-rgb), 0.55));
 }
 
 @media (prefers-reduced-motion: reduce) {

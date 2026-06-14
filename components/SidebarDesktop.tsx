@@ -30,8 +30,12 @@ interface SidebarDesktopProps {
   minimizado?: boolean;
 }
 
+const SIDEBAR_WIDTH = 420;
+const COLLAPSED_TAB = 40;
+const HEADER_HEIGHT = 'var(--header-height, 72px)';
+
 /**
- * Premium Sidebar Panel - Controlled by Header
+ * Panel lateral derecho — participa en el layout flex (no overlay).
  */
 export default function SidebarDesktop({
   adisoAbierto,
@@ -57,14 +61,10 @@ export default function SidebarDesktop({
   }, [minimizado]);
 
   useEffect(() => {
-    const width = internalMinimizado ? 0 : 420;
-    document.documentElement.style.setProperty('--sidebar-width', `${width}px`);
     setSidebarExpanded(!internalMinimizado);
   }, [internalMinimizado, setSidebarExpanded]);
 
   if (!isDesktop) return null;
-
-  const anchoSidebar = internalMinimizado ? 0 : 420;
 
   const handleMinimizarToggle = () => {
     const nuevoEstado = !internalMinimizado;
@@ -72,52 +72,42 @@ export default function SidebarDesktop({
     onMinimizadoChange?.(nuevoEstado);
   };
 
-  return (
-    <>
-      {internalMinimizado && (
-        <motion.button
+  if (internalMinimizado) {
+    return (
+      <aside
+        className="flex-shrink-0 self-start mx-1 mt-2"
+        style={{
+          width: COLLAPSED_TAB,
+          position: 'sticky',
+          top: `calc(${HEADER_HEIGHT} + 8px)`,
+          zIndex: 500,
+        }}
+      >
+        <button
           type="button"
           onClick={handleMinimizarToggle}
-          style={{
-            position: 'fixed',
-            right: '8px',
-            top: '84px',
-            zIndex: 950,
-            width: '36px',
-            height: '36px',
-            borderRadius: '12px',
-            backgroundColor: 'var(--bg-primary)',
-            boxShadow: 'var(--shadow-md)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: '1px solid var(--border-color)',
-            cursor: 'pointer',
-            color: 'var(--text-secondary)',
-          }}
-          whileHover={{ scale: 1.05, backgroundColor: 'var(--bg-secondary)' }}
-          whileTap={{ scale: 0.95 }}
+          className="w-10 h-10 flex items-center justify-center rounded-xl bg-[var(--bg-primary)] shadow-sm border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--brand-blue)] hover:border-[var(--brand-blue)]/40 hover:bg-[var(--hover-bg)] transition-colors"
           aria-label="Mostrar panel lateral"
           title="Mostrar panel"
         >
           <IconExpand size={16} />
-        </motion.button>
-      )}
+        </button>
+      </aside>
+    );
+  }
 
-    <div
+  return (
+    <aside
+      className="flex-shrink-0 self-start overflow-hidden"
       style={{
-        position: 'fixed',
-        top: '72px',
-        right: 0,
-        height: 'calc(100vh - 72px)',
-        width: anchoSidebar,
+        width: SIDEBAR_WIDTH,
+        position: 'sticky',
+        top: HEADER_HEIGHT,
+        height: `calc(100vh - ${HEADER_HEIGHT})`,
         zIndex: 900,
-        overflow: 'hidden',
-        pointerEvents: internalMinimizado ? 'none' : 'auto',
         transition: 'width 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
       }}
     >
-
       <div
         style={{
           width: '100%',
@@ -125,58 +115,124 @@ export default function SidebarDesktop({
           display: 'flex',
           flexDirection: 'column',
           backgroundColor: 'var(--bg-primary)',
-          boxShadow: internalMinimizado ? 'none' : '-10px 0 30px rgba(0,0,0,0.03)',
+          boxShadow: '-10px 0 30px rgba(0,0,0,0.03)',
           borderTopLeftRadius: '24px',
           borderBottomLeftRadius: '24px',
           overflow: 'hidden',
         }}
       >
         <AnimatePresence mode="wait">
-          {!internalMinimizado && (
-            <motion.div
-              key={seccionActiva}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-              style={{
-                flex: 1,
-                overflowY: 'auto',
-                overflowX: 'hidden',
-                padding: 0,
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-            >
-              {seccionActiva === 'adiso' && adisoAbierto && (
-                <ModalAdiso
-                  adiso={adisoAbierto}
-                  onCerrar={onCerrarAdiso}
-                  onAnterior={onAnterior}
-                  onSiguiente={onSiguiente}
-                  puedeAnterior={puedeAnterior}
-                  puedeSiguiente={puedeSiguiente}
-                  dentroSidebar={true}
-                />
-              )}
+          <motion.div
+            key={seccionActiva}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              flex: 1,
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              padding: 0,
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            {seccionActiva === 'adiso' && adisoAbierto && (
+              <ModalAdiso
+                adiso={adisoAbierto}
+                onCerrar={onCerrarAdiso}
+                onAnterior={onAnterior}
+                onSiguiente={onSiguiente}
+                puedeAnterior={puedeAnterior}
+                puedeSiguiente={puedeSiguiente}
+                dentroSidebar={true}
+              />
+            )}
 
-              {seccionActiva !== 'adiso' && (
+            {seccionActiva !== 'adiso' && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end',
+                  padding: '10px 12px',
+                  borderBottom: '1px solid var(--border-color)',
+                  flexShrink: 0,
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={handleMinimizarToggle}
+                  aria-label="Ocultar panel"
+                  title="Ocultar panel"
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '10px',
+                    border: '1px solid var(--border-color)',
+                    backgroundColor: 'var(--bg-secondary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: 'var(--text-secondary)',
+                  }}
+                >
+                  <IconMinimize size={16} />
+                </button>
+              </div>
+            )}
+
+            {seccionActiva === 'mapa' && (
+              <MapaInteractivo
+                adisos={todosLosAdisos}
+                onAbrirAdiso={(adiso) => {
+                  abrirAdiso(adiso.id);
+                }}
+              />
+            )}
+
+            {seccionActiva === 'publicar' && (
+              <FormularioPublicar
+                onPublicar={onPublicar}
+                onCerrar={() => {}}
+                onError={onError}
+                onSuccess={onSuccess}
+                dentroSidebar={true}
+              />
+            )}
+
+            {seccionActiva === 'gratuitos' && (
+              <AdisosGratuitos todosLosAdisos={todosLosAdisos} />
+            )}
+
+            {seccionActiva === 'adiso' && !adisoAbierto && (
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '100%',
+                }}
+              >
                 <div
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'flex-end',
-                    padding: '10px 12px',
+                    justifyContent: 'space-between',
+                    padding: '12px 16px',
                     borderBottom: '1px solid var(--border-color)',
                     flexShrink: 0,
                   }}
                 >
+                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                    Detalle
+                  </span>
                   <button
                     type="button"
                     onClick={handleMinimizarToggle}
-                    aria-label="Ocultar panel"
-                    title="Ocultar panel"
+                    aria-label="Cerrar panel"
+                    title="Cerrar panel"
                     style={{
                       width: '36px',
                       height: '36px',
@@ -190,106 +246,37 @@ export default function SidebarDesktop({
                       color: 'var(--text-secondary)',
                     }}
                   >
-                    <IconMinimize size={16} />
+                    <IconClose size={18} />
                   </button>
                 </div>
-              )}
-
-              {seccionActiva === 'mapa' && (
-                <MapaInteractivo
-                  adisos={todosLosAdisos}
-                  onAbrirAdiso={(adiso) => {
-                    abrirAdiso(adiso.id);
-                  }}
-                />
-              )}
-
-              {seccionActiva === 'publicar' && (
-                <FormularioPublicar
-                  onPublicar={onPublicar}
-                  onCerrar={() => {}}
-                  onError={onError}
-                  onSuccess={onSuccess}
-                  dentroSidebar={true}
-                />
-              )}
-
-              {seccionActiva === 'gratuitos' && (
-                <AdisosGratuitos todosLosAdisos={todosLosAdisos} />
-              )}
-
-              {seccionActiva === 'adiso' && !adisoAbierto && (
                 <div
                   style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    height: '100%',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flex: 1,
+                    padding: '2rem',
+                    textAlign: 'center',
+                    color: 'var(--text-secondary)',
                   }}
                 >
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '12px 16px',
-                      borderBottom: '1px solid var(--border-color)',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
-                      Detalle
-                    </span>
-                    <button
-                      type="button"
-                      onClick={handleMinimizarToggle}
-                      aria-label="Cerrar panel"
-                      title="Cerrar panel"
-                      style={{
-                        width: '36px',
-                        height: '36px',
-                        borderRadius: '10px',
-                        border: '1px solid var(--border-color)',
-                        backgroundColor: 'var(--bg-secondary)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        color: 'var(--text-secondary)',
-                      }}
-                    >
-                      <IconClose size={18} />
-                    </button>
+                  <div style={{ opacity: 0.5, marginBottom: '1rem' }}>
+                    <IconAdiso size={48} />
                   </div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flex: 1,
-                      padding: '2rem',
-                      textAlign: 'center',
-                      color: 'var(--text-secondary)',
-                    }}
-                  >
-                    <div style={{ opacity: 0.5, marginBottom: '1rem' }}>
-                      <IconAdiso size={48} />
-                    </div>
-                    <p>Selecciona un adiso para ver los detalles</p>
-                  </div>
+                  <p>Selecciona un adiso para ver los detalles</p>
                 </div>
-              )}
+              </div>
+            )}
 
-              {['negocio'].includes(seccionActiva) && (
-                <div style={{ padding: '2rem', textAlign: 'center' }}>
-                  Cargando sección...
-                </div>
-              )}
-            </motion.div>
-          )}
+            {['negocio'].includes(seccionActiva) && (
+              <div style={{ padding: '2rem', textAlign: 'center' }}>
+                Cargando sección...
+              </div>
+            )}
+          </motion.div>
         </AnimatePresence>
       </div>
-    </div>
-    </>
+    </aside>
   );
 }

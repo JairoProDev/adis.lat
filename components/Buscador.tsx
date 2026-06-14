@@ -142,12 +142,12 @@ export default function Buscador({
         <div className={`brand-search-glow relative ${radiusClass} p-[2px]`}>
           <div
             className={`
-              brand-search-shell relative flex items-center bg-white dark:bg-slate-800/40 ${radiusClass}
+              brand-search-shell relative flex items-center ${radiusClass}
               ${compact ? 'px-4 py-2.5' : 'px-6 py-4'}
-              shadow-[0_4px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)]
-              backdrop-blur-md transition-all duration-300 motion-reduce:transition-none
-              hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] motion-reduce:hover:translate-y-0 hover:-translate-y-0.5
-              focus-within:shadow-[0_8px_24px_rgba(var(--brand-primary-rgb),0.2)] focus-within:ring-2 focus-within:ring-[var(--brand-blue)]/35 dark:focus-within:ring-[var(--brand-blue)]/55
+              transition-all duration-300 motion-reduce:transition-none
+              hover:-translate-y-0.5 motion-reduce:hover:translate-y-0
+              focus-within:ring-2 focus-within:ring-[var(--brand-blue)]/35 dark:focus-within:ring-[var(--brand-blue)]/50
+              focus-within:shadow-[0_8px_24px_rgba(var(--brand-primary-rgb),0.18)]
             `}
           >
           <FaSearch className="w-5 h-5 text-[var(--brand-blue)] mr-3 flex-shrink-0 transition-transform group-focus-within:scale-110" />
@@ -157,18 +157,18 @@ export default function Buscador({
             placeholder={t('search.placeholder') || '¿Qué estás buscando?'}
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            className="flex-1 min-w-0 border-none outline-none text-[16px] text-gray-700 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 bg-transparent truncate h-full py-1"
+            className="brand-search-input flex-1 min-w-0 border-none outline-none text-[16px] bg-transparent truncate h-full py-1"
           />
 
-          <div className="flex items-center gap-1 ml-2 pl-2 border-l border-gray-100 dark:border-white/10">
+          <div className="brand-search-divider flex items-center gap-1 ml-2 pl-2 border-l">
             <button
               type="button"
               onClick={handleVoiceSearch}
               disabled={isAnalyzingImage}
               className={`${actionBtnClass} ${
                 isListening
-                  ? 'text-red-500 bg-red-50 dark:bg-red-500/10 animate-pulse'
-                  : 'text-[var(--brand-blue)]/80 hover:text-[var(--brand-blue)] hover:bg-[rgba(var(--brand-primary-rgb),0.08)] dark:hover:bg-[rgba(var(--brand-primary-rgb),0.15)]'
+                  ? 'text-red-500 bg-red-500/10 animate-pulse'
+                  : 'text-[var(--brand-blue)]/80 hover:text-[var(--brand-blue)] hover:bg-[var(--hover-bg)]'
               }`}
               title={isListening ? 'Escuchando… (tocar para detener)' : 'Búsqueda por voz'}
               aria-label={isListening ? 'Detener búsqueda por voz' : 'Búsqueda por voz'}
@@ -188,7 +188,7 @@ export default function Buscador({
                 }
               }}
               disabled={isAnalyzingImage || isListening}
-              className={`${actionBtnClass} text-gray-500 dark:text-gray-400 hover:text-[var(--brand-yellow)] hover:bg-[rgba(var(--brand-yellow-rgb),0.12)] dark:hover:bg-[rgba(var(--brand-yellow-rgb),0.15)] ${
+              className={`${actionBtnClass} text-[var(--text-secondary)] hover:text-[var(--brand-yellow)] hover:bg-[rgba(var(--brand-yellow-rgb),0.12)] ${
                 isAnalyzingImage ? 'animate-pulse text-[var(--brand-yellow)]' : ''
               }`}
               title="Búsqueda visual (foto)"

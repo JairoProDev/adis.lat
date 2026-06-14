@@ -815,41 +815,50 @@ function HomeContent() {
               }
             }}
           />
-          {/* Categorías + buscador: un solo sticky (evita superposición al scroll) */}
-          <div
-            style={{
-              position: 'sticky',
-              top: 'var(--header-height, 72px)',
-              zIndex: 900,
-              width: '100%',
-              maxWidth: isDesktop
-                ? 'calc(100% - var(--sidebar-width, 0px) - var(--left-sidebar-width, 0px))'
-                : '100%',
-              margin: '0 auto',
-              backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
-              borderBottom: browseScrolled ? '1px solid var(--border-color)' : 'none',
-              transition: 'top 0.35s ease, border-color 0.25s ease, margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-              ...(isDesktop && { marginRight: 'var(--sidebar-width, 0px)', marginLeft: 'var(--left-sidebar-width, 0px)' }),
-            }}
-          >
+          {/* Layout 3 columnas: filtros | contenido | detalle */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', flex: 1, width: '100%', minWidth: 0 }}>
+            {isDesktop && (
+              <FilterSidePanel
+                categoria={categoriaFiltro}
+                filters={browseFilters}
+                onChange={setBrowseFilters}
+                adisos={adisos}
+                busqueda={busquedaDebounced}
+                searchValue={busqueda}
+                onBusquedaChange={setBusqueda}
+                onCategoryDetected={(categoria) => {
+                  setCategoriaFiltro(categoria);
+                  const params = new URLSearchParams(searchParams.toString());
+                  params.set('categoria', categoria);
+                  router.replace(`/?${params.toString()}`, { scroll: false });
+                }}
+                onNotify={(message, type) => {
+                  if (type === 'error') error(message);
+                  else if (type === 'success') success(message);
+                  else success(message);
+                }}
+                collapsed={filterSidebarCollapsed}
+                onToggleCollapse={() => setFilterSidebarCollapsed((c) => !c)}
+                onOpenUbicacion={() => setMostrarFiltroUbicacion(true)}
+                userLat={profile?.latitud}
+                userLng={profile?.longitud}
+                resultCount={adisosFiltrados.length}
+              />
+            )}
+            <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
             <div
               className="no-scrollbar"
               style={{
                 display: 'flex',
                 justifyContent: isDesktop ? 'center' : 'flex-start',
-                overflowX: browseScrolled ? 'hidden' : 'auto',
+                overflowX: 'auto',
                 overflowY: 'hidden',
                 gap: isDesktop ? '1.5rem' : '1rem',
-                padding: browseScrolled ? '0 1rem' : '1.25rem 1rem 0.75rem',
-                maxHeight: browseScrolled ? 0 : 120,
-                opacity: browseScrolled ? 0 : 1,
+                padding: '1.25rem 1rem 0.75rem',
                 scrollbarWidth: 'none',
                 msOverflowStyle: 'none',
                 WebkitOverflowScrolling: 'touch',
                 alignItems: 'center',
-                transition: 'max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease',
-                pointerEvents: browseScrolled ? 'none' : 'auto',
               }}
             >
               {[
@@ -946,86 +955,57 @@ function HomeContent() {
             >
               <StoriesBar />
             </div>
+            {/* Buscador + filtros: sticky compacto, alineados bajo el mismo ancho */}
             <div
               style={{
-                padding: browseScrolled ? '0.5rem 1rem' : '0 1rem 1rem',
-                transition: 'padding 0.3s ease',
+                position: 'sticky',
+                top: 'var(--header-height, 72px)',
+                zIndex: 900,
+                borderBottom: browseScrolled ? '1px solid var(--border-color)' : 'none',
+                transition: 'border-color 0.25s ease',
+                paddingBottom: '0.5rem',
               }}
             >
-              <UnifiedSearchComposer
-                value={busqueda}
-                onChange={setBusqueda}
-                compact={browseScrolled}
-                onCategoryDetected={(categoria) => {
-                  setCategoriaFiltro(categoria);
-                  const params = new URLSearchParams(searchParams.toString());
-                  params.set('categoria', categoria);
-                  router.replace(`/?${params.toString()}`, { scroll: false });
-                }}
-                onNotify={(message, type) => {
-                  if (type === 'error') error(message);
-                  else if (type === 'success') success(message);
-                  else success(message);
-                }}
-              />
+              <div className="mx-auto w-full max-w-2xl px-4 md:px-0">
+                <div
+                  style={{
+                    padding: browseScrolled ? '0.5rem 0 0' : '0 0 0.75rem',
+                    transition: 'padding 0.3s ease',
+                  }}
+                >
+                  <UnifiedSearchComposer
+                    value={busqueda}
+                    onChange={setBusqueda}
+                    compact={browseScrolled}
+                    onCategoryDetected={(categoria) => {
+                      setCategoriaFiltro(categoria);
+                      const params = new URLSearchParams(searchParams.toString());
+                      params.set('categoria', categoria);
+                      router.replace(`/?${params.toString()}`, { scroll: false });
+                    }}
+                    onNotify={(message, type) => {
+                      if (type === 'error') error(message);
+                      else if (type === 'success') success(message);
+                      else success(message);
+                    }}
+                  />
+                </div>
+                <BrowseFilters
+                  categoria={categoriaFiltro}
+                  filters={browseFilters}
+                  onChange={setBrowseFilters}
+                  adisos={adisos}
+                  busqueda={busquedaDebounced}
+                  isDesktop={isDesktop}
+                  userLat={profile?.latitud}
+                  userLng={profile?.longitud}
+                  onOpenUbicacion={() => setMostrarFiltroUbicacion(true)}
+                  sidebarCollapsed={filterSidebarCollapsed}
+                  onToggleSidebar={() => setFilterSidebarCollapsed((c) => !c)}
+                  onOpenMobileFilters={() => setIsMobileFiltersOpen(true)}
+                />
+              </div>
             </div>
-            <div style={{ padding: '0 1rem 0.5rem' }}>
-              <BrowseFilters
-                categoria={categoriaFiltro}
-                filters={browseFilters}
-                onChange={setBrowseFilters}
-                adisos={adisos}
-                busqueda={busquedaDebounced}
-                isDesktop={isDesktop}
-                userLat={profile?.latitud}
-                userLng={profile?.longitud}
-                onOpenUbicacion={() => setMostrarFiltroUbicacion(true)}
-                sidebarCollapsed={filterSidebarCollapsed}
-                onToggleSidebar={() => setFilterSidebarCollapsed((c) => !c)}
-                onOpenMobileFilters={() => setIsMobileFiltersOpen(true)}
-              />
-            </div>
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              flex: 1,
-              width: '100%',
-              maxWidth: isDesktop ? 'calc(100% - var(--sidebar-width, 0px))' : '100%',
-              margin: '0 auto',
-              transition: 'margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-              ...(isDesktop && { marginRight: 'var(--sidebar-width, 0px)', marginLeft: 'var(--left-sidebar-width, 0px)' }),
-            }}
-          >
-            {isDesktop && (
-              <FilterSidePanel
-                categoria={categoriaFiltro}
-                filters={browseFilters}
-                onChange={setBrowseFilters}
-                adisos={adisos}
-                busqueda={busquedaDebounced}
-                searchValue={busqueda}
-                onBusquedaChange={setBusqueda}
-                onCategoryDetected={(categoria) => {
-                  setCategoriaFiltro(categoria);
-                  const params = new URLSearchParams(searchParams.toString());
-                  params.set('categoria', categoria);
-                  router.replace(`/?${params.toString()}`, { scroll: false });
-                }}
-                onNotify={(message, type) => {
-                  if (type === 'error') error(message);
-                  else if (type === 'success') success(message);
-                  else success(message);
-                }}
-                collapsed={filterSidebarCollapsed}
-                onToggleCollapse={() => setFilterSidebarCollapsed((c) => !c)}
-                onOpenUbicacion={() => setMostrarFiltroUbicacion(true)}
-                userLat={profile?.latitud}
-                userLng={profile?.longitud}
-                resultCount={adisosFiltrados.length}
-              />
-            )}
             <main id="main-content" style={{
               flex: 1,
               minWidth: 0,
@@ -1286,7 +1266,7 @@ function HomeContent() {
                     adisos={adisosFiltrados.slice(0, visibleCount)}
                     onAbrirAdiso={handleAbrirAdiso}
                     adisoSeleccionadoId={adisoAbierto?.id}
-                    espacioAdicional={isSidebarMinimizado ? 360 : 0}
+                    espacioAdicional={0}
                     cargandoMas={cargandoMas}
                     sentinelRef={sentinelRef}
                     vista={vista}
@@ -1305,6 +1285,24 @@ function HomeContent() {
                 </>
               )}
             </main>
+            </div>
+            {isDesktop && (
+              <SidebarDesktop
+                adisoAbierto={adisoAbierto}
+                onCerrarAdiso={handleCerrarAdiso}
+                onAnterior={handleAnterior}
+                onSiguiente={handleSiguiente}
+                puedeAnterior={indiceAdisoActual > 0}
+                puedeSiguiente={indiceAdisoActual < adisosFiltrados.length - 1}
+                onPublicar={handlePublicar}
+                onError={(msg) => error(msg)}
+                onSuccess={(msg) => success(msg)}
+                seccionActiva={seccionDesktopActiva}
+                minimizado={isSidebarMinimizado}
+                onMinimizadoChange={setIsSidebarMinimizado}
+                todosLosAdisos={adisosFiltrados}
+              />
+            )}
           </div>
           <FeedbackButton />
 
@@ -1352,23 +1350,6 @@ function HomeContent() {
           <ToastContainer toasts={toasts} removeToast={removeToast} />
         </div>
       </PullToRefresh>
-      {isDesktop && (
-        <SidebarDesktop
-          adisoAbierto={adisoAbierto}
-          onCerrarAdiso={handleCerrarAdiso}
-          onAnterior={handleAnterior}
-          onSiguiente={handleSiguiente}
-          puedeAnterior={indiceAdisoActual > 0}
-          puedeSiguiente={indiceAdisoActual < adisosFiltrados.length - 1}
-          onPublicar={handlePublicar}
-          onError={(msg) => error(msg)}
-          onSuccess={(msg) => success(msg)}
-          seccionActiva={seccionDesktopActiva}
-          minimizado={isSidebarMinimizado}
-          onMinimizadoChange={setIsSidebarMinimizado}
-          todosLosAdisos={adisosFiltrados}
-        />
-      )}
       {!isDesktop && (
         <NavbarMobile
           seccionActiva={seccionMobileActiva || (adisoAbierto ? 'adiso' : null)}

@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Adiso, Categoria } from '@/types';
 import { BrowseFilterState } from '@/lib/filters/types';
 import FilterControlFields from './FilterControlFields';
 import Buscador from '@/components/Buscador';
-import { IconChevronLeft, IconChevronRight } from '@/components/Icons';
+import { IconChevronLeft, IconFilterFunnel } from '@/components/Icons';
 
 interface FilterSidePanelProps {
   categoria: Categoria | 'todos';
@@ -25,10 +25,19 @@ interface FilterSidePanelProps {
   resultCount: number;
 }
 
-const COLLAPSED_WIDTH = 44;
+const COLLAPSED_WIDTH = 40;
 const EXPANDED_WIDTH = 280;
-const SIDE_GAP = 8;
 const HEADER_VAR = 'var(--header-height, 72px)';
+
+const stickyStyle: React.CSSProperties = {
+  position: 'sticky',
+  top: `calc(${HEADER_VAR} + 8px)`,
+  maxHeight: `calc(100vh - ${HEADER_VAR} - 16px)`,
+  alignSelf: 'flex-start',
+  flexShrink: 0,
+  zIndex: 500,
+  transition: 'width 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+};
 
 export default function FilterSidePanel({
   categoria,
@@ -47,43 +56,20 @@ export default function FilterSidePanel({
   userLng,
   resultCount,
 }: FilterSidePanelProps) {
-  useEffect(() => {
-    const width = collapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH;
-    document.documentElement.style.setProperty('--left-sidebar-width', `${width + SIDE_GAP * 2}px`);
-    return () => {
-      document.documentElement.style.setProperty('--left-sidebar-width', '0px');
-    };
-  }, [collapsed]);
-
-  const sharedStyle: React.CSSProperties = {
-    position: 'fixed',
-    left: SIDE_GAP,
-    top: `calc(${HEADER_VAR} + ${SIDE_GAP}px)`,
-    height: `calc(100vh - ${HEADER_VAR} - ${SIDE_GAP * 2}px)`,
-    zIndex: 500,
-    transition: 'top 0.35s ease, height 0.35s ease',
-  };
-
   if (collapsed) {
     return (
       <aside
-        className="bg-[var(--bg-primary)] rounded-2xl shadow-sm"
-        style={{ ...sharedStyle, width: COLLAPSED_WIDTH }}
+        className="mx-1 mt-2"
+        style={{ ...stickyStyle, width: COLLAPSED_WIDTH }}
       >
         <button
           type="button"
           onClick={onToggleCollapse}
-          className="w-full h-full py-4 flex flex-col items-center gap-2 rounded-2xl text-[var(--text-secondary)] hover:text-[var(--brand-blue)] hover:bg-[var(--hover-bg)] transition-colors"
+          className="w-10 h-10 flex items-center justify-center rounded-xl bg-[var(--bg-primary)] shadow-sm border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--brand-blue)] hover:border-[var(--brand-blue)]/40 hover:bg-[var(--hover-bg)] transition-colors"
           title="Abrir filtros"
           aria-label="Abrir panel de filtros"
         >
-          <IconChevronRight size={18} />
-          <span
-            className="text-[10px] font-bold uppercase tracking-wide"
-            style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
-          >
-            Filtros
-          </span>
+          <IconFilterFunnel size={18} />
         </button>
       </aside>
     );
@@ -91,8 +77,8 @@ export default function FilterSidePanel({
 
   return (
     <aside
-      className="bg-[var(--bg-primary)] overflow-y-auto rounded-2xl shadow-sm no-scrollbar flex flex-col"
-      style={{ ...sharedStyle, width: EXPANDED_WIDTH }}
+      className="mx-1 mt-2 bg-[var(--bg-primary)] overflow-y-auto rounded-2xl shadow-sm no-scrollbar flex flex-col"
+      style={{ ...stickyStyle, width: EXPANDED_WIDTH }}
     >
       <div className="flex items-center justify-between px-4 py-3 sticky top-0 bg-[var(--bg-primary)] z-10">
         <h2 className="text-sm font-bold text-[var(--text-primary)]">Filtros</h2>
