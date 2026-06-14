@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import { FaSearch } from 'react-icons/fa';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
-import { IconMicrophone, IconGoogleLens } from './Icons';
+import { IconMicrophone, IconGoogleLens, IconFilterFunnel } from './Icons';
 import { Categoria } from '@/types';
 
 interface BuscadorProps {
@@ -13,6 +13,11 @@ interface BuscadorProps {
   compact?: boolean;
   onCategoryDetected?: (categoria: Categoria) => void;
   onNotify?: (message: string, type?: 'info' | 'error' | 'success') => void;
+  /** Muestra el botón de embudo en la barra de acciones (solo buscador principal) */
+  showFilterToggle?: boolean;
+  filtersVisible?: boolean;
+  onToggleFilters?: () => void;
+  activeFiltersCount?: number;
 }
 
 function readFileAsDataUrl(file: File): Promise<string> {
@@ -30,6 +35,10 @@ export default function Buscador({
   compact = false,
   onCategoryDetected,
   onNotify,
+  showFilterToggle = false,
+  filtersVisible = false,
+  onToggleFilters,
+  activeFiltersCount = 0,
 }: BuscadorProps) {
   const { t } = useTranslation();
   const { isListening, isSupported, start: startVoice, stop: stopVoice } = useSpeechRecognition('es-PE');
@@ -161,6 +170,26 @@ export default function Buscador({
           />
 
           <div className="brand-search-divider flex items-center gap-1 ml-2 pl-2 border-l">
+            {showFilterToggle && onToggleFilters && (
+              <button
+                type="button"
+                onClick={onToggleFilters}
+                className={`${actionBtnClass} relative ${
+                  filtersVisible
+                    ? 'text-[var(--brand-blue)] bg-[var(--hover-bg)]'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--brand-blue)] hover:bg-[var(--hover-bg)]'
+                }`}
+                title={filtersVisible ? 'Ocultar filtros' : 'Mostrar filtros'}
+                aria-label={filtersVisible ? 'Ocultar filtros' : 'Mostrar filtros'}
+                aria-pressed={filtersVisible}
+              >
+                <IconFilterFunnel size={20} />
+                {activeFiltersCount > 0 && (
+                  <span className="absolute top-2 right-2 w-2 h-2 bg-[var(--brand-blue)] border border-[var(--search-bg,var(--bg-primary))] rounded-full" />
+                )}
+              </button>
+            )}
+
             <button
               type="button"
               onClick={handleVoiceSearch}

@@ -22,6 +22,8 @@ interface FilterInlineSelectorsProps {
   onOpenUbicacion?: () => void;
   userLat?: number;
   userLng?: number;
+  onOpenSidebar?: () => void;
+  onOpenMobileFilters?: () => void;
 }
 
 export default function FilterInlineSelectors({
@@ -33,6 +35,8 @@ export default function FilterInlineSelectors({
   onOpenUbicacion,
   userLat,
   userLng,
+  onOpenSidebar,
+  onOpenMobileFilters,
 }: FilterInlineSelectorsProps) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [openAnchor, setOpenAnchor] = useState<HTMLElement | null>(null);
@@ -266,6 +270,21 @@ export default function FilterInlineSelectors({
                   }}
                 />
               ))}
+            </div>
+          )}
+          {(onOpenSidebar || onOpenMobileFilters) && (
+            <div className="pt-2 border-t border-[var(--border-color)]">
+              <button
+                type="button"
+                className="w-full py-2 rounded-lg text-sm font-semibold text-[var(--brand-blue)] hover:bg-[var(--hover-bg)] transition-colors"
+                onClick={() => {
+                  onOpenSidebar?.();
+                  onOpenMobileFilters?.();
+                  setOpenId(null);
+                }}
+              >
+                {onOpenSidebar ? 'Abrir panel de filtros →' : 'Ver todos los filtros →'}
+              </button>
             </div>
           )}
         </div>

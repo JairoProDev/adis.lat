@@ -49,6 +49,7 @@ import {
   BrowseFilterState,
   FilterLayoutMode,
 } from '@/lib/filters';
+import { countActiveFilters } from '@/lib/filters/types';
 import UnifiedSearchComposer from '@/components/UnifiedSearchComposer';
 import StoriesBar from '@/components/StoriesBar';
 import BrowseFilters from '@/components/filters/BrowseFilters';
@@ -158,11 +159,13 @@ function HomeContent() {
   }, [seccionUrl, isDesktop]);
   const [vista, setVista] = useState<'grid' | 'list' | 'feed'>('grid');
   const [browseScrolled, setBrowseScrolled] = useState(false);
-  const [filterSidebarCollapsed, setFilterSidebarCollapsed] = useState(false);
+  const [filterSidebarCollapsed, setFilterSidebarCollapsed] = useState(true);
+  const [inlineFiltersVisible, setInlineFiltersVisible] = useState(false);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [isSidebarMinimizado, setIsSidebarMinimizado] = useState(true);
   const { toasts, removeToast, success, error } = useToast();
   const marketplacePulse = getMarketplacePulse(adisosFiltrados);
+  const activeFiltersCount = countActiveFilters(browseFilters, categoriaFiltro);
   const [isOnlineState, setIsOnlineState] = useState(() => {
     if (typeof window !== 'undefined') {
       return navigator.onLine;
@@ -961,9 +964,7 @@ function HomeContent() {
                 position: 'sticky',
                 top: 'var(--header-height, 72px)',
                 zIndex: 900,
-                borderBottom: browseScrolled ? '1px solid var(--border-color)' : 'none',
-                transition: 'border-color 0.25s ease',
-                paddingBottom: '0.5rem',
+                paddingBottom: inlineFiltersVisible ? '0.5rem' : '0.25rem',
               }}
             >
               <div className="mx-auto w-full max-w-2xl px-4 md:px-0">
@@ -977,6 +978,10 @@ function HomeContent() {
                     value={busqueda}
                     onChange={setBusqueda}
                     compact={browseScrolled}
+                    showFilterToggle
+                    filtersVisible={inlineFiltersVisible}
+                    onToggleFilters={() => setInlineFiltersVisible((v) => !v)}
+                    activeFiltersCount={activeFiltersCount}
                     onCategoryDetected={(categoria) => {
                       setCategoriaFiltro(categoria);
                       const params = new URLSearchParams(searchParams.toString());
@@ -997,11 +1002,11 @@ function HomeContent() {
                   adisos={adisos}
                   busqueda={busquedaDebounced}
                   isDesktop={isDesktop}
+                  visible={inlineFiltersVisible}
                   userLat={profile?.latitud}
                   userLng={profile?.longitud}
                   onOpenUbicacion={() => setMostrarFiltroUbicacion(true)}
-                  sidebarCollapsed={filterSidebarCollapsed}
-                  onToggleSidebar={() => setFilterSidebarCollapsed((c) => !c)}
+                  onOpenSidebar={() => setFilterSidebarCollapsed(false)}
                   onOpenMobileFilters={() => setIsMobileFiltersOpen(true)}
                 />
               </div>

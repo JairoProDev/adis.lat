@@ -15,6 +15,10 @@ interface UnifiedSearchComposerProps {
   compact?: boolean;
   onCategoryDetected?: (categoria: Categoria) => void;
   onNotify?: (message: string, type?: 'info' | 'error' | 'success') => void;
+  showFilterToggle?: boolean;
+  filtersVisible?: boolean;
+  onToggleFilters?: () => void;
+  activeFiltersCount?: number;
 }
 
 const MIN_LENGTH = 12;
@@ -32,6 +36,10 @@ export default function UnifiedSearchComposer({
   compact = false,
   onCategoryDetected,
   onNotify,
+  showFilterToggle,
+  filtersVisible,
+  onToggleFilters,
+  activeFiltersCount,
 }: UnifiedSearchComposerProps) {
   const { user, profile } = useAuth();
   const { openAuthModal } = useUI();
@@ -107,6 +115,10 @@ export default function UnifiedSearchComposer({
         compact={compact}
         onCategoryDetected={onCategoryDetected}
         onNotify={onNotify}
+        showFilterToggle={showFilterToggle}
+        filtersVisible={filtersVisible}
+        onToggleFilters={onToggleFilters}
+        activeFiltersCount={activeFiltersCount}
       />
 
       {intent && !compact && (
