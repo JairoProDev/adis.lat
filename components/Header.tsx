@@ -3,14 +3,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import {
-  FaBars,
   FaBell,
   FaFacebookMessenger,
   FaChartLine,
   FaMoon,
-  FaSun
+  FaSun,
 } from 'react-icons/fa';
-import LanguageSelector from './LanguageSelector';
 import UserMenu from './UserMenu';
 import NotificationsPopover from './NotificationsPopover';
 import MessagesPopover from './MessagesPopover';
@@ -19,16 +17,16 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { SeccionSidebar } from './SidebarDesktop';
 import {
-  IconAdiso,
   IconMap,
   IconMegaphone,
   IconStore,
-  IconGratuitos,
-  IconLocation,
   IconRobot,
-  IconSearch
+  IconSearch,
+  IconChevronDown,
 } from './Icons';
 import { useAuth } from '@/hooks/useAuth';
+import { Categoria } from '@/types';
+import { getCategoriaLabel } from '@/lib/adiso-display';
 
 interface HeaderProps {
   onChangelogClick?: () => void;
@@ -37,21 +35,51 @@ interface HeaderProps {
   onToggleLeftSidebar?: () => void;
   ubicacion?: string;
   onUbicacionClick?: () => void;
+  categoria?: Categoria | 'todos';
+}
+
+const LOGO_FONT = '"Plus Jakarta Sans", "Avenir Next", "Segoe UI", sans-serif';
+
+function iconBtnStyle(active: boolean, compact = false): React.CSSProperties {
+  const size = compact ? 36 : 40;
+  return {
+    width: `${size}px`,
+    height: `${size}px`,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: '50%',
+    background: active ? 'var(--hover-bg)' : 'var(--bg-tertiary)',
+    color: active ? 'var(--brand-blue)' : 'var(--text-secondary)',
+    border: '1px solid var(--border-color)',
+    cursor: 'pointer',
+    flexShrink: 0,
+  };
 }
 
 export default function Header({
   onChangelogClick,
-  seccionActiva,
-  onSeccionChange,
   onToggleLeftSidebar,
   ubicacion = 'Perú',
-  onUbicacionClick
+  onUbicacionClick,
+  categoria = 'todos',
 }: HeaderProps) {
   const [mounted, setMounted] = useState(false);
   const { t } = useTranslation();
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const [headerVisible, setHeaderVisible] = useState(true);
   const lastScrollY = useRef(0);
+  const [activePopover, setActivePopover] = useState<'notifications' | 'messages' | null>(null);
+  const [hoveredItem, setHoveredItem] = useState<SeccionSidebar | null>(null);
+  const [themeMode, setThemeMode] = useState<'light' | 'dark' | 'auto'>('auto');
+  const { user } = useAuth();
+  const { openChat } = useUI();
+  const isAuthenticated = !!user;
+
+  const categoriaLabel =
+    categoria !== 'todos' ? getCategoriaLabel(categoria as Categoria) : 'Todas las categorías';
+  const contextLine =
+    categoria !== 'todos' ? `${categoriaLabel} · ${ubicacion}` : ubicacion;
 
   useEffect(() => {
     setMounted(true);
@@ -87,14 +115,6 @@ export default function Header({
     };
   }, [headerVisible, mounted]);
 
-  const [showMobileSettings, setShowMobileSettings] = useState(false);
-  const [activePopover, setActivePopover] = useState<'notifications' | 'messages' | null>(null);
-  const [hoveredItem, setHoveredItem] = useState<SeccionSidebar | null>(null);
-  const [themeMode, setThemeMode] = useState<'light' | 'dark' | 'auto'>('auto');
-  const { user } = useAuth();
-  const { openChat } = useUI();
-  const isAuthenticated = !!user;
-
   const applyTheme = (mode: 'light' | 'dark' | 'auto') => {
     const root = document.documentElement;
     root.classList.remove('light-mode', 'dark-mode', 'dark');
@@ -123,381 +143,285 @@ export default function Header({
 
   if (!mounted) return null;
 
-  return (
-    <header style={{
-      backgroundColor: 'var(--bg-primary)',
-      borderBottom: '1px solid var(--border-color)',
-      height: '72px',
-      position: 'sticky',
-      top: 0,
-      zIndex: 1000,
-      display: 'flex',
-      alignItems: 'center',
-      padding: isDesktop ? '0 1.5rem' : '0 0.75rem',
-      gap: isDesktop ? 0 : '8px',
-      transform: headerVisible ? 'translateY(0)' : 'translateY(-100%)',
-      transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-    }}>
-      {/* LEFT: Logo (+ ubicación en desktop) */}
-      <div style={{
+  const brandBlock = (
+    <button
+      type="button"
+      onClick={onUbicacionClick}
+      disabled={!onUbicacionClick}
+      style={{
         display: 'flex',
         alignItems: 'center',
-        flexShrink: 0,
-        gap: '12px',
-      }}>
-
-
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          cursor: !isDesktop ? 'pointer' : 'default'
+        gap: isDesktop ? '10px' : '8px',
+        background: 'none',
+        border: '1px solid transparent',
+        cursor: onUbicacionClick ? 'pointer' : 'default',
+        padding: isDesktop ? '6px 10px 6px 6px' : '4px 8px 4px 4px',
+        borderRadius: '12px',
+        transition: 'background-color 0.2s, border-color 0.2s',
+        textAlign: 'left',
+        minWidth: 0,
+        maxWidth: isDesktop ? '280px' : '100%',
+      }}
+      className={onUbicacionClick ? 'hover:bg-[var(--hover-bg)] hover:border-[var(--border-color)]' : undefined}
+      aria-label="Cambiar ubicación y contexto de búsqueda"
+    >
+      <img
+        src="/logo.png"
+        alt=""
+        aria-hidden
+        style={{
+          height: isDesktop ? '36px' : '32px',
+          width: 'auto',
+          objectFit: 'contain',
+          flexShrink: 0,
         }}
-          onClick={() => {
-            if (!isDesktop && onUbicacionClick) {
-              onUbicacionClick();
-            }
+        onError={(e) => {
+          e.currentTarget.style.display = 'none';
+        }}
+      />
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            minWidth: 0,
           }}
         >
-          <a href={isDesktop ? "/" : undefined}
-            onClick={(e) => {
-              if (!isDesktop) {
-                e.preventDefault();
-              }
-            }}
+          <span
             style={{
-              textDecoration: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              padding: '4px',
-              flexShrink: 0,
-            }}>
-            <div style={{
-              height: isDesktop ? '42px' : '36px',
-              display: 'flex',
-              alignItems: 'center',
-              flexShrink: 0,
-            }}>
-              <img
-                src="/logo.png"
-                alt="Buscadis"
-                style={{
-                  height: '100%',
-                  width: 'auto',
-                  objectFit: 'contain',
-                }}
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  const parent = e.currentTarget.parentElement;
-                  if (parent && !parent.querySelector('.logo-fallback')) {
-                    const span = document.createElement('span');
-                    span.className = 'logo-fallback';
-                    span.innerText = 'Buscadis';
-                    span.style.fontWeight = '800';
-                    span.style.fontSize = isDesktop ? '1.28rem' : '1rem';
-                    span.style.color = 'var(--brand-blue)';
-                    span.style.letterSpacing = '0.01em';
-                    span.style.fontFamily = '"Plus Jakarta Sans", "Avenir Next", "Segoe UI", sans-serif';
-                    parent.appendChild(span);
-                  }
-                }}
-              />
-              {isDesktop && (
-              <span
-                style={{
-                  fontSize: '1.72rem',
-                  fontWeight: 800,
-                  color: 'var(--brand-blue)',
-                  letterSpacing: '0.01em',
-                  marginLeft: '8px',
-                  lineHeight: 1,
-                  fontFamily: '"Plus Jakarta Sans", "Avenir Next", "Segoe UI", sans-serif',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Buscadis
-              </span>
-              )}
-            </div>
-          </a>
-
-          {/* Separator - Desktop only */}
-          {isDesktop && onUbicacionClick && <div style={{ width: '1px', height: '32px', backgroundColor: 'var(--border-color)', margin: '0 4px' }} />}
-
-          {/* Location Button - Desktop only */}
-          {isDesktop && onUbicacionClick && (
-            <button
-              onClick={onUbicacionClick}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                background: 'none',
-                border: '1px solid transparent',
-                cursor: 'pointer',
-                padding: '6px 10px',
-                borderRadius: '8px',
-                transition: 'all 0.2s',
-                maxWidth: '160px',
-                textAlign: 'left',
-                outline: 'none'
-              }}
-              className="hover:bg-gray-100 dark:hover:bg-zinc-800 hover:border-gray-200 dark:hover:border-zinc-700"
-            >
-              <div style={{
-                color: 'var(--brand-blue)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <IconLocation size={18} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                <span style={{
-                  fontSize: '10px',
-                  color: 'var(--text-tertiary)',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  lineHeight: '1'
-                }}>
-                  Cerca de
-                </span>
-                <span style={{
-                  fontSize: '13px',
-                  color: 'var(--text-primary)',
-                  fontWeight: 600,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  width: '100%'
-                }}>
-                  {ubicacion}
-                </span>
-              </div>
-            </button>
+              fontSize: isDesktop ? '1.15rem' : '1rem',
+              fontWeight: 800,
+              color: 'var(--brand-blue)',
+              letterSpacing: '0.01em',
+              lineHeight: 1.1,
+              fontFamily: LOGO_FONT,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Buscadis
+          </span>
+          {onUbicacionClick && (
+            <IconChevronDown size={12} className="text-[var(--text-tertiary)] shrink-0" />
           )}
         </div>
+        <span
+          style={{
+            display: 'block',
+            fontSize: '10px',
+            fontWeight: 600,
+            color: 'var(--text-secondary)',
+            lineHeight: 1.2,
+            marginTop: '2px',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            maxWidth: isDesktop ? '200px' : '160px',
+          }}
+        >
+          {contextLine}
+        </span>
+      </div>
+    </button>
+  );
+
+  const navItems = [
+    { id: 'negocio', icon: IconStore, label: 'Mi Negocio', href: '/mi-negocio' },
+    { id: 'adiso', icon: IconSearch, label: 'Buscar', href: '/' },
+    { id: 'publicar', icon: IconMegaphone, label: 'Publicar', href: '/publicar' },
+    { id: 'mapa', icon: IconMap, label: 'Mapa', href: '/mapa' },
+    { id: 'chatbot', icon: IconRobot, label: 'Asistente', href: '/chat' },
+  ] as const;
+
+  const actionButtons = (
+    <>
+      <button
+        type="button"
+        onClick={toggleTheme}
+        style={iconBtnStyle(false, !isDesktop)}
+        className="hover:bg-[var(--hover-bg)] hover:text-[var(--brand-blue)] transition-colors"
+        title={themeMode === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+        aria-label={themeMode === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+      >
+        {themeMode === 'dark' ? <FaSun size={16} /> : <FaMoon size={16} />}
+      </button>
+
+      {isAuthenticated && (
+        <>
+          {onChangelogClick && isDesktop && (
+            <button
+              type="button"
+              onClick={onChangelogClick}
+              style={iconBtnStyle(false, !isDesktop)}
+              className="hover:bg-[var(--hover-bg)] hover:text-[var(--brand-blue)] transition-colors"
+              title={t('header.progress')}
+            >
+              <FaChartLine size={16} />
+            </button>
+          )}
+
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setActivePopover(activePopover === 'notifications' ? null : 'notifications')}
+              style={iconBtnStyle(activePopover === 'notifications', !isDesktop)}
+              className="hover:bg-[var(--hover-bg)] hover:text-[var(--brand-blue)] transition-colors"
+              aria-label="Notificaciones"
+            >
+              <FaBell size={16} />
+            </button>
+            {activePopover === 'notifications' && (
+              <NotificationsPopover onClose={() => setActivePopover(null)} />
+            )}
+          </div>
+
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setActivePopover(activePopover === 'messages' ? null : 'messages')}
+              style={iconBtnStyle(activePopover === 'messages', !isDesktop)}
+              className="hover:bg-[var(--hover-bg)] hover:text-[var(--brand-blue)] transition-colors"
+              aria-label="Mensajes"
+            >
+              <FaFacebookMessenger size={16} />
+            </button>
+            {activePopover === 'messages' && (
+              <MessagesPopover
+                onClose={() => setActivePopover(null)}
+                onOpenConversation={(id) => {
+                  setActivePopover(null);
+                  openChat(id);
+                }}
+              />
+            )}
+          </div>
+        </>
+      )}
+    </>
+  );
+
+  return (
+    <header
+      style={{
+        backgroundColor: 'var(--bg-primary)',
+        borderBottom: '1px solid var(--border-color)',
+        height: '72px',
+        position: 'sticky',
+        top: 0,
+        zIndex: 1000,
+        display: 'grid',
+        gridTemplateColumns: isDesktop ? '1fr auto 1fr' : 'minmax(0, 1fr) auto',
+        alignItems: 'center',
+        padding: isDesktop ? '0 1.25rem' : '0 0.65rem',
+        columnGap: '12px',
+        transform: headerVisible ? 'translateY(0)' : 'translateY(-100%)',
+        transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+      }}
+    >
+      {/* LEFT: marca + contexto (botón de ubicación) */}
+      <div style={{ display: 'flex', alignItems: 'center', minWidth: 0, justifySelf: 'start' }}>
+        {brandBlock}
       </div>
 
-      {/* CENTER: Navigation (Desktop Only) */}
-      <div style={{ flex: 1, display: 'flex', justifyContent: 'center', height: '100%' }}>
-        {isDesktop && (
-          <div style={{ display: 'flex', gap: '8px', height: '100%' }}>
-            {[
-              { id: 'negocio', icon: IconStore, label: 'Mi Negocio', href: '/mi-negocio' },
-              { id: 'adiso', icon: IconSearch, label: 'Buscar', href: '/' },
-              { id: 'publicar', icon: IconMegaphone, label: 'Publicar', href: '/publicar' },
-              { id: 'mapa', icon: IconMap, label: 'Mapa', href: '/mapa' },
-              { id: 'chatbot', icon: IconRobot, label: 'Asistente', href: '/chat' },
-            ].map((item) => {
-              const Icon = item.icon;
-              // Simple active check based on current path
-              const isActive = (typeof window !== 'undefined' && (
-                (item.href === '/' && window.location.pathname === '/' && !window.location.search.includes('seccion=')) ||
-                (item.href !== '/' && window.location.pathname.startsWith(item.href || ''))
-              ));
+      {/* CENTER: navegación desktop — columna auto = centrada en la grilla */}
+      {isDesktop && (
+        <nav style={{ display: 'flex', gap: '4px', height: '100%', alignItems: 'stretch' }}>
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive =
+              typeof window !== 'undefined' &&
+              ((item.href === '/' &&
+                window.location.pathname === '/' &&
+                !window.location.search.includes('seccion=')) ||
+                (item.href !== '/' && window.location.pathname.startsWith(item.href)));
 
-              const isHovered = hoveredItem === item.id;
-              const isPublishCta = item.id === 'publicar';
-              const accentColor = isPublishCta ? 'var(--brand-yellow)' : 'var(--brand-blue)';
-              const navColor = isActive || isHovered
-                ? accentColor
-                : isPublishCta
-                  ? 'var(--text-secondary)'
-                  : 'var(--text-secondary)';
+            const isHovered = hoveredItem === item.id;
+            const isPublishCta = item.id === 'publicar';
+            const accentColor = isPublishCta ? 'var(--brand-yellow)' : 'var(--brand-blue)';
 
-              return (
-                <Link
-                  href={item.href || '#'}
-                  key={item.id}
-                  onMouseEnter={() => setHoveredItem(item.id as SeccionSidebar)}
-                  onMouseLeave={() => setHoveredItem(null)}
+            return (
+              <Link
+                href={item.href}
+                key={item.id}
+                onMouseEnter={() => setHoveredItem(item.id as SeccionSidebar)}
+                onMouseLeave={() => setHoveredItem(null)}
+                style={{
+                  height: '100%',
+                  padding: '0 20px',
+                  position: 'relative',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: isActive || isHovered ? accentColor : 'var(--text-secondary)',
+                  transition: 'color 0.2s ease',
+                  textDecoration: 'none',
+                }}
+              >
+                <span
                   style={{
-                    height: '100%',
-                    padding: '0 24px',
-                    border: 'none',
-                    background: 'none',
-                    cursor: 'pointer',
-                    position: 'relative',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: navColor,
-                    transition: 'all 0.2s ease',
-                    textDecoration: 'none'
-                  }}
-                  className="group"
-                >
-                  <span style={{
-                    position: 'relative',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    height: '28px',
+                    height: '26px',
                     marginBottom: '2px',
+                    transform: isHovered ? 'scale(1.08)' : 'scale(1)',
                     transition: 'transform 0.2s',
-                    transform: isHovered ? 'scale(1.1)' : 'scale(1)'
-                  }}>
-                    <Icon size={24} color={isActive || isHovered ? accentColor : isPublishCta ? 'var(--brand-yellow)' : undefined} />
-                  </span>
-                  <span style={{
+                  }}
+                >
+                  <Icon
+                    size={22}
+                    color={
+                      isActive || isHovered
+                        ? accentColor
+                        : isPublishCta
+                          ? 'var(--brand-yellow)'
+                          : undefined
+                    }
+                  />
+                </span>
+                <span
+                  style={{
                     fontSize: '11px',
                     fontWeight: isActive ? 600 : 500,
-                    opacity: isActive || isHovered ? 1 : 0.8,
-                    color: isPublishCta && !isActive && !isHovered ? 'var(--brand-yellow)' : undefined,
-                  }}>
-                    {item.label}
-                  </span>
-
-                  {/* Active Indicator Line */}
-                  <span style={{
+                    opacity: isActive || isHovered ? 1 : 0.85,
+                  }}
+                >
+                  {item.label}
+                </span>
+                <span
+                  style={{
                     position: 'absolute',
                     bottom: 0,
-                    left: 0,
-                    right: 0,
+                    left: '12px',
+                    right: '12px',
                     height: '3px',
                     backgroundColor: accentColor,
                     opacity: isActive ? 1 : 0,
                     transition: 'opacity 0.2s',
                     borderTopLeftRadius: '3px',
-                    borderTopRightRadius: '3px'
-                  }} />
-
-                  {/* Hover background effect (subtle) */}
-                  <span style={{
-                    position: 'absolute',
-                    inset: '4px',
-                    backgroundColor: isHovered && !isActive ? 'var(--hover-bg)' : 'transparent',
-                    borderRadius: '8px',
-                    zIndex: -1,
-                    transition: 'background-color 0.2s'
-                  }} />
-                </Link>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* RIGHT: Actions */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flex: 1, gap: isDesktop ? '8px' : '6px', minWidth: 0 }}>
-        {isDesktop && (
-        <button
-          onClick={toggleTheme}
-          style={{
-            width: '40px',
-            height: '40px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRadius: '50%',
-            background: 'var(--bg-tertiary)',
-            color: 'var(--text-secondary)',
-            border: '1px solid var(--border-color)',
-            cursor: 'pointer'
-          }}
-          className="hover:bg-[var(--hover-bg)] transition-colors hover:text-[var(--brand-blue)]"
-          title={themeMode === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-          aria-label={themeMode === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-        >
-          {themeMode === 'dark' ? <FaSun size={16} /> : <FaMoon size={16} />}
-        </button>
-        )}
-
-        {isAuthenticated && (
-          <>
-            {onChangelogClick && isDesktop && (
-              <button
-                onClick={onChangelogClick}
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '50%',
-                  background: 'var(--bg-secondary)',
-                  color: 'var(--text-primary)',
-                  border: 'none',
-                  cursor: 'pointer'
-                }}
-                className="hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors hover:text-[var(--brand-blue)]"
-                title={t('header.progress')}
-              >
-                <FaChartLine size={18} />
-              </button>
-            )}
-
-            {isDesktop && (
-            <>
-            {/* Notifications */}
-            <div className="relative">
-              <button
-                onClick={() => setActivePopover(activePopover === 'notifications' ? null : 'notifications')}
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '50%',
-                  background: activePopover === 'notifications' ? 'var(--bg-secondary-hover)' : 'var(--bg-secondary)',
-                  color: activePopover === 'notifications' ? 'var(--brand-blue)' : 'var(--text-primary)',
-                  border: 'none',
-                  cursor: 'pointer'
-                }}
-                className="hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors hover:text-[var(--brand-blue)]"
-              >
-                <FaBell size={18} />
-              </button>
-              {activePopover === 'notifications' && (
-                <NotificationsPopover onClose={() => setActivePopover(null)} />
-              )}
-            </div>
-
-            {/* Messages */}
-            <div className="relative">
-              <button
-                onClick={() => setActivePopover(activePopover === 'messages' ? null : 'messages')}
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '50%',
-                  background: activePopover === 'messages' ? 'var(--bg-secondary-hover)' : 'var(--bg-secondary)',
-                  color: activePopover === 'messages' ? 'var(--brand-blue)' : 'var(--text-primary)',
-                  border: 'none',
-                  cursor: 'pointer'
-                }}
-                className="hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors hover:text-[var(--brand-blue)]"
-              >
-                <FaFacebookMessenger size={18} />
-              </button>
-              {activePopover === 'messages' && (
-                <MessagesPopover
-                  onClose={() => setActivePopover(null)}
-                  onOpenConversation={(id) => {
-                    setActivePopover(null);
-                    openChat(id);
+                    borderTopRightRadius: '3px',
                   }}
                 />
-              )}
-            </div>
-            </>
-            )}
-          </>
-        )}
+              </Link>
+            );
+          })}
+        </nav>
+      )}
 
-        {/* User Profile (Desktop & Mobile) */}
-        <UserMenu
-          onProgressClick={onChangelogClick}
-          onSidebarToggle={onToggleLeftSidebar}
-        />
+      {/* RIGHT: acciones + usuario */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-end',
+          gap: isDesktop ? '8px' : '6px',
+          justifySelf: 'end',
+          minWidth: 0,
+        }}
+      >
+        {actionButtons}
+        <UserMenu onProgressClick={onChangelogClick} onSidebarToggle={onToggleLeftSidebar} />
       </div>
     </header>
   );

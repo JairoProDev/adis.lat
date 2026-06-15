@@ -14,6 +14,8 @@ import { FaChartLine } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import ThemeToggle from './ThemeToggle';
+import LanguageSelector from './LanguageSelector';
 
 interface UserMenuProps {
   onProgressClick?: () => void;
