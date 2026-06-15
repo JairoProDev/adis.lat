@@ -11,6 +11,7 @@ import { UIProvider } from '@/contexts/UIContext';
 import { FavoritosProvider } from '@/contexts/FavoritosContext';
 import OfflineIndicator from '@/components/pwa/OfflineIndicator';
 import InstallPrompt from '@/components/pwa/InstallPrompt';
+import SessionTracker from '@/components/SessionTracker';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://buscadis.com';
 
@@ -135,6 +136,7 @@ export default function RootLayout({
                 <UIProvider>
                   <AdisosGratuitosCacheProvider>
                     <NavigationProvider>
+                      <SessionTracker />
                       <OfflineIndicator />
                       {children}
                       <InstallPrompt />

@@ -9,6 +9,8 @@ import { getCountryByCode, DEFAULT_COUNTRY_CODE } from '@/lib/geo/countries-data
 import { formatLocationFull } from '@/lib/geo/format';
 import { getLocationCountryCode } from '@/lib/geo/flags';
 import { buildSeekDescription, buildSeekTitle, saveSeekIntent } from '@/lib/seek-intent';
+import { persistDemandIntent } from '@/lib/demand-intents/client';
+import { useAuth } from '@/hooks/useAuth';
 import type { BrowseLocationFilter } from '@/lib/geo/types';
 import type { Categoria } from '@/types';
 
@@ -39,6 +41,7 @@ export default function BrowseEmptyState({
   onChangeLocation,
 }: BrowseEmptyStateProps) {
   const router = useRouter();
+  const { user } = useAuth();
   const countryCode = getLocationCountryCode(ubicacion);
   const country = getCountryByCode(countryCode);
   const locationLabel = formatLocationFull(ubicacion);
@@ -56,6 +59,13 @@ export default function BrowseEmptyState({
       categoria: 'comunidad',
       ubicacion: locationLabel,
       countryCode,
+    });
+    void persistDemandIntent({
+      queryText: titulo,
+      categoria: categoria !== 'todos' ? categoria : 'comunidad',
+      ubicacion: ubicacion as Record<string, unknown> | undefined,
+      source: 'explicit_seek',
+      userId: user?.id,
     });
     router.push('/publicar');
   };

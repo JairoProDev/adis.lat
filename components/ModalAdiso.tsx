@@ -307,7 +307,7 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
 
       // Registrar analytics si hay usuario
       if (user?.id) {
-        registrarContacto(user.id, adiso.id, adiso.categoria);
+        registrarContacto(user.id, adiso.id, adiso.categoria, 'whatsapp');
       }
 
       // Abrir WhatsApp
@@ -317,7 +317,7 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
 
     // Anuncio activo - contacto directo normal
     setContactosLocales(prev => prev + 1);
-    registrarContacto(user?.id, adiso.id, adiso.categoria);
+    registrarContacto(user?.id, adiso.id, adiso.categoria, 'whatsapp');
 
     // Determinar tipo de contacto y abrir según corresponda
 
@@ -361,7 +361,7 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
       });
       const data = (await res.json()) as { conversationId?: string };
       if (data.conversationId) {
-        registrarContacto(user.id, adiso.id, adiso.categoria);
+        registrarContacto(user.id, adiso.id, adiso.categoria, 'chat');
         openChat(data.conversationId);
       }
     } finally {

@@ -6,8 +6,11 @@ import {
     recordInterestSignal,
     setInteractionReason,
     restaurarAdisoOculto,
+    getInteraccionesUsuario,
     DismissReason,
 } from '@/lib/interactions';
+import { trackEvent } from '@/lib/events';
+import { registrarFavorito } from '@/lib/analytics';
 import { useToast } from '@/hooks/useToast';
 import { useUI } from '@/contexts/UIContext';
 import { Adiso } from '@/types';
@@ -32,7 +35,11 @@ export function useAdInteraction(adiso: Adiso) {
             } catch (e) {
                 console.error("Error reading local storage", e);
             }
+            return;
         }
+        getInteraccionesUsuario(user.id, 'not_interested').then((ids) => {
+            setIsHidden(ids.has(adisoId));
+        });
     }, [user?.id, adisoId]);
 
     const toggleFav = async (e?: React.MouseEvent) => {
@@ -45,6 +52,7 @@ export function useAdInteraction(adiso: Adiso) {
             if (user?.id && newState) {
                 registrarInteraccion(user.id, adisoId, 'favorite');
                 recordInterestSignal(user.id, adiso, 1);
+                registrarFavorito(user.id, adisoId, adiso.categoria);
             }
 
             success(newState ? 'Añadido a favoritos' : 'Eliminado de favoritos');
@@ -68,6 +76,12 @@ export function useAdInteraction(adiso: Adiso) {
             try {
                 await registrarInteraccion(user.id, adisoId, 'not_interested');
                 recordInterestSignal(user.id, adiso, -1);
+                trackEvent('ad.dismiss', {
+                    entityType: 'adiso',
+                    entityId: adisoId,
+                    payload: { categoria: adiso.categoria },
+                    userId: user.id,
+                });
             } catch (err) {
                 setIsHidden(false);
             }
@@ -89,6 +103,12 @@ export function useAdInteraction(adiso: Adiso) {
             try {
                 await setInteractionReason(user.id, adisoId, reason);
                 await recordInterestSignal(user.id, adiso, -1, reason);
+                trackEvent('ad.dismiss_reason', {
+                    entityType: 'adiso',
+                    entityId: adisoId,
+                    payload: { reason, categoria: adiso.categoria },
+                    userId: user.id,
+                });
             } catch (err) {
                 console.error('Error al guardar motivo de descarte:', err);
             }

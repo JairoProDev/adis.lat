@@ -2,7 +2,7 @@ import { Adiso, UbicacionDetallada } from '@/types';
 import { TipoOrdenamiento } from '@/components/Ordenamiento';
 import { BrowseFilterState } from './types';
 import { adisoMatchesFacets, adisoPublicadoDentroDe, adisoTieneImagen } from './matchers';
-import { personalizationFreshnessBoostMs } from '@/lib/ai/personalization';
+import { personalizationFreshnessBoostMs, personalizeAdisos } from '@/lib/ai/personalization';
 import type { UserInterestProfile } from '@/lib/interactions';
 import { getCountryByCode, DEFAULT_COUNTRY_CODE } from '@/lib/geo/countries-data';
 
@@ -96,6 +96,7 @@ export interface ApplyBrowseFiltersInput {
   userLat?: number;
   userLng?: number;
   interestProfile?: UserInterestProfile | null;
+  hiddenAdIds?: Set<string>;
 }
 
 export function applyBrowseFilters({
@@ -107,8 +108,21 @@ export function applyBrowseFilters({
   userLat,
   userLng,
   interestProfile,
+  hiddenAdIds,
 }: ApplyBrowseFiltersInput): Adiso[] {
   let filtrados = adisos.filter((a) => !TEST_REGEX.test(a.titulo || ''));
+
+  if (hiddenAdIds && hiddenAdIds.size > 0) {
+    filtrados = filtrados.filter((a) => !hiddenAdIds.has(a.id));
+  }
+
+  // Exclude categories with strong negative signals
+  if (interestProfile?.categoriaSignals) {
+    filtrados = filtrados.filter((a) => {
+      const neg = interestProfile.categoriaSignals[a.categoria];
+      return neg === undefined || neg > -3;
+    });
+  }
 
   if (categoria !== 'todos') {
     filtrados = filtrados.filter((a) => a.categoria === categoria);
@@ -176,7 +190,7 @@ export function applyBrowseFilters({
     });
   }
 
-  return [...filtrados].sort((a, b) => {
+  const sorted = [...filtrados].sort((a, b) => {
     switch (ordenamiento) {
     case 'recientes': {
       const ra = a.promotionRank ?? 0;
@@ -211,6 +225,11 @@ export function applyBrowseFilters({
       return 0;
     }
   });
+
+  if (ordenamiento === 'recientes' && interestProfile) {
+    return personalizeAdisos(sorted, interestProfile);
+  }
+  return sorted;
 }
 
 export function countFacetOption(

@@ -21,6 +21,7 @@ import ProfileMessagesTab from './ProfileMessagesTab';
 import ProfileHiddenTab from './ProfileHiddenTab';
 import ProfileSettingsTab from './ProfileSettingsTab';
 import ProfilePublisherTab from './ProfilePublisherTab';
+import ProfileInterestedLeadsTab from './ProfileInterestedLeadsTab';
 import ProfileBusinessesTab from './ProfileBusinessesTab';
 import ProfileCompletionCard from './ProfileCompletionCard';
 import ProfileHubSkeleton from './ProfileHubSkeleton';
@@ -271,6 +272,7 @@ export default function ProfileHubShell({
         {tab === 'historial' && <ProfileHistoryTab token={session?.access_token} />}
         {tab === 'mensajes' && <ProfileMessagesTab />}
         {tab === 'ocultos' && <ProfileHiddenTab />}
+        {tab === 'interesados' && showPublisher && <ProfileInterestedLeadsTab />}
         {tab === 'publicar' && showPublisher && (
           <ProfilePublisherTab token={session?.access_token} highlightId={highlightId} />
         )}

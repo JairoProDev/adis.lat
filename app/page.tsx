@@ -21,7 +21,9 @@ import { UbicacionDetallada } from '@/types';
 import { useNavigation } from '@/contexts/NavigationContext';
 
 import { registrarBusqueda } from '@/lib/analytics';
-import { getUserInterestProfile, UserInterestProfile } from '@/lib/interactions';
+import { getUserInterestProfile, getInteraccionesUsuario, UserInterestProfile } from '@/lib/interactions';
+import { persistDemandIntent } from '@/lib/demand-intents/client';
+import { trackEvent } from '@/lib/events';
 import { onOnlineStatusChange, getOfflineMessage } from '@/lib/offline';
 import dynamicImport from 'next/dynamic';
 import Header from '@/components/Header';
@@ -96,6 +98,7 @@ import { formatLocationShort } from '@/lib/geo/format';
 import { getLocationCountryCode } from '@/lib/geo/flags';
 import { getCountryByCode, DEFAULT_COUNTRY_CODE } from '@/lib/geo/countries-data';
 import BrowseEmptyState from '@/components/BrowseEmptyState';
+import ParaTiSection from '@/components/home/ParaTiSection';
 const TEST_REGEX = /toyota test|test adiso|test anuncio/i;
 
 function getBrowseCountLabel(
@@ -139,6 +142,7 @@ function HomeContent() {
   const [categoriaFiltro, setCategoriaFiltro] = useState<Categoria | 'todos'>(categoriaUrl && ['empleos', 'inmuebles', 'vehiculos', 'servicios', 'productos', 'eventos', 'negocios', 'comunidad'].includes(categoriaUrl) ? categoriaUrl : 'todos');
   const [ordenamiento, setOrdenamiento] = useState<TipoOrdenamiento>('recientes');
   const [interestProfile, setInterestProfile] = useState<UserInterestProfile | null>(null);
+  const [hiddenAdIds, setHiddenAdIds] = useState<Set<string>>(new Set());
 
 
   const [browseFilters, setBrowseFilters] = useState<BrowseFilterState>(() =>
@@ -448,6 +452,14 @@ function HomeContent() {
     };
   }, [user?.id]);
 
+  useEffect(() => {
+    if (!user?.id) {
+      setHiddenAdIds(new Set());
+      return;
+    }
+    getInteraccionesUsuario(user.id, 'not_interested').then(setHiddenAdIds);
+  }, [user?.id]);
+
   // Filtrado y ordenamiento (sistema unificado)
   useEffect(() => {
     if (adisos.length === 0) {
@@ -464,14 +476,25 @@ function HomeContent() {
       userLat: profile?.latitud,
       userLng: profile?.longitud,
       interestProfile,
+      hiddenAdIds,
     });
 
     if (busquedaDebounced.trim()) {
       registrarBusqueda(user?.id, busquedaDebounced.trim(), filtrados.length);
+      if (filtrados.length === 0) {
+        void persistDemandIntent({
+          queryText: busquedaDebounced.trim(),
+          categoria: categoriaFiltro !== 'todos' ? categoriaFiltro : undefined,
+          facets: browseFilters.facets as Record<string, unknown>,
+          ubicacion: browseFilters.ubicacion as Record<string, unknown> | undefined,
+          source: 'empty_search',
+          userId: user?.id,
+        });
+      }
     }
 
     setAdisosFiltrados(filtrados);
-  }, [busquedaDebounced, categoriaFiltro, ordenamiento, adisos, browseFilters, profile?.latitud, profile?.longitud, user?.id, interestProfile]);
+  }, [busquedaDebounced, categoriaFiltro, ordenamiento, adisos, browseFilters, profile?.latitud, profile?.longitud, user?.id, interestProfile, hiddenAdIds]);
 
   // Breve skeleton al cambiar filtros (no en carga inicial)
   useEffect(() => {
@@ -498,6 +521,27 @@ function HomeContent() {
     // El scroll infinito (hook useInfiniteScroll) se encargará de cargar más
     // automáticamente si el sentinel queda visible después del filtrado inicial.
   }, [busquedaDebounced, categoriaFiltro, browseFilters]);
+
+  useEffect(() => {
+    if (categoriaFiltro !== 'todos') {
+      trackEvent('category.selected', {
+        entityType: 'category',
+        entityId: categoriaFiltro,
+        payload: { categoria: categoriaFiltro },
+        userId: user?.id,
+      });
+    }
+  }, [categoriaFiltro, user?.id]);
+
+  useEffect(() => {
+    if (countActiveFilters(browseFilters, categoriaFiltro) > 0) {
+      trackEvent('filter.applied', {
+        entityType: 'filter',
+        payload: { filters: browseFilters, categoria: categoriaFiltro },
+        userId: user?.id,
+      });
+    }
+  }, [browseFilters, categoriaFiltro, user?.id]);
 
   // Actualizar índice del adiso abierto cuando cambian los filtrados o el adiso abierto
   useEffect(() => {
@@ -1269,7 +1313,15 @@ function HomeContent() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                   <Ordenamiento
                     valor={ordenamiento}
-                    onChange={setOrdenamiento}
+                    onChange={(v) => {
+                      setOrdenamiento(v);
+                      trackEvent('filter.applied', {
+                        entityType: 'filter',
+                        entityId: 'sort',
+                        payload: { sort: v },
+                        userId: user?.id,
+                      });
+                    }}
                   />
 
                   {/* View Mode Switcher */}
@@ -1351,6 +1403,8 @@ function HomeContent() {
                   onChangeLocation={() => setMostrarFiltroUbicacion(true)}
                 />
               ) : (
+                <>
+                <ParaTiSection onAbrirAdiso={handleAbrirAdiso} />
                 <GrillaAdisos
                   adisos={adisosFiltrados.slice(0, visibleCount)}
                   onAbrirAdiso={handleAbrirAdiso}
@@ -1360,6 +1414,7 @@ function HomeContent() {
                   sentinelRef={sentinelRef}
                   vista={vista}
                 />
+                </>
               )}
             </main>
             </div>

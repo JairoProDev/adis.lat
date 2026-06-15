@@ -16,6 +16,7 @@ const VALID_TABS: ProfileTabId[] = [
   'historial',
   'mensajes',
   'ocultos',
+  'interesados',
   'publicar',
   'negocios',
   'ajustes',

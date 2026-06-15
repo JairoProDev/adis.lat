@@ -92,6 +92,9 @@ const getCategoriaIcon = (categoria: Categoria): React.ComponentType<{ size?: nu
 const PASOS_TOTALES = 6;
 const PASOS_TOTALES_GRATUITO = 4; // Sin paquete ni imágenes
 import { consumeSeekIntent } from '@/lib/seek-intent';
+import { persistDemandIntent } from '@/lib/demand-intents/client';
+import InterestPreviewPanel from '@/components/publish/InterestPreviewPanel';
+import { trackEvent } from '@/lib/events';
 
 const PUBLISH_DRAFT_KEY = 'publish_draft_v1';
 
@@ -140,6 +143,13 @@ export default function FormularioPublicar({
         categoria: (seek.categoria as AdisoFormData['categoria']) || 'comunidad',
       }));
       setPasoActual(2);
+      void persistDemandIntent({
+        queryText: seek.titulo,
+        categoria: seek.categoria,
+        ubicacion: seek.ubicacion ? { label: seek.ubicacion, countryCode: seek.countryCode } : undefined,
+        source: 'explicit_seek',
+        userId: user?.id,
+      });
       return;
     }
     try {
@@ -151,7 +161,15 @@ export default function FormularioPublicar({
     } catch {
       // ignore corrupt draft
     }
-  }, []);
+  }, [user?.id]);
+
+  useEffect(() => {
+    trackEvent('publish.step_view', {
+      entityType: 'publish_draft',
+      payload: { paso: pasoActual, categoria: formData.categoria },
+      userId: user?.id,
+    });
+  }, [pasoActual, formData.categoria, user?.id]);
 
   useEffect(() => {
     sessionStorage.setItem(
@@ -442,6 +460,40 @@ export default function FormularioPublicar({
         user_id: user?.id,
         usuario_id: user?.id,
       };
+
+      if (!modoGratuito) {
+        const pkgRes = await fetch('/api/adisos/package', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            packageTier: formData.tamaño || 'miniatura',
+            draft: nuevoAdiso,
+          }),
+        });
+        const pkgData = (await pkgRes.json()) as {
+          status?: string;
+          initPoint?: string;
+          adiso?: Adiso;
+          error?: string;
+        };
+
+        if (!pkgRes.ok) {
+          throw new Error(pkgData.error || 'No se pudo procesar el pago');
+        }
+
+        if (pkgData.status === 'pending' && pkgData.initPoint) {
+          sessionStorage.removeItem(PUBLISH_DRAFT_KEY);
+          window.location.href = pkgData.initPoint;
+          return;
+        }
+
+        const adisoGuardado = pkgData.adiso || nuevoAdiso;
+        sessionStorage.removeItem(PUBLISH_DRAFT_KEY);
+        onPublicar(adisoGuardado);
+        onSuccess?.('¡Adiso publicado! Tus interesados ya están siendo notificados.');
+        router.push(`/perfil?tab=interesados&highlight=${adisoGuardado.id}`);
+        return;
+      }
 
       const adisoGuardado = await saveAdiso(nuevoAdiso);
       sessionStorage.removeItem(PUBLISH_DRAFT_KEY);
@@ -798,6 +850,21 @@ export default function FormularioPublicar({
         </div>
       )}
 
+      {!modoGratuito && formData.titulo.trim().length >= 4 && (
+        <div style={{ marginTop: '1rem' }}>
+          <InterestPreviewPanel
+            categoria={formData.categoria}
+            titulo={formData.titulo}
+            descripcion={formData.descripcion}
+            ubicacion={
+              typeof formData.ubicacion === 'string'
+                ? formData.ubicacion
+                : formData.ubicacion?.distrito || formData.ubicacion?.departamento
+            }
+          />
+        </div>
+      )}
+
       {!modoGratuito && (
         <div style={{
           padding: '1rem',
@@ -857,6 +924,15 @@ export default function FormularioPublicar({
           }}>
             Mayor visibilidad = Mayor tamaño. Elige el que mejor se adapte a tus necesidades.
           </p>
+        </div>
+
+        <div style={{ marginBottom: '1rem' }}>
+          <InterestPreviewPanel
+            categoria={formData.categoria}
+            titulo={formData.titulo}
+            descripcion={formData.descripcion}
+            showPaymentCta
+          />
         </div>
 
         <div style={{

@@ -10,6 +10,7 @@ import {
   IconMegaphone,
   IconStore,
   IconSettings,
+  IconUser,
 } from '@/components/Icons';
 
 export type ProfileTabId =
@@ -18,6 +19,7 @@ export type ProfileTabId =
   | 'historial'
   | 'mensajes'
   | 'ocultos'
+  | 'interesados'
   | 'publicar'
   | 'negocios'
   | 'ajustes';
@@ -36,6 +38,7 @@ export const PROFILE_TABS: {
   { id: 'historial', label: 'Historial', Icon: IconClock },
   { id: 'mensajes', label: 'Mensajes', Icon: IconMessages },
   { id: 'ocultos', label: 'Ocultos', Icon: IconEyeOff },
+  { id: 'interesados', label: 'Interesados', Icon: IconUser, publisherOnly: true },
   { id: 'publicar', label: 'Publicar', Icon: IconMegaphone, publisherOnly: true },
   { id: 'negocios', label: 'Negocios', Icon: IconStore, businessOnly: true },
   { id: 'ajustes', label: 'Ajustes', Icon: IconSettings },

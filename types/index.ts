@@ -329,6 +329,7 @@ export interface UserPreferences {
   categorias_favoritas: Categoria[];
   notificaciones_email: boolean;
   notificaciones_push: boolean;
+  oportunidades_personalizadas?: boolean;
   idioma: string;
   tema: TemaPreferencia;
   radio_busqueda_km: number;
