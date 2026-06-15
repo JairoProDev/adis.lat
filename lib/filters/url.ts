@@ -33,12 +33,14 @@ export function browseFiltersFromSearchParams(params: URLSearchParams): BrowseFi
     state.publicadoEn = pub as PublicadoEn;
   }
 
+  const pais = params.get('pais');
   const depto = params.get('depto');
   const prov = params.get('prov');
   const dist = params.get('dist');
   const radio = parseNum(params.get('radio'));
-  if (depto || prov || dist) {
+  if (pais || depto || prov || dist) {
     state.ubicacion = {
+      countryCode: pais || undefined,
       departamento: depto || undefined,
       provincia: prov || undefined,
       distrito: dist || undefined,
@@ -72,7 +74,7 @@ export function browseFiltersToSearchParams(
 
   const del = [
     'precio_min', 'precio_max', 'con_precio', 'fotos', 'publicado',
-    'verificado', 'destacado', 'depto', 'prov', 'dist', 'radio', 'facet',
+    'verificado', 'destacado', 'pais', 'depto', 'prov', 'dist', 'radio', 'facet',
   ];
   del.forEach((k) => params.delete(k));
 
@@ -85,6 +87,7 @@ export function browseFiltersToSearchParams(
   if (filters.destacado) params.set('destacado', '1');
 
   if (filters.ubicacion) {
+    if (filters.ubicacion.countryCode) params.set('pais', filters.ubicacion.countryCode);
     if (filters.ubicacion.departamento) params.set('depto', filters.ubicacion.departamento);
     if (filters.ubicacion.provincia) params.set('prov', filters.ubicacion.provincia);
     if (filters.ubicacion.distrito) params.set('dist', filters.ubicacion.distrito);

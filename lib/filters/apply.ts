@@ -4,6 +4,7 @@ import { BrowseFilterState } from './types';
 import { adisoMatchesFacets, adisoPublicadoDentroDe, adisoTieneImagen } from './matchers';
 import { personalizationFreshnessBoostMs } from '@/lib/ai/personalization';
 import type { UserInterestProfile } from '@/lib/interactions';
+import { getCountryByCode, DEFAULT_COUNTRY_CODE } from '@/lib/geo/countries-data';
 
 const TEST_REGEX = /toyota test|test adiso|test anuncio/i;
 
@@ -32,6 +33,21 @@ function calcularDistanciaKm(lat1: number, lon1: number, lat2: number, lon2: num
   return R * c;
 }
 
+function adisoMatchesCountry(ubi: UbicacionDetallada, countryCode?: string): boolean {
+  if (!countryCode || countryCode === DEFAULT_COUNTRY_CODE) {
+    const pais = (ubi.pais || 'Perú').toLowerCase();
+    return pais.includes('peru') || pais.includes('perú') || !ubi.pais;
+  }
+  const country = getCountryByCode(countryCode);
+  if (!country) return true;
+  const pais = (ubi.pais || '').toLowerCase();
+  return (
+    pais === country.name.toLowerCase() ||
+    pais === country.nameEn.toLowerCase() ||
+    countryCode.toLowerCase() === pais
+  );
+}
+
 function matchUbicacion(
   adiso: Adiso,
   filtro: NonNullable<BrowseFilterState['ubicacion']>,
@@ -43,6 +59,13 @@ function matchUbicacion(
     ? { pais: 'Perú', departamento: adiso.ubicacion, provincia: '', distrito: '' }
     : adiso.ubicacion;
 
+  if (filtro.countryCode && !adisoMatchesCountry(ubi, filtro.countryCode)) {
+    return false;
+  }
+
+  if (!filtro.departamento && !filtro.provincia && !filtro.distrito) {
+    return true;
+  }
   if (filtro.distrito) {
     const matchDistrito = ubi.distrito?.toLowerCase().trim() === filtro.distrito.toLowerCase().trim();
     if (matchDistrito) return true;

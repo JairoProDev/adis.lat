@@ -1,6 +1,7 @@
 import { Categoria } from '@/types';
 import { BrowseFilterState, FilterChip } from './types';
 import { getFilterDefinition, getFiltersForCategory } from './definitions';
+import { getCountryByCode } from '@/lib/geo/countries-data';
 
 export function buildFilterChips(
   filters: BrowseFilterState,
@@ -40,6 +41,9 @@ export function buildFilterChips(
     chips.push({ id: 'ubicacion', field: 'ubicacion', label: filters.ubicacion.provincia });
   } else if (filters.ubicacion?.departamento) {
     chips.push({ id: 'ubicacion', field: 'ubicacion', label: filters.ubicacion.departamento });
+  } else if (filters.ubicacion?.countryCode) {
+    const c = getCountryByCode(filters.ubicacion.countryCode);
+    chips.push({ id: 'ubicacion', field: 'ubicacion', label: c?.name || filters.ubicacion.country || 'País' });
   }
 
   for (const [facetId, raw] of Object.entries(filters.facets)) {

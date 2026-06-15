@@ -92,14 +92,14 @@ import type { SeccionSidebar } from '@/components/SidebarDesktop';
 
 type SeccionMobile = 'adiso' | 'mapa' | 'publicar' | 'chatbot' | 'gratuitos';
 
-// Expresión regular profesional para limpiar datos de prueba residuales
+import { formatLocationShort, getLocationFlag } from '@/lib/geo/format';
 const TEST_REGEX = /toyota test|test adiso|test anuncio/i;
 
 function getBrowseCountLabel(
   categoria: Categoria | 'todos',
-  filtro?: { distrito?: string; departamento?: string }
+  filtro?: { distrito?: string; departamento?: string; provincia?: string },
 ): string {
-  const ubic = filtro?.distrito || filtro?.departamento || 'Cusco';
+  const ubic = filtro?.distrito || filtro?.provincia || filtro?.departamento || 'Cusco';
   if (categoria !== 'todos') {
     return `· ${getCategoriaLabel(categoria)}`;
   }
@@ -827,7 +827,8 @@ function HomeContent() {
           </a>
           <Header
             onToggleLeftSidebar={() => setIsLeftSidebarOpen(!isLeftSidebarOpen)}
-            ubicacion={browseFilters.ubicacion?.distrito || browseFilters.ubicacion?.departamento || 'Perú'}
+            ubicacion={formatLocationShort(browseFilters.ubicacion)}
+            ubicacionFlag={getLocationFlag(browseFilters.ubicacion)}
             categoria={categoriaFiltro}
             onUbicacionClick={() => setMostrarFiltroUbicacion(true)}
             seccionActiva={seccionDesktopActiva}

@@ -39,6 +39,7 @@ interface HeaderProps {
   onSeccionChange?: (seccion: SeccionSidebar) => void;
   onToggleLeftSidebar?: () => void;
   ubicacion?: string;
+  ubicacionFlag?: string;
   onUbicacionClick?: () => void;
   categoria?: Categoria | 'todos';
 }
@@ -49,6 +50,7 @@ export default function Header({
   onChangelogClick,
   onToggleLeftSidebar,
   ubicacion = 'Perú',
+  ubicacionFlag = '🇵🇪',
   onUbicacionClick,
   categoria = 'todos',
 }: HeaderProps) {
@@ -71,7 +73,7 @@ export default function Header({
   const categoriaLabel =
     categoria !== 'todos' ? getCategoriaLabel(categoria as Categoria) : 'Todas las categorías';
   const contextLine =
-    categoria !== 'todos' ? `${categoriaLabel} · ${ubicacion}` : ubicacion;
+    categoria !== 'todos' ? `${categoriaLabel} · ${ubicacionFlag} ${ubicacion}` : `${ubicacionFlag} ${ubicacion}`;
 
   useEffect(() => {
     setMounted(true);

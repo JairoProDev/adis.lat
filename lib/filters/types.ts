@@ -16,10 +16,14 @@ export interface BrowseFilterState {
   verificado?: boolean;
   destacado?: boolean;
   ubicacion?: {
+    countryCode?: string;
+    country?: string;
     departamento?: string;
     provincia?: string;
     distrito?: string;
     radioKm?: number;
+    latitud?: number;
+    longitud?: number;
   };
   /** Facetas por categoría: clave = filter id, valor = opción(es) */
   facets: Record<string, string | string[] | boolean>;
@@ -75,7 +79,7 @@ export function countActiveFilters(
   if (state.publicadoEn) n++;
   if (state.verificado) n++;
   if (state.destacado) n++;
-  if (state.ubicacion?.distrito || state.ubicacion?.departamento || state.ubicacion?.provincia) n++;
+  if (state.ubicacion?.distrito || state.ubicacion?.departamento || state.ubicacion?.provincia || state.ubicacion?.countryCode) n++;
 
   const defs = Object.keys(state.facets);
   for (const key of defs) {
