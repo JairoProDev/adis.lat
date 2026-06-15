@@ -72,7 +72,7 @@ function SidebarLauncher({
             key={id}
             type="button"
             onClick={() => onSelect(id)}
-            className="flex flex-col items-center gap-2 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-4 text-center transition-colors hover:border-[var(--brand-blue)]/40 hover:bg-[var(--hover-bg)]"
+            className="flex flex-col items-center gap-2 rounded-2xl border border-[var(--border-color)] brand-mesh-glass px-3 py-4 text-center transition-colors hover:border-[var(--brand-blue)]/40 hover:bg-[var(--hover-bg)]"
           >
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[rgba(var(--brand-primary-rgb),0.1)]">
               <Icon
@@ -99,8 +99,8 @@ function SidebarSectionTabs({
 }) {
   return (
     <div
-      className="flex shrink-0 items-center gap-1 border-b border-[var(--border-color)] px-2 py-2"
-      style={{ backgroundColor: 'var(--bg-secondary)' }}
+        className="flex shrink-0 items-center gap-1 border-b border-[var(--border-color)] px-2 py-2 brand-mesh-strip"
+        style={{ backgroundColor: 'color-mix(in srgb, var(--bg-secondary) 80%, transparent)' }}
     >
       <div className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto no-scrollbar">
         {PANEL_TABS.map(({ id, shortLabel, Icon }) => {
@@ -248,9 +248,8 @@ export default function SidebarDesktop({
       }}
     >
       <div
-        className="flex h-full flex-col overflow-hidden"
+        className="brand-mesh-glass flex h-full flex-col overflow-hidden"
         style={{
-          backgroundColor: 'var(--bg-primary)',
           boxShadow: '-10px 0 30px rgba(0,0,0,0.03)',
           borderTopLeftRadius: '24px',
           borderBottomLeftRadius: '24px',

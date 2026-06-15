@@ -77,10 +77,10 @@ export default function FilterSidePanel({
 
   return (
     <aside
-      className="mx-1 mt-2 bg-[var(--bg-primary)] overflow-y-auto rounded-2xl shadow-sm no-scrollbar flex flex-col"
+      className="mx-1 mt-2 brand-mesh-glass overflow-y-auto rounded-2xl shadow-sm no-scrollbar flex flex-col"
       style={{ ...stickyStyle, width: EXPANDED_WIDTH }}
     >
-      <div className="flex items-center justify-between px-4 py-3 sticky top-0 bg-[var(--bg-primary)] z-10">
+      <div className="flex items-center justify-between px-4 py-3 sticky top-0 brand-mesh-glass z-10">
         <h2 className="text-sm font-bold text-[var(--text-primary)]">Filtros</h2>
         <button
           type="button"

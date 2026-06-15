@@ -817,7 +817,7 @@ function HomeContent() {
   return (
     <>
       <PullToRefresh onRefresh={handleRefresh}>
-        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <div className="brand-mesh-bg" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
@@ -870,7 +870,7 @@ function HomeContent() {
             )}
             <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
             <div
-              className="no-scrollbar"
+              className="no-scrollbar brand-mesh-strip"
               style={{
                 display: 'flex',
                 justifyContent:isDesktop ? 'center' : 'flex-start',
@@ -1139,13 +1139,14 @@ function HomeContent() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '6px',
-                      backgroundColor: 'var(--bg-primary)',
                       padding: '4px 10px 4px 5px',
                       borderRadius: '20px',
                       boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
                       height: '36px',
                       flexShrink: 0,
-                    }}>
+                    }}
+                    className="brand-pill-glass"
+                    >
                       <div style={{
                         backgroundColor: 'var(--brand-blue)',
                         color: 'white',
@@ -1240,13 +1241,14 @@ function HomeContent() {
                   {/* View Mode Switcher */}
                   <div style={{
                     display: 'flex',
-                    backgroundColor: 'var(--bg-primary)',
                     padding: '4px',
                     borderRadius: '14px',
                     boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
                     height: '42px',
                     alignItems: 'center'
-                  }}>
+                  }}
+                  className="brand-pill-glass"
+                  >
                     {[
                       { id: 'grid', icon: IconGrid, title: 'Cuadrícula' },
                       { id: 'feed', icon: IconFeed, title: 'Individual' },

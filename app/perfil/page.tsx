@@ -47,7 +47,7 @@ export default function PerfilPage() {
   }, [setSidebarExpanded]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--bg-secondary)] pb-16 md:pb-0">
+    <div className="brand-mesh-bg flex min-h-screen flex-col pb-16 md:pb-0">
       <Header
         onToggleLeftSidebar={() => setSidebarOpen(true)}
         seccionActiva={'perfil' as never}

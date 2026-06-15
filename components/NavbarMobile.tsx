@@ -90,6 +90,7 @@ export default function NavbarMobile({
         }
       `}</style>
       <nav
+        className="brand-nav-sheen"
         style={{
           position: 'fixed',
           bottom: 0,
@@ -97,7 +98,6 @@ export default function NavbarMobile({
           right: 0,
           height: 'calc(4rem + env(safe-area-inset-bottom, 0px))',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-          backgroundColor: 'var(--bg-primary)',
           borderTop: '1px solid var(--border-color)',
           display: 'flex',
           justifyContent: 'space-around',
