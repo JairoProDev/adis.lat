@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { FaPencilAlt, FaPaperPlane, FaCheck } from 'react-icons/fa';
-import { IconAdis } from '@/components/Icons';
+import { IconAdis, IconImage } from '@/components/Icons';
 import PublishImagePreview from './PublishImagePreview';
 import { getCategoriaIcon, PUBLISH_CATEGORIAS } from '@/lib/categoria-icons';
 import { getCategoriaThemeTokens } from '@/lib/categoria-theme';
@@ -31,7 +31,61 @@ export interface ChatMessageView {
   imageUrl?: string;
 }
 
-/* ── Header ── */
+/* ── Opciones inline en el hilo del chat ── */
+export function PublishChatInlineOptions({
+  step,
+  compact,
+  input,
+  uploading,
+  onInputChange,
+  onSelect,
+  onConfirmAmount,
+  onPickFile,
+}: {
+  step: 'categoria' | 'precio' | 'foto';
+  compact?: boolean;
+  input?: string;
+  uploading?: boolean;
+  onInputChange?: (v: string) => void;
+  onSelect: (value: string) => void;
+  onConfirmAmount?: () => void;
+  onPickFile?: () => void;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex items-start gap-2 max-w-full"
+    >
+      <div className={`${compact ? 'w-6 h-6' : 'w-7 h-7'} shrink-0`} aria-hidden />
+      <div className="flex-1 min-w-0 space-y-2">
+        {step === 'categoria' && (
+          <PublishCategoryGrid compact={compact} onSelect={onSelect} inline />
+        )}
+        {step === 'precio' && (
+          <PublishPriceOptions
+            compact={compact}
+            inline
+            input={input ?? ''}
+            onInputChange={onInputChange ?? (() => {})}
+            onSelect={onSelect}
+            onConfirmAmount={onConfirmAmount ?? (() => {})}
+          />
+        )}
+        {step === 'foto' && (
+          <PublishPhotoOptions
+            compact={compact}
+            inline
+            uploading={uploading ?? false}
+            onPickFile={onPickFile ?? (() => {})}
+            onSkip={() => onSelect('skip')}
+          />
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
 export function PublishChatHeader({
   compact,
   typing,
@@ -239,12 +293,24 @@ export function PublishChatBubble({
 export function PublishCategoryGrid({
   compact,
   onSelect,
+  inline = false,
 }: {
   compact?: boolean;
   onSelect: (value: string) => void;
+  inline?: boolean;
 }) {
   return (
-    <div className={`grid gap-2 ${compact ? 'grid-cols-4' : 'grid-cols-4 sm:grid-cols-4'}`}>
+    <div
+      className={`grid gap-2 ${
+        inline
+          ? compact
+            ? 'grid-cols-4'
+            : 'grid-cols-4'
+          : compact
+            ? 'grid-cols-4'
+            : 'grid-cols-4 sm:grid-cols-4'
+      } ${inline ? 'rounded-2xl rounded-bl-sm p-2 ring-1 ring-black/[0.05] bg-[var(--bg-primary)] shadow-sm' : ''}`}
+    >
       {PUBLISH_CATEGORIAS.map((opt, i) => {
         const Icon = getCategoriaIcon(opt.value);
         const accent = getCategoriaThemeTokens(opt.value).accent;
@@ -277,19 +343,21 @@ export function PublishCategoryGrid({
 
 export function PublishPriceOptions({
   compact,
+  inline = false,
   input,
   onInputChange,
   onSelect,
   onConfirmAmount,
 }: {
   compact?: boolean;
+  inline?: boolean;
   input: string;
   onInputChange: (v: string) => void;
   onSelect: (value: string) => void;
   onConfirmAmount: () => void;
 }) {
   return (
-    <div className="space-y-2">
+    <div className={`space-y-2 ${inline ? 'rounded-2xl rounded-bl-sm p-2.5 ring-1 ring-black/[0.05] bg-[var(--bg-primary)] shadow-sm' : ''}`}>
       <div className={`flex flex-wrap gap-1.5 ${compact ? '' : 'gap-2'}`}>
         {PRECIO_OPTIONS.map((opt, i) => (
           <motion.button
@@ -299,12 +367,13 @@ export function PublishPriceOptions({
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: i * 0.05 }}
             onClick={() => onSelect(opt.value)}
-            className={`rounded-full font-semibold transition-all hover:scale-105 active:scale-95 ring-1 ring-black/[0.06] bg-[var(--bg-primary)] hover:bg-[rgba(var(--brand-primary-rgb),0.08)] hover:ring-[rgba(var(--brand-primary-rgb),0.3)] text-[var(--text-secondary)] hover:text-[var(--brand-blue)] ${compact ? 'px-2.5 py-1 text-[11px]' : 'px-3 py-1.5 text-xs'}`}
+            className={`rounded-full font-semibold transition-all hover:scale-105 active:scale-95 ring-1 ring-black/[0.06] bg-[var(--bg-secondary)] hover:bg-[rgba(var(--brand-primary-rgb),0.08)] hover:ring-[rgba(var(--brand-primary-rgb),0.3)] text-[var(--text-secondary)] hover:text-[var(--brand-blue)] ${compact ? 'px-2.5 py-1 text-[11px]' : 'px-3 py-1.5 text-xs'}`}
           >
             {opt.label}
           </motion.button>
         ))}
       </div>
+      {!inline && (
       <div className="flex gap-2 items-center">
         <input
           type="text"
@@ -324,23 +393,28 @@ export function PublishPriceOptions({
           OK
         </button>
       </div>
+      )}
     </div>
   );
 }
 
 export function PublishPhotoOptions({
   compact,
+  inline = false,
   uploading,
   onPickFile,
   onSkip,
 }: {
   compact?: boolean;
+  inline?: boolean;
   uploading: boolean;
   onPickFile: () => void;
   onSkip: () => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div
+      className={`flex flex-wrap gap-2 ${inline ? 'rounded-2xl rounded-bl-sm p-2.5 ring-1 ring-black/[0.05] bg-[var(--bg-primary)] shadow-sm' : ''}`}
+    >
       <button
         type="button"
         disabled={uploading}
@@ -360,7 +434,91 @@ export function PublishPhotoOptions({
   );
 }
 
-/* ── Composer input ── */
+/* ── Barra inferior fija (estilo chat IA) ── */
+export function PublishChatBottomBar({
+  compact,
+  input,
+  placeholder,
+  onChange,
+  onSend,
+  disabled,
+  showInput = true,
+  onAttachImage,
+  attachUploading,
+  attachLabel,
+}: {
+  compact?: boolean;
+  input: string;
+  placeholder: string;
+  onChange: (v: string) => void;
+  onSend: () => void;
+  disabled?: boolean;
+  showInput?: boolean;
+  onAttachImage?: () => void;
+  attachUploading?: boolean;
+  attachLabel?: string;
+}) {
+  return (
+    <div
+      className={`shrink-0 border-t border-black/[0.06] bg-[var(--bg-primary)]/95 backdrop-blur-md ${
+        compact ? 'px-2.5 py-2' : 'px-3.5 py-3'
+      }`}
+    >
+      {showInput ? (
+        <div className={`flex items-end gap-2 ${compact ? '' : 'gap-2.5'}`}>
+          {onAttachImage && (
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.92 }}
+              onClick={onAttachImage}
+              disabled={attachUploading}
+              className={`shrink-0 rounded-xl ring-1 ring-black/[0.06] text-[var(--brand-blue)] bg-[var(--bg-secondary)] flex items-center justify-center disabled:opacity-50 ${compact ? 'w-9 h-9' : 'w-10 h-10'}`}
+              aria-label={attachLabel ?? 'Adjuntar foto'}
+              title={attachLabel ?? 'Adjuntar foto'}
+            >
+              <IconImage size={compact ? 14 : 16} color="var(--brand-blue)" />
+            </motion.button>
+          )}
+          <div className="flex-1 min-w-0">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => onChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  onSend();
+                }
+              }}
+              placeholder={placeholder}
+              disabled={disabled}
+              className={`w-full rounded-2xl ring-1 ring-black/[0.06] bg-[var(--bg-secondary)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[rgba(var(--brand-primary-rgb),0.35)] disabled:opacity-50 ${
+                compact ? 'px-3 py-2 text-[13px] h-9' : 'px-4 py-2.5 text-sm h-11'
+              }`}
+            />
+          </div>
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.92 }}
+            onClick={onSend}
+            disabled={disabled || !input.trim()}
+            className={`shrink-0 rounded-2xl text-white flex items-center justify-center disabled:opacity-35 shadow-[0_4px_14px_rgba(var(--brand-primary-rgb),0.4)] ${compact ? 'w-9 h-9' : 'w-11 h-11'}`}
+            style={{ background: 'linear-gradient(135deg, var(--brand-blue), #3d96b0)' }}
+            aria-label="Enviar"
+          >
+            <FaPaperPlane size={compact ? 12 : 14} className="translate-x-px -translate-y-px" />
+          </motion.button>
+        </div>
+      ) : (
+        <p className={`m-0 text-center text-[var(--text-tertiary)] ${compact ? 'text-[11px] py-1' : 'text-xs py-1.5'}`}>
+          Elige una opción en el chat ↑
+        </p>
+      )}
+    </div>
+  );
+}
+
+/* ── Composer input (legacy) ── */
 export function PublishChatComposer({
   compact,
   input,

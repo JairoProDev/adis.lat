@@ -68,6 +68,19 @@ export function botQuestion(step: PublishChatStepId): string {
   }
 }
 
+export function resolveCategoriaFromText(text: string): Categoria {
+  const t = text.trim().toLowerCase();
+  const exact = CATEGORIA_OPTIONS.find(
+    (c) => c.value === t || c.label.toLowerCase() === t,
+  );
+  if (exact) return exact.value;
+  const partial = CATEGORIA_OPTIONS.find(
+    (c) => t.includes(c.label.toLowerCase()) || c.label.toLowerCase().includes(t),
+  );
+  if (partial) return partial.value;
+  return inferCategory(text);
+}
+
 export function inferCategory(text: string): Categoria {
   const t = text.toLowerCase();
   if (/\b(alquil|depart|casa|terreno|inmueble|habitaci)/.test(t)) return 'inmuebles';

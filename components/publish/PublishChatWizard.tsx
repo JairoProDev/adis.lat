@@ -3,16 +3,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import PublishTierModal from './PublishTierModal';
+import PublishChatInputBar from './PublishChatInputBar';
 import {
   calcProgress,
-  PublishCategoryGrid,
   PublishChatBubble,
-  PublishChatComposer,
   PublishChatHeader,
+  PublishChatInlineOptions,
   PublishChatSummary,
   PublishChatTyping,
-  PublishPhotoOptions,
-  PublishPriceOptions,
   type ChatMessageView,
 } from './PublishChatUI';
 import { usePublishActions } from '@/hooks/usePublishActions';
@@ -26,6 +24,7 @@ import {
   PRECIO_OPTIONS,
   PublishChatDraft,
   PublishChatStepId,
+  resolveCategoriaFromText,
   STEP_ORDER,
 } from '@/lib/publish/chat-steps';
 
@@ -71,9 +70,6 @@ interface PublishChatWizardProps {
   initialImageUrl?: string | null;
   onNotify?: (msg: string, type?: 'info' | 'error' | 'success') => void;
   onPublished?: () => void;
-  /** When user submits from external composer */
-  externalSubmit?: { text: string; imageUrl?: string | null } | null;
-  onExternalSubmitHandled?: () => void;
 }
 
 export default function PublishChatWizard({
@@ -82,8 +78,6 @@ export default function PublishChatWizard({
   initialImageUrl = null,
   onNotify,
   onPublished,
-  externalSubmit,
-  onExternalSubmitHandled,
 }: PublishChatWizardProps) {
   const { profile } = useAuth();
   const {
@@ -149,7 +143,7 @@ export default function PublishChatWizard({
     setTyping(true);
     await delay(400);
     setTyping(false);
-    addBot('¡Hola! Soy ADIS. Te ayudo a publicar tu aviso paso a paso. Solo una pregunta a la vez 😊');
+    addBot('¡Hola! Soy ADIS. Cuéntame qué quieres publicar y te ayudaré a crear tu adiso 😊');
     await delay(300);
     await askStep('categoria');
   }, [started, addBot, askStep]);
@@ -192,7 +186,12 @@ export default function PublishChatWizard({
     await askStep(next);
   };
 
-  const applyAnswer = async (step: PublishChatStepId, rawValue: string, imageUrl?: string) => {
+  const applyAnswer = async (
+    step: PublishChatStepId,
+    rawValue: string,
+    imageUrl?: string,
+    userDisplay?: string,
+  ) => {
     const value = rawValue.trim();
     if (!value && step !== 'foto' && step !== 'precio') return;
 
@@ -225,9 +224,26 @@ export default function PublishChatWizard({
     }
 
     setDraft(nextDraft);
-    addUser(formatAnswer(step, value, nextDraft), step, nextDraft.imageUrl);
+    const display =
+      userDisplay ?? formatAnswer(step, value, nextDraft);
+    addUser(display, step, nextDraft.imageUrl);
     setInput('');
     scrollBottom();
+
+    if (
+      step === 'categoria' &&
+      userDisplay &&
+      userDisplay !== formatAnswer(step, value, nextDraft)
+    ) {
+      setTyping(true);
+      await delay(400);
+      setTyping(false);
+      addBot(
+        `Tiene sentido — lo ubico en ${formatAnswer(step, value, nextDraft)} según lo que comentas.`,
+      );
+      scrollBottom();
+    }
+
     await advanceAfterAnswer(step, nextDraft);
   };
 
@@ -264,40 +280,50 @@ export default function PublishChatWizard({
   );
 
   useEffect(() => {
-    if (!externalSubmit?.text) return;
-    const answered = messages.some((m) => m.role === 'user');
-    if (!answered) {
-      void fastForwardFromComposer(externalSubmit.text, externalSubmit.imageUrl);
-    } else {
-      setDraft((d) => ({ ...d, descripcion: externalSubmit.text.trim() }));
-      addUser(
-        externalSubmit.text.trim().length > 200
-          ? `${externalSubmit.text.trim().slice(0, 200)}…`
-          : externalSubmit.text.trim(),
-        'descripcion',
-      );
-      if (externalSubmit.imageUrl) setPublishImageUrl(externalSubmit.imageUrl);
-      scrollBottom();
-    }
-    onExternalSubmitHandled?.();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [externalSubmit]);
-
-  useEffect(() => {
     if (!initialText?.trim() || !started) return;
     const timer = setTimeout(() => {
       const answered = messages.some((m) => m.role === 'user');
       if (!answered) void fastForwardFromComposer(initialText, initialImageUrl);
-    }, 800);
+    }, 600);
     return () => clearTimeout(timer);
-    // seed once when landing with URL params
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [started]);
+  }, [started, initialText, initialImageUrl]);
 
   const handleSend = () => {
-    if (typing || currentStep === 'done') return;
-    if (currentStep === 'foto') return;
-    void applyAnswer(currentStep, input);
+    if (typing || currentStep === 'done' || !input.trim()) return;
+    const text = input.trim();
+
+    if (currentStep === 'categoria') {
+      const matched = CATEGORIA_OPTIONS.find(
+        (c) =>
+          c.value === text.toLowerCase() ||
+          c.label.toLowerCase() === text.toLowerCase(),
+      );
+      const cat = matched?.value ?? resolveCategoriaFromText(text);
+      void applyAnswer(
+        'categoria',
+        cat,
+        undefined,
+        matched ? undefined : text,
+      );
+      return;
+    }
+
+    if (currentStep === 'foto') {
+      void applyAnswer('foto', 'skip');
+      return;
+    }
+
+    void applyAnswer(currentStep, text);
+  };
+
+  const handlePublishImage = (file: File) => {
+    void uploadPublishImage(file).then((url) => {
+      if (!url) return;
+      if (currentStep === 'foto') {
+        void applyAnswer('foto', 'attached', url);
+      }
+    });
   };
 
   const handleOption = (value: string) => {
@@ -349,24 +375,38 @@ export default function PublishChatWizard({
     }, draft.imageUrl || publishImageUrl || undefined);
   };
 
-  const showOptions =
-    !typing &&
-    currentStep !== 'done' &&
-    (currentStep === 'categoria' || currentStep === 'precio' || currentStep === 'foto');
+  const interactiveStep =
+    !typing && currentStep !== 'done' && (currentStep === 'categoria' || currentStep === 'precio' || currentStep === 'foto')
+      ? currentStep
+      : null;
 
   const progress = calcProgress(currentStep);
 
   const inputPlaceholder =
-    currentStep === 'titulo'
-      ? 'Ej: iPad Air M2 256 GB'
-      : currentStep === 'contacto'
-        ? 'Ej: 987 654 321'
-        : 'Escribe tu respuesta…';
+    currentStep === 'categoria'
+      ? 'O escribe tu categoría…'
+      : currentStep === 'titulo'
+        ? 'Ej: iPad Air M2 256 GB'
+        : currentStep === 'descripcion'
+          ? 'Describe tu aviso…'
+          : currentStep === 'contacto'
+            ? 'Ej: 987 654 321'
+            : currentStep === 'precio'
+              ? 'Monto en soles o elige arriba'
+              : currentStep === 'ubicacion'
+                ? 'Ciudad o distrito…'
+                : currentStep === 'foto'
+                  ? 'Escribe para continuar sin foto…'
+                  : 'Escribe tu mensaje…';
+
+  useEffect(() => {
+    scrollBottom();
+  }, [messages.length, typing, interactiveStep, currentStep]);
 
   return (
-    <div className={`flex flex-col ${compact ? 'h-full min-h-0' : ''}`}>
+    <div className={`flex flex-col ${compact ? 'h-full min-h-0' : 'h-full min-h-[480px]'}`}>
       <div
-        className={`flex flex-col rounded-2xl overflow-hidden shadow-[var(--shadow-lg)] ring-1 ring-black/[0.05] bg-[var(--bg-secondary)] ${compact ? 'flex-1 min-h-0' : ''}`}
+        className={`flex flex-col flex-1 min-h-0 rounded-2xl overflow-hidden shadow-[var(--shadow-lg)] ring-1 ring-black/[0.05] bg-[var(--bg-secondary)]`}
       >
         <PublishChatHeader
           compact={compact}
@@ -377,9 +417,7 @@ export default function PublishChatWizard({
 
         <div
           ref={scrollRef}
-          className={`flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 space-y-3 scroll-smooth ${
-            compact ? 'min-h-0 max-h-none' : 'max-h-[min(520px,55vh)]'
-          }`}
+          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-3 py-3 space-y-3 scroll-smooth"
           style={{
             background:
               'linear-gradient(180deg, var(--bg-secondary) 0%, rgba(var(--brand-primary-rgb),0.03) 50%, var(--bg-secondary) 100%)',
@@ -403,6 +441,19 @@ export default function PublishChatWizard({
 
           {typing && <PublishChatTyping compact={compact} />}
 
+          {interactiveStep && (
+            <PublishChatInlineOptions
+              step={interactiveStep}
+              compact={compact}
+              input={input}
+              uploading={uploadingImage}
+              onInputChange={setInput}
+              onSelect={handleOption}
+              onConfirmAmount={() => input.trim() && handleOption(input.trim())}
+              onPickFile={() => fileRef.current?.click()}
+            />
+          )}
+
           {currentStep === 'done' && (
             <PublishChatSummary
               compact={compact}
@@ -417,60 +468,35 @@ export default function PublishChatWizard({
           )}
         </div>
 
-        {currentStep !== 'done' && !typing && (
-          <div
-            className={`shrink-0 border-t border-black/[0.04] bg-[var(--bg-primary)]/90 backdrop-blur-sm space-y-2.5 ${compact ? 'p-2.5' : 'p-3.5'}`}
-          >
-            {showOptions && currentStep === 'categoria' && (
-              <PublishCategoryGrid compact={compact} onSelect={handleOption} />
-            )}
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) {
+              void uploadPublishImage(f).then((url) => {
+                if (url) void applyAnswer('foto', 'attached', url);
+              });
+            }
+            e.target.value = '';
+          }}
+        />
 
-            {showOptions && currentStep === 'precio' && (
-              <PublishPriceOptions
-                compact={compact}
-                input={input}
-                onInputChange={setInput}
-                onSelect={handleOption}
-                onConfirmAmount={() => input.trim() && handleOption(input.trim())}
-              />
-            )}
-
-            {showOptions && currentStep === 'foto' && (
-              <>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) {
-                      void uploadPublishImage(f).then((url) => {
-                        if (url) void applyAnswer('foto', 'attached', url);
-                      });
-                    }
-                    e.target.value = '';
-                  }}
-                />
-                <PublishPhotoOptions
-                  compact={compact}
-                  uploading={uploadingImage}
-                  onPickFile={() => fileRef.current?.click()}
-                  onSkip={() => handleOption('skip')}
-                />
-              </>
-            )}
-
-            {!showOptions && (
-              <PublishChatComposer
-                compact={compact}
-                input={input}
-                placeholder={inputPlaceholder}
-                onChange={setInput}
-                onSend={handleSend}
-              />
-            )}
-          </div>
+        {currentStep !== 'done' && (
+          <PublishChatInputBar
+            value={input}
+            onChange={setInput}
+            onSend={handleSend}
+            compact={compact}
+            disabled={typing}
+            placeholder={inputPlaceholder}
+            onPublishImage={handlePublishImage}
+            publishImageUrl={publishImageUrl}
+            publishImageUploading={uploadingImage}
+            onRemoveImage={() => setPublishImageUrl(null)}
+          />
         )}
       </div>
 

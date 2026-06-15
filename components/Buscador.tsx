@@ -33,6 +33,8 @@ interface BuscadorProps {
   primaryActionDisabled?: boolean;
   primaryActionLoading?: boolean;
   primaryActionLabel?: string;
+  /** Solo ícono en el botón principal (sin texto) */
+  primaryIconOnly?: boolean;
   /** Adjuntar foto al publicar (modo publish) */
   onPublishImageSelected?: (file: File) => void;
   publishImageAttached?: boolean;
@@ -72,6 +74,7 @@ export default function Buscador({
   publishImageAttached = false,
   publishImageUploading = false,
   flat = false,
+  primaryIconOnly = false,
 }: BuscadorProps) {
   const { t } = useTranslation();
   const { isListening, isSupported, start: startVoice, stop: stopVoice } = useSpeechRecognition('es-PE');
@@ -128,9 +131,7 @@ export default function Buscador({
 
   const defaultPlaceholder =
     composerMode === 'publish'
-      ? flat
-        ? 'Describe tu aviso…'
-        : 'Publica ofertas y oportunidades…'
+      ? 'Publica ofertas y oportunidades…'
       : t('search.placeholder') || 'Buscar ofertas y oportunidades…';
   const placeholder = placeholderProp || defaultPlaceholder;
 
@@ -239,8 +240,9 @@ export default function Buscador({
   };
 
   const primaryLabel =
-    primaryActionLabel ||
+    primaryActionLabel ??
     (composerMode === 'publish' ? (primaryActionLoading ? '…' : 'Publicar') : 'Buscar');
+  const showPrimaryText = !primaryIconOnly && Boolean(primaryLabel?.trim());
 
   const modeToggle = showComposerToggle ? (
     <ComposerModeToggle
@@ -422,26 +424,26 @@ export default function Buscador({
                   ? 'bg-[var(--brand-yellow)] text-[#1c1608] shadow-[0_2px_10px_rgba(var(--brand-yellow-rgb),0.45)] hover:brightness-105'
                   : 'bg-[var(--brand-blue)] text-white shadow-[0_2px_10px_rgba(var(--brand-primary-rgb),0.35)] hover:brightness-105'
               }`}
-              title={primaryLabel}
-              aria-label={primaryLabel}
+              title={primaryLabel || 'Enviar'}
+              aria-label={primaryLabel || 'Enviar'}
             >
               {primaryActionLoading ? (
                 <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
               ) : isPublishMode ? (
-                flat ? (
-                  <IconMegaphone size={13} color="currentColor" />
+                flat || primaryIconOnly ? (
+                  <IconMegaphone size={flat || compact ? 13 : 14} color="currentColor" />
                 ) : (
                   <>
                     <IconMegaphone size={14} color="currentColor" />
-                    <span className="hidden sm:inline">{primaryLabel}</span>
+                    {showPrimaryText && <span className="hidden sm:inline">{primaryLabel}</span>}
                   </>
                 )
-              ) : flat ? (
-                <IconSearch size={13} color="currentColor" />
+              ) : flat || primaryIconOnly ? (
+                <IconSearch size={flat || compact ? 13 : 14} color="currentColor" />
               ) : (
                 <>
                   <IconSearch size={14} color="currentColor" />
-                  <span className="hidden sm:inline">{primaryLabel}</span>
+                  {showPrimaryText && <span className="hidden sm:inline">{primaryLabel}</span>}
                 </>
               )}
             </motion.button>

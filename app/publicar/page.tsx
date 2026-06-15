@@ -10,9 +10,6 @@ import { ToastContainer } from '@/components/Toast';
 import { useToast } from '@/hooks/useToast';
 import FeedbackButton from '@/components/FeedbackButton';
 import { useSearchParams } from 'next/navigation';
-const UnifiedSearchComposer = dynamic(() => import('@/components/UnifiedSearchComposer'), {
-  ssr: false,
-});
 
 const PublishChatWizard = dynamic(() => import('@/components/publish/PublishChatWizard'), {
   loading: () => <div className="p-6 text-center text-sm text-[var(--text-secondary)]">Cargando asistente…</div>,
@@ -24,9 +21,9 @@ function PublicarHubContent() {
   const { setSidebarExpanded } = useNavigation();
   const { toasts, removeToast, success, error } = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [composerText, setComposerText] = useState('');
-  const [chatSeed, setChatSeed] = useState<{ text: string; imageUrl?: string | null } | null>(null);
+  const [initialText, setInitialText] = useState('');
   const [initialImageUrl, setInitialImageUrl] = useState<string | null>(null);
+  const [seedKey, setSeedKey] = useState(0);
 
   useEffect(() => {
     setSidebarExpanded(false);
@@ -39,9 +36,9 @@ function PublicarHubContent() {
     const imagen = searchParams.get('imagen');
     if (titulo || descripcion || text) {
       const combined = [titulo, descripcion || text].filter(Boolean).join('. ');
-      setComposerText(combined);
+      setInitialText(combined);
       if (imagen) setInitialImageUrl(imagen);
-      setChatSeed({ text: combined, imageUrl: imagen });
+      setSeedKey((k) => k + 1);
     }
   }, [searchParams]);
 
@@ -53,33 +50,23 @@ function PublicarHubContent() {
   return (
     <div className="min-h-screen bg-[var(--bg-secondary)] flex flex-col pb-16 md:pb-0">
       <Header onToggleLeftSidebar={() => setSidebarOpen(true)} seccionActiva="publicar" />
-      <main className="flex-1 w-full">
-        <div className="container mx-auto px-4 py-5 md:py-8 max-w-2xl">
-          <h1 className="text-xl md:text-2xl font-bold text-center mb-1 text-[var(--text-primary)]">
+      <main className="flex-1 w-full flex flex-col min-h-0">
+        <div className="container mx-auto px-4 py-4 md:py-6 max-w-2xl flex-1 flex flex-col min-h-0 w-full">
+          <h1 className="text-xl md:text-2xl font-bold text-center mb-1 text-[var(--text-primary)] shrink-0">
             Publica tu aviso
           </h1>
-          <p className="text-center text-sm text-[var(--text-secondary)] mb-5">
-            Escribe una idea arriba y ADIS te guiará paso a paso.
+          <p className="text-center text-sm text-[var(--text-secondary)] mb-4 shrink-0">
+            Conversa con ADIS abajo — te guía paso a paso.
           </p>
 
-          <UnifiedSearchComposer
-            value={composerText}
-            onChange={setComposerText}
-            initialMode="publish"
-            publishBehavior="chat"
-            onPublishToChat={(payload) => setChatSeed(payload)}
-            onNotify={notify}
-          />
-
-          <div className="mt-5">
+          <div className="flex-1 flex flex-col min-h-[min(680px,calc(100vh-180px))]">
             <PublishChatWizard
-              initialText={composerText}
+              key={seedKey}
+              initialText={initialText}
               initialImageUrl={initialImageUrl}
-              externalSubmit={chatSeed}
-              onExternalSubmitHandled={() => setChatSeed(null)}
               onNotify={notify}
               onPublished={() => {
-                setComposerText('');
+                setInitialText('');
                 setInitialImageUrl(null);
               }}
             />
