@@ -21,7 +21,7 @@ import {
   IconMap,
   IconMegaphone,
   IconStore,
-  IconRobot,
+  IconAdis,
   IconSearch,
   IconChevronDown,
   IconBell,
@@ -222,7 +222,7 @@ export default function Header({
     { id: 'adiso', icon: IconSearch, label: 'Buscar', href: '/' },
     { id: 'publicar', icon: IconMegaphone, label: 'Publicar', href: '/publicar' },
     { id: 'mapa', icon: IconMap, label: 'Mapa', href: '/mapa' },
-    { id: 'chatbot', icon: IconRobot, label: 'Asistente', href: '/chat' },
+    { id: 'chatbot', icon: IconAdis, label: 'ADIS', href: '/chat' },
   ] as const;
 
   const actionButtons = (

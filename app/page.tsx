@@ -1130,20 +1130,20 @@ function HomeContent() {
                 gap: '8px',
                 width: '100%',
                 flexWrap: 'nowrap',
-                overflow: 'hidden',
+                overflow: 'visible',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, flexShrink: 1, overflow: 'hidden' }}>
                   {cargando ? (
-                    <div className="skeleton-shimmer" style={{ width: 100, height: 36, borderRadius: '18px', flexShrink: 0 }} />
+                    <div className="skeleton-shimmer" style={{ width: 100, height: 42, borderRadius: '18px', flexShrink: 0 }} />
                   ) : (
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: '6px',
-                      padding: '4px 10px 4px 5px',
-                      borderRadius: '20px',
+                      padding: '4px 12px 4px 6px',
+                      borderRadius: '14px',
                       boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
-                      height: '36px',
+                      height: '42px',
                       flexShrink: 0,
                     }}
                     className="brand-pill-glass"
@@ -1151,10 +1151,10 @@ function HomeContent() {
                       <div style={{
                         backgroundColor: 'var(--brand-blue)',
                         color: 'white',
-                        height: '24px',
-                        minWidth: '24px',
-                        padding: '0 7px',
-                        borderRadius: '12px',
+                        height: '28px',
+                        minWidth: '28px',
+                        padding: '0 8px',
+                        borderRadius: '14px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',

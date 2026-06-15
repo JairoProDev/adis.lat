@@ -127,7 +127,34 @@ export const IconPhone = (p: IconProps) => <FaPhoneAlt size={getSize(p)} color={
 export const IconTitle = (p: IconProps) => <FaHeading size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
 export const IconDescription = (p: IconProps) => <FaAlignLeft size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
 export const IconMap = (p: IconProps) => <FaMap size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
-export const IconChatbot = (p: IconProps) => <FaComments size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
+
+/** ADIS — icono de ayuda inteligente (destellos, no robot ni chat) */
+export const IconAdis = (p: IconProps) => {
+  const s = getSize(p);
+  const color = p.color || 'currentColor';
+  return (
+    <svg
+      width={s}
+      height={s}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={p.className}
+      onClick={p.onClick}
+      aria-hidden
+    >
+      <path
+        d="M12 2.5L13.35 9.15L20 10.5L13.35 11.85L12 18.5L10.65 11.85L4 10.5L10.65 9.15L12 2.5Z"
+        fill={color}
+      />
+      <circle cx="18.5" cy="5.5" r="1.35" fill={color} opacity="0.75" />
+      <circle cx="5.5" cy="16.5" r="1.1" fill={color} opacity="0.55" />
+      <circle cx="19" cy="15" r="0.9" fill={color} opacity="0.45" />
+    </svg>
+  );
+};
+
+export const IconChatbot = IconAdis;
 export const IconShield = (p: IconProps) => <FaShieldAlt size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
 export const IconMedal = (p: IconProps) => <FaMedal size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
 export const IconUserCheck = (p: IconProps) => <FaUserCheck size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;

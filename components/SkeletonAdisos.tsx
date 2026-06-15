@@ -109,7 +109,7 @@ export function SkeletonToolbar() {
       <div
         className="skeleton-shimmer"
         style={{
-          height: '20px',
+          height: '42px',
           width: '120px',
           borderRadius: '6px',
           backgroundColor: 'var(--bg-tertiary)',
@@ -121,7 +121,7 @@ export function SkeletonToolbar() {
         <div
           className="skeleton-shimmer"
           style={{
-            height: '32px',
+            height: '42px',
             width: '110px',
             borderRadius: '6px',
             backgroundColor: 'var(--bg-tertiary)',
@@ -130,7 +130,7 @@ export function SkeletonToolbar() {
         <div
           className="skeleton-shimmer"
           style={{
-            height: '32px',
+            height: '42px',
             width: '96px',
             borderRadius: '6px',
             backgroundColor: 'var(--bg-tertiary)',

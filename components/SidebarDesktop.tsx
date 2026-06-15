@@ -8,7 +8,7 @@ import {
   IconAdiso,
   IconMap,
   IconMegaphone,
-  IconChatbot,
+  IconAdis,
   IconMinimize,
 } from './Icons';
 import ModalAdiso from './ModalAdiso';
@@ -48,7 +48,7 @@ const PANEL_TABS: {
 }[] = [
   { id: 'adiso', label: 'Detalle', shortLabel: 'Detalle', Icon: IconAdiso },
   { id: 'mapa', label: 'Mapa', shortLabel: 'Mapa', Icon: IconMap },
-  { id: 'chatbot', label: 'ADIS', shortLabel: 'ADIS', Icon: IconChatbot },
+  { id: 'chatbot', label: 'ADIS', shortLabel: 'ADIS', Icon: IconAdis },
   { id: 'publicar', label: 'Publicar', shortLabel: 'Publicar', Icon: IconMegaphone },
 ];
 

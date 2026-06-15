@@ -7,7 +7,7 @@ import { SeccionSidebar } from './SidebarDesktop';
 import {
   IconMap,
   IconMegaphone,
-  IconChatbot,
+  IconAdis,
   IconStore,
   IconSearch
 } from './Icons';
@@ -66,7 +66,7 @@ export default function NavbarMobile({
     { id: 'adiso', icono: IconSearch, label: 'Buscar', href: '/' },
     { id: 'publicar', icono: IconMegaphone, label: 'Publicar', href: '/publicar' },
     { id: 'mapa', icono: IconMap, label: 'Mapa', href: '/mapa' },
-    { id: 'chatbot', icono: IconChatbot, label: 'Asistente', href: '/chat' },
+    { id: 'chatbot', icono: IconAdis, label: 'ADIS', href: '/chat' },
   ];
 
   return (

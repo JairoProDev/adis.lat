@@ -4,7 +4,7 @@ import React from 'react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import {
   FaSearch, FaMap, FaBullhorn, FaStore, FaGift,
-  FaRobot, FaHeart, FaEyeSlash, FaUserCircle, FaCog,
+  FaHeart, FaEyeSlash, FaUserCircle, FaCog,
   FaChartLine, FaBook, FaQuestionCircle, FaSignOutAlt,
   FaTimes
 } from 'react-icons/fa';
@@ -20,7 +20,7 @@ import MapaInteractivo from './MapaInteractivo';
 import FormularioPublicar from './FormularioPublicar';
 import AdisosGratuitos from './AdisosGratuitos';
 import ChatbotIANew from './ChatbotIANew';
-import { IconSparkles } from './Icons';
+import { IconSparkles, IconAdis } from './Icons';
 
 interface ModalNavegacionMobileProps {
   abierto: boolean;
@@ -157,12 +157,12 @@ export default function ModalNavegacionMobile({
       ]
     },
     {
-      title: '🤖 Asistente',
+      title: '✨ ADIS',
       items: [
         {
           id: 'chatbot',
-          label: 'Chat IA',
-          icon: FaRobot,
+          label: 'ADIS',
+          icon: IconAdis,
           href: '/chat'
         },
       ]
@@ -281,7 +281,7 @@ export default function ModalNavegacionMobile({
                   seccionInicial === 'adiso' ? 'Detalle de Adiso' :
                     seccionInicial === 'mapa' ? 'Mapa' :
                       seccionInicial === 'publicar' ? 'Publicar' :
-                        seccionInicial === 'chatbot' ? 'Asistente' :
+                        seccionInicial === 'chatbot' ? 'ADIS' :
                           seccionInicial === 'gratuitos' ? 'Gratuitos' :
                             'Sección'
                 ) : 'Menú Principal'}

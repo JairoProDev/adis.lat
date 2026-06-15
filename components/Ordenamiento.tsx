@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { IconSort, IconSortDown, IconSortUp } from './Icons';
+import { IconSort, IconSortDown, IconSortUp, IconChevronDown } from './Icons';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 
@@ -111,20 +111,30 @@ export default function Ordenamiento({ valor, onChange }: OrdenamientoProps) {
           padding: isMobile ? '0 10px' : '0 0.875rem',
           border: 'none',
           borderRadius: '14px',
-          backgroundColor: 'var(--bg-primary)',
           color: 'var(--text-primary)',
           boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
           cursor: 'pointer',
           fontSize: '0.85rem',
           fontWeight: 600,
-          height: '40px',
-          minWidth: isMobile ? '40px' : undefined,
+          height: '42px',
+          minWidth: isMobile ? '42px' : undefined,
         }}
-        className="hover:shadow-md motion-reduce:hover:translate-y-0 hover:-translate-y-0.5"
+        className="brand-pill-glass hover:shadow-md motion-reduce:hover:translate-y-0 hover:-translate-y-0.5"
       >
         <CurrentIcon size={16} aria-hidden="true" className="text-[var(--brand-blue)]" />
         <span className="hidden md:inline max-w-[120px] truncate">{t(opcionActual.labelKey)}</span>
-        <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginLeft: '2px', opacity: 0.6 }} aria-hidden>▼</span>
+        <span
+          className="hidden md:inline-flex"
+          aria-hidden
+          style={{
+            marginLeft: '2px',
+            opacity: 0.75,
+            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+            transition: 'transform 0.2s ease',
+          }}
+        >
+          <IconChevronDown size={12} color="var(--text-tertiary)" />
+        </span>
       </button>
 
       {isOpen && !isMobile && (
@@ -136,7 +146,7 @@ export default function Ordenamiento({ valor, onChange }: OrdenamientoProps) {
             backgroundColor: 'var(--bg-primary)',
             borderRadius: '16px',
             boxShadow: '0 15px 35px rgba(0,0,0,0.1), 0 5px 15px rgba(0,0,0,0.05)',
-            zIndex: 1000,
+            zIndex: 2000,
             minWidth: '200px',
             overflow: 'hidden',
             padding: '4px',
