@@ -5,7 +5,7 @@ import Buscador from './Buscador';
 import { DraftListingCard, DraftListingData } from './ai/DraftListingCard';
 import { useAuth } from '@/hooks/useAuth';
 import { useUI } from '@/contexts/UIContext';
-import { publishQuickAd } from '@/lib/quick-publish';
+import { publishQuickAdWithStory } from '@/lib/quick-publish';
 import { Categoria } from '@/types';
 import { IconSearch, IconMegaphone } from './Icons';
 
@@ -97,7 +97,7 @@ export default function UnifiedSearchComposer({
     }
 
     try {
-      await publishQuickAd(user.id, profile, data);
+      await publishQuickAdWithStory(user.id, profile, data);
       onNotify?.('¡Anuncio publicado con éxito!', 'success');
       setDraft(null);
       setIntent(null);

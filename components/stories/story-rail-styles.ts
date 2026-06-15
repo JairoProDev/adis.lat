@@ -12,12 +12,13 @@ export type StoryRingTier = 'premium' | 'destacada' | 'gratis';
 
 export function ringClassFor(tier: StoryRingTier, unseen: boolean): string {
   if (!unseen) return 'bg-[var(--border-color)]';
+  const pulse = 'motion-safe:animate-[story-ring-pulse_2s_ease-in-out_infinite]';
   switch (tier) {
     case 'premium':
-      return 'bg-gradient-to-tr from-[var(--brand-blue)] via-[var(--brand-yellow)] to-[var(--brand-blue)]';
+      return `bg-gradient-to-tr from-[var(--brand-blue)] via-[var(--brand-yellow)] to-[var(--brand-blue)] ${pulse}`;
     case 'destacada':
-      return 'bg-[var(--brand-yellow)]';
+      return `bg-[var(--brand-yellow)] ${pulse}`;
     default:
-      return 'bg-[var(--brand-blue)]';
+      return `bg-[var(--brand-blue)] ${pulse}`;
   }
 }

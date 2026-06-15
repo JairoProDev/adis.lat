@@ -13,17 +13,25 @@ export function isMercadoPagoConfigured(): boolean {
   return Boolean(process.env.MERCADOPAGO_ACCESS_TOKEN?.trim());
 }
 
+export type MercadoPagoCheckoutKind = 'adiso' | 'story';
+
 export async function createMercadoPagoPreference(params: {
   orderId: string;
   title: string;
   unitPricePen: number;
   payerEmail?: string;
+  kind?: MercadoPagoCheckoutKind;
 }): Promise<MercadoPagoPreferenceResult | null> {
   const token = process.env.MERCADOPAGO_ACCESS_TOKEN?.trim();
   if (!token || params.unitPricePen <= 0) return null;
 
   const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '');
-  const notificationUrl = `${appUrl}/api/adisos/promote/webhook`;
+  const kind = params.kind || 'adiso';
+  const notificationUrl =
+    kind === 'story'
+      ? `${appUrl}/api/stories/promote/webhook`
+      : `${appUrl}/api/adisos/promote/webhook`;
+  const typeQuery = kind === 'story' ? '&type=story' : '';
 
   const body: Record<string, unknown> = {
     items: [
@@ -37,9 +45,9 @@ export async function createMercadoPagoPreference(params: {
     ],
     external_reference: params.orderId,
     back_urls: {
-      success: `${appUrl}/promocionar/exito?order=${params.orderId}`,
-      failure: `${appUrl}/promocionar/error?order=${params.orderId}`,
-      pending: `${appUrl}/promocionar/pendiente?order=${params.orderId}`,
+      success: `${appUrl}/promocionar/exito?order=${params.orderId}${typeQuery}`,
+      failure: `${appUrl}/promocionar/error?order=${params.orderId}${typeQuery}`,
+      pending: `${appUrl}/promocionar/pendiente?order=${params.orderId}${typeQuery}`,
     },
     auto_return: 'approved',
     notification_url: notificationUrl,

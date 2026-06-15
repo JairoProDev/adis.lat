@@ -4,7 +4,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useUI } from '@/contexts/UIContext';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
-import { getActiveStories, groupStoriesByUser, getSeenStoryIds } from '@/lib/stories';
+import {
+  getActiveStories,
+  groupStoriesByUser,
+  getSeenStoryIds,
+  getServerSeenStoryIds,
+} from '@/lib/stories';
+import { getUserInterestProfile } from '@/lib/interactions';
 import { StoryGroup } from '@/types';
 import { IconChevronRight } from '@/components/Icons';
 import StoryViewer from './StoryViewer';
@@ -13,8 +19,12 @@ import CreateStoryCard from './stories/CreateStoryCard';
 import UserStoryCard from './stories/UserStoryCard';
 import { STORY_RAIL } from './stories/story-rail-styles';
 
-export default function StoriesBar() {
-  const { user, profile } = useAuth();
+interface StoriesBarProps {
+  categoria?: string;
+}
+
+export default function StoriesBar({ categoria }: StoriesBarProps) {
+  const { user, profile, session } = useAuth();
   const { openAuthModal } = useUI();
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -30,11 +40,30 @@ export default function StoriesBar() {
   const avatarSize = isDesktop ? STORY_RAIL.avatar.desktop : STORY_RAIL.avatar.mobile;
 
   const loadStories = useCallback(async () => {
-    const stories = await getActiveStories();
-    const seen = getSeenStoryIds();
-    setGroups(groupStoriesByUser(stories, seen));
+    const stories = await getActiveStories({
+      categoria,
+      token: session?.access_token,
+    });
+
+    const localSeen = getSeenStoryIds();
+    let serverSeen: Set<string> | undefined;
+    let interestProfile = null;
+
+    if (user?.id) {
+      serverSeen = await getServerSeenStoryIds(user.id);
+      interestProfile = await getUserInterestProfile(user.id);
+    }
+
+    const seen = serverSeen?.size ? serverSeen : localSeen;
+
+    setGroups(
+      groupStoriesByUser(stories, seen, {
+        serverSeenStoryIds: serverSeen,
+        interestProfile,
+      })
+    );
     setLoaded(true);
-  }, []);
+  }, [categoria, user?.id, session?.access_token]);
 
   useEffect(() => {
     loadStories();
@@ -70,11 +99,9 @@ export default function StoriesBar() {
     setShowUpload(true);
   };
 
-  const otherGroups = user
-    ? groups.filter((g) => g.userId !== user.id)
-    : groups;
-
+  const otherGroups = user ? groups.filter((g) => g.userId !== user.id) : groups;
   const myGroup = user ? groups.find((g) => g.userId === user.id) : undefined;
+  const filterActive = Boolean(categoria && categoria !== 'todos');
 
   if (!loaded) {
     return (
@@ -90,6 +117,20 @@ export default function StoriesBar() {
             style={{ width: cardW, height: cardH, borderRadius: STORY_RAIL.radius }}
           />
         ))}
+      </div>
+    );
+  }
+
+  if (filterActive && groups.length === 0) {
+    return (
+      <div
+        className="flex items-center justify-center rounded-xl border border-dashed border-[var(--border-color)] px-4 py-6 text-center"
+        style={{ minHeight: cardH * 0.6 }}
+      >
+        <p className="text-sm text-[var(--text-secondary)]">
+          Sé el primero en publicar una historia en{' '}
+          <span className="font-semibold text-[var(--text-primary)]">{categoria}</span>
+        </p>
       </div>
     );
   }

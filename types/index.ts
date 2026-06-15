@@ -91,6 +91,16 @@ export const PAQUETES: Record<TamañoPaquete, PaqueteInfo> = {
 
 export type StoryMediaType = 'image' | 'video';
 export type StoryPromotionTier = 'gratis' | 'destacada' | 'premium';
+export type StoryStatus = 'active' | 'archived' | 'draft';
+export type StorySource = 'manual' | 'adiso_auto';
+export type StoryObjective = 'ventas' | 'clicks' | 'contactos';
+export type StoryInteractionType =
+  | 'view'
+  | 'cta_click'
+  | 'whatsapp_click'
+  | 'chat_open'
+  | 'favorite'
+  | 'share';
 
 export interface StoryTierInfo {
   tier: StoryPromotionTier;
@@ -105,22 +115,22 @@ export const STORY_TIERS: Record<StoryPromotionTier, StoryTierInfo> = {
     tier: 'gratis',
     nombre: 'Gratis',
     precio: 0,
-    duracionHoras: 24,
-    descripcion: 'Visible 24 horas, orden normal',
+    duracionHoras: 1,
+    descripcion: 'Visible 1 hora en el carril. Guardada en tu perfil para republicar.',
   },
   destacada: {
     tier: 'destacada',
     nombre: 'Destacada',
-    precio: 9,
+    precio: 5,
     duracionHoras: 24,
-    descripcion: 'Aparece antes que las historias gratuitas, con anillo dorado',
+    descripcion: '24 horas visibles, anillo dorado y mejor posición.',
   },
   premium: {
     tier: 'premium',
     nombre: 'Premium',
-    precio: 19,
+    precio: 9,
     duracionHoras: 48,
-    descripcion: '48 horas visibles y primer lugar en la barra de historias',
+    descripcion: '48 horas visibles, primer lugar en el carril.',
   },
 };
 
@@ -136,10 +146,25 @@ export interface Story {
   view_count: number;
   created_at: string;
   expires_at: string;
+  visible_until: string;
+  status: StoryStatus;
+  archived_at?: string;
+  source: StorySource;
+  objective: StoryObjective;
+  cta_url?: string;
   vendedor?: {
     nombre: string;
     avatarUrl?: string;
   };
+}
+
+export interface StoryMetrics {
+  views: number;
+  whatsapp_clicks: number;
+  chat_opens: number;
+  favorites: number;
+  shares: number;
+  cta_clicks: number;
 }
 
 export interface StoryGroup {
@@ -148,6 +173,7 @@ export interface StoryGroup {
   stories: Story[];
   hasUnseen: boolean;
   topTier: StoryPromotionTier;
+  relevanceScore?: number;
 }
 
 export type AdisoPromotionTier = 'gratis' | 'destacada' | 'premium';

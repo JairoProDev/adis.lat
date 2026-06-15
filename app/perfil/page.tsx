@@ -7,16 +7,19 @@ import LeftSidebar from '@/components/LeftSidebar';
 import { useNavigation } from '@/contexts/NavigationContext';
 import { useAuth } from '@/hooks/useAuth';
 import { getMyAdisos, getAdisoById } from '@/lib/storage';
-import { Adiso } from '@/types';
+import { Adiso, Story } from '@/types';
 import GrillaAdisos from '@/components/GrillaAdisos';
+import StoryArchiveGrid from '@/components/stories/StoryArchiveGrid';
 import { FaUserCircle, FaEnvelope, FaCog, FaSignOutAlt, FaHistory } from 'react-icons/fa';
 
 export default function PerfilPage() {
     const { setSidebarExpanded } = useNavigation();
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const { user, signOut } = useAuth();
+    const { user, signOut, session } = useAuth();
     const [myAdisos, setMyAdisos] = useState<Adiso[]>([]);
+    const [myStories, setMyStories] = useState<Story[]>([]);
     const [loading, setLoading] = useState(true);
+    const [storiesLoading, setStoriesLoading] = useState(false);
 
     React.useEffect(() => {
         setSidebarExpanded(false);
@@ -46,6 +49,26 @@ export default function PerfilPage() {
 
         fetchMyAdisos();
     }, []);
+
+    const fetchMyStories = async () => {
+        if (!session?.access_token) return;
+        setStoriesLoading(true);
+        try {
+            const res = await fetch('/api/stories/mine?archived=true', {
+                headers: { Authorization: `Bearer ${session.access_token}` },
+            });
+            if (res.ok) {
+                const data = (await res.json()) as { stories?: Story[] };
+                setMyStories(data.stories || []);
+            }
+        } finally {
+            setStoriesLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchMyStories();
+    }, [session?.access_token]);
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-zinc-900 flex flex-col pb-16 md:pb-0">
@@ -106,6 +129,24 @@ export default function PerfilPage() {
                         <div className="text-3xl font-bold text-yellow-500 mb-1">4.9</div>
                         <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Calificación</div>
                     </div>
+                </div>
+
+                {/* Story archive */}
+                <div className="mb-8">
+                    <div className="flex justify-between items-end mb-4">
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Mis Historias</h2>
+                    </div>
+                    {storiesLoading ? (
+                        <div className="flex justify-center p-8">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                        </div>
+                    ) : (
+                        <StoryArchiveGrid
+                            stories={myStories.filter((s) => s.status === 'archived')}
+                            token={session?.access_token}
+                            onRefresh={fetchMyStories}
+                        />
+                    )}
                 </div>
 
                 {/* My Ads Section */}

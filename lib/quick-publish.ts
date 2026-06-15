@@ -28,5 +28,16 @@ export async function publishQuickAd(
         precio: draft.precio,
     };
 
-    return createAdisoInSupabase(adiso);
+    const created = await createAdisoInSupabase(adiso);
+    const { createStoryFromAdiso } = await import('@/lib/stories/adiso-sync');
+    void createStoryFromAdiso(userId, created);
+    return created;
+}
+
+export async function publishQuickAdWithStory(
+    userId: string,
+    profile: Profile | null,
+    draft: DraftListingData
+): Promise<Adiso> {
+    return publishQuickAd(userId, profile, draft);
 }

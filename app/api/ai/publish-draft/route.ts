@@ -82,6 +82,13 @@ export async function PUT(request: NextRequest) {
 
   const created = await createAdisoInSupabase(adiso);
   markDraftPublished(draftId);
+
+  const userId = created.user_id || created.usuario_id;
+  if (userId) {
+    const { createStoryFromAdiso } = await import('@/lib/stories/adiso-sync');
+    void createStoryFromAdiso(userId, created);
+  }
+
   trackAIEvent({
     name: 'chat.tool.executed',
     tool: 'publish_commit',

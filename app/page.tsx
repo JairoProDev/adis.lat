@@ -957,7 +957,7 @@ function HomeContent() {
                 padding: isDesktop ? '0 1rem 0.375rem' : '0 0.75rem 0.25rem',
               }}
             >
-              <StoriesBar />
+              <StoriesBar categoria={categoriaFiltro} />
             </div>
             {/* Buscador + filtros: sticky compacto, alineados bajo el mismo ancho */}
             <div

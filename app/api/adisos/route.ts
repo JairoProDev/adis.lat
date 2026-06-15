@@ -247,6 +247,14 @@ export async function POST(request: NextRequest) {
 
     const adisoCreado = await createAdisoInSupabase(nuevoAdiso);
 
+    if (nuevoAdiso.user_id || nuevoAdiso.usuario_id) {
+      const ownerId = (nuevoAdiso.user_id || nuevoAdiso.usuario_id) as string;
+      const { createStoryFromAdiso } = await import('@/lib/stories/adiso-sync');
+      void createStoryFromAdiso(ownerId, adisoCreado, {
+        promotionTier: adisoCreado.promotionTier,
+      });
+    }
+
     return NextResponse.json(adisoCreado, { status: 201 });
   } catch (error: any) {
     console.error('Error al crear adiso:', error);

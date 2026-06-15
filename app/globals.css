@@ -239,9 +239,17 @@ a {
 
 /* Animación de spinner */
 @keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
   to {
     transform: rotate(360deg);
   }
+}
+
+@keyframes story-ring-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.04); }
 }
 
 /* Glassmorphism utilities */
