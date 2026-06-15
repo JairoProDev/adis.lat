@@ -229,12 +229,6 @@ function HomeContent() {
     }
   }, [categoriaFiltro]);
 
-  useEffect(() => {
-    if (isDesktop && seccionDesktopActiva === 'adiso' && !adisoAbierto && !adisoId && !seccionUrl) {
-      setIsSidebarMinimizado(true);
-    }
-  }, [isDesktop, seccionDesktopActiva, adisoAbierto, adisoId, seccionUrl]);
-
   // Detectar cambios en el estado de conexión
   useEffect(() => {
     const cleanup = onOnlineStatusChange((online) => {
@@ -383,9 +377,6 @@ function HomeContent() {
     if (!adisoId) {
       ultimoErrorAdisoRef.current = null;
       setAdisoAbierto(null);
-      if (isDesktop) {
-        setIsSidebarMinimizado(true);
-      }
       return;
     }
 

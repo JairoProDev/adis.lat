@@ -13,7 +13,6 @@ import { trackViewHistory } from '@/lib/profile/view-history-client';
 import { registrarVisualizacion, registrarClick, registrarContacto } from '@/lib/analytics';
 import { useAdInteraction } from '@/hooks/useAdInteraction';
 import { useAdInteractionSession } from '@/hooks/useAdInteractionSession';
-import { getCategoriaThemeTokens } from '@/lib/categoria-theme';
 import PromoteAdisoModal from '@/components/PromoteAdisoModal';
 import { IconZap } from './Icons';
 import {
@@ -39,17 +38,21 @@ import {
   IconTrash,
   IconExternalLink,
   IconSend,
+  IconEnvelope,
+  IconPhone,
 } from './Icons';
 import { Categoria, UbicacionDetallada } from '@/types';
 import { getAdisoUrl } from '@/lib/url';
 import {
   pickSocialBadge,
   getCtaLabelPorCategoria,
+  getInAppCtaLabelPorCategoria,
   sanitizeAdisoDescripcion,
   toDisplayTitle,
   formatPrecioDisplay,
   getCategoriaLabel,
 } from '@/lib/adiso-display';
+import { ExternalContactChannel, resolveExternalContact } from '@/lib/adiso-contact';
 
 // Función helper para formatear ubicación
 function formatearUbicacion(ubicacion: any): { texto: string; coordenadas: { lat: number; lng: number } | null } {
@@ -116,7 +119,6 @@ export default function ModalAdiso({
   const { openAuthModal, openChat } = useUI();
   const { isFavorite, toggleFav } = useAdInteraction(adiso);
   const [enviandoMensaje, setEnviandoMensaje] = useState(false);
-  const categoryAccent = getCategoriaThemeTokens(adiso.categoria).accent;
 
   const minSwipeDistance = 50;
 
@@ -132,6 +134,8 @@ export default function ModalAdiso({
     contactos: contactosLocales,
   });
   const ctaLabel = getCtaLabelPorCategoria(adiso.categoria);
+  const inAppCtaLabel = getInAppCtaLabelPorCategoria(adiso.categoria);
+  const externalContact = resolveExternalContact(adiso);
   const displayTitle = toDisplayTitle(adiso.titulo);
   const displayDescription = sanitizeAdisoDescripcion(adiso.descripcion);
   const priceLabel = formatPrecioDisplay(adiso);
@@ -344,6 +348,40 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
     }
   };
 
+  const handleExternalContact = async (channel?: ExternalContactChannel | null) => {
+    const contact = channel ?? externalContact;
+    if (!contact) return;
+
+    const ahora = new Date();
+    const estaCaducado =
+      adiso.estaActivo === false ||
+      (adiso.fechaExpiracion && new Date(adiso.fechaExpiracion) < ahora);
+    const esHistorico = adiso.esHistorico === true;
+
+    if (estaCaducado || esHistorico) {
+      await handleContactar();
+      return;
+    }
+
+    setContactosLocales((prev) => prev + 1);
+    registrarContacto(user?.id, adiso.id, adiso.categoria, contact.kind === 'email' ? 'email' : 'whatsapp');
+
+    if (contact.kind === 'email') {
+      window.location.href = `mailto:${contact.valor}?subject=${encodeURIComponent(`Interesado en: ${adiso.titulo}`)}`;
+      return;
+    }
+    if (contact.kind === 'telefono') {
+      window.location.href = `tel:${contact.valor.replace(/\s/g, '')}`;
+      return;
+    }
+    if (contact.kind === 'link') {
+      window.open(contact.valor, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    window.open(getWhatsAppUrl(contact.valor, adiso.titulo, adiso.categoria, adiso.id), '_blank');
+  };
+
   const sellerUserId = adiso.user_id || adiso.usuario_id || adiso.vendedor?.id;
   const canAutoInteract = Boolean(sellerUserId && !esMiAdiso && user);
   const { askField, isRevealed, upsell: interactionUpsell } = useAdInteractionSession(
@@ -410,66 +448,33 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
 
   // --- RENDER LOGIC ---
 
-  // Botones de acción (Links, Share, Fav) - Reutilizables
-  // Botones de acción (Links, Share, Fav) - Reutilizables
-  const ActionButtons = ({ mobile = false }) => (
-    <div style={{ display: 'flex', gap: '8px' }}>
+  const actionBtnClass =
+    'flex h-9 w-9 items-center justify-center rounded-lg text-[var(--text-secondary)] transition-colors hover:bg-[var(--hover-bg)] active:bg-[var(--bg-secondary)]';
+
+  const ActionButtons = () => (
+    <div className="flex items-center gap-1">
       <button
+        type="button"
         onClick={handleCompartir}
-        className="hover:scale-105 active:scale-95 transition-all"
-        style={{
-          width: '38px',
-          height: '38px',
-          borderRadius: '12px',
-          border: 'none',
-          backgroundColor: 'var(--bg-tertiary)',
-          color: 'var(--text-secondary)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          boxShadow: '0 4px 10px rgba(0,0,0,0.03)'
-        }}
+        className={actionBtnClass}
         title="Compartir"
+        aria-label="Compartir"
       >
         <IconShare size={18} />
       </button>
       <button
+        type="button"
         onClick={handleCopiarLink}
-        className="hover:scale-105 active:scale-95 transition-all"
-        style={{
-          width: '38px',
-          height: '38px',
-          borderRadius: '12px',
-          border: 'none',
-          backgroundColor: copiado ? '#22c55e' : 'var(--bg-tertiary)',
-          color: copiado ? 'white' : 'var(--text-secondary)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          boxShadow: '0 4px 10px rgba(0,0,0,0.03)'
-        }}
-        title="Copiar Link"
+        className={`${actionBtnClass}${copiado ? ' bg-[#22c55e] text-white hover:bg-[#22c55e] active:bg-[#16a34a]' : ''}`}
+        title="Copiar enlace"
+        aria-label="Copiar enlace"
       >
         {copiado ? <IconCheck size={18} /> : <IconCopy size={18} />}
       </button>
       <button
+        type="button"
         onClick={(e) => toggleFav(e)}
-        className="hover:scale-105 active:scale-95 transition-all"
-        style={{
-          width: '38px',
-          height: '38px',
-          borderRadius: '12px',
-          border: 'none',
-          backgroundColor: 'var(--bg-tertiary)',
-          color: isFavorite ? '#ef4444' : 'var(--text-secondary)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          boxShadow: '0 4px 10px rgba(0,0,0,0.03)'
-        }}
+        className={`${actionBtnClass}${isFavorite ? ' text-red-500 active:bg-red-500/10' : ''}`}
         title={isFavorite ? 'Quitar de favoritos' : 'Guardar en favoritos'}
         aria-label={isFavorite ? 'Quitar de favoritos' : 'Guardar en favoritos'}
       >
@@ -482,103 +487,73 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
     </div>
   );
 
-  // Botón Principal de Contacto - Reutilizable
   const canMessageInApp = !!sellerUserId && !esMiAdiso;
 
-  const ContactButton = ({ fullWidth = false }) => {
-    // Lógica para determinar el botón de contacto
-    const contactosMultiples = adiso.contactosMultiples && adiso.contactosMultiples.length > 0
-      ? adiso.contactosMultiples
-      : null;
+  const ExternalContactIcon = ({ channel }: { channel: ExternalContactChannel }) => {
+    if (channel.kind === 'email') return <IconEnvelope size={22} />;
+    if (channel.kind === 'telefono') return <IconPhone size={20} />;
+    if (channel.kind === 'link') return <IconExternalLink size={20} />;
+    return <IconWhatsApp size={22} />;
+  };
 
-    const ahora = new Date();
-    const esHistorico = adiso.esHistorico === true;
-    const estaCaducado =
-      adiso.estaActivo === false ||
-      esHistorico ||
-      (adiso.fechaExpiracion && new Date(adiso.fechaExpiracion) < ahora);
+  const externalBtnAccent =
+    externalContact?.kind === 'email'
+      ? '#6366f1'
+      : externalContact?.kind === 'telefono'
+        ? '#0ea5e9'
+        : externalContact?.kind === 'link'
+          ? 'var(--brand-blue)'
+          : '#25D366';
 
-    const baseButtonStyle: React.CSSProperties = {
-      width: fullWidth ? '100%' : 'auto',
-      padding: '1rem 2rem',
-      fontSize: '1.05rem',
-      fontWeight: 800,
-      color: 'white',
-      border: 'none',
-      borderRadius: '16px',
-      cursor: 'pointer',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: '0.75rem',
-      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-      boxShadow: '0 10px 25px -5px rgba(var(--brand-primary-rgb), 0.35)',
-      textTransform: 'none'
-    };
+  const ContactFooter = () => {
+    if (esMiAdiso || esPropietario) return null;
 
-    const waButton = (onClick: () => void, label: string, accent?: string) => (
-      <button
-        onClick={onClick}
-        className="hover:-translate-y-1 hover:brightness-110 active:scale-[0.98]"
-        style={{
-          ...baseButtonStyle,
-          width: fullWidth && canMessageInApp ? '100%' : baseButtonStyle.width,
-          flex: fullWidth && canMessageInApp ? 1 : undefined,
-          backgroundColor: accent || '#22c55e',
-          backgroundImage: accent
-            ? `linear-gradient(135deg, ${accent} 0%, ${accent}dd 100%)`
-            : 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
-          boxShadow: '0 10px 25px -5px rgba(34, 197, 94, 0.35)',
-        }}
-      >
-        <IconWhatsApp size={22} /> {label}
-      </button>
+    const showInApp = canMessageInApp;
+    const showExternal = Boolean(externalContact);
+
+    if (!showInApp && !showExternal) return null;
+
+    return (
+      <div className="flex shrink-0 gap-2 border-t border-[var(--border-color)] bg-[var(--bg-primary)] p-3 shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
+        {showInApp ? (
+          <button
+            type="button"
+            onClick={() => void handleMensajeBuscadis()}
+            disabled={enviandoMensaje}
+            className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--brand-blue)] px-4 py-3.5 text-sm font-bold text-white transition-transform hover:brightness-105 active:scale-[0.98] disabled:opacity-70"
+          >
+            <IconSend size={18} />
+            <span className="truncate">{enviandoMensaje ? 'Abriendo chat…' : inAppCtaLabel}</span>
+          </button>
+        ) : showExternal && externalContact ? (
+          <button
+            type="button"
+            onClick={() => void handleExternalContact(externalContact)}
+            className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-bold text-white transition-transform hover:brightness-105 active:scale-[0.98]"
+            style={{
+              backgroundColor: externalBtnAccent,
+              boxShadow: `0 8px 20px -6px ${externalBtnAccent}66`,
+            }}
+          >
+            <ExternalContactIcon channel={externalContact} />
+            <span className="truncate">{ctaLabel}</span>
+          </button>
+        ) : null}
+
+        {showInApp && showExternal && externalContact && (
+          <button
+            type="button"
+            onClick={() => void handleExternalContact(externalContact)}
+            aria-label={externalContact.ariaLabel}
+            title={externalContact.ariaLabel}
+            className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-xl border border-[var(--border-color)] text-white transition-transform hover:brightness-105 active:scale-[0.98]"
+            style={{ backgroundColor: externalBtnAccent }}
+          >
+            <ExternalContactIcon channel={externalContact} />
+          </button>
+        )}
+      </div>
     );
-
-    const buscadisButton = (
-      <button
-        type="button"
-        onClick={() => void handleMensajeBuscadis()}
-        disabled={enviandoMensaje}
-        className="hover:-translate-y-1 hover:brightness-110 active:scale-[0.98]"
-        style={{
-          ...baseButtonStyle,
-          width: fullWidth ? '100%' : baseButtonStyle.width,
-          flex: fullWidth ? 1 : undefined,
-          backgroundColor: 'var(--brand-blue)',
-          backgroundImage: 'linear-gradient(135deg, var(--brand-blue) 0%, #2563eb 100%)',
-          boxShadow: '0 10px 25px -5px rgba(var(--brand-primary-rgb), 0.35)',
-          opacity: enviandoMensaje ? 0.7 : 1,
-        }}
-      >
-        <IconSend size={20} />
-        {enviandoMensaje ? 'Abriendo…' : 'Continuar en chat'}
-      </button>
-    );
-
-    const wrap = (secondary: React.ReactNode) =>
-      canMessageInApp ? (
-        <div style={{ display: 'flex', gap: '0.75rem', width: fullWidth ? '100%' : 'auto', flexDirection: fullWidth ? 'column' : 'row' }}>
-          {buscadisButton}
-          {secondary}
-        </div>
-      ) : (
-        secondary
-      );
-
-    if (estaCaducado || esHistorico) {
-      return wrap(waButton(() => handleContactar(), ctaLabel, 'var(--brand-blue)'));
-    }
-
-    if (contactosMultiples && contactosMultiples.length > 1) {
-      const contactoPrincipal = contactosMultiples[0];
-      const isWA = contactoPrincipal.tipo === 'whatsapp';
-      return wrap(
-        waButton(() => handleContactar(contactoPrincipal.valor), 'Prefiero WhatsApp', isWA ? '#22c55e' : '#3b82f6')
-      );
-    }
-
-    return wrap(waButton(() => handleContactar(), 'Prefiero WhatsApp', categoryAccent));
   };
 
   const galleryNavBtnStyle: React.CSSProperties = {
@@ -842,16 +817,14 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
                   }}>
                     Detalle de Adiso
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <ActionButtons mobile={true} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <ActionButtons />
                     <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-color)', margin: '0 4px' }} />
                     <button
+                      type="button"
                       onClick={onCerrar}
-                      style={{
-                        width: '40px', height: '40px', borderRadius: '50%', border: 'none',
-                        backgroundColor: '#f3f4f6', color: '#374151', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        cursor: 'pointer'
-                      }}
+                      aria-label="Cerrar detalle"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--text-secondary)] transition-colors hover:bg-[var(--hover-bg)] active:bg-[var(--bg-secondary)]"
                     >
                       <IconClose size={20} />
                     </button>
@@ -865,15 +838,7 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
               </div>
 
               {/* Sticky Footer CTA */}
-              <div style={{
-                padding: '16px',
-                borderTop: '1px solid var(--border-color)',
-                backgroundColor: 'var(--bg-primary)',
-                boxShadow: '0 -4px 12px rgba(0,0,0,0.05)',
-                zIndex: 20
-              }}>
-                <ContactButton fullWidth={true} />
-              </div>
+              <ContactFooter />
             </motion.div>
           </div>
         </AnimatePresence>
@@ -909,6 +874,7 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
     <>
       <div
         ref={modalRef}
+        className={isSidebar ? 'flex h-full min-h-0 flex-col' : undefined}
         style={{
           // Desktop Overlay or Sidebar Container logic
           position: isSidebar ? 'relative' : 'fixed',
@@ -923,47 +889,24 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
           if (!isSidebar && e.target === e.currentTarget) onCerrar();
         }}
       >
-        <div style={{
+        <div className="flex h-full min-h-0 flex-col overflow-hidden" style={{
           width: isSidebar ? '100%' : '480px',
           maxWidth: '100%',
-          height: '100%',
           backgroundColor: 'var(--bg-primary)',
           boxShadow: isSidebar ? 'none' : '-10px 0 40px rgba(0,0,0,0.1)',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
           position: 'relative'
         }} onClick={e => e.stopPropagation()}>
 
           {/* Desktop Header */}
-          <div style={{
-            padding: '1.5rem',
-            borderBottom: 'none',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexShrink: 0,
-            backgroundColor: 'var(--bg-primary)'
-          }}>
-            <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>Detalle de Adiso</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="flex shrink-0 items-center justify-between px-4 py-3">
+            <div className="text-base font-semibold text-[var(--text-primary)]">Detalle de Adiso</div>
+            <div className="flex items-center gap-1">
               <ActionButtons />
               <button
                 type="button"
                 onClick={onCerrar}
                 aria-label="Cerrar detalle"
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '10px',
-                  border: '1px solid var(--border-color)',
-                  background: 'var(--bg-secondary)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
+                className="ml-1 flex h-9 w-9 items-center justify-center rounded-lg text-[var(--text-secondary)] transition-colors hover:bg-[var(--hover-bg)] active:bg-[var(--bg-secondary)]"
               >
                 <IconClose size={18} />
               </button>
@@ -971,18 +914,12 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
           </div>
 
           {/* Content */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
             <ContentBody />
           </div>
 
           {/* Footer */}
-          <div style={{
-            padding: '1.5rem',
-            borderTop: 'none',
-            backgroundColor: 'var(--bg-primary)'
-          }}>
-            <ContactButton fullWidth={true} />
-          </div>
+          <ContactFooter />
         </div>
       </div>
 

@@ -98,27 +98,43 @@ function SidebarSectionTabs({
   onMinimize: () => void;
 }) {
   return (
-    <div
-        className="flex shrink-0 items-center gap-1 border-b border-[var(--border-color)] px-2 py-2 brand-mesh-strip"
-        style={{ backgroundColor: 'color-mix(in srgb, var(--bg-secondary) 80%, transparent)' }}
-    >
-      <div className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto no-scrollbar">
+    <div className="flex shrink-0 items-center gap-2 border-b border-[var(--border-color)] bg-[var(--bg-primary)] px-3 py-2.5">
+      <div
+        role="tablist"
+        aria-label="Secciones del panel"
+        className="grid min-w-0 flex-1 grid-cols-4 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-1"
+      >
         {PANEL_TABS.map(({ id, shortLabel, Icon }) => {
           const selected = active === id;
           return (
             <button
               key={id}
               type="button"
+              role="tab"
+              aria-selected={selected}
               onClick={() => onChange(id)}
               title={shortLabel}
-              className={`flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition-colors ${
+              className={`flex min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-1 py-2 transition-all ${
                 selected
-                  ? 'bg-[var(--brand-blue)] text-white shadow-sm'
-                  : 'text-[var(--text-secondary)] hover:bg-[var(--hover-bg)]'
+                  ? 'bg-[var(--bg-primary)] text-[var(--brand-blue)] shadow-sm ring-1 ring-[var(--border-color)]'
+                  : 'text-[var(--text-secondary)] hover:bg-[var(--hover-bg)] active:bg-[var(--bg-primary)]'
               }`}
             >
-              <Icon size={12} color={selected ? 'white' : 'var(--text-secondary)'} />
-              <span>{shortLabel}</span>
+              <Icon
+                size={16}
+                color={
+                  id === 'publicar'
+                    ? selected
+                      ? 'var(--brand-yellow)'
+                      : 'var(--brand-yellow)'
+                    : selected
+                      ? 'var(--brand-blue)'
+                      : 'var(--text-secondary)'
+                }
+              />
+              <span className="w-full truncate text-center text-[11px] font-semibold leading-none">
+                {shortLabel}
+              </span>
             </button>
           );
         })}
@@ -128,9 +144,9 @@ function SidebarSectionTabs({
         onClick={onMinimize}
         aria-label="Ocultar panel"
         title="Ocultar panel"
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-secondary)] transition-colors hover:bg-[var(--hover-bg)]"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[var(--text-secondary)] transition-colors hover:bg-[var(--hover-bg)] active:bg-[var(--bg-secondary)]"
       >
-        <IconMinimize size={14} />
+        <IconMinimize size={16} />
       </button>
     </div>
   );
@@ -167,24 +183,24 @@ export default function SidebarDesktop({
     setSidebarExpanded(!internalMinimizado);
   }, [internalMinimizado, setSidebarExpanded]);
 
-  const expandWithSection = useCallback(
-    (seccion: SeccionSidebar) => {
-      onSeccionChange?.(seccion);
-      setInternalMinimizado(false);
-      onMinimizadoChange?.(false);
-    },
-    [onSeccionChange, onMinimizadoChange]
-  );
-
   const handleMinimizarToggle = () => {
     const nuevoEstado = !internalMinimizado;
     setInternalMinimizado(nuevoEstado);
     onMinimizadoChange?.(nuevoEstado);
   };
 
+  const handleSectionChange = useCallback(
+    (seccion: SeccionSidebar) => {
+      onSeccionChange?.(seccion);
+      setInternalMinimizado(false);
+      onMinimizadoChange?.(false);
+    },
+    [onSeccionChange, onMinimizadoChange],
+  );
+
   const handleMapAbrirAdiso = (adiso: Adiso) => {
     abrirAdiso(adiso.id);
-    onSeccionChange?.('adiso');
+    handleSectionChange('adiso');
   };
 
   if (!isDesktop) return null;
@@ -206,7 +222,7 @@ export default function SidebarDesktop({
             <button
               key={id}
               type="button"
-              onClick={() => expandWithSection(id)}
+              onClick={() => handleSectionChange(id)}
               title={shortLabel}
               aria-label={shortLabel}
               className={`flex h-10 w-10 items-center justify-center rounded-xl border shadow-sm transition-colors ${
@@ -257,7 +273,7 @@ export default function SidebarDesktop({
       >
         <SidebarSectionTabs
           active={seccionActiva}
-          onChange={(seccion) => onSeccionChange?.(seccion)}
+          onChange={handleSectionChange}
           onMinimize={handleMinimizarToggle}
         />
 
@@ -271,7 +287,8 @@ export default function SidebarDesktop({
             className="flex min-h-0 flex-1 flex-col overflow-hidden"
           >
             {showAdisoDetail && (
-              <ModalAdiso
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                <ModalAdiso
                 adiso={adisoAbierto}
                 onCerrar={onCerrarAdiso}
                 onAnterior={onAnterior}
@@ -282,10 +299,11 @@ export default function SidebarDesktop({
                 onSuccess={onSuccess}
                 onError={onError}
               />
+              </div>
             )}
 
             {showAdisoEmpty && (
-              <SidebarLauncher onSelect={(seccion) => onSeccionChange?.(seccion)} />
+              <SidebarLauncher onSelect={handleSectionChange} />
             )}
 
             {seccionActiva === 'mapa' && (

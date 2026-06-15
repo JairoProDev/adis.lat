@@ -23,6 +23,17 @@ const CTA_LABELS: Record<Categoria, string> = {
   comunidad: 'Contactar por WhatsApp',
 };
 
+const IN_APP_CTA_LABELS: Record<Categoria, string> = {
+  empleos: 'Postular por chat',
+  inmuebles: 'Agendar visita',
+  vehiculos: 'Consultar vehículo',
+  servicios: 'Solicitar cotización',
+  productos: 'Preguntar disponibilidad',
+  eventos: 'Consultar entradas',
+  negocios: 'Escribir al negocio',
+  comunidad: 'Enviar mensaje',
+};
+
 /** Etiqueta corta para CTA en overlay de la imagen del card (sin precio). */
 const CARD_CTA_SHORT: Record<Categoria, string> = {
   empleos: 'Postular',
@@ -92,6 +103,10 @@ export function getCategoriaLabel(categoria: Categoria): string {
 
 export function getCtaLabelPorCategoria(categoria: Categoria): string {
   return CTA_LABELS[categoria] ?? 'Contactar por WhatsApp';
+}
+
+export function getInAppCtaLabelPorCategoria(categoria: Categoria): string {
+  return IN_APP_CTA_LABELS[categoria] ?? 'Enviar mensaje';
 }
 
 export function getCardCtaShortLabel(categoria: Categoria): string {
