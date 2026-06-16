@@ -13,6 +13,7 @@ export interface HeroRendererProps {
   showEditControls?: boolean;
   onEditPart?: (part: string) => void;
   reviewAggregate?: BusinessReviewAggregate | null;
+  embedded?: boolean;
 }
 
 export default function HeroRenderer({
@@ -21,8 +22,9 @@ export default function HeroRenderer({
   showEditControls,
   onEditPart,
   reviewAggregate,
+  embedded = false,
 }: HeroRendererProps) {
-  const common = { profile, showEditControls, onEditPart, reviewAggregate };
+  const common = { profile, showEditControls, onEditPart, reviewAggregate, embedded };
   switch (variant) {
     case 'split':
       return <HeroSplit {...common} />;

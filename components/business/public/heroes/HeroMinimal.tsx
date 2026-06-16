@@ -2,12 +2,14 @@
 
 import { IconEdit, IconVerified } from '@/components/Icons';
 import type { BusinessProfile, BusinessReviewAggregate } from '@/types/business';
+import { cn } from '@/lib/utils';
 
 interface HeroMinimalProps {
   profile: Partial<BusinessProfile>;
   showEditControls?: boolean;
   onEditPart?: (part: string) => void;
   reviewAggregate?: BusinessReviewAggregate | null;
+  embedded?: boolean;
 }
 
 export default function HeroMinimal({
@@ -15,9 +17,10 @@ export default function HeroMinimal({
   showEditControls,
   onEditPart,
   reviewAggregate,
+  embedded = false,
 }: HeroMinimalProps) {
   return (
-    <div className="bg-[var(--bg-primary)] pt-20 pb-8 text-center relative z-10">
+    <div className={cn('bg-[var(--bg-primary)] pb-8 text-center relative z-10', embedded ? 'pt-4' : 'pt-20')}>
       <div className="max-w-xl mx-auto px-4">
         <div className="relative inline-block group mb-6">
           <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-[var(--border-subtle)] mx-auto bg-white shadow-md">

@@ -36,6 +36,7 @@ export function renderProfileBlock(
           profile={profile}
           showEditControls={showEditControls}
           onEditPart={onEditPart}
+          embedded={ctx.isPreview}
         />
       );
     case 'highlights':

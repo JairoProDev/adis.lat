@@ -13,6 +13,8 @@ interface BusinessHeroProps {
   showEditControls?: boolean;
   onEditPart?: (part: string) => void;
   reviewAggregate?: BusinessReviewAggregate | null;
+  /** Sin offset de header global (preview embebido / iframe) */
+  embedded?: boolean;
 }
 
 export default function BusinessHero({
@@ -20,6 +22,7 @@ export default function BusinessHero({
   showEditControls,
   onEditPart,
   reviewAggregate,
+  embedded = false,
 }: BusinessHeroProps) {
   const [mounted, setMounted] = useState(false);
   const [openStatus, setOpenStatus] = useState<boolean | null>(null);
@@ -30,8 +33,13 @@ export default function BusinessHero({
   }, [profile.business_hours]);
 
   return (
-    <div className="bg-white pb-2 shadow-sm relative z-10 pt-16">
-      <div className="w-full max-w-[1100px] mx-auto relative group h-[200px] md:h-[350px] overflow-hidden bg-slate-100 md:rounded-b-xl shadow-sm">
+    <div className={cn('bg-white pb-2 shadow-sm relative z-10', embedded ? 'pt-0' : 'pt-16')}>
+      <div
+        className={cn(
+          'w-full max-w-[1100px] mx-auto relative group overflow-hidden bg-slate-100 shadow-sm',
+          embedded ? 'h-[120px] rounded-t-xl' : 'h-[200px] md:h-[350px] md:rounded-b-xl'
+        )}
+      >
         {profile.banner_url ? (
           <img
             src={profile.banner_url}
@@ -53,12 +61,16 @@ export default function BusinessHero({
       </div>
 
       <div className="max-w-6xl mx-auto px-4 md:px-8">
-        <div className="flex flex-row items-end md:items-start gap-4 -mt-12 md:-mt-24 relative z-20 mb-4">
-          <motion.div
-            initial={false}
-            className="shrink-0 relative"
-          >
-            <div className="w-24 h-24 md:w-48 md:h-48 rounded-full border-4 md:border-[6px] border-white bg-white shadow-xl overflow-hidden relative group/logo">
+        <div className={cn('flex flex-row items-end md:items-start gap-4 relative z-20 mb-4', embedded ? '-mt-8' : '-mt-12 md:-mt-24')}>
+          <motion.div initial={false} className="shrink-0 relative">
+            <div
+              className={cn(
+                'rounded-full border-white bg-white shadow-xl overflow-hidden relative group/logo',
+                embedded
+                  ? 'w-16 h-16 border-2'
+                  : 'w-24 h-24 md:w-48 md:h-48 border-4 md:border-[6px]'
+              )}
+            >
               {profile.logo_url ? (
                 <img src={profile.logo_url} alt="Logo" className="w-full h-full object-cover" />
               ) : (

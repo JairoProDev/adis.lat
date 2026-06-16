@@ -75,6 +75,7 @@ export default function BusinessTabShell({
           profile={ctx.profile}
           showEditControls={ctx.showEditControls}
           onEditPart={ctx.onEditPart}
+          embedded={ctx.isPreview}
         />
       )}
       {highlightsBlock?.visible &&

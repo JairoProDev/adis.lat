@@ -203,18 +203,19 @@ export function EditorSteps({
             </div>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar p-0">
-                <div className="p-4 space-y-4 border-b border-slate-100 bg-slate-50">
+                <div className="p-4 space-y-3 border-b border-slate-100 bg-slate-50/80">
                     <ProfileCompletenessChecklist
                         profile={profile}
                         productCount={catalogProducts.length}
                     />
                     <FilterSectionCard
                         sectionId="template-theme"
-                        step={0}
+                        step={1}
                         title="Plantilla y tema"
-                        subtitle="Galería híbrida + builder visual"
-                        icon={<IconGrid size={18} />}
+                        subtitle="Galería, bloques y apariencia"
+                        icon={<IconGrid size={16} />}
                         defaultOpen
+                        collapsible
                     >
                         <ProfileBuilderModes
                             profile={profile}

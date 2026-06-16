@@ -3,12 +3,14 @@
 import { IconEdit, IconVerified, IconWhatsapp } from '@/components/Icons';
 import type { BusinessProfile, BusinessReviewAggregate } from '@/types/business';
 import { getWhatsappUrl } from '@/lib/business/public-utils';
+import { cn } from '@/lib/utils';
 
 interface HeroBentoProps {
   profile: Partial<BusinessProfile>;
   showEditControls?: boolean;
   onEditPart?: (part: string) => void;
   reviewAggregate?: BusinessReviewAggregate | null;
+  embedded?: boolean;
 }
 
 export default function HeroBento({
@@ -16,9 +18,10 @@ export default function HeroBento({
   showEditControls,
   onEditPart,
   reviewAggregate,
+  embedded = false,
 }: HeroBentoProps) {
   return (
-    <div className="bg-[var(--bg-secondary)] pt-16 pb-6 relative z-10">
+    <div className={cn('bg-[var(--bg-secondary)] pb-6 relative z-10', embedded ? 'pt-2' : 'pt-16')}>
       <div className="max-w-6xl mx-auto px-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 auto-rows-[minmax(80px,auto)]">
           <div className="col-span-2 row-span-2 bg-[var(--bg-primary)] rounded-2xl p-6 shadow-sm border border-[var(--border-subtle)] flex flex-col justify-end relative group overflow-hidden">

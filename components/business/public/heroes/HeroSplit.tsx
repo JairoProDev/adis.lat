@@ -11,6 +11,7 @@ interface HeroSplitProps {
   showEditControls?: boolean;
   onEditPart?: (part: string) => void;
   reviewAggregate?: BusinessReviewAggregate | null;
+  embedded?: boolean;
 }
 
 export default function HeroSplit({
@@ -18,6 +19,7 @@ export default function HeroSplit({
   showEditControls,
   onEditPart,
   reviewAggregate,
+  embedded = false,
 }: HeroSplitProps) {
   const [mounted, setMounted] = useState(false);
   const [openStatus, setOpenStatus] = useState<boolean | null>(null);
@@ -28,7 +30,7 @@ export default function HeroSplit({
   }, [profile.business_hours]);
 
   return (
-    <div className="bg-[var(--bg-primary)] pt-16 shadow-sm relative z-10">
+    <div className={cn('bg-[var(--bg-primary)] shadow-sm relative z-10', embedded ? 'pt-0 py-4' : 'pt-16')}>
       <div className="max-w-6xl mx-auto px-4 md:px-8 py-8">
         <div className="grid md:grid-cols-2 gap-8 items-center">
           <div className="relative group rounded-2xl overflow-hidden aspect-[4/3] bg-slate-100">
