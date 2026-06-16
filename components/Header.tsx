@@ -17,19 +17,16 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useConversations } from '@/hooks/useConversations';
 import { useNotifications } from '@/hooks/useNotifications';
 import { SeccionSidebar } from './SidebarDesktop';
+import { MAIN_NAV_ITEMS, isMainNavActive, type MainNavId } from '@/lib/main-nav';
 import { publishCta } from '@/lib/publish-cta-styles';
 import CountryFlag from '@/components/location/CountryFlag';
 import {
-  IconMap,
-  IconMegaphone,
-  IconStore,
-  IconAdis,
-  IconSearch,
   IconChevronDown,
   IconBell,
   IconMoon,
   IconSun,
   IconMessages,
+  IconMegaphone,
 } from './Icons';
 import { useAuth } from '@/hooks/useAuth';
 import { Categoria } from '@/types';
@@ -65,7 +62,7 @@ export default function Header({
   const notificationsAnchorRef = useRef<HTMLDivElement>(null);
   const messagesAnchorRef = useRef<HTMLDivElement>(null);
   const [activePopover, setActivePopover] = useState<'notifications' | 'messages' | null>(null);
-  const [hoveredItem, setHoveredItem] = useState<SeccionSidebar | null>(null);
+  const [hoveredItem, setHoveredItem] = useState<MainNavId | null>(null);
   const [themeMode, setThemeMode] = useState<'light' | 'dark' | 'auto'>('auto');
   const { user } = useAuth();
   const { openChat } = useUI();
@@ -228,13 +225,7 @@ export default function Header({
     </button>
   );
 
-  const navItems = [
-    { id: 'negocio', icon: IconStore, label: 'Mi Negocio', href: '/mi-negocio' },
-    { id: 'adiso', icon: IconSearch, label: 'Buscar', href: '/' },
-    { id: 'publicar', icon: IconMegaphone, label: 'Publicar', href: '/publicar' },
-    { id: 'mapa', icon: IconMap, label: 'Mapa', href: '/mapa' },
-    { id: 'chatbot', icon: IconAdis, label: 'ADIS', href: '/chat' },
-  ] as const;
+  const navItems = MAIN_NAV_ITEMS;
 
   const actionButtons = (
     <div className="flex items-center gap-0.5">
@@ -359,10 +350,7 @@ export default function Header({
         <nav style={{ display: 'flex', gap: '4px', height: '100%', alignItems: 'stretch' }}>
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive =
-              item.href === '/'
-                ? pathname === '/'
-                : pathname.startsWith(item.href);
+            const isActive = isMainNavActive(pathname, item.href);
 
             const isHovered = hoveredItem === item.id;
             const isPublishCta = item.id === 'publicar';
@@ -373,7 +361,7 @@ export default function Header({
                 <Link
                   href={item.href}
                   key={item.id}
-                  onMouseEnter={() => setHoveredItem(item.id as SeccionSidebar)}
+                  onMouseEnter={() => setHoveredItem(item.id)}
                   onMouseLeave={() => setHoveredItem(null)}
                   aria-current={isActive ? 'page' : undefined}
                   style={{
@@ -425,7 +413,7 @@ export default function Header({
               <Link
                 href={item.href}
                 key={item.id}
-                onMouseEnter={() => setHoveredItem(item.id as SeccionSidebar)}
+                onMouseEnter={() => setHoveredItem(item.id)}
                 onMouseLeave={() => setHoveredItem(null)}
                 style={{
                   height: '100%',

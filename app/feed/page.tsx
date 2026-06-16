@@ -24,14 +24,18 @@ export default function FeedPage() {
         }}
       >
         <h1 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>
-          Feed social en pausa temporal
+          Feed — promos, ofertas y oportunidades
         </h1>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-          Esta sección está archivada mientras construimos la capa social real. Por ahora, la experiencia activa es
-          <strong> Mi Negocio</strong>.
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem', lineHeight: 1.6 }}>
+          Aquí vivirá tu red social comercial: shorts de promociones, reels de ofertas, lives de
+          shopping y contenido UGC de negocios. Entra porque quieres que te ofrezcan cosas — y ver si
+          te animas a comprar.
+        </p>
+        <p style={{ color: 'var(--text-tertiary)', fontSize: '0.9rem', marginBottom: '1.25rem' }}>
+          Estamos construyendo la experiencia. Mientras tanto, explora el marketplace desde Inicio.
         </p>
         <Link
-          href="/mi-negocio"
+          href="/"
           style={{
             display: 'inline-block',
             background: 'var(--brand-blue)',
@@ -42,7 +46,7 @@ export default function FeedPage() {
             padding: '0.65rem 1rem'
           }}
         >
-          Ir a Mi Negocio
+          Ir al inicio
         </Link>
       </section>
     </main>

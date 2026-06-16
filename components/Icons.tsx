@@ -177,6 +177,25 @@ export const IconPackage = (p: IconProps) => <FaBox size={getSize(p)} color={p.c
 export const IconGrid = (p: IconProps) => <FaTh size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
 export const IconList = (p: IconProps) => <FaList size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
 export const IconFeed = (p: IconProps) => <FaSquare size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
+
+/** Vertical video / Shorts-style feed */
+export const IconShorts = (p: IconProps) => (
+  <svg
+    width={getSize(p)}
+    height={getSize(p)}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={p.color || 'currentColor'}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={p.className}
+    onClick={p.onClick}
+  >
+    <rect x="7" y="3" width="10" height="18" rx="2" />
+    <path d="M11 10v4l3-2-3-2z" fill={p.color || 'currentColor'} stroke="none" />
+  </svg>
+);
 export const IconFilter = (p: IconProps) => <FaFilter size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
 export const IconMapPin = (p: IconProps) => <FaMapPin size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
 export const IconShoppingCart = (p: IconProps) => <FaShoppingCart size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;

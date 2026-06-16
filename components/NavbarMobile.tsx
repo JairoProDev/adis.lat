@@ -4,13 +4,8 @@ import React from 'react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { usePathname, useRouter } from 'next/navigation';
 import { SeccionSidebar } from './SidebarDesktop';
-import {
-  IconMap,
-  IconMegaphone,
-  IconAdis,
-  IconStore,
-  IconSearch
-} from './Icons';
+import { IconMegaphone } from './Icons';
+import { MAIN_NAV_ITEMS, isMainNavActive } from '@/lib/main-nav';
 import { publishCta } from '@/lib/publish-cta-styles';
 
 interface NavbarMobileProps {
@@ -57,17 +52,8 @@ export default function NavbarMobile({
     return () => window.removeEventListener('scroll', handleScroll);
   }, [mounted]);
 
-  // Safe checks
   if (!mounted) return null;
   if (isDesktop) return null;
-
-  const secciones = [
-    { id: 'negocio', icono: IconStore, label: 'Mi Negocio', href: '/mi-negocio' },
-    { id: 'adiso', icono: IconSearch, label: 'Buscar', href: '/' },
-    { id: 'publicar', icono: IconMegaphone, label: 'Publicar', href: '/publicar' },
-    { id: 'mapa', icono: IconMap, label: 'Mapa', href: '/mapa' },
-    { id: 'chatbot', icono: IconAdis, label: 'ADIS', href: '/chat' },
-  ];
 
   return (
     <>
@@ -109,22 +95,22 @@ export default function NavbarMobile({
           transition: 'transform 0.3s ease',
         }}
       >
-        {secciones.map((seccion) => {
-          const IconComponent = seccion.icono;
-          const isLink = !!seccion.href;
-          const isPathActive = isLink && seccion.href !== '/' && pathname.startsWith(seccion.href!);
-          const isHomeActive = seccion.href === '/' && pathname === '/' && seccionActiva !== 'mapa' && seccionActiva !== 'publicar';
-
-          const estaActiva = (seccion.id === seccionActiva) || isPathActive || isHomeActive;
+        {MAIN_NAV_ITEMS.map((seccion) => {
+          const IconComponent = seccion.icon;
+          const pathActive = isMainNavActive(pathname, seccion.href);
+          const sidebarActive =
+            pathname === '/' &&
+            !!seccion.sidebarId &&
+            seccionActiva === seccion.sidebarId;
+          const estaActiva = pathActive || sidebarActive;
 
           const esPublicar = seccion.id === 'publicar';
-          const tieneNotificacion = seccion.id === 'adiso' && tieneAdisoAbierto && !estaActiva;
+          const tieneNotificacion = seccion.id === 'inicio' && tieneAdisoAbierto && !estaActiva;
 
           const handleClick = () => {
-            if (seccion.href) {
-              router.push(seccion.href);
-            } else if (onCambiarSeccion) {
-              onCambiarSeccion(seccion.id as SeccionSidebar);
+            router.push(seccion.href);
+            if (seccion.sidebarId && pathname === '/') {
+              onCambiarSeccion(seccion.sidebarId);
             }
           };
 

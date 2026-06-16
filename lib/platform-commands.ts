@@ -20,13 +20,14 @@ export interface PlatformCommand {
 }
 
 export const PLATFORM_COMMANDS: PlatformCommand[] = [
-  { id: 'nav-home', label: 'Ir al inicio', keywords: ['inicio', 'home', 'buscar'], kind: 'navigate', href: '/', group: 'Páginas' },
+  { id: 'nav-home', label: 'Ir al inicio', keywords: ['inicio', 'home', 'marketplace'], kind: 'navigate', href: '/', group: 'Páginas' },
+  { id: 'nav-feed', label: 'Feed de ofertas', keywords: ['feed', 'shorts', 'reels', 'promos', 'ofertas', 'videos'], kind: 'navigate', href: '/feed', group: 'Páginas' },
   { id: 'nav-publicar', label: 'Publicar aviso', keywords: ['publicar', 'vender', 'ofrecer'], kind: 'navigate', href: '/publicar', group: 'Páginas' },
   { id: 'nav-perfil', label: 'Mi perfil', keywords: ['perfil', 'cuenta', 'usuario'], kind: 'navigate', href: '/perfil', group: 'Páginas' },
   { id: 'nav-favoritos', label: 'Favoritos guardados', keywords: ['favoritos', 'guardados', 'corazón'], kind: 'navigate', href: '/favoritos', group: 'Páginas' },
   { id: 'nav-mensajes', label: 'Mensajes', keywords: ['mensajes', 'chat', 'conversaciones'], kind: 'navigate', href: '/perfil?tab=mensajes', group: 'Páginas' },
   { id: 'nav-negocio', label: 'Mi negocio', keywords: ['negocio', 'empresa', 'tienda'], kind: 'navigate', href: '/mi-negocio', group: 'Páginas' },
-  { id: 'nav-chat', label: 'ADIS — asistente IA', keywords: ['adis', 'ia', 'asistente', 'chatbot'], kind: 'navigate', href: '/chat', group: 'Páginas' },
+  { id: 'nav-chat', label: 'Buscar con IA', keywords: ['buscar', 'ia', 'asistente', 'adis', 'chatbot'], kind: 'navigate', href: '/chat', group: 'Páginas' },
   { id: 'tab-overview', label: 'Perfil — resumen', keywords: ['overview', 'resumen'], kind: 'navigate', href: '/perfil?tab=overview', group: 'Perfil' },
   { id: 'tab-guardados', label: 'Perfil — guardados', keywords: ['guardados'], kind: 'navigate', href: '/perfil?tab=guardados', group: 'Perfil' },
   { id: 'tab-historial', label: 'Perfil — historial', keywords: ['historial', 'vistos'], kind: 'navigate', href: '/perfil?tab=historial', group: 'Perfil' },
