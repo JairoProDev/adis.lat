@@ -67,6 +67,11 @@ export default function BusinessPublicView({
     // if (!profile) ... moved to after hooks
 
     const { items: cartItems, count: cartCount, open: cartOpen, setOpen: setCartOpen, addItem, updateQty, removeItem } = useBusinessCart(profile?.id);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     // Catalog State & Filters
     const [searchQuery, setSearchQuery] = useState('');
@@ -94,9 +99,9 @@ export default function BusinessPublicView({
 
     // Ownership check. 
     // True owner check for button visibility
-    const isOwner = user?.id && profile?.user_id && user.id === profile.user_id;
+    const isOwner = mounted && user?.id && profile?.user_id && user.id === profile.user_id;
     // Controls for inline editing overlays (pencil on image, etc) - only show when in explicit edit mode
-    const showEditControls = isOwner && editMode;
+    const showEditControls = Boolean(isOwner && editMode);
 
     const handleShare = async () => {
         if (!profile) return;

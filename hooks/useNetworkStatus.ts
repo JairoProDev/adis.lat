@@ -25,9 +25,8 @@ const getConnectionType = (): NetworkStatus['connectionType'] => {
 };
 
 export function useNetworkStatus(): NetworkStatus {
-  const [isOnline, setIsOnline] = useState<boolean>(
-    typeof navigator !== 'undefined' ? navigator.onLine : true
-  );
+  // Always true on first render so SSR and hydration match; real value in useEffect.
+  const [isOnline, setIsOnline] = useState<boolean>(true);
   const [wasOffline, setWasOffline] = useState(false);
   const [justCameOnline, setJustCameOnline] = useState(false);
   const [connectionType, setConnectionType] = useState<NetworkStatus['connectionType']>(getConnectionType());

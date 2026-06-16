@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { IconEdit, IconMapMarkerAlt, IconVerified } from '@/components/Icons';
 import type { BusinessProfile } from '@/types/business';
@@ -20,7 +21,13 @@ export default function BusinessHero({
   onEditPart,
   reviewAggregate,
 }: BusinessHeroProps) {
-  const openStatus = isBusinessOpenNow(profile.business_hours);
+  const [mounted, setMounted] = useState(false);
+  const [openStatus, setOpenStatus] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+    setOpenStatus(isBusinessOpenNow(profile.business_hours));
+  }, [profile.business_hours]);
 
   return (
     <div className="bg-white pb-2 shadow-sm relative z-10 pt-16">
@@ -48,8 +55,7 @@ export default function BusinessHero({
       <div className="max-w-6xl mx-auto px-4 md:px-8">
         <div className="flex flex-row items-end md:items-start gap-4 -mt-12 md:-mt-24 relative z-20 mb-4">
           <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
+            initial={false}
             className="shrink-0 relative"
           >
             <div className="w-24 h-24 md:w-48 md:h-48 rounded-full border-4 md:border-[6px] border-white bg-white shadow-xl overflow-hidden relative group/logo">
@@ -81,9 +87,9 @@ export default function BusinessHero({
           </motion.div>
 
           <div className="flex-1 pb-1 md:pt-28 md:pb-0 min-w-0">
-            <motion.h1 className="text-2xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight line-clamp-2 md:line-clamp-none">
+            <h1 className="text-2xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight line-clamp-2 md:line-clamp-none">
               {profile.name || 'Mi Negocio'}
-            </motion.h1>
+            </h1>
             {profile.tagline && (
               <p className="text-sm md:text-base text-slate-500 font-medium mt-1">{profile.tagline}</p>
             )}
@@ -98,16 +104,16 @@ export default function BusinessHero({
 
         <div className="flex flex-col md:flex-row gap-6 md:ml-[220px]">
           <div className="flex-1">
-            <p className="text-slate-600 text-sm md:text-lg font-medium leading-relaxed mb-3">
+            <div className="text-slate-600 text-sm md:text-lg font-medium leading-relaxed mb-3">
               {profile.description || 'Bienvenido a nuestra tienda oficial.'}
-            </p>
+            </div>
             <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
               {profile.contact_address && (
                 <span className="flex items-center gap-1">
                   <IconMapMarkerAlt size={14} /> {profile.contact_address}
                 </span>
               )}
-              {openStatus !== null && (
+              {mounted && openStatus !== null && (
                 <span
                   className={cn(
                     'flex items-center gap-1 px-2 py-0.5 rounded-full',

@@ -69,9 +69,14 @@ export default function PublicBusinessPage({
         updateBusiness,
     } = useBusinessData(slug, false);
 
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     // Derived owner check — also works when user_id in business_profiles matches auth user
     // OR when the user is in business_members with a role >= editor
-    const isOwner = Boolean(
+    const isOwner = mounted && Boolean(
         user?.id &&
         business &&
         (business.user_id === user.id)
@@ -94,7 +99,7 @@ export default function PublicBusinessPage({
             });
     }, [user?.id, business?.id, isOwner]);
 
-    const canEdit = isOwner || isMember;
+    const canEdit = mounted && (isOwner || isMember);
 
     // When business loads, initialize local editing profile
     useEffect(() => {
@@ -217,7 +222,7 @@ export default function PublicBusinessPage({
                 <div className="text-center">
                     <div className="w-12 h-12 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin mx-auto mb-4" />
                     <p className="text-slate-400 font-medium">Cargando...</p>
-                    {!isOnline && (
+                    {mounted && !isOnline && (
                         <p className="text-sm text-amber-500 mt-2">Sin conexión — buscando datos guardados</p>
                     )}
                 </div>
