@@ -1,6 +1,8 @@
 import type { CSSProperties } from 'react';
 import type { BusinessProfile } from '@/types/business';
 import type { Adiso } from '@/types';
+import { resolveThemeTokens, themeFontClass } from '@/lib/business/theme-tokens';
+import type { ProfileThemePreset } from '@/types/business';
 
 export function getBusinessCanonicalUrl(slug: string): string {
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://buscadis.com').replace(/\/$/, '');
@@ -42,15 +44,29 @@ export function getCartWhatsappUrl(
 }
 
 export function businessThemeStyle(profile: Partial<BusinessProfile>): CSSProperties {
+  const preset = (profile.theme_preset || 'executive') as ProfileThemePreset;
+  const tokens = resolveThemeTokens(preset, {
+    color: profile.theme_color || undefined,
+    mode: profile.theme_mode === 'dark' ? 'dark' : profile.theme_mode === 'light' ? 'light' : undefined,
+  });
+  const isDark = tokens.mode === 'dark';
+
   return {
-    '--brand-color': profile.theme_color || '#3c6997',
-    '--bg-primary': '#ffffff',
-    '--bg-secondary': '#f8fafc',
-    '--bg-tertiary': '#e2e8f0',
-    '--text-primary': '#0f172a',
-    '--text-secondary': '#475569',
-    '--text-tertiary': '#94a3b8',
-    '--border-color': '#e2e8f0',
-    '--border-subtle': '#f1f5f9',
+    '--brand-color': tokens.color,
+    '--bg-primary': isDark ? '#0f172a' : '#ffffff',
+    '--bg-secondary': isDark ? '#020617' : '#f8fafc',
+    '--bg-tertiary': isDark ? '#1e293b' : '#e2e8f0',
+    '--text-primary': isDark ? '#f8fafc' : '#0f172a',
+    '--text-secondary': isDark ? '#cbd5e1' : '#475569',
+    '--text-tertiary': isDark ? '#64748b' : '#94a3b8',
+    '--border-color': isDark ? '#334155' : '#e2e8f0',
+    '--border-subtle': isDark ? '#1e293b' : '#f1f5f9',
+    '--theme-radius': tokens.radius === 'sharp' ? '0px' : tokens.radius === 'pill' ? '1.5rem' : '0.75rem',
   } as CSSProperties;
+}
+
+export function businessThemeClassName(profile: Partial<BusinessProfile>): string {
+  const preset = (profile.theme_preset || 'executive') as ProfileThemePreset;
+  const tokens = resolveThemeTokens(preset);
+  return themeFontClass(tokens.fontFamily);
 }

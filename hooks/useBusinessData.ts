@@ -21,6 +21,16 @@ import { idbGetCatalog, idbSetCatalog } from '@/lib/offline-catalog-store';
 import { idbClearCatalogPdf } from '@/lib/catalog-pdf';
 import { prefetchCatalogProductImages } from '@/lib/catalog-image-prefetch';
 import { useNetworkStatus } from './useNetworkStatus';
+import { normalizeProfileBlocks } from '@/lib/business/blocks/normalize';
+
+function enrichBusinessProfile(profile: BusinessProfile): BusinessProfile {
+  return {
+    ...profile,
+    template_id: profile.template_id || 'modern_tabs',
+    theme_preset: profile.theme_preset || 'executive',
+    profile_blocks: normalizeProfileBlocks(profile.profile_blocks, profile.template_id),
+  };
+}
 
 interface BusinessDataState {
   business: BusinessProfile | null;
@@ -81,13 +91,14 @@ export function useBusinessData(slug: string, isOwner: boolean) {
         return;
       }
 
-      const cachedProducts = await readCachedCatalog(cachedBusiness.id);
-      const mappedAdisos = mapProductsToAdisos(cachedProducts, cachedBusiness);
+      const enrichedCache = enrichBusinessProfile(cachedBusiness);
+      const cachedProducts = await readCachedCatalog(enrichedCache.id);
+      const mappedAdisos = mapProductsToAdisos(cachedProducts, enrichedCache);
 
       if (!cancelled) {
-        businessRef.current = cachedBusiness;
+        businessRef.current = enrichedCache;
         setState({
-          business: cachedBusiness,
+          business: enrichedCache,
           adisos: mappedAdisos,
           catalogProducts: cachedProducts,
           loading: false,
@@ -170,11 +181,12 @@ export function useBusinessData(slug: string, isOwner: boolean) {
 
   const applyCatalogToState = useCallback(
     (profileData: BusinessProfile, catalogData: any[]) => {
-      const mappedAdisos = mapProductsToAdisos(catalogData, profileData);
-      businessRef.current = profileData;
+      const enriched = enrichBusinessProfile(profileData);
+      const mappedAdisos = mapProductsToAdisos(catalogData, enriched);
+      businessRef.current = enriched;
       setState((prev) => ({
         ...prev,
-        business: profileData,
+        business: enriched,
         adisos: mappedAdisos,
         catalogProducts: catalogData,
         loading: false,
@@ -223,17 +235,18 @@ export function useBusinessData(slug: string, isOwner: boolean) {
           return;
         }
 
-        const catalogResult = await fetchCatalog(profileData.id, isOwner);
+        const enrichedProfile = enrichBusinessProfile(profileData);
+        const catalogResult = await fetchCatalog(enrichedProfile.id, isOwner);
 
         if (catalogResult !== null) {
-          applyCatalogToState(profileData, catalogResult);
+          applyCatalogToState(enrichedProfile, catalogResult);
         } else {
-          const fallback = await readCachedCatalog(profileData.id);
-          const mapped = mapProductsToAdisos(fallback, profileData);
-          businessRef.current = profileData;
+          const fallback = await readCachedCatalog(enrichedProfile.id);
+          const mapped = mapProductsToAdisos(fallback, enrichedProfile);
+          businessRef.current = enrichedProfile;
           setState((prev) => ({
             ...prev,
-            business: profileData,
+            business: enrichedProfile,
             adisos: mapped.length > 0 ? mapped : prev.adisos,
             catalogProducts: fallback.length > 0 ? fallback : prev.catalogProducts,
             loading: false,

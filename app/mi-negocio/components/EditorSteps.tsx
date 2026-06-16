@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { BusinessProfile, SocialLink, BusinessHours } from '@/types/business';
 import { uploadBusinessImage, deleteAllBusinessProducts, deleteCatalogProduct } from '@/lib/business';
@@ -6,7 +6,7 @@ import {
     IconStore, IconPhone, IconClock, IconShare, IconArrowRight, IconCheck,
     IconStar, IconMegaphone, IconEdit, IconMapMarkerAlt, IconEnvelope,
     IconInstagram, IconFacebook, IconTiktok, IconGlobe, IconBox, IconPlus, IconSparkles, IconTrash,
-    IconSearch
+    IconSearch, IconGrid
 } from '@/components/Icons';
 import { cn } from '@/lib/utils';
 import { Adiso } from '@/types';
@@ -15,6 +15,7 @@ import SimpleCatalogAdd from '@/components/business/SimpleCatalogAdd';
 import { ProductEditor } from '@/components/business/ProductEditor';
 import ProfileCompletenessChecklist from '@/components/business/builder/ProfileCompletenessChecklist';
 import ProfileBuilderModes from '@/components/business/builder/ProfileBuilderModes';
+import FilterSectionCard from '@/components/filters/FilterSectionCard';
 import { IconArrowLeft } from '@/components/Icons';
 
 // Icons mapping for steps
@@ -63,8 +64,33 @@ export function EditorSteps({
 }: EditorStepsProps) {
     const [uploadingImage, setUploadingImage] = useState<string | null>(null);
     const [catalogSearch, setCatalogSearch] = useState('');
-    const [deletingProductId, setDeletingProductId] = useState<string | null>(null);  // ID en proceso de eliminación
-    const [confirmDeleteProduct, setConfirmDeleteProduct] = useState<any | null>(null); // Producto esperando confirmación
+    const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
+    const [confirmDeleteProduct, setConfirmDeleteProduct] = useState<any | null>(null);
+    const [recommendedTemplateId, setRecommendedTemplateId] = useState<string | undefined>();
+
+    useEffect(() => {
+        const withPhoto = catalogProducts.filter((p: any) => p.images?.length || p.image_url).length;
+        const ratio = catalogProducts.length ? withPhoto / catalogProducts.length : 0;
+        const categories = catalogProducts.map((p: any) => p.category || '').filter(Boolean);
+        const dominant = categories.sort(
+            (a, b) =>
+                categories.filter((c) => c === b).length - categories.filter((c) => c === a).length
+        )[0];
+        fetch('/api/business/suggest-template', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                description: profile.description,
+                logo_url: profile.logo_url,
+                dominantCategory: dominant,
+                productCount: catalogProducts.length,
+                productsWithPhotoRatio: ratio,
+            }),
+        })
+            .then((r) => r.json())
+            .then((d) => d.templateId && setRecommendedTemplateId(d.templateId))
+            .catch(() => {});
+    }, [profile.id, catalogProducts.length]);
 
     const filteredCatalog = catalogProducts.filter((p: any) =>
         (p.title || '').toLowerCase().includes(catalogSearch.toLowerCase()) ||
@@ -182,10 +208,21 @@ export function EditorSteps({
                         profile={profile}
                         productCount={catalogProducts.length}
                     />
-                    <ProfileBuilderModes
-                        profile={profile}
-                        onUpdate={(patch) => setProfile({ ...profile, ...patch })}
-                    />
+                    <FilterSectionCard
+                        sectionId="template-theme"
+                        step={0}
+                        title="Plantilla y tema"
+                        subtitle="Galería híbrida + builder visual"
+                        icon={<IconGrid size={18} />}
+                        defaultOpen
+                    >
+                        <ProfileBuilderModes
+                            profile={profile}
+                            onUpdate={(patch) => setProfile({ ...profile, ...patch })}
+                            adisos={userAdisos}
+                            recommendedTemplateId={recommendedTemplateId}
+                        />
+                    </FilterSectionCard>
                 </div>
                 {/* Menu List */}
                 <div className="flex flex-col divide-y divide-slate-50">

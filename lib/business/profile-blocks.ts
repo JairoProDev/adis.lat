@@ -1,5 +1,7 @@
 import type { ProfileBlock, ProfileThemePreset } from '@/types/business';
 
+export { normalizeProfileBlocks, getVisibleBlocks, blockTypeToTabId } from '@/lib/business/blocks/normalize';
+
 export const DEFAULT_PROFILE_BLOCKS: ProfileBlock[] = [
   { id: 'hero', type: 'hero', visible: true, config: {} },
   { id: 'highlights', type: 'highlights', visible: true, config: {} },
@@ -20,7 +22,4 @@ export const PROFILE_THEME_PRESETS: Record<
   cyberpunk: { label: 'Cyberpunk', color: '#a855f7', mode: 'dark' },
 };
 
-export function normalizeProfileBlocks(blocks?: ProfileBlock[] | null): ProfileBlock[] {
-  if (!blocks || blocks.length === 0) return DEFAULT_PROFILE_BLOCKS;
-  return blocks;
-}
+// normalizeProfileBlocks lives in lib/business/blocks/normalize.ts

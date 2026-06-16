@@ -44,6 +44,16 @@ export interface ProfileBlock {
 
 export type ProfileThemePreset = 'executive' | 'minimal' | 'organic' | 'cyberpunk';
 
+export type PageTemplateId =
+    | 'modern_tabs'
+    | 'bento_scroll'
+    | 'minimal_scroll'
+    | 'vibrant_tabs'
+    | 'pack_ferreteria'
+    | 'pack_restaurante'
+    | 'pack_belleza'
+    | 'pack_servicios';
+
 export interface BusinessReview {
     id: string;
     business_profile_id: string;
@@ -88,6 +98,9 @@ export interface BusinessProfile {
     social_links: SocialLink[];
     custom_blocks: CustomBlock[];
     profile_blocks?: ProfileBlock[];
+    template_id?: PageTemplateId | string;
+    theme_preset?: ProfileThemePreset;
+    template_applied_at?: string;
 
     // SEO
     meta_title?: string;
