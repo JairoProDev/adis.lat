@@ -64,17 +64,23 @@ export default function ProfileBusinessesTab() {
               {role} · {p.is_published ? 'Publicado' : 'Borrador'}
             </p>
           </div>
-          <div className="flex flex-shrink-0 flex-col gap-1">
+          <div className="flex flex-shrink-0 flex-col gap-1 sm:flex-row">
             <Link
               href={`/mi-negocio?business=${p.id}`}
-              className="rounded-lg bg-[var(--brand-blue)] px-3 py-1.5 text-xs font-semibold text-white"
+              className="rounded-lg bg-[var(--brand-blue)] px-3 py-1.5 text-xs font-semibold text-white text-center"
             >
               Editar
+            </Link>
+            <Link
+              href={`/mi-negocio/equipo?business=${p.id}`}
+              className="rounded-lg border border-[var(--border-color)] px-3 py-1.5 text-xs font-semibold text-[var(--text-secondary)] text-center hover:bg-[var(--bg-secondary)]"
+            >
+              Equipo
             </Link>
             {p.slug && (
               <Link
                 href={`/${p.slug}`}
-                className="text-center text-xs text-[var(--text-secondary)] hover:underline"
+                className="text-center text-xs text-[var(--text-secondary)] hover:underline py-1.5"
               >
                 Ver página
               </Link>

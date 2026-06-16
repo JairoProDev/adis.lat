@@ -20,6 +20,7 @@ import { Adiso } from '@/types';
 import { IconEye, IconEdit, IconX, IconCheck } from '@/components/Icons';
 import AuthModal from '@/components/AuthModal';
 import BusinessPublicView from '@/components/business/BusinessPublicView';
+import BusinessSwitcher from '@/components/business/BusinessSwitcher';
 import ChatbotGuide from '@/components/business/ChatbotGuide';
 import { EditorSteps } from './components/EditorSteps';
 import SimpleCatalogAdd from '@/components/business/SimpleCatalogAdd';
@@ -184,7 +185,7 @@ function BusinessBuilderPageContent() {
                 setIsFirstTime(false);
                 setChatbotMinimized(true);
 
-                if (existingProfile.slug && !businessParam) {
+                if (existingProfile.slug && !businessParam && memberships.length <= 1) {
                     router.push(`/${existingProfile.slug}?edit=true`);
                     return;
                 }
@@ -226,8 +227,8 @@ function BusinessBuilderPageContent() {
                 setIsFirstTime(false);
                 setChatbotMinimized(true);
 
-                // If business has a slug, redirect to the unified page editor
-                if (existingProfile.slug) {
+                // Single business: unified slug editor. Multiple: stay here with switcher.
+                if (existingProfile.slug && memberships.length <= 1) {
                     router.push(`/${existingProfile.slug}?edit=true`);
                     return;
                 }
@@ -286,6 +287,8 @@ function BusinessBuilderPageContent() {
                 setProfile(savedProfile);
                 lastSavedProfileStr.current = JSON.stringify(savedProfile);
                 setLastSavedTime(new Date());
+                const memberships = await listBusinessProfilesForUser(user.id);
+                setBusinessOptions(memberships);
                 if (!profile.id && savedProfile.id) {
                     router.replace(`${pathname}?business=${savedProfile.id}`);
                 }
@@ -446,8 +449,15 @@ function BusinessBuilderPageContent() {
         );
     }
 
+    const forceNew = searchParams.get('new') === '1';
+
     return (
         <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--bg-secondary)' }}>
+            {forceNew && !profile.id && (
+                <div className="bg-blue-50 border-b border-blue-100 px-4 py-2 text-center text-sm text-blue-800">
+                    Estás creando un <strong>nuevo negocio</strong>. Elige nombre y URL; no afecta tus otros negocios.
+                </div>
+            )}
             {/* Top Bar */}
             <div className="sticky top-0 z-50 bg-white border-b shadow-sm h-16" style={{ borderColor: 'var(--border-color)' }}>
                 <div className="max-w-[1920px] mx-auto px-4 h-full flex justify-between items-center">
@@ -478,37 +488,26 @@ function BusinessBuilderPageContent() {
                                     )}
                                 </div>
                             </div>
-                            {businessOptions.length > 0 && (
-                                <div className="flex items-center gap-2 ml-2 flex-wrap">
-                                    <label className="text-xs text-slate-500 font-medium">Negocio</label>
-                                    <select
-                                        className="text-sm border border-slate-200 rounded-lg px-2 py-1 bg-white text-slate-800 max-w-[200px]"
-                                        value={profile.id || ''}
-                                        onChange={(e) => {
-                                            const id = e.target.value;
-                                            if (id) router.push(`${pathname}?business=${id}`);
-                                        }}
-                                    >
-                                        {businessOptions.map(({ profile: p }) => (
-                                            <option key={p.id} value={p.id}>{p.name || p.slug || p.id}</option>
-                                        ))}
-                                    </select>
-                                    <button
-                                        type="button"
-                                        className="text-xs font-semibold text-blue-600 hover:underline"
-                                        onClick={() => router.push(`${pathname}?new=1`)}
-                                    >
-                                        + Nuevo negocio
-                                    </button>
-                                    {profile.id && (
-                                        <Link
-                                            href={`/mi-negocio/equipo?business=${profile.id}`}
-                                            className="text-xs font-semibold text-slate-600 hover:underline"
-                                        >
-                                            Equipo
-                                        </Link>
-                                    )}
-                                </div>
+                            {businessOptions.length > 0 && !forceNew && (
+                                <BusinessSwitcher
+                                    businesses={businessOptions}
+                                    currentBusinessId={profile.id}
+                                    onSelect={(id) => router.push(`${pathname}?business=${id}`)}
+                                    className="ml-2"
+                                />
+                            )}
+                            {forceNew && businessOptions.length > 0 && (
+                                <button
+                                    type="button"
+                                    className="ml-2 text-xs font-semibold text-slate-500 hover:underline"
+                                    onClick={() => {
+                                        const first = businessOptions[0]?.profile;
+                                        if (first?.slug) router.push(`/${first.slug}?edit=true`);
+                                        else if (first?.id) router.push(`${pathname}?business=${first.id}`);
+                                    }}
+                                >
+                                    Cancelar y volver
+                                </button>
                             )}
                         </div>
                     </div>

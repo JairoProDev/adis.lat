@@ -14,6 +14,7 @@ import {
   IconSettings,
   IconSignOut,
   IconVerified,
+  IconPlus,
 } from './Icons';
 import { FaChartLine } from 'react-icons/fa';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -66,6 +67,24 @@ function UserMenuContent({ onProgressClick }: UserMenuProps) {
       onClick: () => {
         setMostrarMenu(false);
         router.push('/mi-negocio');
+      },
+    },
+    {
+      icon: <IconPlus size={16} color="var(--brand-blue)" />,
+      iconBg: 'bg-[rgba(var(--brand-primary-rgb),0.12)]',
+      label: 'Crear otro negocio',
+      onClick: () => {
+        setMostrarMenu(false);
+        router.push('/mi-negocio?new=1');
+      },
+    },
+    {
+      icon: <IconStore size={16} color="var(--text-secondary)" />,
+      iconBg: 'bg-[var(--bg-tertiary)]',
+      label: 'Mis negocios',
+      onClick: () => {
+        setMostrarMenu(false);
+        goTo('negocios');
       },
     },
     {

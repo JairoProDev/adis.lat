@@ -15,7 +15,9 @@ import SimpleCatalogAdd from '@/components/business/SimpleCatalogAdd';
 import { useToast } from '@/hooks/useToast';
 import { useBusinessData } from '@/hooks/useBusinessData';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
-import { updateBusinessProfile } from '@/lib/business';
+import { updateBusinessProfile, listBusinessProfilesForUser } from '@/lib/business';
+import { type BusinessWithRole } from '@/lib/business-access';
+import BusinessSwitcher from '@/components/business/BusinessSwitcher';
 import { saveBusinessViaAPI, publishBusinessViaAPI } from '@/lib/business-api';
 import { useDebounce } from '@/hooks/useDebounce';
 import { IconCheck, IconEdit, IconEye, IconX } from '@/components/Icons';
@@ -70,9 +72,19 @@ export default function PublicBusinessPage({
     } = useBusinessData(slug, false);
 
     const [mounted, setMounted] = useState(false);
+    const [businessOptions, setBusinessOptions] = useState<BusinessWithRole[]>([]);
+
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    useEffect(() => {
+        if (!user?.id) {
+            setBusinessOptions([]);
+            return;
+        }
+        listBusinessProfilesForUser(user.id).then(setBusinessOptions);
+    }, [user?.id, business?.id]);
 
     // Derived owner check — also works when user_id in business_profiles matches auth user
     // OR when the user is in business_members with a role >= editor
@@ -275,7 +287,7 @@ export default function PublicBusinessPage({
                     >
                         <IconX size={18} color="var(--text-secondary, #64748b)" />
                     </button>
-                    <div className="flex flex-col">
+                    <div className="flex flex-col min-w-0 flex-1">
                         <span className="font-bold text-sm text-slate-800 leading-tight">Editar Página</span>
                         <div className="flex items-center gap-1.5">
                             {saving ? (
@@ -292,6 +304,15 @@ export default function PublicBusinessPage({
                                 <span className="text-[10px] text-slate-400">Los cambios se guardan solos</span>
                             )}
                         </div>
+                        {businessOptions.length > 0 && business?.id && (
+                            <div className="mt-1.5">
+                                <BusinessSwitcher
+                                    businesses={businessOptions}
+                                    currentBusinessId={business.id}
+                                    compact
+                                />
+                            </div>
+                        )}
                     </div>
 
                     <div className="ml-auto flex items-center gap-2">
@@ -414,13 +435,24 @@ export default function PublicBusinessPage({
 
                     {/* "Editar página" floating button for owner (when not editing) */}
                     {canEdit && !isEditing && (
-                        <button
-                            onClick={() => setIsEditing(true)}
-                            className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 bg-slate-800 text-white rounded-full shadow-xl font-bold text-sm hover:bg-slate-700 transition-all hover:scale-105 active:scale-95"
-                        >
-                            <IconEdit size={16} />
-                            Editar página
-                        </button>
+                        <div className="fixed bottom-6 left-4 right-4 z-50 flex flex-col items-end gap-2 sm:left-auto sm:right-6 sm:items-end">
+                            {businessOptions.length > 0 && business?.id && (
+                                <div className="bg-white/95 backdrop-blur-sm border border-slate-200 rounded-xl px-3 py-2 shadow-lg max-w-full">
+                                    <BusinessSwitcher
+                                        businesses={businessOptions}
+                                        currentBusinessId={business.id}
+                                        compact
+                                    />
+                                </div>
+                            )}
+                            <button
+                                onClick={() => setIsEditing(true)}
+                                className="flex items-center gap-2 px-4 py-2.5 bg-slate-800 text-white rounded-full shadow-xl font-bold text-sm hover:bg-slate-700 transition-all hover:scale-105 active:scale-95"
+                            >
+                                <IconEdit size={16} />
+                                Editar página
+                            </button>
+                        </div>
                     )}
 
                     {/* CHATBOT GUIDE */}
