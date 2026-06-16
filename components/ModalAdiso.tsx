@@ -514,7 +514,7 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
     if (!showInApp && !showExternal) return null;
 
     return (
-      <div className="flex shrink-0 gap-2 border-t border-[var(--border-color)] bg-[var(--bg-primary)] p-3 shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
+      <div className="flex shrink-0 gap-2 border-t border-[var(--border-color)] bg-[var(--bg-primary)] p-3 shadow-[var(--shadow-up)]">
         {showInApp ? (
           <button
             type="button"

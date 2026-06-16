@@ -144,7 +144,7 @@ const AdisoCard = forwardRef<HTMLDivElement, AdisoCardProps>(
                 {vista === 'feed' && (
                     <div className="w-full p-3 flex items-center justify-between border-b border-[var(--border-color)]">
                         <div className="flex items-center gap-2 min-w-0">
-                            <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 dark:bg-slate-800 relative border border-[var(--border-color)] flex-shrink-0">
+                            <div className="w-10 h-10 rounded-full overflow-hidden bg-[var(--bg-tertiary)] relative border border-[var(--border-color)] flex-shrink-0">
                                 {adiso.vendedor?.avatarUrl ? (
                                     <Image
                                         src={adiso.vendedor.avatarUrl}

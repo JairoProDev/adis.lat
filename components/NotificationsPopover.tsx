@@ -76,7 +76,7 @@ export default function NotificationsPopover({ onClose }: NotificationsPopoverPr
 
     if (loading && notifications.length === 0) {
         return (
-            <div className="w-full rounded-2xl border border-[var(--border-color)] bg-[var(--bg-primary)] p-4 shadow-[0_16px_48px_rgba(15,23,42,0.12)]">
+            <div className="w-full rounded-2xl border border-[var(--border-color)] bg-[var(--bg-primary)] p-4 shadow-[var(--popover-shadow)]">
                 <div className="flex justify-center py-4">
                     <div className="h-6 w-6 animate-spin rounded-full border-2 border-[var(--brand-blue)] border-t-transparent" />
                 </div>
@@ -85,7 +85,7 @@ export default function NotificationsPopover({ onClose }: NotificationsPopoverPr
     }
 
     return (
-        <div className="flex w-full flex-col overflow-hidden rounded-2xl border border-[var(--border-color)] bg-[var(--bg-primary)] shadow-[0_16px_48px_rgba(15,23,42,0.12)]">
+        <div className="flex w-full flex-col overflow-hidden rounded-2xl border border-[var(--border-color)] bg-[var(--bg-primary)] shadow-[var(--popover-shadow)]">
             <div className="flex items-center justify-between border-b border-[var(--border-color)] bg-[var(--bg-secondary)] px-4 py-3">
                 <h3 className="flex items-center gap-2 text-sm font-bold text-[var(--text-primary)]">
                     <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[rgba(var(--brand-primary-rgb),0.12)]">

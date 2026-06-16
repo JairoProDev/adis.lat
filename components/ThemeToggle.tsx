@@ -149,7 +149,7 @@ export default function ThemeToggle() {
             backgroundColor: 'var(--bg-primary)',
             border: '1px solid var(--border-color)',
             borderRadius: '12px',
-            boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+            boxShadow: 'var(--popover-shadow)',
             zIndex: 1000,
             overflow: 'hidden',
             animation: 'slideUp 0.2s ease-out'

@@ -162,7 +162,7 @@ function UserMenuContent({ onProgressClick }: UserMenuProps) {
       {mostrarMenu && (
         <div
           role="menu"
-          className="absolute right-0 top-[calc(100%+0.5rem)] z-[1001] w-[min(100vw-1.5rem,300px)] overflow-hidden rounded-2xl border border-[var(--border-color)] bg-[var(--bg-primary)] shadow-[0_16px_48px_rgba(15,23,42,0.12)]"
+          className="absolute right-0 top-[calc(100%+0.5rem)] z-[1001] w-[min(100vw-1.5rem,300px)] overflow-hidden rounded-2xl border border-[var(--border-color)] bg-[var(--bg-primary)] shadow-[var(--popover-shadow)]"
         >
           {/* Cabecera */}
           <div className="border-b border-[var(--border-color)] px-4 py-3.5">
