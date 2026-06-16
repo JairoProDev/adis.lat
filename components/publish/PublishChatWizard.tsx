@@ -145,7 +145,7 @@ export default function PublishChatWizard({
     setTyping(true);
     await delay(400);
     setTyping(false);
-    addBot('¡Hola! Soy ADIS. Cuéntame qué quieres publicar y te ayudaré a crear tu adiso 😊');
+    addBot('Hola. Te guío paso a paso para publicar tu aviso en el marketplace.');
     await delay(300);
     await askStep('categoria');
   }, [started, addBot, askStep]);
@@ -174,7 +174,7 @@ export default function PublishChatWizard({
       setTyping(true);
       await delay(600);
       setTyping(false);
-      addBot('¡Listo! Revisa tu aviso y elige cómo publicarlo.');
+      addBot('Perfecto. Revisa el resumen y elige cómo publicar.');
       scrollBottom();
       return;
     }
@@ -428,7 +428,7 @@ export default function PublishChatWizard({
   return (
     <div className={`flex flex-col ${compact ? 'h-full min-h-0' : 'h-full min-h-[480px]'}`}>
       <div
-        className={`flex flex-col flex-1 min-h-0 rounded-2xl overflow-hidden shadow-[var(--shadow-lg)] ring-1 ring-black/[0.05] bg-[var(--bg-secondary)]`}
+        className={`flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] ${compact ? 'shadow-none' : 'shadow-sm'}`}
       >
         <PublishChatHeader
           compact={compact}
@@ -439,11 +439,7 @@ export default function PublishChatWizard({
 
         <div
           ref={scrollRef}
-          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-3 py-3 space-y-3 scroll-smooth"
-          style={{
-            background:
-              'linear-gradient(180deg, var(--bg-secondary) 0%, rgba(var(--brand-primary-rgb),0.03) 50%, var(--bg-secondary) 100%)',
-          }}
+          className="flex-1 min-h-0 space-y-3.5 overflow-y-auto overflow-x-hidden scroll-smooth px-3 py-4"
         >
           <AnimatePresence initial={false}>
             {messages.map((msg) => (

@@ -35,9 +35,7 @@ export default function PublishChatInputBar({
 
   return (
     <div
-      className={`shrink-0 border-t border-black/[0.06] bg-[var(--bg-secondary)]/80 backdrop-blur-sm ${
-        compact ? 'px-2 py-2' : 'px-3 py-3'
-      }`}
+      className={`shrink-0 bg-[var(--bg-secondary)] ${compact ? 'px-2.5 pb-2.5 pt-2' : 'px-4 pb-4 pt-3'}`}
     >
       <input
         ref={fileRef}

@@ -1,8 +1,8 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { FaPencilAlt, FaPaperPlane, FaCheck } from 'react-icons/fa';
-import { IconAdis, IconImage } from '@/components/Icons';
+import { FaPencilAlt, FaCheck } from 'react-icons/fa';
+import { IconAdis } from '@/components/Icons';
 import PublishImagePreview from './PublishImagePreview';
 import { getCategoriaIcon, PUBLISH_CATEGORIAS } from '@/lib/categoria-icons';
 import { getCategoriaThemeTokens } from '@/lib/categoria-theme';
@@ -31,7 +31,7 @@ export interface ChatMessageView {
   imageUrl?: string;
 }
 
-/* ── Opciones inline en el hilo del chat ── */
+/* ── Opciones inline en el hilo ── */
 export function PublishChatInlineOptions({
   step,
   compact,
@@ -53,12 +53,13 @@ export function PublishChatInlineOptions({
 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex items-start gap-2 max-w-full"
+      transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+      className="flex items-start gap-2.5 max-w-full pl-0.5"
     >
-      <div className={`${compact ? 'w-6 h-6' : 'w-7 h-7'} shrink-0`} aria-hidden />
-      <div className="flex-1 min-w-0 space-y-2">
+      <div className={`${compact ? 'w-7' : 'w-8'} shrink-0`} aria-hidden />
+      <div className="flex-1 min-w-0">
         {step === 'categoria' && (
           <PublishCategoryGrid compact={compact} onSelect={onSelect} inline />
         )}
@@ -90,84 +91,99 @@ export function PublishChatHeader({
   compact,
   typing,
   currentStep,
-  progress,
 }: {
   compact?: boolean;
   typing: boolean;
   currentStep: PublishChatStepId | 'done';
-  progress: number;
+  progress?: number;
 }) {
-  const status =
-    typing
-      ? 'Pensando…'
-      : currentStep === 'done'
-        ? 'Listo para publicar'
-        : `Paso ${STEP_ORDER.indexOf(currentStep as PublishChatStepId) + 1} de ${STEP_ORDER.length}`;
+  const stepIndex =
+    currentStep === 'done'
+      ? STEP_ORDER.length
+      : STEP_ORDER.indexOf(currentStep as PublishChatStepId) + 1;
+
+  const stepLabel =
+    currentStep === 'done'
+      ? 'Revisión final'
+      : STEP_LABELS[currentStep as PublishChatStepId];
+
+  const status = typing
+    ? 'Escribiendo…'
+    : currentStep === 'done'
+      ? 'Listo para publicar'
+      : `${stepLabel} · ${stepIndex}/${STEP_ORDER.length}`;
 
   return (
-    <div
-      className="relative shrink-0 overflow-hidden"
-      style={{ background: 'var(--brand-mesh-soft)' }}
-    >
-      <div className="absolute inset-0 bg-[var(--bg-primary)]/75 backdrop-blur-md" />
-      <div className={`relative ${compact ? 'px-3 py-2.5' : 'px-4 py-3.5'}`}>
-        <div className="flex items-center gap-2.5">
+    <div className="shrink-0 border-b border-[var(--border-color)] bg-[var(--bg-primary)]">
+      <div className={`${compact ? 'px-3 py-2.5' : 'px-4 py-3.5'}`}>
+        <div className="flex items-center gap-3">
           <div className="relative shrink-0">
             <div
-              className={`${compact ? 'w-8 h-8' : 'w-10 h-10'} rounded-2xl flex items-center justify-center shadow-[0_4px_14px_rgba(var(--brand-yellow-rgb),0.35)]`}
-              style={{
-                background: 'linear-gradient(135deg, rgba(var(--brand-yellow-rgb),0.25) 0%, rgba(var(--brand-primary-rgb),0.2) 100%)',
-              }}
+              className={`${compact ? 'h-9 w-9' : 'h-10 w-10'} flex items-center justify-center rounded-full bg-[rgba(var(--brand-primary-rgb),0.1)] ring-1 ring-[rgba(var(--brand-primary-rgb),0.15)]`}
             >
-              <IconAdis size={compact ? 15 : 18} color="var(--brand-yellow)" />
+              <IconAdis size={compact ? 16 : 18} color="var(--brand-blue)" />
             </div>
             {!typing && currentStep !== 'done' && (
-              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[var(--bg-primary)] shadow-sm" />
+              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-[var(--bg-primary)] bg-emerald-500" />
             )}
           </div>
-          <div className="flex-1 min-w-0">
-            <p className={`m-0 font-extrabold tracking-tight text-[var(--text-primary)] ${compact ? 'text-xs' : 'text-sm'}`}>
-              ADIS
+          <div className="min-w-0 flex-1">
+            <p
+              className={`m-0 font-semibold tracking-tight text-[var(--text-primary)] ${compact ? 'text-[13px]' : 'text-sm'}`}
+            >
+              Asistente de publicación
             </p>
-            <p className={`m-0 text-[var(--text-tertiary)] truncate ${compact ? 'text-[10px]' : 'text-xs'}`}>
+            <p
+              className={`m-0 truncate text-[var(--text-tertiary)] ${compact ? 'text-[11px]' : 'text-xs'}`}
+            >
               {status}
             </p>
           </div>
         </div>
-        <div className="mt-2.5 h-1 rounded-full bg-[var(--bg-tertiary)] overflow-hidden">
-          <motion.div
-            className="h-full rounded-full"
-            style={{
-              background: 'linear-gradient(90deg, var(--brand-blue), var(--brand-yellow))',
-            }}
-            initial={{ width: 0 }}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.45, ease: 'easeOut' }}
-          />
+
+        {/* Step dots */}
+        <div className="mt-3 flex items-center gap-1">
+          {STEP_ORDER.map((s, i) => {
+            const done = currentStep === 'done' || i < stepIndex - 1;
+            const active =
+              currentStep !== 'done' && s === currentStep;
+            return (
+              <span
+                key={s}
+                title={STEP_LABELS[s]}
+                className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
+                  done
+                    ? 'bg-[var(--brand-blue)]'
+                    : active
+                      ? 'bg-[rgba(var(--brand-primary-rgb),0.55)]'
+                      : 'bg-[var(--bg-tertiary)]'
+                }`}
+              />
+            );
+          })}
         </div>
       </div>
     </div>
   );
 }
 
-/* ── Typing indicator ── */
 export function PublishChatTyping({ compact }: { compact?: boolean }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex items-end gap-2"
+      className="flex items-end gap-2.5"
     >
       <AdisAvatar compact={compact} />
       <div
-        className={`inline-flex items-center gap-1.5 rounded-2xl rounded-bl-md px-4 py-3 shadow-sm ring-1 ring-black/[0.04] bg-[var(--bg-primary)] ${compact ? 'py-2.5 px-3' : ''}`}
+        className={`inline-flex items-center gap-1 rounded-2xl rounded-bl-md bg-[var(--bg-primary)] px-4 py-3 ring-1 ring-[var(--border-color)] ${compact ? 'py-2.5' : ''}`}
       >
         {[0, 1, 2].map((i) => (
           <motion.span
             key={i}
-            className="block w-1.5 h-1.5 rounded-full bg-[var(--brand-blue)]"
-            animate={{ y: [0, -4, 0], opacity: [0.4, 1, 0.4] }}
-            transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.15 }}
+            className="block h-1.5 w-1.5 rounded-full bg-[var(--text-tertiary)]"
+            animate={{ opacity: [0.25, 0.9, 0.25] }}
+            transition={{ duration: 1.1, repeat: Infinity, delay: i * 0.18 }}
           />
         ))}
       </div>
@@ -178,15 +194,13 @@ export function PublishChatTyping({ compact }: { compact?: boolean }) {
 function AdisAvatar({ compact }: { compact?: boolean }) {
   return (
     <div
-      className={`${compact ? 'w-6 h-6' : 'w-7 h-7'} shrink-0 rounded-xl flex items-center justify-center`}
-      style={{ background: 'linear-gradient(135deg, rgba(var(--brand-yellow-rgb),0.2), rgba(var(--brand-primary-rgb),0.15))' }}
+      className={`${compact ? 'h-7 w-7' : 'h-8 w-8'} flex shrink-0 items-center justify-center rounded-full bg-[rgba(var(--brand-primary-rgb),0.1)]`}
     >
-      <IconAdis size={compact ? 11 : 13} color="var(--brand-yellow)" />
+      <IconAdis size={compact ? 12 : 14} color="var(--brand-blue)" />
     </div>
   );
 }
 
-/* ── Message bubble ── */
 export function PublishChatBubble({
   msg,
   compact,
@@ -210,16 +224,16 @@ export function PublishChatBubble({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-      className={`flex items-end gap-2 ${isUser ? 'flex-row-reverse' : ''}`}
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+      className={`flex items-end gap-2.5 ${isUser ? 'flex-row-reverse' : ''}`}
     >
       {!isUser && <AdisAvatar compact={compact} />}
 
-      <div className={`group flex flex-col max-w-[88%] ${isUser ? 'items-end' : 'items-start'}`}>
+      <div className={`group flex max-w-[90%] flex-col ${isUser ? 'items-end' : 'items-start'}`}>
         {msg.step && isUser && (
-          <span className="mb-1 px-1.5 text-[9px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">
+          <span className="mb-1 px-0.5 text-[10px] font-medium text-[var(--text-tertiary)]">
             {STEP_LABELS[msg.step]}
           </span>
         )}
@@ -227,35 +241,30 @@ export function PublishChatBubble({
         <div
           className={`relative ${
             isUser
-              ? 'rounded-2xl rounded-br-sm px-3.5 py-2.5 text-white shadow-[0_4px_16px_rgba(var(--brand-primary-rgb),0.35)]'
-              : `rounded-2xl rounded-bl-sm px-3.5 py-2.5 text-[var(--text-primary)] shadow-sm ring-1 ring-black/[0.04] bg-[var(--bg-primary)] ${compact ? 'text-[13px]' : 'text-sm'}`
+              ? `rounded-2xl rounded-br-md bg-[var(--brand-blue)] px-3.5 py-2.5 text-white shadow-sm ${compact ? 'text-[13px]' : 'text-sm'}`
+              : `rounded-2xl rounded-bl-md bg-[var(--bg-primary)] px-3.5 py-2.5 text-[var(--text-primary)] ring-1 ring-[var(--border-color)] ${compact ? 'text-[13px]' : 'text-sm'}`
           }`}
-          style={
-            isUser
-              ? { background: 'linear-gradient(135deg, var(--brand-blue) 0%, #3d96b0 100%)' }
-              : undefined
-          }
         >
           {editing ? (
-            <div className="flex flex-col gap-2 min-w-[160px]">
+            <div className="flex min-w-[160px] flex-col gap-2">
               <input
                 value={editInput}
                 onChange={(e) => onEditInputChange(e.target.value)}
-                className="w-full rounded-lg px-2.5 py-1.5 text-sm text-[var(--text-primary)] bg-white/90 border-0 focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-2.5 py-1.5 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[rgba(var(--brand-primary-rgb),0.3)]"
                 autoFocus
               />
               <div className="flex gap-1.5">
                 <button
                   type="button"
                   onClick={onSaveEdit}
-                  className="flex-1 py-1 rounded-lg bg-white/25 text-xs font-bold hover:bg-white/35 transition-colors"
+                  className="flex-1 rounded-lg bg-[var(--brand-blue)] py-1.5 text-xs font-semibold text-white"
                 >
                   Guardar
                 </button>
                 <button
                   type="button"
                   onClick={onCancelEdit}
-                  className="flex-1 py-1 rounded-lg bg-black/10 text-xs font-medium"
+                  className="flex-1 rounded-lg bg-[var(--bg-tertiary)] py-1.5 text-xs font-medium text-[var(--text-secondary)]"
                 >
                   Cancelar
                 </button>
@@ -263,9 +272,7 @@ export function PublishChatBubble({
             </div>
           ) : (
             <>
-              <p className={`m-0 whitespace-pre-wrap break-words leading-relaxed ${compact && isUser ? 'text-[13px]' : ''}`}>
-                {msg.content}
-              </p>
+              <p className="m-0 whitespace-pre-wrap break-words leading-relaxed">{msg.content}</p>
               {msg.imageUrl && (
                 <div className="mt-2">
                   <PublishImagePreview url={msg.imageUrl} onRemove={() => {}} size="sm" />
@@ -275,10 +282,10 @@ export function PublishChatBubble({
                 <button
                   type="button"
                   onClick={onStartEdit}
-                  className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-[var(--bg-primary)] text-[var(--text-tertiary)] shadow-md ring-1 ring-black/[0.06] opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all hover:text-[var(--brand-blue)] hover:scale-105"
+                  className="absolute -left-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-[var(--bg-primary)] text-[var(--text-tertiary)] opacity-0 shadow-sm ring-1 ring-[var(--border-color)] transition-all group-hover:opacity-100 hover:text-[var(--brand-blue)]"
                   aria-label="Editar"
                 >
-                  <FaPencilAlt size={8} />
+                  <FaPencilAlt size={9} />
                 </button>
               )}
             </>
@@ -289,7 +296,6 @@ export function PublishChatBubble({
   );
 }
 
-/* ── Option chips ── */
 export function PublishCategoryGrid({
   compact,
   onSelect,
@@ -301,15 +307,9 @@ export function PublishCategoryGrid({
 }) {
   return (
     <div
-      className={`grid gap-2 ${
-        inline
-          ? compact
-            ? 'grid-cols-4'
-            : 'grid-cols-4'
-          : compact
-            ? 'grid-cols-4'
-            : 'grid-cols-4 sm:grid-cols-4'
-      } ${inline ? 'rounded-2xl rounded-bl-sm p-2 ring-1 ring-black/[0.05] bg-[var(--bg-primary)] shadow-sm' : ''}`}
+      className={`grid gap-1.5 ${
+        compact ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-3'
+      } ${inline ? 'rounded-2xl rounded-bl-md bg-[var(--bg-primary)] p-2 ring-1 ring-[var(--border-color)]' : ''}`}
     >
       {PUBLISH_CATEGORIAS.map((opt, i) => {
         const Icon = getCategoriaIcon(opt.value);
@@ -318,19 +318,20 @@ export function PublishCategoryGrid({
           <motion.button
             key={opt.value}
             type="button"
-            initial={{ opacity: 0, y: 6 }}
+            initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.03 }}
+            transition={{ delay: i * 0.025, duration: 0.2 }}
             onClick={() => onSelect(opt.value)}
-            className="group flex flex-col items-center gap-1 rounded-xl p-1 transition-transform hover:scale-[1.03] active:scale-[0.97]"
+            className="group flex items-center gap-2.5 rounded-xl border border-transparent bg-[var(--bg-secondary)] px-2.5 py-2 text-left transition-all hover:border-[var(--border-color)] hover:bg-[var(--bg-primary)] active:scale-[0.98]"
           >
             <span
-              className={`flex items-center justify-center rounded-xl border-2 border-[rgba(var(--brand-yellow-rgb),0.55)] bg-[var(--bg-primary)] shadow-sm transition-all group-hover:border-[var(--brand-yellow)] group-hover:shadow-md ${compact ? 'w-9 h-9' : 'w-11 h-11'}`}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors"
+              style={{ backgroundColor: `${accent}18` }}
             >
-              <Icon size={compact ? 16 : 20} color={accent} />
+              <Icon size={18} color={accent} />
             </span>
             <span
-              className={`font-semibold text-center leading-tight text-[var(--text-secondary)] group-hover:text-[var(--brand-blue)] ${compact ? 'text-[9px]' : 'text-[10px]'}`}
+              className={`font-medium leading-tight text-[var(--text-primary)] group-hover:text-[var(--brand-blue)] ${compact ? 'text-xs' : 'text-[13px]'}`}
             >
               {opt.label}
             </span>
@@ -357,42 +358,43 @@ export function PublishPriceOptions({
   onConfirmAmount: () => void;
 }) {
   return (
-    <div className={`space-y-2 ${inline ? 'rounded-2xl rounded-bl-sm p-2.5 ring-1 ring-black/[0.05] bg-[var(--bg-primary)] shadow-sm' : ''}`}>
-      <div className={`flex flex-wrap gap-1.5 ${compact ? '' : 'gap-2'}`}>
+    <div
+      className={`space-y-2.5 ${inline ? 'rounded-2xl rounded-bl-md bg-[var(--bg-primary)] p-2.5 ring-1 ring-[var(--border-color)]' : ''}`}
+    >
+      <div className="flex flex-wrap gap-1.5">
         {PRECIO_OPTIONS.map((opt, i) => (
           <motion.button
             key={opt.value}
             type="button"
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: i * 0.05 }}
+            transition={{ delay: i * 0.04 }}
             onClick={() => onSelect(opt.value)}
-            className={`rounded-full font-semibold transition-all hover:scale-105 active:scale-95 ring-1 ring-black/[0.06] bg-[var(--bg-secondary)] hover:bg-[rgba(var(--brand-primary-rgb),0.08)] hover:ring-[rgba(var(--brand-primary-rgb),0.3)] text-[var(--text-secondary)] hover:text-[var(--brand-blue)] ${compact ? 'px-2.5 py-1 text-[11px]' : 'px-3 py-1.5 text-xs'}`}
+            className={`rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] font-medium text-[var(--text-secondary)] transition-colors hover:border-[rgba(var(--brand-primary-rgb),0.35)] hover:bg-[rgba(var(--brand-primary-rgb),0.06)] hover:text-[var(--brand-blue)] ${compact ? 'px-2.5 py-1 text-[11px]' : 'px-3 py-1.5 text-xs'}`}
           >
             {opt.label}
           </motion.button>
         ))}
       </div>
       {!inline && (
-      <div className="flex gap-2 items-center">
-        <input
-          type="text"
-          inputMode="decimal"
-          value={input}
-          onChange={(e) => onInputChange(e.target.value.replace(/[^\d.,]/g, ''))}
-          placeholder="Monto en soles"
-          className={`flex-1 rounded-xl ring-1 ring-black/[0.06] bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[rgba(var(--brand-primary-rgb),0.35)] ${compact ? 'px-2.5 py-1.5 text-xs' : 'px-3 py-2 text-sm'}`}
-        />
-        <button
-          type="button"
-          onClick={onConfirmAmount}
-          disabled={!input.trim()}
-          className={`shrink-0 rounded-xl font-bold text-white disabled:opacity-40 transition-opacity ${compact ? 'px-3 py-1.5 text-[11px]' : 'px-4 py-2 text-xs'}`}
-          style={{ background: 'linear-gradient(135deg, var(--brand-blue), #3d96b0)' }}
-        >
-          OK
-        </button>
-      </div>
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            inputMode="decimal"
+            value={input}
+            onChange={(e) => onInputChange(e.target.value.replace(/[^\d.,]/g, ''))}
+            placeholder="Monto en soles"
+            className={`flex-1 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[rgba(var(--brand-primary-rgb),0.25)] ${compact ? 'px-2.5 py-1.5 text-xs' : 'px-3 py-2 text-sm'}`}
+          />
+          <button
+            type="button"
+            onClick={onConfirmAmount}
+            disabled={!input.trim()}
+            className={`shrink-0 rounded-xl bg-[var(--brand-blue)] font-semibold text-white disabled:opacity-40 ${compact ? 'px-3 py-1.5 text-[11px]' : 'px-4 py-2 text-xs'}`}
+          >
+            OK
+          </button>
+        </div>
       )}
     </div>
   );
@@ -413,158 +415,27 @@ export function PublishPhotoOptions({
 }) {
   return (
     <div
-      className={`flex flex-wrap gap-2 ${inline ? 'rounded-2xl rounded-bl-sm p-2.5 ring-1 ring-black/[0.05] bg-[var(--bg-primary)] shadow-sm' : ''}`}
+      className={`flex flex-col gap-2 ${inline ? 'rounded-2xl rounded-bl-md bg-[var(--bg-primary)] p-2.5 ring-1 ring-[var(--border-color)]' : ''}`}
     >
       <button
         type="button"
         disabled={uploading}
         onClick={onPickFile}
-        className={`rounded-xl font-semibold ring-1 ring-[rgba(var(--brand-primary-rgb),0.3)] text-[var(--brand-blue)] bg-[rgba(var(--brand-primary-rgb),0.08)] hover:bg-[rgba(var(--brand-primary-rgb),0.14)] transition-colors disabled:opacity-50 ${compact ? 'px-3 py-1.5 text-[11px]' : 'px-4 py-2 text-xs'}`}
+        className={`w-full rounded-xl border border-[rgba(var(--brand-primary-rgb),0.25)] bg-[rgba(var(--brand-primary-rgb),0.06)] font-semibold text-[var(--brand-blue)] transition-colors hover:bg-[rgba(var(--brand-primary-rgb),0.1)] disabled:opacity-50 ${compact ? 'py-2 text-xs' : 'py-2.5 text-sm'}`}
       >
-        {uploading ? 'Subiendo…' : '📷 Adjuntar foto'}
+        {uploading ? 'Subiendo…' : 'Adjuntar foto'}
       </button>
       <button
         type="button"
         onClick={onSkip}
-        className={`rounded-xl font-medium text-[var(--text-tertiary)] ring-1 ring-black/[0.06] hover:bg-[var(--bg-tertiary)] transition-colors ${compact ? 'px-3 py-1.5 text-[11px]' : 'px-4 py-2 text-xs'}`}
+        className={`w-full rounded-xl py-2 font-medium text-[var(--text-tertiary)] transition-colors hover:bg-[var(--bg-secondary)] hover:text-[var(--text-secondary)] ${compact ? 'text-xs' : 'text-sm'}`}
       >
-        Sin foto
+        Continuar sin foto
       </button>
     </div>
   );
 }
 
-/* ── Barra inferior fija (estilo chat IA) ── */
-export function PublishChatBottomBar({
-  compact,
-  input,
-  placeholder,
-  onChange,
-  onSend,
-  disabled,
-  showInput = true,
-  onAttachImage,
-  attachUploading,
-  attachLabel,
-}: {
-  compact?: boolean;
-  input: string;
-  placeholder: string;
-  onChange: (v: string) => void;
-  onSend: () => void;
-  disabled?: boolean;
-  showInput?: boolean;
-  onAttachImage?: () => void;
-  attachUploading?: boolean;
-  attachLabel?: string;
-}) {
-  return (
-    <div
-      className={`shrink-0 border-t border-black/[0.06] bg-[var(--bg-primary)]/95 backdrop-blur-md ${
-        compact ? 'px-2.5 py-2' : 'px-3.5 py-3'
-      }`}
-    >
-      {showInput ? (
-        <div className={`flex items-end gap-2 ${compact ? '' : 'gap-2.5'}`}>
-          {onAttachImage && (
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.92 }}
-              onClick={onAttachImage}
-              disabled={attachUploading}
-              className={`shrink-0 rounded-xl ring-1 ring-black/[0.06] text-[var(--brand-blue)] bg-[var(--bg-secondary)] flex items-center justify-center disabled:opacity-50 ${compact ? 'w-9 h-9' : 'w-10 h-10'}`}
-              aria-label={attachLabel ?? 'Adjuntar foto'}
-              title={attachLabel ?? 'Adjuntar foto'}
-            >
-              <IconImage size={compact ? 14 : 16} color="var(--brand-blue)" />
-            </motion.button>
-          )}
-          <div className="flex-1 min-w-0">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => onChange(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  onSend();
-                }
-              }}
-              placeholder={placeholder}
-              disabled={disabled}
-              className={`w-full rounded-2xl ring-1 ring-black/[0.06] bg-[var(--bg-secondary)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[rgba(var(--brand-primary-rgb),0.35)] disabled:opacity-50 ${
-                compact ? 'px-3 py-2 text-[13px] h-9' : 'px-4 py-2.5 text-sm h-11'
-              }`}
-            />
-          </div>
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.92 }}
-            onClick={onSend}
-            disabled={disabled || !input.trim()}
-            className={`shrink-0 rounded-2xl text-white flex items-center justify-center disabled:opacity-35 shadow-[0_4px_14px_rgba(var(--brand-primary-rgb),0.4)] ${compact ? 'w-9 h-9' : 'w-11 h-11'}`}
-            style={{ background: 'linear-gradient(135deg, var(--brand-blue), #3d96b0)' }}
-            aria-label="Enviar"
-          >
-            <FaPaperPlane size={compact ? 12 : 14} className="translate-x-px -translate-y-px" />
-          </motion.button>
-        </div>
-      ) : (
-        <p className={`m-0 text-center text-[var(--text-tertiary)] ${compact ? 'text-[11px] py-1' : 'text-xs py-1.5'}`}>
-          Elige una opción en el chat ↑
-        </p>
-      )}
-    </div>
-  );
-}
-
-/* ── Composer input (legacy) ── */
-export function PublishChatComposer({
-  compact,
-  input,
-  placeholder,
-  onChange,
-  onSend,
-}: {
-  compact?: boolean;
-  input: string;
-  placeholder: string;
-  onChange: (v: string) => void;
-  onSend: () => void;
-}) {
-  return (
-    <div className={`flex items-end gap-2 ${compact ? '' : 'gap-2.5'}`}>
-      <div className="flex-1 relative">
-        <textarea
-          value={input}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              onSend();
-            }
-          }}
-          rows={compact ? 1 : 2}
-          placeholder={placeholder}
-          className={`w-full resize-none rounded-2xl ring-1 ring-black/[0.06] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[rgba(var(--brand-primary-rgb),0.35)] transition-shadow ${compact ? 'px-3 py-2 text-[13px] min-h-[40px]' : 'px-4 py-2.5 text-sm min-h-[44px]'}`}
-        />
-      </div>
-      <motion.button
-        type="button"
-        whileTap={{ scale: 0.92 }}
-        onClick={onSend}
-        disabled={!input.trim()}
-        className={`shrink-0 rounded-2xl text-white flex items-center justify-center disabled:opacity-35 shadow-[0_4px_14px_rgba(var(--brand-primary-rgb),0.4)] transition-opacity ${compact ? 'w-9 h-9' : 'w-11 h-11'}`}
-        style={{ background: 'linear-gradient(135deg, var(--brand-blue), #3d96b0)' }}
-        aria-label="Enviar"
-      >
-        <FaPaperPlane size={compact ? 12 : 14} className="translate-x-px -translate-y-px" />
-      </motion.button>
-    </div>
-  );
-}
-
-/* ── Summary card ── */
 export function PublishChatSummary({
   compact,
   draft,
@@ -584,61 +455,63 @@ export function PublishChatSummary({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`rounded-2xl overflow-hidden ring-1 ring-black/[0.06] shadow-md bg-[var(--bg-primary)] ${compact ? 'text-xs' : 'text-sm'}`}
+      className={`overflow-hidden rounded-2xl border border-[var(--border-color)] bg-[var(--bg-primary)] shadow-sm ${compact ? 'text-xs' : 'text-sm'}`}
     >
-      <div
-        className="px-3.5 py-2 flex items-center gap-2 border-b border-black/[0.04]"
-        style={{ background: 'var(--brand-mesh-soft)' }}
-      >
-        <span className="w-5 h-5 rounded-lg bg-emerald-500/15 text-emerald-600 flex items-center justify-center">
+      <div className="flex items-center gap-2 border-b border-[var(--border-color)] px-3.5 py-2.5">
+        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600">
           <FaCheck size={10} />
         </span>
-        <span className="font-bold text-[var(--text-primary)] text-xs">Tu aviso está listo</span>
+        <span className="text-xs font-semibold text-[var(--text-primary)]">Vista previa del aviso</span>
       </div>
-      <div className={`space-y-2.5 ${compact ? 'p-3' : 'p-4'}`}>
+      <div className={`space-y-3 ${compact ? 'p-3' : 'p-4'}`}>
         <div>
-          <p className={`m-0 font-extrabold text-[var(--text-primary)] leading-snug ${compact ? 'text-sm' : 'text-base'}`}>
+          <p
+            className={`m-0 font-semibold leading-snug text-[var(--text-primary)] ${compact ? 'text-sm' : 'text-base'}`}
+          >
             {draft.titulo || 'Sin título'}
           </p>
-          <p className={`m-0 mt-1 text-[var(--text-secondary)] line-clamp-3 leading-relaxed ${compact ? 'text-[11px]' : 'text-xs'}`}>
+          <p
+            className={`m-0 mt-1.5 line-clamp-3 leading-relaxed text-[var(--text-secondary)] ${compact ? 'text-[11px]' : 'text-xs'}`}
+          >
             {draft.descripcion}
           </p>
         </div>
         <div className="flex flex-wrap gap-1.5">
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[rgba(var(--brand-primary-rgb),0.1)] text-[var(--brand-blue)]">
+          <span className="inline-flex items-center gap-1 rounded-md bg-[var(--bg-secondary)] px-2 py-1 text-[10px] font-medium text-[var(--text-secondary)]">
             <CatIcon size={10} color={catAccent} />
             {cat?.label}
           </span>
           {draft.ubicacion && (
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-[var(--bg-tertiary)] text-[var(--text-secondary)]">
-              📍 {draft.ubicacion}
+            <span className="rounded-md bg-[var(--bg-secondary)] px-2 py-1 text-[10px] font-medium text-[var(--text-secondary)]">
+              {draft.ubicacion}
             </span>
           )}
           {draft.precio && draft.precio !== 'skip' && (
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-[rgba(var(--brand-yellow-rgb),0.15)] text-[var(--text-primary)]">
-              💰 {draft.precio === 'consultar' ? 'A consultar' : draft.precio === 'negociable' ? 'Negociable' : draft.precio === 'gratis' ? 'Gratis' : `S/ ${draft.precio}`}
+            <span className="rounded-md bg-[rgba(var(--brand-yellow-rgb),0.12)] px-2 py-1 text-[10px] font-medium text-[var(--text-primary)]">
+              {draft.precio === 'consultar'
+                ? 'A consultar'
+                : draft.precio === 'negociable'
+                  ? 'Negociable'
+                  : draft.precio === 'gratis'
+                    ? 'Gratis'
+                    : `S/ ${draft.precio}`}
             </span>
           )}
         </div>
-        {imageUrl && (
-          <PublishImagePreview url={imageUrl} onRemove={onRemoveImage} size="sm" />
-        )}
-        <motion.button
+        {imageUrl && <PublishImagePreview url={imageUrl} onRemove={onRemoveImage} size="sm" />}
+        <button
           type="button"
-          whileTap={{ scale: 0.98 }}
           onClick={onPublish}
-          className={`w-full rounded-xl font-extrabold text-[#1c1608] shadow-[0_4px_16px_rgba(var(--brand-yellow-rgb),0.45)] hover:brightness-105 transition-all ${compact ? 'py-2 text-xs' : 'py-2.5 text-sm'}`}
-          style={{ background: 'linear-gradient(135deg, var(--brand-yellow), #ffb020)' }}
+          className={`w-full rounded-xl bg-[var(--brand-yellow)] py-2.5 text-sm font-bold text-[#1a1508] transition-all hover:brightness-105 active:scale-[0.99] ${compact ? 'py-2 text-xs' : ''}`}
         >
-          Publicar aviso
-        </motion.button>
+          Elegir plan y publicar
+        </button>
       </div>
     </motion.div>
   );
 }
-
 export function calcProgress(currentStep: PublishChatStepId | 'done'): number {
   if (currentStep === 'done') return 100;
   const idx = STEP_ORDER.indexOf(currentStep);

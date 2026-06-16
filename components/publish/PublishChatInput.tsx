@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, type KeyboardEvent } from 'react';
-import { IconImage, IconMegaphone, IconSend } from '@/components/Icons';
+import { IconImage, IconSend } from '@/components/Icons';
 
 interface PublishChatInputProps {
   value: string;
@@ -16,7 +16,7 @@ interface PublishChatInputProps {
   imageUploading?: boolean;
 }
 
-/** Input conversacional para publicar — sin lógica de búsqueda del marketplace */
+/** Composer estilo asistente IA — limpio, sin iconografía de megáfono */
 export default function PublishChatInput({
   value,
   onChange,
@@ -31,23 +31,21 @@ export default function PublishChatInput({
 }: PublishChatInputProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const hasText = value.trim().length > 0;
+  const canSend = !disabled && !sending && hasText;
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      if (!disabled && !sending && hasText) onSend();
+      if (canSend) onSend();
     }
   };
 
   return (
     <div
-      className={`flex items-end gap-2 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-primary)] ${
-        compact ? 'px-2 py-1.5' : 'px-3 py-2'
+      className={`publish-composer flex items-end gap-1.5 rounded-[1.25rem] border border-[var(--border-color)] bg-[var(--bg-primary)] shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.06)] transition-shadow focus-within:border-[rgba(var(--brand-primary-rgb),0.35)] focus-within:shadow-[0_0_0_3px_rgba(var(--brand-primary-rgb),0.12)] ${
+        compact ? 'px-2.5 py-2' : 'px-3 py-2.5'
       }`}
     >
-      <span className="mb-1 shrink-0 text-[var(--brand-yellow)]" aria-hidden>
-        <IconMegaphone size={compact ? 16 : 18} color="var(--brand-yellow)" />
-      </span>
       <textarea
         ref={inputRef}
         rows={1}
@@ -56,7 +54,9 @@ export default function PublishChatInput({
         onKeyDown={handleKeyDown}
         disabled={disabled || sending}
         placeholder={placeholder}
-        className="max-h-32 min-h-[36px] flex-1 resize-none border-none bg-transparent py-1.5 text-sm outline-none text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]"
+        className={`max-h-28 min-h-[38px] flex-1 resize-none border-none bg-transparent py-1.5 leading-snug outline-none text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] ${
+          compact ? 'text-[13px]' : 'text-sm'
+        }`}
       />
       {onAttachImage && (
         <button
@@ -64,21 +64,27 @@ export default function PublishChatInput({
           onClick={onAttachImage}
           disabled={imageUploading}
           aria-label="Adjuntar foto"
-          className={`mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors hover:bg-[var(--hover-bg)] ${
-            imageAttached ? 'text-[var(--brand-blue)]' : 'text-[var(--text-secondary)]'
+          className={`mb-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors ${
+            imageAttached
+              ? 'bg-[rgba(var(--brand-primary-rgb),0.12)] text-[var(--brand-blue)]'
+              : 'text-[var(--text-tertiary)] hover:bg-[var(--hover-bg)] hover:text-[var(--text-secondary)]'
           }`}
         >
-          <IconImage size={18} />
+          <IconImage size={17} />
         </button>
       )}
       <button
         type="button"
         onClick={onSend}
-        disabled={disabled || sending || !hasText}
+        disabled={!canSend}
         aria-label="Enviar"
-        className="mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-yellow)] text-[var(--text-primary)] transition-opacity disabled:opacity-40"
+        className={`mb-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-all ${
+          canSend
+            ? 'bg-[var(--brand-blue)] text-white shadow-sm hover:brightness-110 active:scale-95'
+            : 'bg-[var(--bg-tertiary)] text-[var(--text-tertiary)]'
+        }`}
       >
-        <IconSend size={16} />
+        <IconSend size={15} color={canSend ? '#fff' : undefined} />
       </button>
     </div>
   );
