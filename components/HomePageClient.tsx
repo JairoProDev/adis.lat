@@ -9,6 +9,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Adiso, Categoria } from '@/types';
 import { getAdisos, getAdisoById, saveAdiso, getAdisosCache } from '@/lib/storage';
 import { getAdisosFromSupabase } from '@/lib/supabase';
+import { getCatalogProductsAsAdisos } from '@/lib/business';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useToast } from '@/hooks/useToast';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
@@ -102,6 +103,40 @@ import { getCountryByCode, DEFAULT_COUNTRY_CODE } from '@/lib/geo/countries-data
 import BrowseEmptyState from '@/components/BrowseEmptyState';
 import ParaTiSection from '@/components/home/ParaTiSection';
 const TEST_REGEX = /toyota test|test adiso|test anuncio/i;
+
+async function getMarketplaceFeed(options: {
+  limit: number;
+  offset: number;
+  soloActivos?: boolean;
+  categoria?: string;
+  busqueda?: string;
+}): Promise<Adiso[]> {
+  const adisoLimit = Math.max(10, Math.ceil(options.limit * 0.7));
+  const catalogLimit = Math.max(6, options.limit - adisoLimit);
+
+  const [adisosBase, catalogAdisos] = await Promise.all([
+    getAdisosFromSupabase({
+      ...options,
+      limit: adisoLimit,
+    }),
+    getCatalogProductsAsAdisos({
+      limit: catalogLimit,
+      offset: options.offset,
+      categoria: options.categoria,
+      busqueda: options.busqueda,
+    }),
+  ]);
+
+  const mergedMap = new Map<string, Adiso>();
+  [...adisosBase, ...catalogAdisos].forEach((item) => mergedMap.set(item.id, item));
+
+  return Array.from(mergedMap.values()).sort((a, b) => {
+    const rankA = a.promotionRank || 0;
+    const rankB = b.promotionRank || 0;
+    if (rankA !== rankB) return rankB - rankA;
+    return new Date(b.fechaPublicacion).getTime() - new Date(a.fechaPublicacion).getTime();
+  });
+}
 
 function getBrowseCountLabel(
   categoria: Categoria | 'todos',
@@ -259,7 +294,7 @@ function HomeContent() {
     setPaginaActual(1);
     setVisibleCount(20);
     try {
-      const adisosDesdeAPI = await getAdisosFromSupabase({
+      const adisosDesdeAPI = await getMarketplaceFeed({
         limit: ITEMS_POR_PAGINA,
         offset: 0,
         soloActivos: false
@@ -320,7 +355,7 @@ function HomeContent() {
 
       // Actualizar desde API en background - cargar primera página
       try {
-        let adisosDesdeAPI = await getAdisosFromSupabase({
+        let adisosDesdeAPI = await getMarketplaceFeed({
           limit: ITEMS_POR_PAGINA,
           offset: 0,
           soloActivos: false // Mostrar todos, incluyendo históricos
@@ -839,7 +874,7 @@ function HomeContent() {
         }).length;
       }
 
-      const nuevosAdisos = await getAdisosFromSupabase({
+      const nuevosAdisos = await getMarketplaceFeed({
         limit: ITEMS_POR_PAGINA,
         offset: offsetActual,
         soloActivos: false,

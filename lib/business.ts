@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import type { Adiso, Categoria } from '@/types';
 import { BusinessProfile } from '@/types/business';
 import type { BusinessMemberRole, BusinessWithRole } from './business-access';
 
@@ -291,6 +292,140 @@ export async function getBusinessProductAsAdiso(productId: string): Promise<any 
     } catch (e) {
         console.error('Error fetching business product:', e);
         return null;
+    }
+}
+
+const MARKETPLACE_CATEGORIES: Categoria[] = [
+    'empleos',
+    'inmuebles',
+    'vehiculos',
+    'servicios',
+    'productos',
+    'eventos',
+    'negocios',
+    'comunidad',
+];
+
+function normalizeCatalogCategory(category?: string | null): Categoria {
+    const value = (category || '').trim().toLowerCase();
+    if (MARKETPLACE_CATEGORIES.includes(value as Categoria)) {
+        return value as Categoria;
+    }
+    if (value.includes('emple')) return 'empleos';
+    if (value.includes('inmueble') || value.includes('casa') || value.includes('terreno')) return 'inmuebles';
+    if (value.includes('veh')) return 'vehiculos';
+    if (value.includes('serv')) return 'servicios';
+    if (value.includes('event')) return 'eventos';
+    if (value.includes('negoc')) return 'negocios';
+    if (value.includes('comun')) return 'comunidad';
+    return 'productos';
+}
+
+function catalogProductToAdiso(product: any): Adiso {
+    const business = product.business_profiles;
+    const images = Array.isArray(product.images)
+        ? product.images
+            .map((img: any) => (typeof img === 'string' ? img : img?.url))
+            .filter(Boolean)
+        : [];
+    const createdAt = product.created_at ? new Date(product.created_at) : new Date();
+    const fechaPublicacion = createdAt.toISOString();
+
+    return {
+        id: product.id,
+        titulo: product.title || 'Producto',
+        descripcion: product.description || '',
+        precio: typeof product.price === 'number' ? product.price : undefined,
+        moneda: product.currency === 'USD' ? 'USD' : 'PEN',
+        imagenesUrls: images,
+        imagenUrl: images[0],
+        categoria: normalizeCatalogCategory(product.category),
+        ubicacion: business?.contact_address || 'Perú',
+        fechaPublicacion,
+        horaPublicacion: createdAt.toISOString().slice(11, 19),
+        contacto: business?.contact_whatsapp || business?.contact_phone || business?.contact_email || '',
+        vistas: product.view_count || 0,
+        contactos: product.click_count || 0,
+        estaActivo: product.status === 'published',
+        esHistorico: false,
+        user_id: product.user_id || business?.user_id || undefined,
+        usuario_id: product.user_id || business?.user_id || undefined,
+        vendedor: {
+            id: business?.id || product.user_id || product.id,
+            nombre: business?.name || 'Negocio',
+            avatarUrl: business?.logo_url || undefined,
+            esVerificado: Boolean(business?.is_verified),
+            nivelVerificacion: business?.is_verified ? 'negocio' : 'basico',
+        },
+    };
+}
+
+export async function getCatalogProductsAsAdisos(options?: {
+    limit?: number;
+    offset?: number;
+    categoria?: string;
+    busqueda?: string;
+}): Promise<Adiso[]> {
+    if (!supabase) return [];
+
+    try {
+        let query = supabase
+            .from('catalog_products')
+            .select(`
+                *,
+                business_profiles (
+                    id,
+                    user_id,
+                    name,
+                    slug,
+                    logo_url,
+                    contact_phone,
+                    contact_whatsapp,
+                    contact_email,
+                    contact_address,
+                    is_verified,
+                    is_published
+                )
+            `)
+            .eq('status', 'published');
+
+        if (options?.categoria && options.categoria !== 'todos') {
+            query = query.ilike('category', `%${options.categoria}%`);
+        }
+
+        if (options?.busqueda) {
+            const q = options.busqueda.trim();
+            if (q) {
+                query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%`);
+            }
+        }
+
+        query = query.order('created_at', { ascending: false });
+
+        if (options?.limit) {
+            const from = options.offset || 0;
+            const to = from + options.limit - 1;
+            query = query.range(from, to);
+        } else {
+            query = query.limit(20);
+        }
+
+        const { data, error } = await query;
+        if (error) {
+            console.error('Error fetching catalog products for marketplace:', error);
+            return [];
+        }
+
+        const publishedProducts = (data || []).filter((p: any) => {
+            const profile = p.business_profiles;
+            if (!profile) return true;
+            return profile.is_published !== false;
+        });
+
+        return publishedProducts.map(catalogProductToAdiso);
+    } catch (error) {
+        console.error('Error mapping catalog products to adisos:', error);
+        return [];
     }
 }
 
