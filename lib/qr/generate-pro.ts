@@ -1,4 +1,5 @@
 import type { QrStyleConfig } from './types';
+import { fetchLogoDataUrl } from './logo-image';
 
 export interface GenerateProQrOptions {
   data: string;
@@ -70,26 +71,20 @@ function buildStylingOptions(
 export async function generateProQrPng(options: GenerateProQrOptions): Promise<Buffer> {
   const QRCodeStyling = await loadQrCodeStyling();
   const { createCanvas, loadImage } = await import('canvas');
+  const { JSDOM } = await import('jsdom');
 
   const stylingOptions = buildStylingOptions(options);
   const qr = new QRCodeStyling({
     ...stylingOptions,
+    jsdom: JSDOM,
     nodeCanvas: { createCanvas, loadImage },
   });
 
   if (options.logoUrl || options.styleConfig.logoUrl) {
     const imgUrl = options.logoUrl || options.styleConfig.logoUrl;
     if (imgUrl) {
-      try {
-        const res = await fetch(imgUrl);
-        if (res.ok) {
-          const buf = Buffer.from(await res.arrayBuffer());
-          const dataUrl = `data:${res.headers.get('content-type') || 'image/png'};base64,${buf.toString('base64')}`;
-          qr.update({ image: dataUrl });
-        }
-      } catch {
-        /* logo optional */
-      }
+      const dataUrl = await fetchLogoDataUrl(imgUrl);
+      if (dataUrl) qr.update({ image: dataUrl });
     }
   }
 

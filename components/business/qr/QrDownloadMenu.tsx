@@ -8,11 +8,13 @@ interface QrDownloadMenuProps {
   shortUrl?: string;
 }
 
-const KITS_FREE = [{ id: 'flyer-basic', label: 'Flyer básico', format: 'svg' as const }];
+const KITS_FREE = [
+  { id: 'flyer-basic', label: 'Flyer básico', format: 'svg' as const },
+  { id: 'sticker', label: 'Etiqueta empaque', format: 'svg' as const },
+];
 const KITS_PRO = [
   { id: 'story', label: 'Historia IG', format: 'png' as const },
   { id: 'table-tent', label: 'Tarjeta de mesa', format: 'pdf' as const },
-  { id: 'sticker', label: 'Sticker', format: 'svg' as const },
   { id: 'poster', label: 'Cartel A4', format: 'pdf' as const },
   { id: 'business-card', label: 'Tarjeta visita', format: 'pdf' as const },
 ];
@@ -38,6 +40,8 @@ export default function QrDownloadMenu({ slug, isPro, shortUrl }: QrDownloadMenu
       <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Descargar</p>
       <div className="flex flex-wrap gap-2">
         {download(`${base}/qr?format=png`, 'QR PNG')}
+        {download(`${base}/qr?format=png&width=1024`, 'PNG impresión (1024px)')}
+        {isPro && download(`${base}/qr?format=png&width=2048&tier=pro`, 'PNG máxima (2048px)')}
         {download(`${base}/qr?format=svg`, 'QR SVG')}
         {isPro && download(`${base}/qr?format=pdf&tier=pro`, 'QR PDF impresión')}
       </div>

@@ -36,7 +36,7 @@ export default function QrStudio({
   onUpgrade,
 }: QrStudioProps) {
   const { session } = useAuth();
-  const [tab, setTab] = useState<Tab>('download');
+  const [tab, setTab] = useState<Tab>(isPro ? 'customize' : 'download');
   const [styleConfig, setStyleConfig] = useState<QrStyleConfig>({
     dotsColor: themeColor,
     backgroundColor: '#ffffff',

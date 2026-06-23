@@ -27,7 +27,7 @@ async function getQrImageTag(input: KitTemplateInput, size = 400): Promise<strin
         themeColor: input.themeColor,
         styleConfig: input.styleConfig,
         width: size,
-        withWatermark: !input.usePro,
+        logoUrl: input.logoUrl,
       });
   const b64 = png.toString('base64');
   return `<image href="data:image/png;base64,${b64}" width="${size}" height="${size}"/>`;

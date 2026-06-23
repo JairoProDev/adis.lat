@@ -15,9 +15,9 @@ export function canUseProQr(profile: Partial<BusinessProfile>): boolean {
 export const PRO_QR_MONTHLY_PRICE_PEN = 29;
 
 export const PRO_QR_FEATURES = [
-  'Diseñador visual con gradientes y formas',
-  'Logo de tu negocio en el centro',
-  'Kits imprimibles profesionales',
-  'Analítica avanzada de escaneos',
-  'Sin marca Buscadis en materiales',
+  'Gradientes y formas avanzadas',
+  'Plantillas para redes e impresión',
+  'Kits phygital (cartel, tarjeta, sticker Pro)',
+  'Analítica de escaneos y conversiones',
+  'Exportación PDF y PNG hasta 2048px',
 ] as const;

@@ -8,7 +8,7 @@ import { getQrTargetUrl } from '@/lib/qr/resolve-url';
 import { buildKitSvg } from '@/lib/qr/templates';
 import type { QrKitTemplate } from '@/lib/qr/types';
 
-const PRO_TEMPLATES: QrKitTemplate[] = ['story', 'table-tent', 'sticker', 'poster', 'business-card'];
+const PRO_TEMPLATES: QrKitTemplate[] = ['story', 'table-tent', 'poster', 'business-card'];
 
 /** businessId is slug */
 export async function GET(

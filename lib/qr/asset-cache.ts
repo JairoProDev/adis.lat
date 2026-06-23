@@ -6,19 +6,19 @@ export const QR_ASSETS_BUCKET = 'qr-assets';
 
 export function computeQrAssetHash(params: {
   targetUrl: string;
+  logoUrl?: string | null;
   shortCode: string;
   styleConfig: QrStyleConfig;
   tier: 'free' | 'pro';
   width: number;
-  withWatermark: boolean;
 }): string {
   const payload = JSON.stringify({
     targetUrl: params.targetUrl,
+    logoUrl: params.logoUrl || null,
     shortCode: params.shortCode,
     style: params.styleConfig,
     tier: params.tier,
     width: params.width,
-    wm: params.withWatermark,
   });
   return createHash('sha256').update(payload).digest('hex').slice(0, 20);
 }

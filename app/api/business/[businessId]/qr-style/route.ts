@@ -6,6 +6,7 @@ import { canUseProQr } from '@/lib/business/subscription';
 import { ensureQrCodeForBusiness, updateQrStyle } from '@/lib/qr/service';
 import { validateQrContrast } from '@/lib/qr/quality-gate';
 import { getQrTargetUrl } from '@/lib/qr/resolve-url';
+import type { QrStyleConfig } from '@/lib/qr/types';
 
 /** businessId is slug */
 export async function GET(

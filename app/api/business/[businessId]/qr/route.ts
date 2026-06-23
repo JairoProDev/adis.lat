@@ -50,7 +50,13 @@ export async function GET(
     const tierParam = req.nextUrl.searchParams.get('tier');
     const wantsPro = tierParam === 'pro' || qr.style_tier === 'pro';
     const usePro = wantsPro && canUseProQr(profile);
-    const width = format === 'pdf' ? 1024 : format === 'svg' ? 400 : 512;
+    const widthParam = Number.parseInt(req.nextUrl.searchParams.get('width') || '', 10);
+    const maxWidth = usePro ? 2048 : 1024;
+    const defaultWidth = format === 'pdf' ? 1024 : format === 'svg' ? 400 : 512;
+    const width =
+      Number.isFinite(widthParam) && widthParam > 0
+        ? Math.min(widthParam, maxWidth)
+        : defaultWidth;
 
     const styleConfig = {
       ...(qr.style_config || {}),
@@ -69,6 +75,7 @@ export async function GET(
             data: targetUrl,
             themeColor: profile.theme_color,
             styleConfig,
+            logoUrl: profile.logo_url,
           });
       return new NextResponse(svg, {
         headers: {
@@ -110,11 +117,11 @@ export async function GET(
 
     const assetHash = computeQrAssetHash({
       targetUrl,
+      logoUrl: profile.logo_url,
       shortCode: qr.short_code,
       styleConfig,
       tier: usePro ? 'pro' : 'free',
       width,
-      withWatermark: !usePro,
     });
 
     if (isCacheValid(qr, assetHash) && qr.cached_png_path) {
@@ -142,7 +149,7 @@ export async function GET(
           themeColor: profile.theme_color,
           styleConfig,
           width,
-          withWatermark: !canUseProQr(profile),
+          logoUrl: profile.logo_url,
         });
 
     if (usePro) {

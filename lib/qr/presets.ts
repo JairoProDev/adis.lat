@@ -113,10 +113,14 @@ export function getPresetById(id: string): QrPreset | undefined {
 }
 
 export function buildFreeStyleConfig(themeColor?: string): QrStyleConfig {
-  const preset = QR_PRESETS[0];
   return {
-    ...preset.config,
     dotsColor: themeColor && /^#[0-9a-fA-F]{6}$/.test(themeColor) ? themeColor : '#1e293b',
+    backgroundColor: '#ffffff',
+    dotType: 'rounded',
+    cornerSquareType: 'extra-rounded',
+    cornerDotType: 'dot',
+    hideBackgroundDots: true,
+    imageSize: 0.28,
     presetId: 'brand-theme',
   };
 }

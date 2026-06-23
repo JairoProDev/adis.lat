@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { IconDownload, IconQrcode, IconShareAlt, IconX } from '@/components/Icons';
 import { getBusinessCanonicalUrl } from '@/lib/business/public-utils';
 import QrPreview from './QrPreview';
@@ -27,6 +28,8 @@ export default function QrProfileModal({
   isPro = false,
   themeColor,
 }: QrProfileModalProps) {
+  const [scanUrl, setScanUrl] = useState<string | null>(null);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -40,16 +43,30 @@ export default function QrProfileModal({
     };
   }, [open, onClose]);
 
+  useEffect(() => {
+    if (!open) return;
+    void (async () => {
+      try {
+        const res = await fetch(`/api/business/${encodeURIComponent(slug)}/qr-style`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.shortUrl) setScanUrl(data.shortUrl);
+        }
+      } catch {
+        /* */
+      }
+    })();
+  }, [open, slug]);
+
   const encoded = encodeURIComponent(slug);
   const qrPngUrl = `/api/business/${encoded}/qr?format=png`;
-  const profileUrl =
-    typeof window !== 'undefined'
-      ? `${window.location.origin}/p/${slug}`
-      : getBusinessCanonicalUrl(slug);
+  const qrPrintUrl = `/api/business/${encoded}/qr?format=png&width=1024`;
+  const packagingKitUrl = `/api/business/${encoded}/qr-kit?template=sticker&format=svg`;
+  const profileUrl = getBusinessCanonicalUrl(slug);
 
   const copyLink = useCallback(async () => {
-    await navigator.clipboard.writeText(profileUrl);
-  }, [profileUrl]);
+    await navigator.clipboard.writeText(scanUrl || profileUrl);
+  }, [scanUrl, profileUrl]);
 
   const handlePrint = useCallback(() => {
     const w = window.open('', '_blank', 'noopener,noreferrer');
@@ -58,7 +75,7 @@ export default function QrProfileModal({
       <!DOCTYPE html>
       <html><head><title>QR — ${businessName}</title></head>
       <body style="margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:system-ui,sans-serif">
-        <img src="${qrPngUrl}" alt="QR" style="width:min(80vw,400px);height:min(80vw,400px)" />
+        <img src="${qrPrintUrl}" alt="QR" style="width:min(80vw,400px);height:min(80vw,400px)" />
         <p style="margin-top:24px;font-size:18px;font-weight:bold">${businessName}</p>
         <p style="color:#64748b;font-size:14px">Escanea para ver nuestro perfil en Buscadis</p>
       </body></html>
@@ -67,15 +84,16 @@ export default function QrProfileModal({
     w.focus();
     w.onload = () => w.print();
     setTimeout(() => w.print(), 500);
-  }, [qrPngUrl, businessName]);
+  }, [qrPrintUrl, businessName]);
 
   const handleShare = useCallback(async () => {
+    const shareUrl = scanUrl || profileUrl;
     if (navigator.share) {
       try {
         await navigator.share({
           title: businessName,
           text: `Perfil de ${businessName} en Buscadis`,
-          url: profileUrl,
+          url: shareUrl,
         });
         return;
       } catch {
@@ -84,7 +102,7 @@ export default function QrProfileModal({
     }
     await copyLink();
     alert('Enlace copiado');
-  }, [businessName, profileUrl, copyLink]);
+  }, [businessName, scanUrl, profileUrl, copyLink]);
 
   const handleUpgrade = useCallback(async () => {
     try {
@@ -162,7 +180,21 @@ export default function QrProfileModal({
                   download={`qr-${slug}.png`}
                   className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition-colors"
                 >
-                  <IconDownload size={16} /> Descargar
+                  <IconDownload size={16} /> PNG
+                </a>
+                <a
+                  href={qrPrintUrl}
+                  download={`qr-${slug}-print.png`}
+                  className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-slate-800 text-white text-sm font-bold hover:bg-slate-900 transition-colors"
+                >
+                  <IconDownload size={16} /> Impresión
+                </a>
+                <a
+                  href={packagingKitUrl}
+                  download={`etiqueta-${slug}.svg`}
+                  className="col-span-2 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors"
+                >
+                  <IconDownload size={16} /> Etiqueta para empaque (SVG)
                 </a>
                 <button
                   type="button"
@@ -174,12 +206,24 @@ export default function QrProfileModal({
                 <button
                   type="button"
                   onClick={handleShare}
-                  className="col-span-2 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-slate-200 text-slate-700 text-sm font-bold hover:bg-slate-50 transition-colors"
+                  className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-slate-200 text-slate-700 text-sm font-bold hover:bg-slate-50 transition-colors"
                 >
-                  <IconShareAlt size={16} /> Compartir enlace
+                  <IconShareAlt size={16} /> Compartir
                 </button>
               </div>
-              <p className="text-[11px] text-slate-400 font-mono truncate max-w-full">{profileUrl}</p>
+              {scanUrl && (
+                <p className="text-[11px] text-slate-500 text-center">
+                  Al escanear abre:{' '}
+                  <span className="font-mono text-slate-700 break-all">{scanUrl}</span>
+                </p>
+              )}
+              <p className="text-[11px] text-slate-400 text-center">
+                ¿Eres el dueño?{' '}
+                <Link href="/login" className="text-blue-600 font-semibold hover:underline">
+                  Inicia sesión
+                </Link>{' '}
+                para personalizar colores, plantillas y analítica Pro.
+              </p>
             </div>
           )}
         </div>
