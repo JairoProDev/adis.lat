@@ -14,6 +14,28 @@ import { withDefaultShareImage } from '@/lib/seo/og-image';
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://buscadis.com').replace(/\/$/, '');
 
+/** Rutas servidas desde public/ — no interpretar como negocio/aviso */
+const RESERVED_STATIC_PREFIXES = new Set([
+  'og',
+  'api',
+  '_next',
+  'favicon.ico',
+  'robots.txt',
+  'sitemap.xml',
+  'site.webmanifest',
+  'manifest.json',
+  'sw.js',
+  'workbox',
+]);
+
+function isReservedStaticPath(slug: string[]): boolean {
+  if (slug.length === 0) return false;
+  const root = slug[0].toLowerCase();
+  if (RESERVED_STATIC_PREFIXES.has(root)) return true;
+  if (root.startsWith('workbox-') || root.startsWith('fallback-')) return true;
+  return false;
+}
+
 export const revalidate = 3600;
 
 interface PageProps {
@@ -26,6 +48,10 @@ interface PageProps {
 export async function generateMetadata(props: PageProps): Promise<Metadata> {
     const params = await props.params;
     const { slug } = params;
+
+    if (isReservedStaticPath(slug)) {
+        return { title: 'No encontrado' };
+    }
 
     // Format 1: /[ubicacion]/[categoria]/[slug] (Length 3)
     // Format 2: /[categoria]/[id] (Length 2) - Legacy
@@ -91,6 +117,10 @@ export default async function Page(props: PageProps) {
     const params = await props.params;
     const searchParams = props.searchParams ? await props.searchParams : {};
     const { slug } = params;
+
+    if (isReservedStaticPath(slug)) {
+        notFound();
+    }
 
     let targetId: string | null = null;
     let isLegacy = false;

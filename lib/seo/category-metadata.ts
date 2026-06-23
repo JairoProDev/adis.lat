@@ -131,6 +131,7 @@ export function buildCategoryShareMetadata(
           width: DEFAULT_OG_IMAGE_WIDTH,
           height: DEFAULT_OG_IMAGE_HEIGHT,
           alt: copy.imageAlt,
+          type: 'image/png',
         },
       ],
     },
