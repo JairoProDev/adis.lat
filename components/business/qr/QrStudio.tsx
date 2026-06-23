@@ -54,12 +54,8 @@ export default function QrStudio({
         if (res.ok) {
           const data = await res.json();
           if (data.qr?.style_config) setStyleConfig(data.qr.style_config);
-          if (data.qr?.short_code) {
-            const domain =
-              process.env.NEXT_PUBLIC_QR_SHORT_DOMAIN ||
-              (typeof window !== 'undefined' ? window.location.origin : 'https://buscadis.com');
-            setShortUrl(`${domain.replace(/\/$/, '')}/q/${data.qr.short_code}`);
-          }
+          if (data.shortUrl) setShortUrl(data.shortUrl);
+          else if (data.qr?.short_code) setShortUrl(`/q/${data.qr.short_code}`);
         }
       } catch {
         /* */

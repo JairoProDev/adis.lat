@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getBusinessProfileBySlug } from '@/lib/business';
+import { getBusinessProfileBySlugAdmin } from '@/lib/qr/get-business-admin';
 import { getUserFromRouteRequest } from '@/lib/supabase-route-auth';
 import { getBusinessMemberRole } from '@/lib/business-access';
 import { canUseProQr } from '@/lib/business/subscription';
 import { ensureQrCodeForBusiness, updateQrStyle } from '@/lib/qr/service';
 import { validateQrContrast } from '@/lib/qr/quality-gate';
-import type { QrStyleConfig } from '@/lib/qr/types';
+import { getQrTargetUrl } from '@/lib/qr/resolve-url';
 
 /** businessId is slug */
 export async function GET(
@@ -13,7 +13,7 @@ export async function GET(
   { params }: { params: Promise<{ businessId: string }> }
 ) {
   const slug = decodeURIComponent((await params).businessId);
-  const profile = await getBusinessProfileBySlug(slug);
+  const profile = await getBusinessProfileBySlugAdmin(slug);
   if (!profile) return NextResponse.json({ error: 'No encontrado' }, { status: 404 });
 
   const qr = await ensureQrCodeForBusiness({
@@ -24,7 +24,7 @@ export async function GET(
 
   return NextResponse.json({
     qr,
-    shortUrl: qr ? `/q/${qr.short_code}` : null,
+    shortUrl: qr ? getQrTargetUrl(qr.short_code) : null,
     isPro: canUseProQr(profile),
   });
 }
@@ -37,7 +37,7 @@ export async function PUT(
   if (!user?.id) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
 
   const slug = decodeURIComponent((await params).businessId);
-  const profile = await getBusinessProfileBySlug(slug);
+  const profile = await getBusinessProfileBySlugAdmin(slug);
   if (!profile) return NextResponse.json({ error: 'No encontrado' }, { status: 404 });
 
   const role = await getBusinessMemberRole(user.id, profile.id);

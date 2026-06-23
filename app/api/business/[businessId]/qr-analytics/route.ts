@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getBusinessProfileBySlug } from '@/lib/business';
+import { getBusinessProfileBySlugAdmin } from '@/lib/qr/get-business-admin';
 import { getUserFromRouteRequest } from '@/lib/supabase-route-auth';
 import { getBusinessMemberRole } from '@/lib/business-access';
 import { canUseProQr } from '@/lib/business/subscription';
@@ -15,7 +15,7 @@ export async function GET(
   if (!user?.id) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
 
   const slug = decodeURIComponent((await params).businessId);
-  const profile = await getBusinessProfileBySlug(slug);
+  const profile = await getBusinessProfileBySlugAdmin(slug);
   if (!profile) return NextResponse.json({ error: 'No encontrado' }, { status: 404 });
 
   const role = await getBusinessMemberRole(user.id, profile.id);

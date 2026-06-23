@@ -6,7 +6,7 @@ import {
   FaUserCheck, FaStar, FaStore, FaInstagram, FaFacebook, FaTiktok, FaGlobe, FaPhoneAlt,
   FaEnvelope, FaShareAlt, FaCheckCircle, FaChevronDown, FaHeart, FaArrowLeft, FaRobot,
   FaHandHoldingHeart, FaPlus, FaImage, FaSpinner, FaEye, FaTags, FaExclamationTriangle,
-  FaInfoCircle, FaQrcode, FaRegHeart, FaMicrophone, FaLinkedin, FaYoutube,
+  FaInfoCircle, FaRegHeart, FaMicrophone, FaLinkedin, FaYoutube,
   FaFile, FaCamera, FaTable, FaUpload, FaList, FaFilter, FaMapPin, FaShoppingCart, FaMagic, FaMinus,
   FaFileExcel, FaDownload, FaLightbulb, FaSyncAlt, FaBolt, FaTag, FaEyeSlash, FaLayerGroup, FaSquare,
   FaSort, FaSortAmountDown, FaSortAmountUp, FaVideo, FaPaperPlane, FaBell, FaMoon, FaSun, FaUser,
@@ -14,6 +14,7 @@ import {
 } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
 import { MdCenterFocusWeak } from 'react-icons/md';
+import QrMinimalIcon from '@/components/icons/QrMinimalIcon';
 
 /**
  * Icons Registry
@@ -158,7 +159,9 @@ export const IconChatbot = IconAdis;
 export const IconShield = (p: IconProps) => <FaShieldAlt size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
 export const IconMedal = (p: IconProps) => <FaMedal size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
 export const IconUserCheck = (p: IconProps) => <FaUserCheck size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
-export const IconQrcode = (p: IconProps) => <FaQrcode size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
+export const IconQrcode = (p: IconProps) => (
+  <QrMinimalIcon size={getSize(p)} className={p.className} onClick={p.onClick} />
+);
 export const IconGoogle = (p: IconProps) => <FcGoogle size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
 export const IconMicrophone = (p: IconProps) => <FaMicrophone size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;
 export const IconGoogleLens = (p: IconProps) => <MdCenterFocusWeak size={getSize(p)} color={p.color || 'currentColor'} className={p.className} onClick={p.onClick} />;

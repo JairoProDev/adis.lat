@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getBusinessProfileBySlug } from '@/lib/business';
+import { getBusinessProfileBySlugAdmin } from '@/lib/qr/get-business-admin';
 import { getBusinessCanonicalUrl } from '@/lib/business/public-utils';
 import { ensureQrCodeForBusiness } from '@/lib/qr/service';
 import { getQrTargetUrl } from '@/lib/qr/resolve-url';
@@ -12,7 +12,7 @@ export async function GET(
   { params }: { params: Promise<{ businessId: string }> }
 ) {
   const { businessId } = await params;
-  const profile = await getBusinessProfileBySlug(decodeURIComponent(businessId));
+  const profile = await getBusinessProfileBySlugAdmin(decodeURIComponent(businessId));
   if (!profile) {
     return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
   }

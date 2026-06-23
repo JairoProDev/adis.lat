@@ -20,7 +20,11 @@ export async function getQrByBusinessId(businessProfileId: string): Promise<QrCo
     .select('*')
     .eq('business_profile_id', businessProfileId)
     .maybeSingle();
-  if (error || !data) return null;
+  if (error) {
+    console.error('[qr] get by business:', error.message);
+    return null;
+  }
+  if (!data) return null;
   return data as QrCodeRecord;
 }
 
@@ -52,10 +56,13 @@ async function insertUniqueQrCode(payload: {
       .select()
       .single();
     if (!error && data) return data as QrCodeRecord;
-    if (error?.code !== '23505') {
-      console.error('[qr] insert error:', error);
-      return null;
+    if (error?.code === '23505') {
+      const existing = await getQrByBusinessId(payload.business_profile_id);
+      if (existing) return existing;
+      continue;
     }
+    console.error('[qr] insert error:', error?.message || error);
+    return null;
   }
   return null;
 }
@@ -94,6 +101,10 @@ export async function updateQrStyle(
   styleConfig: QrStyleConfig,
   styleTier: 'free' | 'pro'
 ): Promise<QrCodeRecord | null> {
+  const { invalidateQrAssetCache } = await import('./asset-cache');
+  const existing = await getQrByBusinessId(businessProfileId);
+  if (existing) await invalidateQrAssetCache(existing.id);
+
   const { data, error } = await supabaseAdmin
     .from('qr_codes')
     .update({

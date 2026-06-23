@@ -40,6 +40,8 @@ export interface QrCodeRecord {
   style_tier: QrStyleTier;
   style_config: QrStyleConfig;
   scan_count: number;
+  asset_hash?: string | null;
+  cached_png_path?: string | null;
   created_at: string;
   updated_at: string;
 }

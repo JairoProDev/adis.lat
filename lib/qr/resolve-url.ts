@@ -1,32 +1,99 @@
 /**
  * Única fuente de verdad para URLs codificadas en QR y redirects.
+ *
+ * Producción: www.buscadis.com (despliegue activo).
+ * Subdominios adis.lat (market, www, apex) no tienen app desplegada — no usarlos.
+ * Dominio corto opcional: NEXT_PUBLIC_QR_SHORT_DOMAIN solo cuando esté en Vercel/DNS.
  */
 
+/** Origen canónico con despliegue verificado (Vercel). */
+export const PRODUCTION_CANONICAL_ORIGIN = 'https://www.buscadis.com';
+
+/** Hosts legacy sin app; ignorar aunque estén en env. */
+const BLOCKED_HOSTS = new Set([
+  'market.adis.lat',
+  'adis.lat',
+  'www.adis.lat',
+]);
+
+function parseOrigin(url: string | undefined): string | null {
+  if (!url) return null;
+  try {
+    return new URL(url.replace(/\/$/, '')).origin;
+  } catch {
+    return null;
+  }
+}
+
+function isBlockedOrigin(origin: string): boolean {
+  try {
+    return BLOCKED_HOSTS.has(new URL(origin).hostname);
+  } catch {
+    return true;
+  }
+}
+
+function isLocalDevOrigin(origin: string): boolean {
+  try {
+    const h = new URL(origin).hostname;
+    return h === 'localhost' || h === '127.0.0.1';
+  } catch {
+    return false;
+  }
+}
+
+/** Evita redirect apex → www en cada escaneo QR. */
+export function normalizeCanonicalOrigin(origin: string): string {
+  try {
+    const u = new URL(origin);
+    if (u.hostname === 'buscadis.com') {
+      u.hostname = 'www.buscadis.com';
+    }
+    return u.origin;
+  } catch {
+    return PRODUCTION_CANONICAL_ORIGIN;
+  }
+}
+
+/** Origen público para perfiles, SEO y redirect post-escaneo. */
+export function getCanonicalSiteOrigin(): string {
+  const app = parseOrigin(process.env.NEXT_PUBLIC_APP_URL);
+  if (app && isLocalDevOrigin(app)) return app;
+
+  const site = parseOrigin(process.env.NEXT_PUBLIC_SITE_URL);
+  if (site && !isBlockedOrigin(site)) {
+    return normalizeCanonicalOrigin(site);
+  }
+
+  const appFallback = parseOrigin(process.env.NEXT_PUBLIC_APP_URL);
+  if (appFallback && !isBlockedOrigin(appFallback)) {
+    return normalizeCanonicalOrigin(appFallback);
+  }
+
+  return PRODUCTION_CANONICAL_ORIGIN;
+}
+
+/** Dominio codificado dentro del QR (debe servir /q/{code}). */
 export function getQrShortDomain(): string {
-  const custom = process.env.NEXT_PUBLIC_QR_SHORT_DOMAIN?.replace(/\/$/, '');
-  if (custom) return custom;
-  const site = (
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    process.env.NEXT_PUBLIC_APP_URL ||
-    'https://buscadis.com'
-  ).replace(/\/$/, '');
-  return site;
+  const custom = parseOrigin(process.env.NEXT_PUBLIC_QR_SHORT_DOMAIN);
+  if (custom && !isBlockedOrigin(custom)) {
+    return normalizeCanonicalOrigin(custom);
+  }
+
+  const app = parseOrigin(process.env.NEXT_PUBLIC_APP_URL);
+  if (app && isLocalDevOrigin(app)) return app;
+
+  return getCanonicalSiteOrigin();
 }
 
-/** URL corta que va dentro del QR (siempre dinámica). */
+/** URL corta dinámica que va dentro del QR. */
 export function getQrTargetUrl(shortCode: string): string {
-  const domain = getQrShortDomain();
-  return `${domain}/q/${shortCode}`;
+  return `${getQrShortDomain()}/q/${shortCode}`;
 }
 
-/** URL canónica del perfil tras redirect. */
+/** URL canónica del perfil tras redirect desde /q/{code}. */
 export function getProfileRedirectUrl(slug: string, fromQr = true): string {
-  const siteUrl = (
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    process.env.NEXT_PUBLIC_APP_URL ||
-    'https://buscadis.com'
-  ).replace(/\/$/, '');
-  const base = `${siteUrl}/p/${slug}`;
+  const base = `${getCanonicalSiteOrigin()}/p/${slug}`;
   if (!fromQr) return base;
   const params = new URLSearchParams({
     utm_source: 'qr',
@@ -41,15 +108,29 @@ export function isAllowedRedirectHost(hostname: string): boolean {
   const allowed = [
     'buscadis.com',
     'www.buscadis.com',
-    'adis.lat',
-    'www.adis.lat',
     'localhost',
     '127.0.0.1',
   ];
   if (allowed.includes(hostname)) return true;
   if (hostname.endsWith('.vercel.app')) return true;
-  const appHost = process.env.NEXT_PUBLIC_APP_URL
-    ? new URL(process.env.NEXT_PUBLIC_APP_URL).hostname
-    : null;
-  return appHost === hostname;
+
+  const custom = parseOrigin(process.env.NEXT_PUBLIC_QR_SHORT_DOMAIN);
+  if (custom) {
+    try {
+      if (new URL(custom).hostname === hostname) return true;
+    } catch {
+      /* */
+    }
+  }
+
+  const siteHost = parseOrigin(process.env.NEXT_PUBLIC_SITE_URL);
+  if (siteHost) {
+    try {
+      if (new URL(siteHost).hostname === hostname) return true;
+    } catch {
+      /* */
+    }
+  }
+
+  return false;
 }
