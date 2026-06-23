@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getUserFromRouteRequest } from '@/lib/supabase-route-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getAdisoUrl } from '@/lib/url';
+import { generateFreeQrPng } from '@/lib/qr/generate-free';
 
 const bodySchema = z.object({
   adisoId: z.string().min(1),
@@ -81,7 +82,14 @@ export async function POST(request: NextRequest) {
       categoria: adiso.categoria as string,
       ubicacion: 'peru',
     } as import('@/types').Adiso)}`;
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(adisoUrl)}`;
+
+    const qrPng = await generateFreeQrPng({
+      data: adisoUrl,
+      themeColor: '#2563eb',
+      width: 300,
+      withWatermark: false,
+    });
+    const qrUrl = `data:image/png;base64,${qrPng.toString('base64')}`;
 
     const svg = buildFlyerSvg({
       titulo: adiso.titulo as string,

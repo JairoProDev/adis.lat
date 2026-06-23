@@ -13,7 +13,13 @@ export function isMercadoPagoConfigured(): boolean {
   return Boolean(process.env.MERCADOPAGO_ACCESS_TOKEN?.trim());
 }
 
-export type MercadoPagoCheckoutKind = 'adiso' | 'story' | 'package' | 'deal' | 'catalog_order';
+export type MercadoPagoCheckoutKind =
+  | 'adiso'
+  | 'story'
+  | 'package'
+  | 'deal'
+  | 'catalog_order'
+  | 'business_subscription';
 
 export async function createMercadoPagoPreference(params: {
   orderId: string;
@@ -21,6 +27,7 @@ export async function createMercadoPagoPreference(params: {
   unitPricePen: number;
   payerEmail?: string;
   kind?: MercadoPagoCheckoutKind;
+  metadata?: Record<string, string>;
 }): Promise<MercadoPagoPreferenceResult | null> {
   const token = process.env.MERCADOPAGO_ACCESS_TOKEN?.trim();
   if (!token || params.unitPricePen <= 0) return null;
@@ -30,6 +37,8 @@ export async function createMercadoPagoPreference(params: {
   const notificationUrl =
     kind === 'catalog_order'
       ? `${appUrl}/api/business/checkout/webhook`
+      : kind === 'business_subscription'
+        ? `${appUrl}/api/business/subscription/webhook`
       : kind === 'deal'
       ? `${appUrl}/api/deals/promote/webhook`
       : kind === 'story'
@@ -40,6 +49,8 @@ export async function createMercadoPagoPreference(params: {
   const typeQuery =
     kind === 'catalog_order'
       ? '&type=catalog_order'
+      : kind === 'business_subscription'
+        ? '&type=business_subscription'
       : kind === 'deal'
       ? '&type=deal'
       : kind === 'story'
@@ -49,15 +60,21 @@ export async function createMercadoPagoPreference(params: {
           : '';
 
   const successUrl =
-    kind === 'catalog_order'
+    kind === 'business_subscription'
+      ? `${appUrl}/mi-negocio?subscription=success`
+      : kind === 'catalog_order'
       ? `${appUrl}/checkout/exito?order=${params.orderId}${typeQuery}`
       : `${appUrl}/promocionar/exito?order=${params.orderId}${typeQuery}`;
   const failureUrl =
-    kind === 'catalog_order'
+    kind === 'business_subscription'
+      ? `${appUrl}/mi-negocio?subscription=error`
+      : kind === 'catalog_order'
       ? `${appUrl}/checkout/error?order=${params.orderId}${typeQuery}`
       : `${appUrl}/promocionar/error?order=${params.orderId}${typeQuery}`;
   const pendingUrl =
-    kind === 'catalog_order'
+    kind === 'business_subscription'
+      ? `${appUrl}/mi-negocio?subscription=pending`
+      : kind === 'catalog_order'
       ? `${appUrl}/checkout/pendiente?order=${params.orderId}${typeQuery}`
       : `${appUrl}/promocionar/pendiente?order=${params.orderId}${typeQuery}`;
 
@@ -84,6 +101,10 @@ export async function createMercadoPagoPreference(params: {
 
   if (params.payerEmail) {
     body.payer = { email: params.payerEmail };
+  }
+
+  if (params.metadata) {
+    body.metadata = params.metadata;
   }
 
   const res = await fetch('https://api.mercadopago.com/checkout/preferences', {

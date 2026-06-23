@@ -46,3 +46,19 @@ export interface BusinessWithRole {
   profile: BusinessProfile;
   role: BusinessMemberRole;
 }
+
+/** Returns active membership role or null. */
+export async function getBusinessMemberRole(
+  userId: string,
+  businessProfileId: string
+): Promise<BusinessMemberRole | null> {
+  const { supabaseAdmin } = await import('@/lib/supabase-admin');
+  const { data } = await supabaseAdmin
+    .from('business_members')
+    .select('role')
+    .eq('business_profile_id', businessProfileId)
+    .eq('user_id', userId)
+    .eq('status', 'active')
+    .maybeSingle();
+  return (data?.role as BusinessMemberRole) || null;
+}

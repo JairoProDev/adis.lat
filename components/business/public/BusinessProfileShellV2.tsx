@@ -21,6 +21,7 @@ import { PrintableCatalog } from '@/components/business/public/BusinessCatalogTa
 import type { BusinessProfileShellProps } from './BusinessProfileShell.types';
 import type { BusinessReviewAggregate } from '@/types/business';
 import { trackProfileEvent } from '@/lib/business/analytics/track-profile-event';
+import { canUseProQr } from '@/lib/business/subscription';
 
 export default function BusinessProfileShellV2({
   profile,
@@ -251,6 +252,8 @@ export default function BusinessProfileShellV2({
                 slug={profile.slug || ''}
                 businessName={profile.name || 'Negocio'}
                 onShare={handleShare}
+                isPro={canUseProQr(profile)}
+                themeColor={profile.theme_color}
               />
             </div>
           )}

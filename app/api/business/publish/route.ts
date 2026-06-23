@@ -12,6 +12,7 @@ import { sanitizeBusinessProfilePayload } from '@/lib/business';
 import { revalidateTag } from 'next/cache';
 import { BUSINESS_CACHE_TAG } from '@/lib/business/seo';
 import { isPlatformAdminEmail, isPlatformAdminProfile } from '@/lib/platform-admin';
+import { ensureQrCodeForBusiness } from '@/lib/qr/service';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -59,6 +60,14 @@ export async function POST(req: NextRequest) {
             if (insertError) {
                 console.error('Error creating business profile via admin API:', insertError);
                 return NextResponse.json({ error: insertError.message }, { status: 500 });
+            }
+
+            if (inserted?.id && inserted?.slug) {
+                await ensureQrCodeForBusiness({
+                    businessProfileId: inserted.id,
+                    slug: inserted.slug,
+                    themeColor: inserted.theme_color,
+                });
             }
 
             return NextResponse.json({ success: true, profile: inserted });
@@ -156,6 +165,11 @@ export async function POST(req: NextRequest) {
 
         if (updated?.slug) {
             revalidateTag(BUSINESS_CACHE_TAG(updated.slug));
+            await ensureQrCodeForBusiness({
+                businessProfileId: updated.id,
+                slug: updated.slug,
+                themeColor: updated.theme_color,
+            });
         }
 
         return NextResponse.json({ success: true, profile: updated });

@@ -1,28 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getBusinessProfileBySlug } from '@/lib/business';
 import { getBusinessCanonicalUrl } from '@/lib/business/public-utils';
-
-function buildFlyerSvg(params: {
-  name: string;
-  tagline: string;
-  url: string;
-  qrUrl: string;
-  color: string;
-}): string {
-  const name = params.name.slice(0, 48).replace(/[<>&]/g, '');
-  const tagline = params.tagline.slice(0, 80).replace(/[<>&]/g, '');
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
-  <rect width="1080" height="1920" fill="${params.color}"/>
-  <rect x="60" y="120" width="960" height="1680" rx="40" fill="#ffffff"/>
-  <text x="100" y="280" font-family="Arial,sans-serif" font-size="36" font-weight="bold" fill="#64748b">BUSCADIS</text>
-  <text x="100" y="420" font-family="Arial,sans-serif" font-size="64" font-weight="bold" fill="#0f172a">${name}</text>
-  <text x="100" y="500" font-family="Arial,sans-serif" font-size="32" fill="#475569">${tagline}</text>
-  <image href="${params.qrUrl}" x="340" y="1100" width="400" height="400"/>
-  <text x="100" y="1620" font-family="Arial,sans-serif" font-size="24" fill="#2563eb">${params.url}</text>
-  <text x="100" y="1680" font-family="Arial,sans-serif" font-size="22" fill="#94a3b8">Escanea el QR · Tu tarjeta digital</text>
-</svg>`;
-}
+import { ensureQrCodeForBusiness } from '@/lib/qr/service';
+import { getQrTargetUrl } from '@/lib/qr/resolve-url';
+import { buildKitSvg } from '@/lib/qr/templates';
+import { canUseProQr } from '@/lib/business/subscription';
 
 /** businessId is the public business slug for this route */
 export async function GET(
@@ -35,23 +17,33 @@ export async function GET(
     return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
   }
 
+  const qr = await ensureQrCodeForBusiness({
+    businessProfileId: profile.id,
+    slug: profile.slug,
+    themeColor: profile.theme_color,
+  });
+  if (!qr) {
+    return NextResponse.json({ error: 'QR no disponible' }, { status: 500 });
+  }
+
   const url = getBusinessCanonicalUrl(profile.slug);
-  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '');
-  const qrUrl = `${appUrl}/api/business/${encodeURIComponent(profile.slug)}/qr?format=png`;
-  const svg = buildFlyerSvg({
-    name: profile.name,
+  const kit = await buildKitSvg('flyer-basic', {
+    businessName: profile.name,
     tagline: profile.tagline || profile.description?.slice(0, 80) || 'Visítanos en Buscadis',
-    url,
-    qrUrl,
-    color: profile.theme_color || '#3c6997',
+    themeColor: profile.theme_color || '#3c6997',
+    profileUrl: url,
+    qrTargetUrl: getQrTargetUrl(qr.short_code),
+    styleConfig: qr.style_config || {},
+    usePro: canUseProQr(profile) && qr.style_tier === 'pro',
+    logoUrl: profile.logo_url,
   });
 
   const format = req.nextUrl.searchParams.get('format');
   if (format === 'json') {
-    return NextResponse.json({ svg, url });
+    return NextResponse.json({ svg: kit.svg, url });
   }
 
-  return new NextResponse(svg, {
+  return new NextResponse(kit.svg, {
     headers: {
       'Content-Type': 'image/svg+xml',
       'Content-Disposition': `attachment; filename="${profile.slug}-flyer.svg"`,

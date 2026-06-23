@@ -217,8 +217,11 @@ export default function PublicBusinessPage({
     useEffect(() => {
         if (business?.id && isOnline) {
             trackEvent('profile_view', business.id);
+            if (searchParams?.from_qr === '1') {
+                trackEvent('qr_scan', business.id);
+            }
         }
-    }, [business?.id, isOnline, trackEvent]);
+    }, [business?.id, isOnline, trackEvent, searchParams?.from_qr]);
 
     const handleProductSave = async (updatedProduct: any) => {
         if (business?.id) {

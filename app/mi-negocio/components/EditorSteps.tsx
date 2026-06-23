@@ -18,6 +18,10 @@ import ProfileAnalyticsWidget from '@/components/business/editor/ProfileAnalytic
 import ProfileBuilderModes from '@/components/business/builder/ProfileBuilderModes';
 import FilterSectionCard from '@/components/filters/FilterSectionCard';
 import { IconArrowLeft } from '@/components/Icons';
+import dynamic from 'next/dynamic';
+import { canUseProQr } from '@/lib/business/subscription';
+
+const QrStudio = dynamic(() => import('@/components/business/qr/QrStudio'), { ssr: false });
 
 // Icons mapping for steps
 const STEPS = [
@@ -272,7 +276,7 @@ export function EditorSteps({
                                             {index === 3 && 'WhatsApp, Mapa, Email'}
                                             {index === 4 && 'Horarios de atención'}
                                             {index === 5 && 'Instagram, Facebook, TikTok'}
-                                            {index === 6 && 'Barra de anuncios'}
+                                            {index === 6 && 'QR, flyer y SEO'}
                                         </p>
                                     </div>
                                     <div className={cn(
@@ -643,6 +647,7 @@ export function EditorSteps({
 
                                         {/* Step 6: Marketing */}
                                         {activeStep === 6 && (
+                                            <div className="space-y-5">
                                             <div className="bg-purple-50 p-4 rounded-xl border border-purple-100 space-y-3">
                                                 <label className="block">
                                                     <span className="text-xs font-bold text-purple-800 mb-2 block">Mensaje Destacado (Sticky Bar)</span>
@@ -685,6 +690,29 @@ export function EditorSteps({
                                                         className="w-full px-3 py-2 rounded-lg border border-purple-200 text-sm outline-none min-h-[80px]"
                                                     />
                                                 </div>
+                                            </div>
+                                            {profile.slug && (
+                                                <QrStudio
+                                                    slug={profile.slug}
+                                                    businessName={profile.name || 'Mi negocio'}
+                                                    themeColor={profile.theme_color}
+                                                    isPro={canUseProQr(profile)}
+                                                    onUpgrade={async () => {
+                                                        try {
+                                                            const res = await fetch('/api/business/subscription', {
+                                                                method: 'POST',
+                                                                headers: { 'Content-Type': 'application/json' },
+                                                                credentials: 'include',
+                                                                body: JSON.stringify({ slug: profile.slug }),
+                                                            });
+                                                            const data = await res.json();
+                                                            if (data.initPoint) window.location.href = data.initPoint;
+                                                        } catch {
+                                                            /* */
+                                                        }
+                                                    }}
+                                                />
+                                            )}
                                             </div>
                                         )}
 

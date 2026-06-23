@@ -122,6 +122,9 @@ export interface BusinessProfile {
     is_published: boolean;
     view_count: number;
 
+    /** free | pro | enterprise — feature gating (billing en fase posterior) */
+    subscription_tier?: 'free' | 'pro' | 'enterprise';
+
     /** Email reserved for automatic ownership on signup (ADIS pre-provisioned pages). */
     pending_owner_email?: string | null;
 

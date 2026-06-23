@@ -7,7 +7,8 @@ export type ProfileAnalyticsEvent =
   | 'discovery_cta_click'
   | 'signup_from_profile'
   | 'share_click'
-  | 'add_to_cart';
+  | 'add_to_cart'
+  | 'qr_scan';
 
 function getSessionId(): string {
   if (typeof sessionStorage === 'undefined') return 'ssr-session';

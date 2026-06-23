@@ -20,6 +20,7 @@ const VALID_BUSINESS_COLUMNS = [
     'is_published', 'view_count', 'created_at', 'updated_at',
     'site_tier', 'publicadis_template_id', 'publicadis_published', 'publicadis_config',
     'pending_owner_email',
+    'subscription_tier',
 ];
 
 export function sanitizeBusinessProfilePayload(profile: any) {

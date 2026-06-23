@@ -1,29 +1,64 @@
 'use client';
 
-import { IconDownload, IconQrcode, IconShareAlt } from '@/components/Icons';
+import { useState } from 'react';
+import dynamic from 'next/dynamic';
+import { IconDownload, IconShareAlt } from '@/components/Icons';
+import { getBusinessCanonicalUrl } from '@/lib/business/public-utils';
+
+const QrStudio = dynamic(() => import('@/components/business/qr/QrStudio'), { ssr: false });
 
 interface BusinessShareToolsProps {
   slug: string;
   businessName: string;
   onShare: () => void;
+  isPro?: boolean;
+  themeColor?: string;
 }
 
-export default function BusinessShareTools({ slug, businessName, onShare }: BusinessShareToolsProps) {
+export default function BusinessShareTools({
+  slug,
+  businessName,
+  onShare,
+  isPro = false,
+  themeColor,
+}: BusinessShareToolsProps) {
   const encoded = encodeURIComponent(slug);
+  const profileUrl =
+    typeof window !== 'undefined'
+      ? `${window.location.origin}/p/${slug}`
+      : getBusinessCanonicalUrl(slug);
 
   const copyLink = async () => {
-    const url = `${window.location.origin}/${slug}`;
-    await navigator.clipboard.writeText(url);
+    await navigator.clipboard.writeText(profileUrl);
     alert('Enlace copiado');
+  };
+
+  const handleUpgrade = async () => {
+    try {
+      const res = await fetch('/api/business/subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ slug }),
+      });
+      const data = await res.json();
+      if (data.initPoint) window.location.href = data.initPoint;
+      else alert(data.error || 'No se pudo iniciar el pago');
+    } catch {
+      alert('Error al conectar con el pago');
+    }
   };
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 print:hidden">
-      <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm">
-        <h3 className="font-bold text-lg mb-4">Tarjeta digital</h3>
-        <p className="text-sm text-slate-500 mb-6">
-          Comparte el perfil de {businessName} con QR, vCard o flyer.
-        </p>
+      <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-6">
+        <div>
+          <h3 className="font-bold text-lg mb-1">Tarjeta digital</h3>
+          <p className="text-sm text-slate-500">
+            Comparte el perfil de {businessName} con QR dinámico, vCard o flyer.
+          </p>
+        </div>
+
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
@@ -47,28 +82,22 @@ export default function BusinessShareTools({ slug, businessName, onShare }: Busi
             <IconDownload size={18} /> Guardar contacto (.vcf)
           </a>
           <a
-            href={`/api/business/${encoded}/flyer`}
+            href={`/api/business/${encoded}/qr-kit?template=flyer-basic&format=svg`}
             download
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-sm font-bold text-slate-700"
           >
             <IconDownload size={18} /> Descargar flyer
           </a>
         </div>
-        <div className="mt-6 flex flex-col sm:flex-row items-center gap-6">
-          <img
-            src={`/api/business/${encoded}/qr?format=png`}
-            alt={`QR de ${businessName}`}
-            className="w-40 h-40 rounded-2xl border border-slate-100 shadow-sm"
-          />
-          <div className="text-center sm:text-left">
-            <p className="flex items-center justify-center sm:justify-start gap-2 text-sm font-bold text-slate-700">
-              <IconQrcode size={18} /> QR dinámico
-            </p>
-            <p className="text-xs text-slate-400 mt-1">
-              Escanea para abrir adis.lat/{slug}
-            </p>
-          </div>
-        </div>
+
+        <QrStudio
+          slug={slug}
+          businessName={businessName}
+          isPro={isPro}
+          themeColor={themeColor}
+          compact
+          onUpgrade={handleUpgrade}
+        />
       </div>
     </div>
   );
