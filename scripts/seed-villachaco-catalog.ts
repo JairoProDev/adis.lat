@@ -56,6 +56,9 @@ interface CatalogSeedFile {
     template_id: string;
     site_tier: string;
     publicadis_site_url: string;
+    social_instagram?: string;
+    social_facebook?: string;
+    social_tiktok?: string;
     logo_file?: string;
     banner_file?: string;
     og_image_file?: string;
@@ -130,15 +133,71 @@ async function findUserIdByEmail(email: string): Promise<string | null> {
   return null;
 }
 
-function buildSocialLinks(publicadisUrl: string) {
-  return [
-    { network: 'custom' as const, url: publicadisUrl, label: 'Sitio web Publicadis' },
-    {
-      network: 'custom' as const,
-      url: 'https://buscadis.com/p/villachaco',
-      label: 'Perfil Buscadis',
-    },
-  ];
+function buildSocialLinks(seed: CatalogSeedFile['business']) {
+  const links: { network: 'custom' | 'instagram' | 'facebook' | 'tiktok'; url: string; label?: string }[] = [];
+
+  if (seed.social_instagram) {
+    links.push({ network: 'instagram', url: seed.social_instagram });
+  }
+  if (seed.social_facebook) {
+    links.push({ network: 'facebook', url: seed.social_facebook });
+  }
+  if (seed.social_tiktok) {
+    links.push({ network: 'tiktok', url: seed.social_tiktok });
+  }
+
+  if (seed.publicadis_site_url) {
+    links.push({
+      network: 'custom',
+      url: seed.publicadis_site_url,
+      label: 'Sitio web Publicadis',
+    });
+  }
+
+  links.push({
+    network: 'custom',
+    url: `https://buscadis.com/p/${seed.slug}`,
+    label: 'Perfil Buscadis',
+  });
+
+  return links;
+}
+
+function buildCustomBlocks(seed: CatalogSeedFile['business']) {
+  const blocks: { id: string; type: 'link'; label: string; content: string; style: 'default' | 'filled' }[] = [];
+
+  if (seed.contact_whatsapp) {
+    const wa = seed.contact_whatsapp.replace(/\D/g, '');
+    blocks.push({
+      id: 'link-whatsapp',
+      type: 'link',
+      label: 'Pedidos por WhatsApp',
+      content: `https://wa.me/${wa}`,
+      style: 'filled',
+    });
+  }
+
+  if (seed.publicadis_site_url) {
+    blocks.push({
+      id: 'link-publicadis',
+      type: 'link',
+      label: 'Catálogo completo',
+      content: seed.publicadis_site_url,
+      style: 'default',
+    });
+  }
+
+  if (seed.social_instagram) {
+    blocks.push({
+      id: 'link-instagram',
+      type: 'link',
+      label: 'Síguenos en Instagram',
+      content: seed.social_instagram,
+      style: 'default',
+    });
+  }
+
+  return blocks;
 }
 
 async function main() {
@@ -203,7 +262,8 @@ async function main() {
     site_tier: seed.business.site_tier || 'both',
     publicadis_template_id: 'artisan-brand',
     publicadis_published: true,
-    social_links: buildSocialLinks(seed.business.publicadis_site_url),
+    social_links: buildSocialLinks(seed.business),
+    custom_blocks: buildCustomBlocks(seed.business),
     ...(ownerUserId
       ? { user_id: ownerUserId, created_by: ownerUserId, pending_owner_email: null }
       : reservedEmail

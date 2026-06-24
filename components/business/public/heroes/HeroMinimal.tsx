@@ -2,6 +2,7 @@
 
 import { IconEdit, IconVerified } from '@/components/Icons';
 import HeroQrButton from '@/components/business/qr/HeroQrButton';
+import BusinessSocialStrip from '@/components/business/public/BusinessSocialStrip';
 import type { BusinessProfile, BusinessReviewAggregate } from '@/types/business';
 import { cn } from '@/lib/utils';
 
@@ -60,6 +61,7 @@ export default function HeroMinimal({
         {profile.tagline && (
           <p className="text-[var(--text-secondary)] mt-3 font-medium">{profile.tagline}</p>
         )}
+        <BusinessSocialStrip profile={profile} className="mt-4 justify-center" variant="icons" />
         {reviewAggregate && reviewAggregate.review_count > 0 && (
           <p className="text-amber-500 font-bold mt-2 text-sm">
             ★ {reviewAggregate.avg_rating.toFixed(1)} · {reviewAggregate.review_count} reseñas

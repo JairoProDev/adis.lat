@@ -13,6 +13,7 @@ import BusinessCustomBlocks from '@/components/business/public/BusinessCustomBlo
 import HeroRenderer from '@/components/business/public/heroes/HeroRenderer';
 import { getWhatsappUrl } from '@/lib/business/public-utils';
 import { getTemplateById } from '@/lib/business/templates/registry';
+import { resolveLinktreeBlocks } from '@/lib/business/social-display';
 import { IconWhatsapp } from '@/components/Icons';
 
 export interface RenderBlockOptions {
@@ -83,12 +84,15 @@ export function renderProfileBlock(
           adisos={adisos}
         />
       ) : null;
-    case 'links':
-      return profile.custom_blocks?.length ? (
+    case 'links': {
+      const linkBlocks = resolveLinktreeBlocks(profile);
+      if (!linkBlocks.length) return null;
+      return (
         <div key={block.id} className="max-w-6xl mx-auto px-4 py-4">
-          <BusinessCustomBlocks blocks={profile.custom_blocks} />
+          <BusinessCustomBlocks blocks={linkBlocks} />
         </div>
-      ) : null;
+      );
+    }
     case 'reviews':
       return profile.slug ? (
         <BusinessReviewsTab key={block.id} slug={profile.slug} />

@@ -397,6 +397,8 @@ export default function PublicBusinessPage({
                         catalogProducts={catalogProducts}
                         viewMode={isEditing ? 'editor' : 'storefront'}
                         editMode={canEdit && isEditing}
+                        canEdit={canEdit}
+                        onOpenEditor={() => setIsEditing(true)}
                         onEditPart={handleEditPart}
                         onEditProduct={(productAdiso) => {
                             setIsEditing(true);
@@ -409,6 +411,7 @@ export default function PublicBusinessPage({
                 </>
             }
             floatingActions={
+                canEdit ? (
                 <div className="fixed bottom-24 left-4 right-4 z-50 flex flex-col items-end gap-2 sm:left-auto sm:right-6 md:bottom-6">
                     {businessOptions.length > 0 && business?.id && (
                         <div className="bg-white/95 backdrop-blur-sm border border-slate-200 rounded-xl px-3 py-2 shadow-lg max-w-full">
@@ -427,6 +430,7 @@ export default function PublicBusinessPage({
                         Editar página
                     </button>
                 </div>
+                ) : undefined
             }
         />
             {(showProductModal || editingProduct) && user && business?.id && (

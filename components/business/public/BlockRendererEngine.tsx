@@ -14,10 +14,15 @@ interface BlockRendererEngineProps {
   activeTab?: string;
   onTabChange?: (tab: string) => void;
   isOwner?: boolean;
+  canEdit?: boolean;
+  isEditor?: boolean;
+  isLoggedIn?: boolean;
+  userEmail?: string | null;
   cartCount?: number;
   onShare?: () => void;
   onOpenCart?: () => void;
   onEditPart?: (part: string) => void;
+  onOpenEditor?: () => void;
   onOpenQr?: () => void;
   ctaPlacement?: CtaPlacement;
 }
@@ -27,10 +32,15 @@ export default function BlockRendererEngine({
   activeTab: controlledTab,
   onTabChange,
   isOwner,
+  canEdit,
+  isEditor,
+  isLoggedIn,
+  userEmail,
   cartCount,
   onShare,
   onOpenCart,
   onEditPart,
+  onOpenEditor,
   onOpenQr,
   ctaPlacement = 'sticky_bar',
 }: BlockRendererEngineProps) {
@@ -57,6 +67,19 @@ export default function BlockRendererEngine({
 
   const heroVariant = template.heroVariant;
   const hideStickyCta = ctaPlacement === 'floating' || ctx.hideMobileActionBar;
+  const shellProps = {
+    isOwner,
+    canEdit,
+    isEditor,
+    isLoggedIn,
+    userEmail,
+    cartCount,
+    onShare,
+    onOpenCart,
+    onEditPart,
+    onOpenEditor,
+    onOpenQr,
+  };
 
   if (template.paradigm === 'scroll') {
     return (
@@ -65,12 +88,7 @@ export default function BlockRendererEngine({
         ctx={ctx}
         heroVariant={heroVariant}
         renderBlock={(block) => renderProfileBlock(block, ctx, heroVariant, { hideStickyCta })}
-        isOwner={isOwner}
-        cartCount={cartCount}
-        onShare={onShare}
-        onOpenCart={onOpenCart}
-        onEditPart={onEditPart}
-        onOpenQr={onOpenQr}
+        {...shellProps}
       />
     );
   }
@@ -84,12 +102,7 @@ export default function BlockRendererEngine({
       onTabChange={setActiveTab}
       adisosCount={ctx.adisos.length}
       renderBlock={(block) => renderProfileBlock(block, ctx, heroVariant, { hideStickyCta })}
-      isOwner={isOwner}
-      cartCount={cartCount}
-      onShare={onShare}
-      onOpenCart={onOpenCart}
-      onEditPart={onEditPart}
-      onOpenQr={onOpenQr}
+      {...shellProps}
     />
   );
 }

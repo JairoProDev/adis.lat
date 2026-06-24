@@ -37,6 +37,8 @@ export default function BusinessProfileShellV2({
   editMode = false,
   onEditProduct,
   onTrackEvent,
+  canEdit: canEditProp,
+  onOpenEditor,
 }: BusinessProfileShellProps) {
   const { user } = useAuth();
   const { isPlatformAdmin } = useUser();
@@ -108,6 +110,10 @@ export default function BusinessProfileShellV2({
       setIsTeamMember(false);
       return;
     }
+    if (!supabase) {
+      setIsTeamMember(false);
+      return;
+    }
     let cancelled = false;
     void supabase
       .from('business_members')
@@ -127,8 +133,10 @@ export default function BusinessProfileShellV2({
   }, [mounted, user?.id, profile?.id, profile?.user_id, isPlatformAdmin]);
 
   const isOwner = Boolean(mounted && user?.id && profile?.user_id && user.id === profile.user_id);
-  const canManageQr = Boolean(mounted && user?.id && (isOwner || isTeamMember || isPlatformAdmin));
-  const showEditControls = Boolean(canManageQr && isEditor);
+  const canManageProfile = Boolean(
+    canEditProp ?? (mounted && (isOwner || isTeamMember || isPlatformAdmin))
+  );
+  const showEditControls = Boolean(canManageProfile && isEditor);
   const showMarketplaceChrome = false;
   const showCommerceDock = (isStorefront || isEditor) && !isPreviewMode;
   const dockBottomPad = showCommerceDock ? 'pb-24' : '';
@@ -241,11 +249,16 @@ export default function BusinessProfileShellV2({
 
       <BlockRendererEngine
         ctx={blockCtx}
-        isOwner={isOwner && isEditor}
+        isOwner={isOwner}
+        canEdit={canManageProfile}
+        isEditor={isEditor}
+        isLoggedIn={Boolean(mounted && user)}
+        userEmail={user?.email}
         cartCount={cartCount}
         onShare={handleShare}
         onOpenCart={() => setCartOpen(true)}
         onEditPart={onEditPart}
+        onOpenEditor={onOpenEditor}
         onOpenQr={() => setQrModalOpen(true)}
         ctaPlacement={template.ctaPlacement}
       />
@@ -256,7 +269,7 @@ export default function BusinessProfileShellV2({
           onClose={() => setQrModalOpen(false)}
           slug={profile.slug}
           businessName={profile.name || 'Negocio'}
-          isOwner={canManageQr}
+          isOwner={canManageProfile}
           isPro={canUseProQr(profile)}
           themeColor={profile.theme_color}
         />
@@ -273,7 +286,7 @@ export default function BusinessProfileShellV2({
         />
       )}
 
-      {isEditor && canManageQr && (
+      {isEditor && canManageProfile && (
         <div className="fixed right-4 bottom-28 z-[95] flex flex-col gap-2 print:hidden md:bottom-6">
           <button
             type="button"
@@ -286,7 +299,7 @@ export default function BusinessProfileShellV2({
         </div>
       )}
 
-      {isEditor && canManageQr && (
+      {isEditor && canManageProfile && (
         <>
           <button
             type="button"

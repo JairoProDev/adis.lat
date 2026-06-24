@@ -25,7 +25,7 @@ export default function BusinessProfileEditorLayout({
   floatingActions,
 }: BusinessProfileEditorLayoutProps) {
   return (
-    <div className="min-h-screen bg-slate-50 relative flex flex-col overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50 relative flex flex-col overflow-x-clip">
       {canEdit && isEditing && editorTopBar}
 
       <div className="flex flex-1 relative">

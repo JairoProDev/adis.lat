@@ -4,9 +4,16 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { IconEdit, IconMapMarkerAlt, IconVerified } from '@/components/Icons';
 import HeroQrButton from '@/components/business/qr/HeroQrButton';
+import BusinessSocialStrip from '@/components/business/public/BusinessSocialStrip';
 import type { BusinessProfile, BusinessReviewAggregate } from '@/types/business';
 import { cn } from '@/lib/utils';
 import { isBusinessOpenNow } from '@/lib/business/hours';
+import {
+  profileHasBanner,
+  heroTitleClass,
+  heroSubtitleClass,
+  heroHandleClass,
+} from '@/lib/business/banner-luminance';
 
 interface BusinessHeroProps {
   profile: Partial<BusinessProfile>;
@@ -27,6 +34,7 @@ export default function BusinessHero({
 }: BusinessHeroProps) {
   const [mounted, setMounted] = useState(false);
   const [openStatus, setOpenStatus] = useState<boolean | null>(null);
+  const hasBanner = profileHasBanner(profile.banner_url);
 
   useEffect(() => {
     setMounted(true);
@@ -41,7 +49,7 @@ export default function BusinessHero({
           embedded ? 'h-[120px] rounded-t-xl' : 'h-[200px] md:h-[350px] md:rounded-b-xl'
         )}
       >
-        {profile.banner_url ? (
+        {hasBanner ? (
           <img
             src={profile.banner_url}
             alt="Portada"
@@ -49,6 +57,12 @@ export default function BusinessHero({
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-r from-[var(--brand-color)] to-slate-800 opacity-90" />
+        )}
+        {hasBanner && (
+          <div
+            className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent md:from-black/80"
+            aria-hidden
+          />
         )}
         {showEditControls && (
           <button
@@ -67,7 +81,12 @@ export default function BusinessHero({
       </div>
 
       <div className="max-w-6xl mx-auto px-4 md:px-8">
-        <div className={cn('flex flex-row items-end md:items-start gap-4 relative z-20 mb-4', embedded ? '-mt-8' : '-mt-12 md:-mt-24')}>
+        <div
+          className={cn(
+            'flex flex-row items-end md:items-start gap-4 relative z-20 mb-4',
+            embedded ? '-mt-8' : '-mt-12 md:-mt-24'
+          )}
+        >
           <motion.div initial={false} className="shrink-0 relative">
             <div
               className={cn(
@@ -114,23 +133,38 @@ export default function BusinessHero({
           </motion.div>
 
           <div className="flex-1 pb-1 md:pt-28 md:pb-0 min-w-0">
-            <h1 className="text-2xl md:text-5xl font-black text-[var(--bp-text)] tracking-tight leading-tight line-clamp-2 md:line-clamp-none">
+            <h1
+              className={cn(
+                'text-2xl md:text-5xl font-black tracking-tight leading-tight line-clamp-2 md:line-clamp-none',
+                heroTitleClass(hasBanner)
+              )}
+            >
               {profile.name || 'Mi Negocio'}
             </h1>
             {profile.tagline && (
-              <p className="text-sm md:text-base text-[var(--bp-text-muted)] font-medium mt-1">{profile.tagline}</p>
+              <p className={cn('text-sm md:text-base font-medium mt-1', heroSubtitleClass(hasBanner))}>
+                {profile.tagline}
+              </p>
             )}
-            <p className="text-xs md:text-base text-[var(--text-tertiary)] font-medium truncate">@{profile.slug}</p>
+            <p className={cn('text-xs md:text-base font-medium truncate', heroHandleClass(hasBanner))}>
+              @{profile.slug}
+            </p>
             {reviewAggregate && reviewAggregate.review_count > 0 && (
-              <p className="text-sm text-amber-500 font-bold mt-1">
+              <p
+                className={cn(
+                  'text-sm font-bold mt-1',
+                  hasBanner ? 'text-amber-400 md:drop-shadow-md' : 'text-amber-500'
+                )}
+              >
                 ★ {reviewAggregate.avg_rating.toFixed(1)} ({reviewAggregate.review_count} reseñas)
               </p>
             )}
+            <BusinessSocialStrip profile={profile} className="mt-3" variant="chips" />
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-6 md:ml-[220px]">
-          <div className="flex-1">
+        <div className="flex flex-col md:flex-row gap-6 md:pl-[220px]">
+          <div className="flex-1 min-w-0">
             <div className="text-[var(--bp-text-muted)] text-sm md:text-lg font-medium leading-relaxed mb-3">
               {profile.description || 'Bienvenido a nuestra tienda oficial.'}
             </div>

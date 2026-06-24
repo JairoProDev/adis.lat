@@ -14,6 +14,7 @@ import {
 } from '@/components/Icons';
 import HeroRenderer from '@/components/business/public/heroes/HeroRenderer';
 import BusinessActionBar from '@/components/business/public/BusinessActionBar';
+import BusinessOwnerBanner from '@/components/business/public/BusinessOwnerBanner';
 
 const TAB_META: Record<string, { label: string; icon: ReactNode }> = {
   catalogo: { label: 'Catálogo', icon: <IconStore size={18} /> },
@@ -31,10 +32,15 @@ interface BusinessTabShellProps {
   adisosCount: number;
   renderBlock: (block: ProfileBlock) => ReactNode;
   isOwner?: boolean;
+  canEdit?: boolean;
+  isEditor?: boolean;
+  isLoggedIn?: boolean;
+  userEmail?: string | null;
   cartCount?: number;
   onShare?: () => void;
   onOpenCart?: () => void;
   onEditPart?: (part: string) => void;
+  onOpenEditor?: () => void;
   onOpenQr?: () => void;
 }
 
@@ -47,10 +53,15 @@ export default function BusinessTabShell({
   adisosCount,
   renderBlock,
   isOwner,
+  canEdit,
+  isEditor,
+  isLoggedIn,
+  userEmail,
   cartCount,
   onShare,
   onOpenCart,
   onEditPart,
+  onOpenEditor,
   onOpenQr,
 }: BusinessTabShellProps) {
   const heroBlock = blocks.find((b) => b.type === 'hero');
@@ -86,13 +97,24 @@ export default function BusinessTabShell({
       {highlightsBlock?.visible && renderBlock(highlightsBlock)}
       <BusinessActionBar
         profile={ctx.profile}
-        isOwner={isOwner}
+        canEdit={canEdit ?? isOwner}
+        isEditor={isEditor}
         cartCount={cartCount}
         onShare={onShare || (() => {})}
         onOpenCart={onOpenCart}
         onEditPart={onEditPart || ctx.onEditPart}
+        onOpenEditor={onOpenEditor}
         onOpenQr={onOpenQr || ctx.onOpenQr}
         hideMobile={ctx.hideMobileActionBar}
+      />
+      <BusinessOwnerBanner
+        profile={ctx.profile}
+        canEdit={canEdit ?? isOwner}
+        isEditor={isEditor}
+        isLoggedIn={isLoggedIn}
+        userEmail={userEmail}
+        onOpenEditor={onOpenEditor}
+        className="mb-3"
       />
       <div className="bg-[var(--bg-primary)] pb-2 shadow-sm relative z-10">
         <div

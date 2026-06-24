@@ -18,4 +18,7 @@ export interface BusinessProfileShellProps {
   chatbotMinimized?: boolean;
   onToggleChatbot?: () => void;
   onTrackEvent?: (event: string) => void;
+  /** Permiso de edición (owner, member o admin) */
+  canEdit?: boolean;
+  onOpenEditor?: () => void;
 }
