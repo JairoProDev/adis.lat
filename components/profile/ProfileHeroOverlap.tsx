@@ -23,6 +23,8 @@ interface ProfileHeroOverlapProps {
   onBannerCtaClick?: () => void;
   /** Si true, solo renderiza el banner (avatar va en el shell junto a métricas). */
   bannerOnly?: boolean;
+  showEditControls?: boolean;
+  onEditBanner?: () => void;
   className?: string;
 }
 
@@ -60,10 +62,12 @@ export default function ProfileHeroOverlap({
   banner,
   onBannerCtaClick,
   bannerOnly = false,
+  showEditControls = false,
+  onEditBanner,
   className,
 }: ProfileHeroOverlapProps) {
-  const hasImage = banner.mode === 'image' && Boolean(banner.imageUrl || entity.bannerImageUrl);
-  const imageUrl = banner.imageUrl || entity.bannerImageUrl;
+  const hasImage = banner.mode === 'image' && Boolean(entity.bannerImageUrl || banner.imageUrl);
+  const imageUrl = entity.bannerImageUrl || banner.imageUrl;
   const cta = banner.cta;
 
   const ctaHref =
@@ -73,7 +77,7 @@ export default function ProfileHeroOverlap({
 
   return (
     <div className={cn('relative w-full', className)}>
-      <div className="relative w-full h-[180px] sm:h-[200px] md:h-[220px] overflow-hidden bg-gradient-to-br from-[var(--brand-color)] to-slate-800 border-b border-[var(--border-subtle)]">
+      <div className="relative w-full h-[180px] sm:h-[200px] md:h-[220px] overflow-hidden bg-gradient-to-br from-[var(--brand-color)] via-[var(--brand-color)] to-[var(--brand-accent)] border-b border-[var(--border-subtle)]">
         {hasImage && imageUrl ? (
           <img src={imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
         ) : banner.mode === 'text' && banner.text?.content ? (
@@ -95,6 +99,16 @@ export default function ProfileHeroOverlap({
             </p>
           </div>
         ) : null}
+
+        {showEditControls && onEditBanner && (
+          <button
+            type="button"
+            onClick={onEditBanner}
+            className="absolute top-3 right-3 z-30 px-3 py-1.5 rounded-lg bg-black/50 text-white text-xs font-bold backdrop-blur-sm hover:bg-black/65 transition-colors"
+          >
+            Cambiar banner
+          </button>
+        )}
 
         {banner.fadeBottom === true && (
           <div

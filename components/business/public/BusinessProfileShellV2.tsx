@@ -25,6 +25,8 @@ import type { BusinessProfileShellProps } from './BusinessProfileShell.types';
 import type { BusinessReviewAggregate } from '@/types/business';
 import { trackProfileEvent } from '@/lib/business/analytics/track-profile-event';
 import { canUseProQr } from '@/lib/business/subscription';
+import { useUI } from '@/contexts/UIContext';
+import type { ProfileEditAccess } from '@/components/profile/ProfileChrome';
 
 export default function BusinessProfileShellV2({
   profile,
@@ -42,7 +44,7 @@ export default function BusinessProfileShellV2({
 }: BusinessProfileShellProps) {
   const { user } = useAuth();
   const { isPlatformAdmin } = useUser();
-  const { success: toastSuccess } = useToast();
+  const { success: toastSuccess, error: toastError } = useToast();
   const [mounted, setMounted] = useState(false);
   const [isTeamMember, setIsTeamMember] = useState(false);
   const [printAdisos, setPrintAdisos] = useState(adisos);
@@ -52,6 +54,7 @@ export default function BusinessProfileShellV2({
   const [showOwnerTools, setShowOwnerTools] = useState(false);
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [engaged, setEngaged] = useState(false);
+  const { openAuthModal } = useUI();
 
   const viewMode = viewModeProp ?? (isPreview ? 'preview' : editMode ? 'editor' : 'storefront');
   const isStorefront = viewMode === 'storefront';
@@ -137,6 +140,28 @@ export default function BusinessProfileShellV2({
     canEditProp ?? (mounted && (isOwner || isTeamMember || isPlatformAdmin))
   );
   const showEditControls = Boolean(canManageProfile && isEditor);
+
+  const editAccess: ProfileEditAccess = !mounted
+    ? 'login_required'
+    : canManageProfile && !isEditor
+      ? 'allowed'
+      : user
+        ? 'denied'
+        : 'login_required';
+
+  const handleEditRequest = useCallback(() => {
+    if (isEditor) return;
+    if (!user) {
+      openAuthModal();
+      return;
+    }
+    if (!canManageProfile) {
+      toastError('Este perfil no te pertenece. No tienes permiso para editarlo.');
+      return;
+    }
+    onOpenEditor?.();
+  }, [isEditor, user, canManageProfile, openAuthModal, onOpenEditor, toastError]);
+
   const showMarketplaceChrome = false;
   const showCommerceDock =
     (isStorefront || isEditor) &&
@@ -266,6 +291,8 @@ export default function BusinessProfileShellV2({
         onOpenEditor={onOpenEditor}
         onOpenQr={() => setQrModalOpen(true)}
         onWhatsappClick={handleWhatsappClick}
+        editAccess={editAccess}
+        onEditRequest={handleEditRequest}
         ctaPlacement={template.ctaPlacement}
       />
 

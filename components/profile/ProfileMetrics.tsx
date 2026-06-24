@@ -1,9 +1,11 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import type { ProfileMetricValue } from '@buscadis/profile-engine';
 import {
   IconEye,
   IconHeart,
+  IconMessages,
   IconShoppingCart,
   IconStar,
   IconStore,
@@ -17,24 +19,30 @@ function formatMetric(n: number): string {
   return String(n);
 }
 
-function MetricIcon({ metricKey }: { metricKey: string }) {
+function MetricIcon({ metricKey, index }: { metricKey: string; index: number }) {
   const size = 18;
+  const accent = index % 2 === 1 ? 'text-[var(--brand-accent)]' : 'text-[var(--brand-color)]';
+  const wrap = (node: ReactNode) => (
+    <span className={accent}>{node}</span>
+  );
+
   switch (metricKey) {
     case 'interactions':
+      return wrap(<IconMessages size={size} />);
     case 'views':
-      return <IconEye size={size} />;
+      return wrap(<IconEye size={size} />);
     case 'sales':
-      return <IconShoppingCart size={size} />;
+      return wrap(<IconShoppingCart size={size} />);
     case 'clients':
     case 'followers':
-      return <IconUsers size={size} />;
+      return wrap(<IconUsers size={size} />);
     case 'reviews':
-      return <IconStar size={size} />;
+      return wrap(<IconStar size={size} />);
     case 'products':
     case 'content_count':
-      return <IconStore size={size} />;
+      return wrap(<IconStore size={size} />);
     default:
-      return <IconHeart size={size} />;
+      return wrap(<IconHeart size={size} />);
   }
 }
 
@@ -54,12 +62,10 @@ export default function ProfileMetrics({ metrics, className }: ProfileMetricsPro
         className
       )}
     >
-      {shown.map((m) => (
+      {shown.map((m, index) => (
         <div key={m.key} className="flex flex-col items-center min-w-[4.5rem]">
           <div className="flex items-center gap-1 text-[var(--text-primary)] font-bold text-sm sm:text-base">
-            <span className="text-[var(--brand-color)]">
-              <MetricIcon metricKey={m.key} />
-            </span>
+            <MetricIcon metricKey={m.key} index={index} />
             <span>{formatMetric(m.value)}</span>
           </div>
           <span className="text-[10px] sm:text-xs text-[var(--text-tertiary)] font-medium mt-0.5 text-center">

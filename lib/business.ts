@@ -9,7 +9,7 @@ export const BUSINESS_TABLE = 'business_profiles';
 
 const VALID_BUSINESS_COLUMNS = [
     'id', 'user_id', 'created_by', 'slug', 'name', 'description',
-    'logo_url', 'banner_url', 'tagline', 'theme_color', 'theme_mode',
+    'logo_url', 'banner_url', 'tagline', 'theme_color', 'theme_accent_color', 'theme_mode',
     'layout_style', 'contact_email', 'contact_phone', 'contact_whatsapp',
     'contact_address', 'contact_maps_url', 'business_hours', 'social_links',
     'custom_blocks', 'profile_blocks', 'template_id', 'theme_preset', 'template_applied_at',
@@ -21,6 +21,8 @@ const VALID_BUSINESS_COLUMNS = [
     'site_tier', 'publicadis_template_id', 'publicadis_published', 'publicadis_config',
     'pending_owner_email',
     'subscription_tier',
+    'profile_layout', 'profile_style', 'banner_config', 'metrics_config',
+    'story_highlights', 'profile_hashtags', 'location_display_level',
 ];
 
 export function sanitizeBusinessProfilePayload(profile: any) {
@@ -29,6 +31,19 @@ export function sanitizeBusinessProfilePayload(profile: any) {
         if (VALID_BUSINESS_COLUMNS.includes(key) && profile[key] !== undefined) {
             payload[key] = profile[key];
         }
+    }
+    if (payload.banner_url) {
+        const existing = payload.banner_config && typeof payload.banner_config === 'object'
+            ? payload.banner_config
+            : profile.banner_config && typeof profile.banner_config === 'object'
+              ? profile.banner_config
+              : {};
+        payload.banner_config = {
+            mode: 'image',
+            fadeBottom: false,
+            ...existing,
+            imageUrl: payload.banner_url,
+        };
     }
     return payload;
 }
@@ -176,12 +191,16 @@ export async function checkSlugAvailability(slug: string): Promise<boolean> {
     return count === 0;
 }
 
-export async function uploadBusinessImage(file: File, userId: string, type: 'logo' | 'banner'): Promise<string | null> {
+export async function uploadBusinessImage(
+    file: File,
+    storageFolderId: string,
+    type: 'logo' | 'banner'
+): Promise<string | null> {
     if (!supabase) return null;
 
     try {
         const fileExt = file.name.split('.').pop();
-        const fileName = `${userId}/${type}-${Date.now()}.${fileExt}`;
+        const fileName = `${storageFolderId}/${type}-${Date.now()}.${fileExt}`;
 
         // Use 'catalog-images' bucket which exists and is public
         const bucketName = 'catalog-images';

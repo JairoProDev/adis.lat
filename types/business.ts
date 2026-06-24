@@ -141,6 +141,8 @@ export interface BusinessProfile {
     tagline?: string;
 
     theme_color: string;
+    /** Color secundario / acento de marca (ej. amarillo Buscadis) */
+    theme_accent_color?: string;
     theme_mode: 'light' | 'dark' | 'system';
     layout_style: 'standard' | 'bento' | 'minimal';
 

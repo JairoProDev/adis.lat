@@ -19,7 +19,7 @@ const PUBLIC_DIR = path.join(process.cwd(), 'public');
 const DATA_PATH = path.join(__dirname, 'data/buscadis-profile.json');
 
 const BRAND_FILES = {
-  logo: 'og-image.jpg',
+  logo: 'logo.png',
   banner: 'og-image.jpg',
   og: 'og-image.jpg',
 };
@@ -219,7 +219,7 @@ async function main() {
     contact_email: b.contact_email,
     contact_address: b.contact_address,
     contact_maps_url: b.contact_maps_url,
-    theme_color: b.theme_color || '#f97316',
+    theme_color: b.theme_color || '#53acc5',
     theme_preset: b.theme_preset || 'executive',
     template_id: b.template_id || 'modern_tabs',
     logo_url: logoUrl,
@@ -252,7 +252,7 @@ async function main() {
     ],
     profile_blocks: profileBlocks,
     profile_layout: layout,
-    profile_style: { skinId: 'buscadis_default' },
+    profile_style: { skinId: 'buscadis_default', accentColor: '#ffc24a' },
     banner_config: {
       ...(b.banner_config as object),
       mode: 'image',

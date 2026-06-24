@@ -19,7 +19,7 @@ function RatingBadge({
 }) {
   return (
     <div className="flex items-center justify-end gap-1 text-sm font-semibold text-[var(--text-secondary)]">
-      <IconStar size={15} className="text-amber-500 shrink-0" />
+      <IconStar size={15} className="text-[var(--brand-accent)] shrink-0" />
       <span>{avgRating.toFixed(2)}</span>
       <span className="text-[var(--text-tertiary)] font-normal">({reviewCount})</span>
     </div>
@@ -27,7 +27,7 @@ function RatingBadge({
 }
 
 export default function ProfileIdentityRow({ entity, className }: ProfileIdentityRowProps) {
-  const { text: locationText, flag } = resolveLocationDisplayText(
+  const { text: locationText, flagUrl } = resolveLocationDisplayText(
     entity.location,
     entity.locationDisplayLevel,
     entity.location?.address
@@ -36,27 +36,35 @@ export default function ProfileIdentityRow({ entity, className }: ProfileIdentit
   const hasRating = Boolean(rating && rating.reviewCount > 0);
 
   return (
-    <div className={cn('max-w-6xl mx-auto px-4 space-y-1', className)}>
-      <h1 className="text-xl sm:text-2xl font-black text-[var(--text-primary)] m-0 flex items-center gap-1.5 min-w-0">
-        <span className="truncate">{entity.displayName}</span>
-        {entity.isVerified && (
-          <IconVerified size={20} className="shrink-0 text-sky-500" aria-label="Verificado" />
-        )}
-      </h1>
+    <div className={cn('max-w-6xl mx-auto px-4', className)}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl sm:text-2xl font-black text-[var(--text-primary)] m-0 flex items-center gap-1.5 min-w-0">
+            <span className="truncate">{entity.displayName}</span>
+            {entity.isVerified && (
+              <IconVerified size={20} className="shrink-0 text-sky-500" aria-label="Verificado" />
+            )}
+          </h1>
+          {entity.tagline ? (
+            <p className="text-[var(--text-tertiary)] font-medium text-sm m-0 mt-0.5 truncate">
+              {entity.tagline}
+            </p>
+          ) : null}
+        </div>
 
-      <div className="flex items-start justify-between gap-3 text-sm">
-        {entity.tagline ? (
-          <p className="text-[var(--text-tertiary)] font-medium m-0 truncate min-w-0 flex-1">
-            {entity.tagline}
-          </p>
-        ) : (
-          <span className="flex-1" />
-        )}
-
-        <div className="flex flex-col items-end gap-0.5 shrink-0 max-w-[48%]">
+        <div className="flex flex-col items-end gap-1 shrink-0 max-w-[46%] pt-0.5">
           {locationText && (
-            <div className="flex items-center gap-1 text-[var(--text-tertiary)] text-xs sm:text-sm justify-end">
-              {flag && <span aria-hidden>{flag}</span>}
+            <div className="flex items-center gap-1.5 text-[var(--text-tertiary)] text-xs sm:text-sm justify-end">
+              {flagUrl && (
+                <img
+                  src={flagUrl}
+                  alt=""
+                  width={18}
+                  height={13}
+                  className="rounded-sm shrink-0 object-cover"
+                  loading="lazy"
+                />
+              )}
               <IconMapMarkerAlt size={14} className="shrink-0 text-[var(--brand-color)]" />
               <span className="truncate">{locationText}</span>
             </div>

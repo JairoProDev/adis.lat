@@ -4,7 +4,7 @@ export const STYLE_SKINS: StyleSkinTokens[] = [
   {
     id: 'buscadis_default',
     label: 'Buscadis',
-    color: '#f97316',
+    color: '#53acc5',
     mode: 'light',
     fontFamily: 'sans',
     radius: 'rounded',

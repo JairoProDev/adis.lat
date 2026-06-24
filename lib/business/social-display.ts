@@ -27,9 +27,29 @@ export function getHeroSocialLinks(profile: Partial<BusinessProfile>): SocialLin
     if (!link.url?.trim()) return false;
     if (isDuplicateActionBarLink(link.url, profile)) return false;
     const label = (link.label || '').toLowerCase();
-    if (label.includes('buscadis') || label.includes('publicadis')) return false;
+    if (label.includes('buscadis')) return false;
     return true;
   });
+}
+
+/** Strip del wireframe: Publicadis primero, luego redes sociales */
+export function getWireframeSocialLinks(profile: Partial<BusinessProfile>): SocialLink[] {
+  const links: SocialLink[] = [];
+  const publicadis = getPublicadisSiteUrl(profile);
+  if (publicadis) {
+    links.push({
+      network: 'custom',
+      url: publicadis,
+      label: 'Sitio web',
+    });
+  }
+  for (const link of getHeroSocialLinks(profile)) {
+    if (link.url?.includes('publicadis.com')) continue;
+    const label = (link.label || '').toLowerCase();
+    if (label.includes('publicadis') || label.includes('sitio web')) continue;
+    links.push(link);
+  }
+  return links;
 }
 
 export function socialLinkLabel(link: SocialLink): string {

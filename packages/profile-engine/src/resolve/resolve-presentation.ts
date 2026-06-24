@@ -22,7 +22,7 @@ export function resolveBannerConfig(
     return {
       fadeBottom: false,
       ...banner,
-      imageUrl: banner.imageUrl || entity?.bannerImageUrl,
+      imageUrl: entity?.bannerImageUrl || banner.imageUrl,
     };
   }
   if (entity?.bannerImageUrl) {

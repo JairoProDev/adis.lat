@@ -5,13 +5,15 @@ import { IconArrowLeft, IconEdit, IconQrcode, IconShareAlt } from '@/components/
 import ProfileChromeMenu, { type ProfileMenuItem } from '@/components/profile/ProfileChromeMenu';
 import { cn } from '@/lib/utils';
 
+export type ProfileEditAccess = 'allowed' | 'login_required' | 'denied';
+
 interface ProfileChromeProps {
   handle: string;
   siteLabel?: string;
   onShare?: () => void;
   onOpenQr?: () => void;
-  canEdit?: boolean;
-  onEdit?: () => void;
+  editAccess?: ProfileEditAccess;
+  onEditRequest?: () => void;
   menuItems?: ProfileMenuItem[];
   className?: string;
 }
@@ -21,12 +23,14 @@ export default function ProfileChrome({
   siteLabel = 'Buscadis.com',
   onShare,
   onOpenQr,
-  canEdit,
-  onEdit,
+  editAccess = 'login_required',
+  onEditRequest,
   menuItems = [],
   className,
 }: ProfileChromeProps) {
   const profileUrl = `${siteLabel}/@${handle}`;
+  const editEnabled = editAccess === 'allowed';
+  const editBlocked = editAccess === 'denied';
 
   return (
     <header
@@ -54,22 +58,41 @@ export default function ProfileChrome({
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
-          {canEdit && onEdit && (
+          {onEditRequest && (
             <button
               type="button"
-              onClick={onEdit}
-              className="h-9 px-2.5 sm:px-3 flex items-center gap-1.5 rounded-full bg-white/95 text-slate-900 text-xs font-bold shadow-md hover:bg-white transition-colors"
-              aria-label="Editar página"
+              onClick={onEditRequest}
+              className={cn(
+                'h-9 w-9 flex items-center justify-center rounded-lg backdrop-blur-md transition-colors shadow-md',
+                editEnabled
+                  ? 'bg-white/95 text-slate-900 hover:bg-white'
+                  : editBlocked
+                    ? 'bg-white/40 text-white/70'
+                    : 'bg-white/90 text-slate-800 hover:bg-white'
+              )}
+              aria-label={
+                editEnabled
+                  ? 'Editar página'
+                  : editBlocked
+                    ? 'Sin permiso para editar'
+                    : 'Iniciar sesión para editar'
+              }
+              title={
+                editEnabled
+                  ? 'Editar página'
+                  : editBlocked
+                    ? 'Este perfil no te pertenece'
+                    : 'Inicia sesión para editar'
+              }
             >
-              <IconEdit size={15} />
-              <span>Editar</span>
+              <IconEdit size={16} />
             </button>
           )}
           {onOpenQr && (
             <button
               type="button"
               onClick={onOpenQr}
-              className="h-9 w-9 flex items-center justify-center rounded-full bg-black/25 backdrop-blur-md text-white hover:bg-black/40 transition-colors"
+              className="h-9 w-9 flex items-center justify-center rounded-lg bg-black/25 backdrop-blur-md text-white hover:bg-black/40 transition-colors"
               aria-label="Código QR"
             >
               <IconQrcode size={18} />
@@ -79,7 +102,7 @@ export default function ProfileChrome({
             <button
               type="button"
               onClick={onShare}
-              className="h-9 w-9 hidden sm:flex items-center justify-center rounded-full bg-black/25 backdrop-blur-md text-white hover:bg-black/40 transition-colors"
+              className="h-9 w-9 hidden sm:flex items-center justify-center rounded-lg bg-black/25 backdrop-blur-md text-white hover:bg-black/40 transition-colors"
               aria-label="Compartir"
             >
               <IconShareAlt size={16} />

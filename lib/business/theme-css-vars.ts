@@ -20,8 +20,13 @@ export function buildBusinessThemeVars(profile: Partial<BusinessProfile>): CSSPr
     tokens.radius === 'sharp' ? '0px' : tokens.radius === 'pill' ? '1.5rem' : '0.75rem';
   const densityGap = tokens.density === 'compact' ? '0.5rem' : '1rem';
 
+  const styleExtra = profile.profile_style as { accentColor?: string } | null | undefined;
+  const primary = profile.theme_color || tokens.color;
+  const accent = profile.theme_accent_color || styleExtra?.accentColor || '#ffc24a';
+
   return {
-    '--brand-color': tokens.color,
+    '--brand-color': primary,
+    '--brand-accent': accent,
     '--bg-primary': isDark ? '#1c2229' : '#ffffff',
     '--bg-secondary': isDark ? '#13171d' : '#f8fafc',
     '--bg-tertiary': isDark ? '#283038' : '#e2e8f0',

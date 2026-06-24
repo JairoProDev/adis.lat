@@ -9,6 +9,7 @@ import type { CtaPlacement } from '@/lib/business/templates/registry';
 import BusinessTabShell from '@/components/business/public/shells/BusinessTabShell';
 import BusinessScrollShell from '@/components/business/public/shells/BusinessScrollShell';
 import ProfileWireframeShell from '@/components/profile/ProfileWireframeShell';
+import type { ProfileEditAccess } from '@/components/profile/ProfileChrome';
 import { usesWireframeLayout } from '@/lib/profile/adapters/business-adapter';
 
 interface BlockRendererEngineProps {
@@ -27,6 +28,8 @@ interface BlockRendererEngineProps {
   onOpenEditor?: () => void;
   onOpenQr?: () => void;
   onWhatsappClick?: () => void;
+  editAccess?: ProfileEditAccess;
+  onEditRequest?: () => void;
   ctaPlacement?: CtaPlacement;
 }
 
@@ -46,6 +49,8 @@ export default function BlockRendererEngine({
   onOpenEditor,
   onOpenQr,
   onWhatsappClick,
+  editAccess,
+  onEditRequest,
   ctaPlacement = 'sticky_bar',
 }: BlockRendererEngineProps) {
   const template = getTemplateById(ctx.profile.template_id || 'modern_tabs');
@@ -84,6 +89,8 @@ export default function BlockRendererEngine({
     onOpenEditor,
     onOpenQr,
     onWhatsappClick,
+    editAccess,
+    onEditRequest,
   };
 
   const renderBlockFn = (block: Parameters<typeof renderProfileBlock>[0]) =>

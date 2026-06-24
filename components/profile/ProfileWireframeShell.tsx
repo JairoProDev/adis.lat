@@ -11,7 +11,7 @@ import {
   resolveBusinessProfileStyle,
 } from '@/lib/profile/adapters/business-adapter';
 import { blockTypeToTabId, getDefaultTabId, getVisibleBlocks } from '@/lib/business/blocks/normalize';
-import ProfileChrome from '@/components/profile/ProfileChrome';
+import ProfileChrome, { type ProfileEditAccess } from '@/components/profile/ProfileChrome';
 import type { ProfileMenuItem } from '@/components/profile/ProfileChromeMenu';
 import { getBusinessCanonicalUrl } from '@/lib/business/public-utils';
 import ProfileHeroOverlap, { ProfileAvatar } from '@/components/profile/ProfileHeroOverlap';
@@ -57,6 +57,8 @@ interface ProfileWireframeShellProps {
   onOpenEditor?: () => void;
   onOpenQr?: () => void;
   onWhatsappClick?: () => void;
+  editAccess?: ProfileEditAccess;
+  onEditRequest?: () => void;
 }
 
 export default function ProfileWireframeShell({
@@ -74,6 +76,8 @@ export default function ProfileWireframeShell({
   onOpenEditor,
   onOpenQr,
   onWhatsappClick,
+  editAccess = 'login_required',
+  onEditRequest,
 }: ProfileWireframeShellProps) {
   const profile = ctx.profile;
   const entity = useMemo(
@@ -89,7 +93,7 @@ export default function ProfileWireframeShell({
   const styleSchema = useMemo(() => resolveBusinessProfileStyle(profile), [profile]);
   const presentation = useMemo(
     () => resolveProfilePresentation(entity, layout, styleSchema, profile.banner_config || undefined),
-    [entity, layout, styleSchema, profile.banner_config]
+    [entity, layout, styleSchema, profile.banner_config, profile.banner_url]
   );
 
   const visibleBlocks = getVisibleBlocks(ctx.blocks);
@@ -141,9 +145,8 @@ export default function ProfileWireframeShell({
     return [
       {
         id: 'edit',
-        label: 'Editar página',
-        onClick: onOpenEditor,
-        hidden: !canEdit || !onOpenEditor,
+        label: 'Editar perfil',
+        onClick: onEditRequest,
       },
       {
         id: 'copy',
@@ -179,7 +182,7 @@ export default function ProfileWireframeShell({
         href: '/ayuda?topic=reportar-perfil',
       },
     ];
-  }, [profile.slug, onShare, canEdit, onOpenEditor]);
+  }, [profile.slug, onShare, onEditRequest]);
 
   const defaultBannerCta = profile.contact_whatsapp
     ? { label: 'Contactar', action: 'whatsapp' as const }
@@ -198,8 +201,8 @@ export default function ProfileWireframeShell({
             handle={entity.handle}
             onShare={onShare}
             onOpenQr={onOpenQr || ctx.onOpenQr}
-            canEdit={canEdit && !isEditor}
-            onEdit={onOpenEditor}
+            editAccess={isEditor ? 'denied' : editAccess}
+            onEditRequest={onEditRequest}
             menuItems={chromeMenuItems}
           />
         )}
@@ -210,6 +213,8 @@ export default function ProfileWireframeShell({
             banner={bannerWithCta}
             onBannerCtaClick={onWhatsappClick}
             bannerOnly
+            showEditControls={Boolean(isEditor && canEdit)}
+            onEditBanner={() => onEditPart?.('visual')}
           />
         )}
 
@@ -231,8 +236,8 @@ export default function ProfileWireframeShell({
         {isSlotVisible(presentation.layout, 'profile_social_strip') && (
           <BusinessSocialStrip
             profile={profile}
-            variant="chips"
-            className="max-w-6xl mx-auto px-4 md:flex-wrap max-md:flex-nowrap max-md:overflow-x-auto max-md:no-scrollbar max-md:snap-x max-md:gap-3 [&_a]:max-md:shrink-0 max-md:[&_span:last-child]:hidden"
+            variant="wireframe"
+            className="max-w-6xl mx-auto px-4 md:flex-wrap max-md:flex-nowrap max-md:overflow-x-auto max-md:no-scrollbar max-md:snap-x max-md:gap-3"
           />
         )}
 

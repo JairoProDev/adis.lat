@@ -133,22 +133,34 @@ export function EditorSteps({
     const handleImageUpload = async (file: File, type: 'logo' | 'banner') => {
         if (!file) return;
 
-        // Local Preview
         const objectUrl = URL.createObjectURL(file);
         setPreviews(prev => ({ ...prev, [type]: objectUrl }));
 
-        if (!profile.user_id) {
-            console.warn("No user_id found in profile, skipping upload.");
+        const storageFolderId = profile.id || profile.user_id;
+        if (!storageFolderId) {
+            console.warn('No business id for image upload.');
             return;
         }
 
         setUploadingImage(type);
         try {
-            const publicUrl = await uploadBusinessImage(file, profile.user_id, type);
+            const publicUrl = await uploadBusinessImage(file, storageFolderId, type);
             if (publicUrl) {
-                if (type === 'logo') setProfile({ ...profile, logo_url: publicUrl });
-                if (type === 'banner') setProfile({ ...profile, banner_url: publicUrl });
-                // Clear preview so we display the real URL (conforms success)
+                if (type === 'logo') {
+                    setProfile({ ...profile, logo_url: publicUrl });
+                }
+                if (type === 'banner') {
+                    setProfile({
+                        ...profile,
+                        banner_url: publicUrl,
+                        banner_config: {
+                            ...(profile.banner_config || {}),
+                            mode: 'image',
+                            imageUrl: publicUrl,
+                            fadeBottom: false,
+                        },
+                    });
+                }
                 setPreviews(prev => ({ ...prev, [type]: undefined }));
             }
         } catch (e) {
