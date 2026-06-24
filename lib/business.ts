@@ -193,37 +193,38 @@ export async function checkSlugAvailability(slug: string): Promise<boolean> {
 
 export async function uploadBusinessImage(
     file: File,
-    storageFolderId: string,
+    businessProfileId: string,
     type: 'logo' | 'banner'
 ): Promise<string | null> {
     if (!supabase) return null;
 
     try {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${storageFolderId}/${type}-${Date.now()}.${fileExt}`;
-
-        // Use 'catalog-images' bucket which exists and is public
-        const bucketName = 'catalog-images';
-
-        const { error: uploadError } = await supabase.storage
-            .from(bucketName)
-            .upload(fileName, file, {
-                cacheControl: '3600',
-                upsert: false
-            });
-
-        if (uploadError) {
-            console.error('Error uploading image to storage:', uploadError);
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData?.session?.access_token;
+        if (!token) {
+            console.error('uploadBusinessImage: sin sesión');
             return null;
         }
 
-        const { data } = supabase.storage
-            .from(bucketName)
-            .getPublicUrl(fileName);
+        const form = new FormData();
+        form.append('file', file);
+        form.append('type', type);
 
-        return data.publicUrl;
+        const res = await fetch(`/api/business/${encodeURIComponent(businessProfileId)}/upload-image`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+            body: form,
+        });
+
+        const json = await res.json();
+        if (!res.ok) {
+            console.error('Error uploading image:', json.error || res.status);
+            return null;
+        }
+
+        return json.url as string;
     } catch (e) {
-        console.error("Exception uploading image:", e);
+        console.error('Exception uploading image:', e);
         return null;
     }
 }

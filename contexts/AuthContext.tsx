@@ -13,9 +13,14 @@ import {
   unlinkPushTokenFromSession,
 } from '@/lib/mobile-app-bridge';
 
-async function claimPendingBusinessPages() {
+async function claimPendingBusinessPages(accessToken?: string | null) {
+  if (!accessToken) return;
   try {
-    await fetch('/api/business/claim-pending', { method: 'POST', credentials: 'include' });
+    await fetch('/api/business/claim-pending', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
   } catch {
     // Non-blocking: profile claim retries on next session
   }
@@ -105,7 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Cargar perfil actualizado en background
         loadProfile(sessionUser.id);
-        void claimPendingBusinessPages();
+        void claimPendingBusinessPages(sessionData.access_token);
         if (isBuscadisNativeApp()) {
           void linkPushTokenToSession(sessionUser.id);
         }
@@ -130,7 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(sessionUser);
         cacheSet(CacheKeys.authSession(), sessionUser, CACHE_TTL.AUTH_SESSION);
         loadProfile(sessionUser.id);
-        void claimPendingBusinessPages();
+        void claimPendingBusinessPages(sessionData.access_token);
         if (isBuscadisNativeApp()) {
           void linkPushTokenToSession(sessionUser.id);
         }

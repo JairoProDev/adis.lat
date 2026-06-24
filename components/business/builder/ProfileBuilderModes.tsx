@@ -20,7 +20,6 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import type { BusinessProfile, ProfileBlock, ProfileThemePreset } from '@/types/business';
 import { DEFAULT_PROFILE_BLOCKS, PROFILE_THEME_PRESETS } from '@/lib/business/profile-blocks';
-import TemplateGallery from './TemplateGallery';
 import BlockInspector from './BlockInspector';
 import CustomBlocksEditor from './CustomBlocksEditor';
 import ProfileLayoutStyleEditor from './ProfileLayoutStyleEditor';
@@ -215,12 +214,9 @@ export default function ProfileBuilderModes({
 
       {mode === 'design' && (
         <div className="space-y-4">
-          <TemplateGallery
+          <ProfileLayoutStyleEditor
             profile={profile}
             onUpdate={onUpdate}
-            recommendedTemplateId={recommendedTemplateId}
-            onUndo={handleUndo}
-            canUndo={Boolean(undoSnapshot.current)}
           />
           <div className="pt-2 border-t border-slate-100">
             <p className="text-xs font-bold text-slate-500 uppercase mb-2">Tema curado</p>
@@ -246,8 +242,6 @@ export default function ProfileBuilderModes({
               ))}
             </div>
           </div>
-
-          <ProfileLayoutStyleEditor profile={profile} onUpdate={onUpdate} />
 
           <div className="flex items-start gap-2 rounded-xl bg-blue-50 border border-blue-100 px-3 py-2.5 text-xs text-blue-800">
             <IconEye size={16} className="shrink-0 mt-0.5 text-blue-500" />

@@ -2,16 +2,15 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
-import { IconPlus } from '@/components/Icons';
+import { IconCheck } from '@/components/Icons';
 import { useAuth } from '@/hooks/useAuth';
 import { useUser } from '@/hooks/useUser';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/useToast';
 import { useBusinessCart } from '@/hooks/useBusinessCart';
-import BusinessShareTools from '@/components/business/public/BusinessShareTools';
+import BusinessJsonLd from '@/components/business/public/BusinessJsonLd';
 import QrProfileModal from '@/components/business/qr/QrProfileModal';
 import BusinessCartDrawer from '@/components/business/public/BusinessCartDrawer';
-import BusinessJsonLd from '@/components/business/public/BusinessJsonLd';
 import BlockRendererEngine from '@/components/business/public/BlockRendererEngine';
 import CommerceDock from '@/components/business/public/CommerceDock';
 import { usesWireframeLayout } from '@/lib/profile/adapters/business-adapter';
@@ -51,7 +50,6 @@ export default function BusinessProfileShellV2({
   const [reviewAggregate, setReviewAggregate] = useState<BusinessReviewAggregate | null>(
     reviewAggregateProp ?? null
   );
-  const [showOwnerTools, setShowOwnerTools] = useState(false);
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [engaged, setEngaged] = useState(false);
   const { openAuthModal } = useUI();
@@ -164,14 +162,14 @@ export default function BusinessProfileShellV2({
 
   const showMarketplaceChrome = false;
   const showCommerceDock =
-    (isStorefront || isEditor) &&
+    isStorefront &&
     !isPreviewMode &&
     !usesWireframeLayout(profile ?? {});
   const showWireframeSticky =
-    (isStorefront || isEditor) &&
+    isStorefront &&
     !isPreviewMode &&
     usesWireframeLayout(profile ?? {});
-  const dockBottomPad = showCommerceDock || showWireframeSticky ? 'pb-24' : '';
+  const dockBottomPad = showCommerceDock || (showWireframeSticky && !isEditor) ? 'pb-24' : '';
 
   const templateId = profile?.template_id || 'modern_tabs';
   const template = getTemplateById(templateId);
@@ -296,7 +294,7 @@ export default function BusinessProfileShellV2({
         ctaPlacement={template.ctaPlacement}
       />
 
-      {profile.slug && (
+      {profile.slug && !isEditor && (
         <QrProfileModal
           open={qrModalOpen}
           onClose={() => setQrModalOpen(false)}
@@ -319,48 +317,6 @@ export default function BusinessProfileShellV2({
         />
       )}
 
-      {isEditor && canManageProfile && (
-        <div className="fixed right-4 bottom-28 z-[95] flex flex-col gap-2 print:hidden md:bottom-6">
-          <button
-            type="button"
-            onClick={() => onEditPart?.('add-product')}
-            className="w-12 h-12 bg-[var(--brand-color)] text-white rounded-full shadow-xl flex items-center justify-center active:scale-95 transition-transform"
-            title="Agregar producto"
-          >
-            <IconPlus size={24} />
-          </button>
-        </div>
-      )}
-
-      {isEditor && canManageProfile && (
-        <>
-          <button
-            type="button"
-            onClick={() => setQrModalOpen(true)}
-            className="fixed left-4 bottom-40 z-[95] md:bottom-20 px-3 py-2 rounded-full bg-white border border-slate-200 text-xs font-bold shadow-lg print:hidden"
-          >
-            QR
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowOwnerTools((v) => !v)}
-            className="fixed left-4 bottom-28 z-[95] md:bottom-6 px-3 py-2 rounded-full bg-[var(--bp-surface)] border border-[var(--bp-border)] text-xs font-bold shadow-lg print:hidden"
-          >
-            {showOwnerTools ? 'Cerrar' : 'Herramientas'}
-          </button>
-          {showOwnerTools && (
-            <div className="fixed inset-x-4 bottom-40 z-[95] md:inset-x-auto md:left-4 md:max-w-sm print:hidden">
-              <BusinessShareTools
-                slug={profile.slug || ''}
-                businessName={profile.name || 'Negocio'}
-                onShare={handleShare}
-                isPro={canUseProQr(profile)}
-                themeColor={profile.theme_color}
-              />
-            </div>
-          )}
-        </>
-      )}
 
       <BusinessCartDrawer
         open={cartOpen}

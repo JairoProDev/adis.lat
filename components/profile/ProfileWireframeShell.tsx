@@ -135,7 +135,10 @@ export default function ProfileWireframeShell({
   }, {});
 
   const highlightsBlock = visibleBlocks.find((b) => b.type === 'highlights');
-  const showSticky = isSlotVisible(presentation.layout, 'profile_sticky_cta') && !ctx.hideMobileActionBar;
+  const showSticky =
+    isSlotVisible(presentation.layout, 'profile_sticky_cta') &&
+    !ctx.hideMobileActionBar &&
+    !isEditor;
 
   const chromeMenuItems = useMemo((): ProfileMenuItem[] => {
     const shareUrl =
@@ -200,7 +203,7 @@ export default function ProfileWireframeShell({
           <ProfileChrome
             handle={entity.handle}
             onShare={onShare}
-            onOpenQr={onOpenQr || ctx.onOpenQr}
+            onOpenQr={isEditor ? undefined : onOpenQr || ctx.onOpenQr}
             editAccess={isEditor ? 'denied' : editAccess}
             onEditRequest={onEditRequest}
             menuItems={chromeMenuItems}

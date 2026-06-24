@@ -20,6 +20,8 @@ interface BusinessSwitcherProps {
   onSelect?: (businessId: string, slug?: string) => void;
   className?: string;
   compact?: boolean;
+  /** Oculta enlaces Nuevo / Equipo (p. ej. barra del editor en móvil) */
+  hideActions?: boolean;
 }
 
 export default function BusinessSwitcher({
@@ -28,6 +30,7 @@ export default function BusinessSwitcher({
   onSelect,
   className,
   compact = false,
+  hideActions = false,
 }: BusinessSwitcherProps) {
   const router = useRouter();
 
@@ -83,23 +86,27 @@ export default function BusinessSwitcher({
         </select>
       </div>
 
-      <button
-        type="button"
-        onClick={() => router.push('/mi-negocio?new=1')}
-        className="inline-flex items-center gap-1 text-xs font-bold text-[var(--brand-blue,#2563eb)] hover:underline whitespace-nowrap"
-      >
-        <IconPlus size={12} />
-        Nuevo
-      </button>
+      {!hideActions && (
+        <>
+          <button
+            type="button"
+            onClick={() => router.push('/mi-negocio?new=1')}
+            className="inline-flex items-center gap-1 text-xs font-bold text-[var(--brand-blue,#2563eb)] hover:underline whitespace-nowrap"
+          >
+            <IconPlus size={12} />
+            Nuevo
+          </button>
 
-      {currentBusinessId && (
-        <Link
-          href={`/mi-negocio/equipo?business=${currentBusinessId}`}
-          className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-slate-900 whitespace-nowrap"
-        >
-          <IconComunidad size={12} />
-          Equipo
-        </Link>
+          {currentBusinessId && (
+            <Link
+              href={`/mi-negocio/equipo?business=${currentBusinessId}`}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-slate-900 whitespace-nowrap"
+            >
+              <IconComunidad size={12} />
+              Equipo
+            </Link>
+          )}
+        </>
       )}
     </div>
   );

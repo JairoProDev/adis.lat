@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { BusinessProfile } from '@/types/business';
 import BusinessPublicView from '@/components/business/BusinessPublicView';
 import BusinessProfileEditorLayout, {
-  EditorCloseButton,
-  EditorViewToggle,
+    EditorCloseButton,
 } from '@/components/business/editor/BusinessProfileEditorLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { useUser } from '@/hooks/useUser';
@@ -24,7 +24,7 @@ import { type BusinessWithRole } from '@/lib/business-access';
 import BusinessSwitcher from '@/components/business/BusinessSwitcher';
 import { saveBusinessViaAPI, publishBusinessViaAPI } from '@/lib/business-api';
 import { useDebounce } from '@/hooks/useDebounce';
-import { IconCheck } from '@/components/Icons';
+import { IconCheck, IconEye } from '@/components/Icons';
 
 export default function PublicBusinessPage({
     params,
@@ -242,6 +242,7 @@ export default function PublicBusinessPage({
         else if (part === 'hours') setActiveStep(4);
         else if (part === 'social') setActiveStep(5);
         else if (part === 'marketing') setActiveStep(6);
+        else if (part === 'qr' || part === 'qr_tools') setActiveStep(7);
         else if (part === 'identity') setActiveStep(0);
     }, []);
 
@@ -299,57 +300,71 @@ export default function PublicBusinessPage({
             onCloseEditor={() => setIsEditing(false)}
             onOpenEditor={() => setIsEditing(true)}
             editorTopBar={
-                <div className="sticky top-0 z-[70] bg-white border-b border-slate-200 shadow-sm h-14 flex items-center px-4 gap-3">
-                    <EditorCloseButton onClick={() => setIsEditing(false)} />
-                    <div className="flex flex-col min-w-0 flex-1">
-                        <span className="font-bold text-sm text-slate-800 leading-tight">Editar Página</span>
-                        {isPlatformAdmin && !isOwner && !isMember && (
-                            <span className="text-[10px] font-medium text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded w-fit">
-                                Modo admin — editando perfil ajeno
-                            </span>
-                        )}
-                        <div className="flex items-center gap-1.5">
-                            {saving ? (
-                                <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                                    <div className="w-2 h-2 border border-slate-400 border-t-transparent rounded-full animate-spin" />
-                                    Guardando...
+                <div className="sticky top-0 z-[70] bg-white border-b border-slate-200 shadow-sm">
+                    <div className="min-h-14 flex items-center px-4 gap-3 py-2">
+                        <EditorCloseButton onClick={() => setIsEditing(false)} />
+                        <div className="flex flex-col min-w-0 flex-1 gap-0.5">
+                            <span className="font-bold text-sm text-slate-800 leading-tight">Editar página</span>
+                            {isPlatformAdmin && !isOwner && !isMember && (
+                                <span className="text-[10px] font-medium text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded w-fit">
+                                    Modo admin
                                 </span>
-                            ) : lastSavedTime ? (
-                                <span className="text-[10px] text-green-600 flex items-center gap-1 bg-green-50 px-1.5 rounded-full">
-                                    <IconCheck size={8} />
-                                    Autoguardado
-                                </span>
-                            ) : (
-                                <span className="text-[10px] text-slate-400">Los cambios se guardan solos</span>
                             )}
-                        </div>
-                        {businessOptions.length > 0 && business?.id && (
-                            <div className="mt-1.5">
-                                <BusinessSwitcher
-                                    businesses={businessOptions}
-                                    currentBusinessId={business.id}
-                                    compact
-                                />
+                            <div className="flex items-center gap-1.5 min-h-[14px]">
+                                {saving ? (
+                                    <span className="text-[10px] text-slate-500 flex items-center gap-1">
+                                        <span className="w-2 h-2 border border-slate-400 border-t-transparent rounded-full animate-spin" />
+                                        Guardando…
+                                    </span>
+                                ) : lastSavedTime ? (
+                                    <span className="text-[10px] text-emerald-600 flex items-center gap-1">
+                                        <IconCheck size={10} />
+                                        Guardado
+                                    </span>
+                                ) : null}
                             </div>
-                        )}
-                    </div>
-                    <div className="ml-auto flex items-center gap-2">
-                        <EditorViewToggle
-                            isEditing={isEditing}
-                            onEdit={() => setIsEditing(true)}
-                            onPreview={() => setIsEditing(false)}
-                        />
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setIsEditing(false)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200 transition-colors shrink-0"
+                        >
+                            <IconEye size={14} />
+                            <span className="hidden sm:inline">Ver página</span>
+                        </button>
                         <button
                             onClick={handlePublish}
                             disabled={saving}
                             className={cn(
-                                'px-4 py-1.5 rounded-lg font-bold text-white text-sm flex items-center gap-2 transition-all hover:shadow-md disabled:opacity-50',
+                                'px-3 py-1.5 rounded-lg font-bold text-white text-xs flex items-center gap-1.5 transition-all disabled:opacity-50 shrink-0',
                                 editableProfile.is_published ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-[var(--brand-blue,#53acc5)] hover:brightness-110'
                             )}
                         >
                             {editableProfile.is_published ? '✓ Publicado' : 'Publicar'}
                         </button>
                     </div>
+                    {businessOptions.length > 0 && business?.id && (
+                        <div className="px-4 pb-2 border-t border-slate-100 pt-2 flex flex-wrap items-center gap-2">
+                            <BusinessSwitcher
+                                businesses={businessOptions}
+                                currentBusinessId={business.id}
+                                compact
+                                hideActions
+                            />
+                            <Link
+                                href="/mi-negocio?new=1"
+                                className="text-xs font-bold text-[var(--brand-blue,#53acc5)] hover:underline"
+                            >
+                                + Nuevo negocio
+                            </Link>
+                            <Link
+                                href={`/mi-negocio/equipo?business=${business.id}`}
+                                className="text-xs font-semibold text-slate-600 hover:text-slate-900"
+                            >
+                                Equipo
+                            </Link>
+                        </div>
+                    )}
                 </div>
             }
             sidebar={
@@ -373,9 +388,6 @@ export default function PublicBusinessPage({
                         setShowProductModal(true);
                     }}
                     onRefreshCatalog={() => business?.id && reloadCatalog(business.id)}
-                    onToggleView={() => setIsEditing(false)}
-                    isPublished={!!editableProfile.is_published}
-                    onPublish={handlePublish}
                 />
             }
             preview={

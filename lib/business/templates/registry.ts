@@ -20,6 +20,8 @@ export interface PageTemplate {
   industryPack?: IndustryPack;
   thumbnailGradient: string;
   filters: { style?: string; industry?: string };
+  /** Plantillas legacy ocultas en el editor hasta rehacerlas */
+  deprecated?: boolean;
 }
 
 const baseBlocks = (types: ProfileBlockType[]): ProfileBlock[] =>
@@ -56,6 +58,7 @@ export const PAGE_TEMPLATES: PageTemplate[] = [
     suggestedTheme: 'organic',
     thumbnailGradient: 'from-emerald-500 to-teal-800',
     filters: { style: 'bento' },
+    deprecated: true,
   },
   {
     id: 'minimal_scroll',
@@ -69,6 +72,7 @@ export const PAGE_TEMPLATES: PageTemplate[] = [
     suggestedTheme: 'minimal',
     thumbnailGradient: 'from-neutral-700 to-neutral-900',
     filters: { style: 'minimal' },
+    deprecated: true,
   },
   {
     id: 'vibrant_tabs',
@@ -82,6 +86,7 @@ export const PAGE_TEMPLATES: PageTemplate[] = [
     suggestedTheme: 'cyberpunk',
     thumbnailGradient: 'from-purple-600 to-pink-600',
     filters: { style: 'vibrant' },
+    deprecated: true,
   },
   {
     id: 'pack_ferreteria',
@@ -96,6 +101,7 @@ export const PAGE_TEMPLATES: PageTemplate[] = [
     industryPack: 'ferreteria',
     thumbnailGradient: 'from-orange-600 to-amber-800',
     filters: { industry: 'ferreteria' },
+    deprecated: true,
   },
   {
     id: 'pack_restaurante',
@@ -110,6 +116,7 @@ export const PAGE_TEMPLATES: PageTemplate[] = [
     industryPack: 'restaurante',
     thumbnailGradient: 'from-red-600 to-orange-700',
     filters: { industry: 'restaurante' },
+    deprecated: true,
   },
   {
     id: 'pack_belleza',
@@ -124,6 +131,7 @@ export const PAGE_TEMPLATES: PageTemplate[] = [
     industryPack: 'belleza',
     thumbnailGradient: 'from-pink-500 to-purple-700',
     filters: { industry: 'belleza' },
+    deprecated: true,
   },
   {
     id: 'pack_servicios',
@@ -138,6 +146,7 @@ export const PAGE_TEMPLATES: PageTemplate[] = [
     industryPack: 'servicios',
     thumbnailGradient: 'from-slate-600 to-blue-900',
     filters: { industry: 'servicios' },
+    deprecated: true,
   },
 ];
 
@@ -151,6 +160,7 @@ export function listTemplates(filters?: {
   style?: string;
 }): PageTemplate[] {
   return PAGE_TEMPLATES.filter((t) => {
+    if (t.deprecated) return false;
     if (filters?.paradigm && t.paradigm !== filters.paradigm) return false;
     if (filters?.industry && t.filters.industry !== filters.industry) return false;
     if (filters?.style && t.filters.style !== filters.style) return false;

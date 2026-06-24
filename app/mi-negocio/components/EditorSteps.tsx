@@ -6,33 +6,57 @@ import {
     IconStore, IconPhone, IconClock, IconShare, IconArrowRight, IconCheck,
     IconStar, IconMegaphone, IconEdit, IconMapMarkerAlt, IconEnvelope,
     IconInstagram, IconFacebook, IconTiktok, IconGlobe, IconBox, IconPlus, IconSparkles, IconTrash,
-    IconSearch, IconGrid
+    IconSearch, IconGrid, IconQrcode
 } from '@/components/Icons';
 import { cn } from '@/lib/utils';
 import { Adiso } from '@/types';
-import { EditorHeader } from './EditorHeader';
 import SimpleCatalogAdd from '@/components/business/SimpleCatalogAdd';
 import { ProductEditor } from '@/components/business/ProductEditor';
-import ProfileCompletenessChecklist from '@/components/business/builder/ProfileCompletenessChecklist';
 import ProfileAnalyticsWidget from '@/components/business/editor/ProfileAnalyticsWidget';
 import ProfileBuilderModes from '@/components/business/builder/ProfileBuilderModes';
+import BusinessShareTools from '@/components/business/public/BusinessShareTools';
 import FilterSectionCard from '@/components/filters/FilterSectionCard';
 import { IconArrowLeft } from '@/components/Icons';
-import dynamic from 'next/dynamic';
 import { canUseProQr } from '@/lib/business/subscription';
-
-const QrStudio = dynamic(() => import('@/components/business/qr/QrStudio'), { ssr: false });
 
 // Icons mapping for steps
 const STEPS = [
     { id: 'identity', label: 'Identidad', icon: IconStore },
-    { id: 'brand', label: 'Marca Visual', icon: IconStar },
+    { id: 'brand', label: 'Marca visual', icon: IconStar },
     { id: 'catalog', label: 'Catálogo', icon: IconBox },
     { id: 'contact', label: 'Contacto', icon: IconPhone },
     { id: 'hours', label: 'Horarios', icon: IconClock },
     { id: 'social', label: 'Redes', icon: IconShare },
-    { id: 'marketing', label: 'Marketing', icon: IconMegaphone },
-];
+    { id: 'marketing', label: 'Marketing y SEO', icon: IconMegaphone },
+    { id: 'qr_tools', label: 'QR y herramientas', icon: IconQrcode },
+] as const;
+
+function isStepComplete(
+    stepId: (typeof STEPS)[number]['id'],
+    profile: Partial<BusinessProfile>,
+    productCount: number
+): boolean {
+    switch (stepId) {
+        case 'identity':
+            return Boolean(profile.name?.trim() && profile.slug?.trim() && (profile.description?.length ?? 0) > 20);
+        case 'brand':
+            return Boolean(profile.logo_url && profile.banner_url);
+        case 'catalog':
+            return productCount >= 1;
+        case 'contact':
+            return Boolean(profile.contact_whatsapp?.trim());
+        case 'hours':
+            return Boolean(profile.business_hours && Object.keys(profile.business_hours).length > 0);
+        case 'social':
+            return (profile.social_links?.filter((l) => l.url?.trim()).length ?? 0) > 0;
+        case 'marketing':
+            return Boolean(profile.meta_title?.trim() || profile.announcement_text?.trim());
+        case 'qr_tools':
+            return Boolean(profile.slug);
+        default:
+            return false;
+    }
+}
 
 interface EditorStepsProps {
     profile: Partial<BusinessProfile>;
@@ -46,9 +70,6 @@ interface EditorStepsProps {
     editingProduct?: any;
     setEditingProduct?: (product: any) => void;
     onRefreshCatalog?: () => void;
-    onToggleView?: () => void;
-    isPublished?: boolean;
-    onPublish?: () => void;
 }
 
 export function EditorSteps({
@@ -63,9 +84,6 @@ export function EditorSteps({
     editingProduct,
     setEditingProduct,
     onRefreshCatalog,
-    onToggleView,
-    isPublished,
-    onPublish
 }: EditorStepsProps) {
     const [uploadingImage, setUploadingImage] = useState<string | null>(null);
     const [catalogSearch, setCatalogSearch] = useState('');
@@ -136,7 +154,7 @@ export function EditorSteps({
         const objectUrl = URL.createObjectURL(file);
         setPreviews(prev => ({ ...prev, [type]: objectUrl }));
 
-        const storageFolderId = profile.id || profile.user_id;
+        const storageFolderId = profile.id;
         if (!storageFolderId) {
             console.warn('No business id for image upload.');
             return;
@@ -170,17 +188,8 @@ export function EditorSteps({
         }
     };
 
-    const handleChecklistNavigate = (itemId: string) => {
-        const map: Record<string, number> = {
-            logo: 1,
-            products: 2,
-            whatsapp: 3,
-            hours: 4,
-            description: 0,
-            deal: 6,
-        };
-        if (map[itemId] !== undefined) setActiveStep(map[itemId]);
-    };
+    const stepsCompleteCount = STEPS.filter((s) => isStepComplete(s.id, profile, catalogProducts.length)).length;
+    const stepsScore = Math.round((stepsCompleteCount / STEPS.length) * 100);
 
     const currentStep = STEPS[activeStep];
     const StepIcon = currentStep.icon;
@@ -194,50 +203,23 @@ export function EditorSteps({
 
     return (
         <div className="flex flex-col h-full bg-white relative">
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10 shrink-0">
-                <div className="flex flex-col items-start justify-center gap-0.5">
-                    <h2 className="font-bold text-lg text-slate-800 leading-none">Editar Página</h2>
-                    {/* Auto-save Indicator */}
-                    <div className="flex items-center gap-1.5">
-                        <div className={cn("w-2 h-2 rounded-full", saving ? "bg-amber-400 animate-pulse" : "bg-green-500")} />
-                        <span className="text-[10px] font-medium text-slate-500">
-                            {saving ? 'Guardando...' : 'Autoguardado'}
-                        </span>
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                    {/* View Toggle / Close Button */}
-                    {onToggleView && (
-                        <button
-                            onClick={onToggleView}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 text-white md:bg-slate-100 md:text-slate-600 rounded-lg md:hover:bg-slate-200 transition-colors font-bold text-xs"
-                            title="Cerrar editor y ver página"
-                        >
-                            <span className="hidden sm:inline">Ver Página</span>
-                            <span className="sm:hidden">Ver</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>
-                        </button>
-                    )}
-
-                    {/* Publish Button */}
-                    <button 
-                        onClick={onPublish}
-                        disabled={saving}
-                        className="px-3 py-1.5 bg-green-600 text-white text-xs font-bold rounded-full shadow-sm shadow-green-200 hover:bg-green-700 transition-colors disabled:opacity-50"
-                    >
-                        {isPublished ? 'Publicado' : 'Publicar'}
-                    </button>
-                </div>
-            </div>
-
             <div className="flex-1 overflow-y-auto custom-scrollbar p-0">
-                <div className="p-4 space-y-3 border-b border-slate-100 bg-slate-50/80">
-                    <ProfileCompletenessChecklist
-                        profile={profile}
-                        productCount={catalogProducts.length}
-                        onNavigate={handleChecklistNavigate}
-                    />
+                <div className="p-4 border-b border-slate-100 bg-slate-50/80 space-y-3">
+                    <div className="rounded-xl border border-slate-200 bg-white p-3">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-bold text-slate-600">Progreso del perfil</span>
+                            <span className="text-xs font-black text-[var(--brand-blue,#53acc5)]">{stepsScore}%</span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                            <div
+                                className="h-full rounded-full bg-[var(--brand-blue,#53acc5)] transition-all"
+                                style={{ width: `${stepsScore}%` }}
+                            />
+                        </div>
+                        <p className="text-[10px] text-slate-400 mt-1.5">
+                            {stepsCompleteCount} de {STEPS.length} secciones completas
+                        </p>
+                    </div>
                     <ProfileAnalyticsWidget businessProfileId={profile.id} />
                     <FilterSectionCard
                         sectionId="template-theme"
@@ -261,34 +243,46 @@ export function EditorSteps({
                     {STEPS.map((step, index) => {
                         const isActive = activeStep === index;
                         const StepIcon = step.icon;
+                        const done = isStepComplete(step.id, profile, catalogProducts.length);
 
                         return (
                             <div key={step.id} className="group">
                                 <button
                                     onClick={() => setActiveStep(index)}
                                     className={cn(
-                                        "w-full flex items-center gap-4 p-4 text-left transition-all hover:bg-slate-50",
+                                        "w-full flex items-center gap-3 p-4 text-left transition-all hover:bg-slate-50",
                                         isActive ? "bg-slate-50" : "bg-white"
                                     )}
                                 >
                                     <div className={cn(
-                                        "w-10 h-10 rounded-full flex items-center justify-center transition-colors",
-                                        isActive ? "bg-blue-100 text-blue-600" : "bg-slate-100 text-slate-500 group-hover:bg-white group-hover:shadow-sm"
+                                        "w-9 h-9 rounded-full flex items-center justify-center text-xs font-black shrink-0 border-2",
+                                        done
+                                            ? "bg-emerald-500 border-emerald-500 text-white"
+                                            : isActive
+                                                ? "bg-blue-100 border-blue-200 text-blue-700"
+                                                : "bg-slate-100 border-slate-200 text-slate-500"
                                     )}>
-                                        <StepIcon size={20} />
+                                        {done ? <IconCheck size={14} /> : index + 1}
                                     </div>
-                                    <div className="flex-1">
+                                    <div className={cn(
+                                        "w-9 h-9 rounded-full flex items-center justify-center shrink-0",
+                                        isActive ? "bg-blue-100 text-blue-600" : "bg-slate-100 text-slate-500"
+                                    )}>
+                                        <StepIcon size={18} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
                                         <h3 className={cn("font-bold text-sm", isActive ? "text-blue-700" : "text-slate-800")}>
                                             {step.label}
                                         </h3>
                                         <p className="text-xs text-slate-500 truncate">
-                                            {index === 0 && 'Nombre, Slug, Descripción'}
-                                            {index === 1 && 'Logo, Banner, Colores'}
-                                            {index === 2 && 'Gestionar productos'}
-                                            {index === 3 && 'WhatsApp, Mapa, Email'}
+                                            {index === 0 && 'Nombre, URL y descripción'}
+                                            {index === 1 && 'Logo, portada y colores'}
+                                            {index === 2 && 'Productos y servicios'}
+                                            {index === 3 && 'WhatsApp, mapa y email'}
                                             {index === 4 && 'Horarios de atención'}
-                                            {index === 5 && 'Instagram, Facebook, TikTok'}
-                                            {index === 6 && 'QR, flyer y SEO'}
+                                            {index === 5 && 'Redes y sitio web'}
+                                            {index === 6 && 'Anuncios y SEO'}
+                                            {index === 7 && 'QR, flyer y compartir'}
                                         </p>
                                     </div>
                                     <div className={cn(
@@ -320,7 +314,7 @@ export function EditorSteps({
                                                     <label className="block">
                                                         <span className="text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Nombre de Usuario (URL)</span>
                                                         <div className="flex items-center bg-white border border-slate-200 rounded-xl focus-within:border-blue-500 overflow-hidden">
-                                                            <span className="pl-4 pr-1 text-slate-400 text-sm font-mono">adis.lat/</span>
+                                                            <span className="pl-3 pr-1 text-slate-400 text-xs font-mono shrink-0">buscadis.com/@</span>
                                                             <input
                                                                 type="text"
                                                                 value={profile.slug || ''}
@@ -703,28 +697,35 @@ export function EditorSteps({
                                                     />
                                                 </div>
                                             </div>
-                                            {profile.slug && (
-                                                <QrStudio
+                                            </div>
+                                        )}
+
+                                        {activeStep === 7 && profile.slug && (
+                                            <div className="space-y-5">
+                                                <BusinessShareTools
                                                     slug={profile.slug}
                                                     businessName={profile.name || 'Mi negocio'}
-                                                    themeColor={profile.theme_color}
                                                     isPro={canUseProQr(profile)}
-                                                    onUpgrade={async () => {
-                                                        try {
-                                                            const res = await fetch('/api/business/subscription', {
-                                                                method: 'POST',
-                                                                headers: { 'Content-Type': 'application/json' },
-                                                                credentials: 'include',
-                                                                body: JSON.stringify({ slug: profile.slug }),
-                                                            });
-                                                            const data = await res.json();
-                                                            if (data.initPoint) window.location.href = data.initPoint;
-                                                        } catch {
-                                                            /* */
+                                                    themeColor={profile.theme_color}
+                                                    onShare={async () => {
+                                                        const url = typeof window !== 'undefined'
+                                                            ? window.location.href
+                                                            : '';
+                                                        if (navigator.share) {
+                                                            try {
+                                                                await navigator.share({
+                                                                    title: profile.name || 'Mi negocio',
+                                                                    url,
+                                                                });
+                                                            } catch {
+                                                                /* cancelled */
+                                                            }
+                                                        } else {
+                                                            await navigator.clipboard.writeText(url);
+                                                            alert('Enlace copiado');
                                                         }
                                                     }}
                                                 />
-                                            )}
                                             </div>
                                         )}
 
@@ -735,15 +736,9 @@ export function EditorSteps({
                     })}
                 </div>
 
-                {/* Visual Spacer */}
-                <div className="h-20" />
+                <div className="h-8" />
             </div>
 
-            <div className="p-4 border-t border-slate-100 bg-slate-50 text-center text-xs text-slate-400">
-                <p>Todos los cambios se guardan automáticamente</p>
-            </div>
-
-            {/* ── Modal Confirmar Eliminación ──────────────────────────── */}
             {confirmDeleteProduct && (
                 <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
                     <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300">

@@ -459,91 +459,101 @@ function BusinessBuilderPageContent() {
                 </div>
             )}
             {/* Top Bar */}
-            <div className="sticky top-0 z-50 bg-white border-b shadow-sm h-16" style={{ borderColor: 'var(--border-color)' }}>
-                <div className="max-w-[1920px] mx-auto px-4 h-full flex justify-between items-center">
-                    <div className="flex items-center gap-3">
+            <div className="sticky top-0 z-50 bg-white border-b shadow-sm" style={{ borderColor: 'var(--border-color)' }}>
+                <div className="max-w-[1920px] mx-auto px-4 py-2 flex justify-between items-center gap-3 min-h-14">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
                         <button
                             onClick={() => router.push('/')}
-                            className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                            className="p-2 hover:bg-slate-100 rounded-full transition-colors shrink-0"
                         >
                             <IconX size={20} color="var(--text-secondary)" />
                         </button>
-                        <div className="flex items-center gap-2 flex-wrap">
-                            <div className="flex flex-col items-start gap-0.5 ml-2">
-                                <h1 className="font-bold text-base md:text-lg text-slate-800 leading-tight">Editar Página</h1>
-                                {/* Auto-save Indicator */}
-                                <div className="flex items-center gap-2">
-                                    {saving ? (
-                                        <span className="text-[10px] md:text-xs text-slate-400 flex items-center gap-1 font-medium">
-                                            <div className="w-2.5 h-2.5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
-                                            Guardando...
-                                        </span>
-                                    ) : (
-                                        lastSavedTime && (
-                                            <span className="text-[10px] md:text-xs text-green-600 flex items-center gap-1 font-medium bg-green-50 px-1.5 rounded-full">
-                                                <IconCheck size={10} />
-                                                Autoguardado
-                                            </span>
-                                        )
-                                    )}
-                                </div>
+                        <div className="flex flex-col min-w-0">
+                            <h1 className="font-bold text-sm md:text-base text-slate-800 leading-tight truncate">
+                                Editar página
+                            </h1>
+                            <div className="flex items-center gap-1.5 min-h-[14px]">
+                                {saving ? (
+                                    <span className="text-[10px] text-slate-500 flex items-center gap-1">
+                                        <span className="w-2 h-2 border border-slate-400 border-t-transparent rounded-full animate-spin" />
+                                        Guardando…
+                                    </span>
+                                ) : lastSavedTime ? (
+                                    <span className="text-[10px] text-emerald-600 flex items-center gap-1">
+                                        <IconCheck size={10} />
+                                        Guardado
+                                    </span>
+                                ) : null}
                             </div>
-                            {businessOptions.length > 0 && !forceNew && (
-                                <BusinessSwitcher
-                                    businesses={businessOptions}
-                                    currentBusinessId={profile.id}
-                                    onSelect={(id) => router.push(`${pathname}?business=${id}`)}
-                                    className="ml-2"
-                                />
-                            )}
-                            {forceNew && businessOptions.length > 0 && (
-                                <button
-                                    type="button"
-                                    className="ml-2 text-xs font-semibold text-slate-500 hover:underline"
-                                    onClick={() => {
-                                        const first = businessOptions[0]?.profile;
-                                        if (first?.slug) router.push(`/${first.slug}?edit=true`);
-                                        else if (first?.id) router.push(`${pathname}?business=${first.id}`);
-                                    }}
-                                >
-                                    Cancelar y volver
-                                </button>
-                            )}
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                        {!isFirstTime && (
-                            <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200 shadow-inner">
-                                <button
-                                    onClick={() => setViewMode('preview')}
-                                    className={`px-2 md:px-3 py-1.5 rounded-md text-xs md:text-sm font-bold transition-all flex items-center gap-1.5 ${viewMode === 'preview' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
-                                    title="Ver como usuario"
-                                >
-                                    <IconEye size={14} />
-                                    <span>Ver</span>
-                                </button>
-                                <button
-                                    onClick={() => setViewMode('editor')}
-                                    className={`px-2 md:px-3 py-1.5 rounded-md text-xs md:text-sm font-bold transition-all flex items-center gap-1.5 ${viewMode === 'editor' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
-                                    title="Editar contenido"
-                                >
-                                    <IconEdit size={14} />
-                                    <span>Editar</span>
-                                </button>
-                            </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                        {viewMode === 'editor' ? (
+                            <button
+                                type="button"
+                                onClick={() => setViewMode('preview')}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200 transition-colors"
+                            >
+                                <IconEye size={14} />
+                                <span className="hidden sm:inline">Ver página</span>
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() => setViewMode('editor')}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200 transition-colors"
+                            >
+                                <IconEdit size={14} />
+                                <span className="hidden sm:inline">Editar</span>
+                            </button>
                         )}
 
                         <button
                             onClick={handlePublish}
                             disabled={saving || !profile.id}
-                            className="px-4 md:px-6 py-2 rounded-lg font-bold text-white flex items-center gap-2 hover:shadow-lg transition-all disabled:opacity-50 text-sm"
+                            className="px-3 md:px-4 py-1.5 rounded-lg font-bold text-white flex items-center gap-1.5 hover:shadow-lg transition-all disabled:opacity-50 text-xs"
                             style={{ backgroundColor: profile.is_published ? '#10b981' : 'var(--brand-blue)' }}
                         >
-                            {profile.is_published ? 'Publicado' : 'Publicar'}
+                            {profile.is_published ? '✓ Publicado' : 'Publicar'}
                         </button>
                     </div>
                 </div>
+                {businessOptions.length > 0 && !forceNew && (
+                    <div className="max-w-[1920px] mx-auto px-4 pb-2 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-2">
+                        <BusinessSwitcher
+                            businesses={businessOptions}
+                            currentBusinessId={profile.id}
+                            onSelect={(id) => router.push(`${pathname}?business=${id}`)}
+                            compact
+                            hideActions
+                        />
+                        <Link href="/mi-negocio?new=1" className="text-xs font-bold text-[var(--brand-blue)] hover:underline">
+                            + Nuevo negocio
+                        </Link>
+                        {profile.id && (
+                            <Link
+                                href={`/mi-negocio/equipo?business=${profile.id}`}
+                                className="text-xs font-semibold text-slate-600 hover:text-slate-900"
+                            >
+                                Equipo
+                            </Link>
+                        )}
+                        {forceNew && (
+                            <button
+                                type="button"
+                                className="text-xs font-semibold text-slate-500 hover:underline"
+                                onClick={() => {
+                                    const first = businessOptions[0]?.profile;
+                                    if (first?.slug) router.push(`/${first.slug}?edit=true`);
+                                    else if (first?.id) router.push(`${pathname}?business=${first.id}`);
+                                }}
+                            >
+                                Cancelar y volver
+                            </button>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Main Content Layout */}
@@ -564,9 +574,6 @@ function BusinessBuilderPageContent() {
                             catalogProducts={catalogProducts}
                             onAddProduct={() => setShowAddProductModal(true)}
                             onRefreshCatalog={handleRefreshCatalog}
-                            onToggleView={() => setViewMode('preview')}
-                            isPublished={!!profile.is_published}
-                            onPublish={handlePublish}
                         />
                     </div>
                 </div>
@@ -577,9 +584,9 @@ function BusinessBuilderPageContent() {
                         <div className={`bg-white min-h-full ${viewMode === 'editor' ? 'rounded-xl shadow-xl border border-slate-200 overflow-hidden' : ''}`}>
                             <BusinessPublicView
                                 profile={profile}
-                                isPreview
-                                viewMode="preview"
-                                editMode
+                                isPreview={viewMode === 'preview'}
+                                viewMode={viewMode === 'editor' ? 'editor' : 'preview'}
+                                editMode={viewMode === 'editor'}
                                 onUpdate={handleChatbotUpdate}
                                 onEditPart={handleEditPart}
                                 onEditProduct={handleEditProduct}

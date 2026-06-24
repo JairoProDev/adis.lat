@@ -58,7 +58,7 @@ export default function ProfileChrome({
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
-          {onEditRequest && (
+          {onEditRequest && editAccess !== 'denied' && (
             <button
               type="button"
               onClick={onEditRequest}
