@@ -289,11 +289,17 @@ export async function getQrScanStats(
     deviceMap.set(dev, (deviceMap.get(dev) || 0) + 1);
   }
 
+  const byDay: { date: string; count: number }[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const date = d.toISOString().slice(0, 10);
+    byDay.push({ date, count: dayMap.get(date) || 0 });
+  }
+
   return {
     total: rows.length,
-    byDay: [...dayMap.entries()]
-      .map(([date, count]) => ({ date, count }))
-      .sort((a, b) => a.date.localeCompare(b.date)),
+    byDay,
     byDevice: [...deviceMap.entries()].map(([device, count]) => ({ device, count })),
   };
 }

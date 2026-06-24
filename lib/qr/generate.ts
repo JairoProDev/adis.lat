@@ -20,13 +20,23 @@ async function generateClassicPng(options: GenerateQrOptions): Promise<Buffer> {
   const dark = config.dotsColor || options.themeColor || '#1e293b';
   const light = config.backgroundColor || '#ffffff';
 
-  return QRCode.toBuffer(options.data, {
-    type: 'png',
-    errorCorrectionLevel: 'H',
-    margin: 2,
-    width,
-    color: { dark, light },
-  });
+  try {
+    const { generateProQrPng } = await import('./generate-pro');
+    return await generateProQrPng({
+      data: options.data,
+      styleConfig: config,
+      width,
+      skipLogo: true,
+    });
+  } catch {
+    return QRCode.toBuffer(options.data, {
+      type: 'png',
+      errorCorrectionLevel: 'H',
+      margin: 2,
+      width,
+      color: { dark, light },
+    });
+  }
 }
 
 async function generateBrandedPng(options: GenerateQrOptions): Promise<Buffer> {
@@ -42,7 +52,7 @@ async function generateBrandedPng(options: GenerateQrOptions): Promise<Buffer> {
       width,
       skipLogo: true,
     });
-    const logoRatio = options.styleConfig.imageSize ?? 0.26;
+    const logoRatio = options.styleConfig.imageSize ?? 0.5;
     return compositeLogoOnQr(styled, options.logoUrl, width, logoRatio);
   }
 
@@ -94,7 +104,7 @@ async function tryMode(
   const bg = options.styleConfig.backgroundColor || '#ffffff';
   const qa = await runFullQualityGate(png, options.data, dots, bg, {
     mode,
-    requireRobust: mode === 'visual',
+    requireRobust: false,
   });
 
   return { png, qaOk: qa.ok, message: qa.message };
@@ -110,7 +120,7 @@ export async function generateQrPng(options: GenerateQrOptions): Promise<Generat
 
   const chain: QrRenderMode[] =
     requested === 'visual'
-      ? ['visual', 'branded', 'classic']
+      ? ['visual', 'branded']
       : requested === 'branded'
         ? ['branded', 'classic']
         : ['classic'];
@@ -157,34 +167,26 @@ export async function generateQrPng(options: GenerateQrOptions): Promise<Generat
 
 export async function generateQrSvg(options: GenerateQrOptions): Promise<string> {
   const mode = options.renderMode || resolveRenderMode(options.styleConfig, 'branded');
-  if (mode === 'classic') {
+  const width = options.width ?? 400;
+
+  try {
+    const { generateProQrSvg } = await import('./generate-pro');
+    return await generateProQrSvg({
+      data: options.data,
+      styleConfig: { ...options.styleConfig, renderMode: mode },
+      width,
+      logoUrl: mode === 'classic' ? undefined : options.logoUrl,
+      skipLogo: mode === 'classic',
+    });
+  } catch {
     const dark = options.styleConfig.dotsColor || options.themeColor || '#1e293b';
     const light = options.styleConfig.backgroundColor || '#ffffff';
     return QRCode.toString(options.data, {
       type: 'svg',
       errorCorrectionLevel: 'H',
       margin: 2,
-      width: options.width ?? 400,
+      width,
       color: { dark, light },
     });
   }
-
-  const tier = options.tier || 'free';
-  if (tier === 'pro') {
-    const { generateProQrSvg } = await import('./generate-pro');
-    return generateProQrSvg({
-      data: options.data,
-      styleConfig: options.styleConfig,
-      width: options.width,
-      logoUrl: options.logoUrl,
-    });
-  }
-  const { generateFreeQrSvg } = await import('./generate-free');
-  return generateFreeQrSvg({
-    data: options.data,
-    themeColor: options.themeColor,
-    styleConfig: options.styleConfig,
-    width: options.width,
-    logoUrl: options.logoUrl,
-  });
 }

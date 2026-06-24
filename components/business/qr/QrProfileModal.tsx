@@ -143,16 +143,21 @@ export default function QrProfileModal({
       />
       <div className="relative w-full sm:max-w-lg max-h-[92vh] overflow-y-auto bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl animate-in slide-in-from-bottom-4 duration-300">
         <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-white/95 backdrop-blur-sm rounded-t-3xl sm:rounded-t-3xl">
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
               <IconQrcode size={18} />
             </div>
-            <div>
-              <h2 id="qr-modal-title" className="font-bold text-slate-900 text-sm">
+            <div className="min-w-0">
+              <h2 id="qr-modal-title" className="font-bold text-slate-900 text-sm truncate">
                 {isOwner ? 'Tu código QR' : 'Código QR'}
               </h2>
-              <p className="text-[11px] text-slate-500">{businessName}</p>
+              <p className="text-[11px] text-slate-500 truncate">{businessName}</p>
             </div>
+            {isOwner && isPro && (
+              <span className="text-[9px] font-bold uppercase bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full shrink-0">
+                Pro
+              </span>
+            )}
           </div>
           <button
             type="button"
@@ -164,7 +169,7 @@ export default function QrProfileModal({
           </button>
         </div>
 
-        <div className="p-5">
+        <div className={isOwner ? 'px-5 pb-5 pt-2' : 'p-5'}>
           {isOwner ? (
             <QrStudio
               slug={slug}

@@ -1,13 +1,14 @@
 'use client';
 
 import { IconDownload } from '@/components/Icons';
-import type { QrRenderMode } from '@/lib/qr/types';
+import { buildDownloadQuery } from '@/lib/qr/preview-params';
+import type { QrStyleConfig } from '@/lib/qr/types';
 
 interface QrDownloadMenuProps {
   slug: string;
   isPro: boolean;
   shortUrl?: string;
-  renderMode?: QrRenderMode;
+  styleConfig: QrStyleConfig;
 }
 
 type DownloadItem = {
@@ -137,31 +138,32 @@ function DownloadCard({ item }: { item: DownloadItem }) {
   );
 }
 
-export default function QrDownloadMenu({ slug, isPro, shortUrl, renderMode }: QrDownloadMenuProps) {
+export default function QrDownloadMenu({ slug, isPro, shortUrl, styleConfig }: QrDownloadMenuProps) {
   const encoded = encodeURIComponent(slug);
   const base = `/api/business/${encoded}`;
-  const modeQ = renderMode ? `&mode=${renderMode}` : '';
+
+  const qrQuery = (extra?: Record<string, string>) => buildDownloadQuery(styleConfig, extra);
 
   const qrFiles: DownloadItem[] = [
     {
       id: 'png',
       label: 'PNG digital',
       desc: '512 px · pantallas, web y WhatsApp',
-      href: `${base}/qr?format=png${modeQ}`,
+      href: `${base}/qr?format=png&${qrQuery()}`,
       wire: 'square',
     },
     {
       id: 'png-print',
       label: 'PNG impresión',
       desc: '1024 px · flyers y carteles pequeños',
-      href: `${base}/qr?format=png&width=1024${modeQ}`,
+      href: `${base}/qr?format=png&width=1024&${qrQuery()}`,
       wire: 'print',
     },
     {
       id: 'png-pack',
       label: 'Packaging alta res',
       desc: '2048 px · empaques e imprenta digital',
-      href: `${base}/qr?format=png&width=2048&tier=pro${modeQ}`,
+      href: `${base}/qr?format=png&width=2048&tier=pro&${qrQuery()}`,
       wire: 'packaging',
       pro: true,
     },
@@ -169,14 +171,14 @@ export default function QrDownloadMenu({ slug, isPro, shortUrl, renderMode }: Qr
       id: 'svg',
       label: 'SVG vectorial',
       desc: 'Escala sin pérdida · diseñadores',
-      href: `${base}/qr?format=svg${modeQ}`,
+      href: `${base}/qr?format=svg&${qrQuery()}`,
       wire: 'vector',
     },
     {
       id: 'pdf',
       label: 'Guía PDF',
       desc: 'Hoja A4 con QR + instrucciones de impresión',
-      href: `${base}/qr?format=pdf&tier=pro${modeQ}`,
+      href: `${base}/qr?format=pdf&tier=pro&${qrQuery()}`,
       wire: 'pdf',
       pro: true,
     },

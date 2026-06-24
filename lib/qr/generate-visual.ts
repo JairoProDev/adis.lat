@@ -49,7 +49,7 @@ export async function generateVisualQrPng(options: GenerateVisualQrOptions): Pro
     const logoBuf = await fetchLogoPngBuffer(options.logoUrl, Math.round(width * 0.5));
     if (logoBuf) {
       const logoImg = await loadImage(logoBuf);
-      drawLogoUnderlay(ctx, logoImg, width, intensity, options.styleConfig.imageSize ?? 0.32);
+      drawLogoUnderlay(ctx, logoImg, width, intensity, options.styleConfig.imageSize ?? 0.5);
     }
   }
 
@@ -61,7 +61,8 @@ export async function generateVisualQrPng(options: GenerateVisualQrOptions): Pro
     offsetModules,
     dotsColor,
     intensity,
-    dotScale
+    dotScale,
+    options.styleConfig.dotType || 'rounded'
   );
 
   drawTimingPatterns(ctx, matrix, modulePx, offsetModules, dotsColor);

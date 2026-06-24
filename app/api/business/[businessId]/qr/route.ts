@@ -5,7 +5,7 @@ import { ensureQrCodeForBusiness, getQrByBusinessId } from '@/lib/qr/service';
 import { generateQrPng, generateQrSvg } from '@/lib/qr/generate';
 import { canUseProQr } from '@/lib/business/subscription';
 import { buildFreeStyleConfig, resolveRenderMode } from '@/lib/qr/presets';
-import { applyPreviewStyleOverrides } from '@/lib/qr/preview-params';
+import { applyStyleQueryOverrides } from '@/lib/qr/preview-params';
 import {
   computeQrAssetHash,
   downloadCachedQrPng,
@@ -52,7 +52,6 @@ export async function GET(
     const tierParam = req.nextUrl.searchParams.get('tier');
     const wantsPro = tierParam === 'pro' || qr.style_tier === 'pro';
     const usePro = wantsPro && canUseProQr(profile);
-    const modeParam = req.nextUrl.searchParams.get('mode') as QrRenderMode | null;
     const widthParam = Number.parseInt(req.nextUrl.searchParams.get('width') || '', 10);
     const maxWidth = usePro ? 2048 : 1024;
     const defaultWidth = format === 'pdf' ? 1024 : format === 'svg' ? 400 : 512;
@@ -63,7 +62,7 @@ export async function GET(
 
     const isPreview = req.nextUrl.searchParams.get('preview') === '1';
 
-    const styleConfig = applyPreviewStyleOverrides(
+    const styleConfig = applyStyleQueryOverrides(
       {
         ...buildFreeStyleConfig(profile.theme_color),
         ...(qr.style_config || {}),
@@ -72,10 +71,7 @@ export async function GET(
       req.nextUrl.searchParams
     );
 
-    const renderMode =
-      modeParam && ['classic', 'branded', 'visual'].includes(modeParam)
-        ? modeParam
-        : resolveRenderMode(styleConfig, qr.render_mode || 'branded');
+    const renderMode = resolveRenderMode(styleConfig, qr.render_mode || 'branded');
 
     if (format === 'svg') {
       const svg = await generateQrSvg({

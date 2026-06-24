@@ -68,7 +68,7 @@ async function buildStylingOptions(
     base.image = image;
     base.imageOptions = {
       hideBackgroundDots: styleConfig.hideBackgroundDots ?? true,
-      imageSize: styleConfig.imageSize ?? 0.35,
+      imageSize: styleConfig.imageSize ?? 0.5,
       margin: 4,
       crossOrigin: 'anonymous',
       saveAsBlob: true,

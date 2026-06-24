@@ -10,13 +10,15 @@ export async function compositeLogoOnQr(
   qrPng: Buffer,
   logoUrl: string,
   width: number,
-  logoRatio = 0.26
+  logoRatio = 0.5
 ): Promise<Buffer> {
-  const dataUrl = await fetchLogoDataUrl(logoUrl, Math.round(width * 0.5));
+  if (logoRatio <= 0) return qrPng;
+
+  const dataUrl = await fetchLogoDataUrl(logoUrl, Math.round(width * 0.6));
   if (!dataUrl) return qrPng;
 
   const logoBuf = Buffer.from(dataUrl.split(',')[1]!, 'base64');
-  const maxLogo = Math.round(width * Math.min(0.38, Math.max(0.14, logoRatio)));
+  const maxLogo = Math.round(width * Math.min(0.55, Math.max(0, logoRatio)));
 
   const logo = await sharp(logoBuf)
     .resize(maxLogo, maxLogo, {

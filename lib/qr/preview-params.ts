@@ -1,12 +1,6 @@
 import type { QrRenderMode, QrStyleConfig } from './types';
 
-export function applyPreviewStyleOverrides(
-  base: QrStyleConfig,
-  params: URLSearchParams
-): QrStyleConfig {
-  if (params.get('preview') !== '1') return base;
-
-  const next: QrStyleConfig = { ...base };
+function readStyleParams(params: URLSearchParams, next: QrStyleConfig): void {
   const mode = params.get('mode');
   if (mode && ['classic', 'branded', 'visual'].includes(mode)) {
     next.renderMode = mode as QrRenderMode;
@@ -36,7 +30,50 @@ export function applyPreviewStyleOverrides(
     const n = Number(img);
     if (Number.isFinite(n)) next.imageSize = n;
   }
+}
+
+/** Aplica overrides de query cuando hay parámetros de estilo (preview o descarga). */
+export function applyStyleQueryOverrides(
+  base: QrStyleConfig,
+  params: URLSearchParams
+): QrStyleConfig {
+  const hasStyle =
+    params.get('preview') === '1' ||
+    params.has('mode') ||
+    params.has('dots') ||
+    params.has('bg') ||
+    params.has('dotType') ||
+    params.has('hi') ||
+    params.has('ds') ||
+    params.has('cornerSquare') ||
+    params.has('cornerDot') ||
+    params.has('img');
+
+  if (!hasStyle) return base;
+
+  const next: QrStyleConfig = { ...base };
+  readStyleParams(params, next);
   return next;
+}
+
+/** @deprecated use applyStyleQueryOverrides */
+export function applyPreviewStyleOverrides(
+  base: QrStyleConfig,
+  params: URLSearchParams
+): QrStyleConfig {
+  return applyStyleQueryOverrides(base, params);
+}
+
+function appendStyleParams(p: URLSearchParams, styleConfig: QrStyleConfig): void {
+  p.set('mode', styleConfig.renderMode || 'branded');
+  p.set('dots', styleConfig.dotsColor || '#1e293b');
+  p.set('bg', styleConfig.backgroundColor || '#ffffff');
+  if (styleConfig.dotType) p.set('dotType', styleConfig.dotType);
+  if (styleConfig.halftoneIntensity != null) p.set('hi', String(styleConfig.halftoneIntensity));
+  if (styleConfig.dotScale != null) p.set('ds', String(styleConfig.dotScale));
+  if (styleConfig.cornerSquareType) p.set('cornerSquare', styleConfig.cornerSquareType);
+  if (styleConfig.cornerDotType) p.set('cornerDot', styleConfig.cornerDotType);
+  if (styleConfig.imageSize != null) p.set('img', String(styleConfig.imageSize));
 }
 
 export function buildPreviewQuery(styleConfig: QrStyleConfig): string {
@@ -44,16 +81,15 @@ export function buildPreviewQuery(styleConfig: QrStyleConfig): string {
     format: 'png',
     preview: '1',
     refresh: '1',
-    mode: styleConfig.renderMode || 'branded',
-    dots: styleConfig.dotsColor || '#1e293b',
-    bg: styleConfig.backgroundColor || '#ffffff',
   });
-  if (styleConfig.dotType) p.set('dotType', styleConfig.dotType);
-  if (styleConfig.halftoneIntensity != null) p.set('hi', String(styleConfig.halftoneIntensity));
-  if (styleConfig.dotScale != null) p.set('ds', String(styleConfig.dotScale));
-  if (styleConfig.cornerSquareType) p.set('cornerSquare', styleConfig.cornerSquareType);
-  if (styleConfig.cornerDotType) p.set('cornerDot', styleConfig.cornerDotType);
-  if (styleConfig.imageSize != null) p.set('img', String(styleConfig.imageSize));
+  appendStyleParams(p, styleConfig);
+  return p.toString();
+}
+
+/** Query para descargas — mismos estilos que la vista previa, sin caché obsoleta. */
+export function buildDownloadQuery(styleConfig: QrStyleConfig, extra?: Record<string, string>): string {
+  const p = new URLSearchParams({ refresh: '1', ...extra });
+  appendStyleParams(p, styleConfig);
   return p.toString();
 }
 

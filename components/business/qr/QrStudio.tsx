@@ -5,7 +5,8 @@ import dynamic from 'next/dynamic';
 import { IconQrcode, IconSparkles } from '@/components/Icons';
 import { cn } from '@/lib/utils';
 import { QR_PRESETS } from '@/lib/qr/presets';
-import type { QrRenderMode, QrStyleConfig } from '@/lib/qr/types';
+import { harmoniousCorners } from '@/lib/qr/dot-harmony';
+import type { QrDotType, QrRenderMode, QrStyleConfig } from '@/lib/qr/types';
 import { PRO_QR_FEATURES, PRO_QR_MONTHLY_PRICE_PEN } from '@/lib/business/subscription';
 import QrDownloadMenu from './QrDownloadMenu';
 import QrAnalyticsPanel from './QrAnalyticsPanel';
@@ -36,7 +37,7 @@ const QR_STYLES: {
 }[] = [
   {
     id: 'classic',
-    name: 'Cuadrado',
+    name: 'Básico',
     preview: (
       <svg viewBox="0 0 40 40" className="w-11 h-11" aria-hidden>
         <rect width="40" height="40" rx="6" fill="#f1f5f9" />
@@ -101,7 +102,8 @@ export default function QrStudio({
     dotsColor: themeColor,
     backgroundColor: '#ffffff',
     dotType: 'rounded',
-    halftoneIntensity: 0.75,
+    imageSize: 0.5,
+    halftoneIntensity: 0.8,
     dotScale: 0.35,
     buscadisFinderMark: true,
   });
@@ -200,28 +202,32 @@ export default function QrStudio({
   return (
     <div
       className={cn(
-        'rounded-3xl border border-slate-100 bg-gradient-to-br from-white to-slate-50 overflow-hidden',
-        compact ? 'shadow-sm' : 'shadow-lg'
+        'overflow-hidden',
+        compact
+          ? ''
+          : 'rounded-3xl border border-slate-100 bg-gradient-to-br from-white to-slate-50 shadow-lg'
       )}
     >
-      <div className="p-5 border-b border-slate-100 bg-white/80">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
-            <IconQrcode size={20} />
+      {!compact && (
+        <div className="p-5 border-b border-slate-100 bg-white/80">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+              <IconQrcode size={20} />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-900">Tu código QR</h3>
+              <p className="text-xs text-slate-500">{businessName}</p>
+            </div>
+            {isPro && (
+              <span className="ml-auto text-[10px] font-bold uppercase bg-amber-100 text-amber-800 px-2 py-1 rounded-full">
+                Pro
+              </span>
+            )}
           </div>
-          <div>
-            <h3 className="font-bold text-slate-900">Tu código QR</h3>
-            <p className="text-xs text-slate-500">{businessName}</p>
-          </div>
-          {isPro && (
-            <span className="ml-auto text-[10px] font-bold uppercase bg-amber-100 text-amber-800 px-2 py-1 rounded-full">
-              Pro
-            </span>
-          )}
         </div>
-      </div>
+      )}
 
-      <div className={cn('grid gap-5 p-5', compact ? 'grid-cols-1' : 'lg:grid-cols-2')}>
+      <div className={cn('grid gap-5', compact ? 'grid-cols-1' : 'p-5 lg:grid-cols-2')}>
         <div className="flex flex-col items-center gap-2">
           <QrPreviewLazy
             slug={slug}
@@ -318,26 +324,34 @@ export default function QrStudio({
                 Forma de los puntos
                 <select
                   value={styleConfig.dotType || 'rounded'}
-                  onChange={(e) =>
-                    patchStyle({ dotType: e.target.value as QrStyleConfig['dotType'] })
-                  }
+                  onChange={(e) => {
+                    const dotType = e.target.value as QrDotType;
+                    const harmony = harmoniousCorners(dotType);
+                    patchStyle({
+                      dotType,
+                      cornerSquareType: harmony.cornerSquareType,
+                      cornerDotType: harmony.cornerDotType,
+                    });
+                  }}
                   className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white"
                 >
                   <option value="square">Cuadrados</option>
-                  <option value="dots">Redondos</option>
+                  <option value="dots">Puntos finos</option>
                   <option value="rounded">Suaves</option>
-                  <option value="classy-rounded">Elegantes</option>
+                  <option value="extra-rounded">Muy redondeados</option>
+                  <option value="classy">Clásicos</option>
+                  <option value="classy-rounded">Clásicos suaves</option>
                 </select>
               </label>
 
               {(renderMode === 'branded' || renderMode === 'visual') && logoOk && (
                 <label className="block text-xs font-bold text-slate-600">
-                  Tamaño del logo ({Math.round((styleConfig.imageSize ?? 0.26) * 100)}%)
+                  Tamaño del logo ({Math.round((styleConfig.imageSize ?? 0.5) * 100)}%)
                   <input
                     type="range"
-                    min={15}
-                    max={35}
-                    value={Math.round((styleConfig.imageSize ?? 0.26) * 100)}
+                    min={0}
+                    max={100}
+                    value={Math.round((styleConfig.imageSize ?? 0.5) * 100)}
                     onChange={(e) =>
                       patchStyle({ imageSize: Number(e.target.value) / 100 })
                     }
@@ -346,7 +360,7 @@ export default function QrStudio({
                 </label>
               )}
 
-              {renderMode === 'branded' && (
+              {(renderMode === 'classic' || renderMode === 'branded') && (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <p className="text-xs font-bold text-slate-600 mb-1.5">Marco de esquinas</p>
@@ -470,7 +484,20 @@ export default function QrStudio({
           )}
 
           {tab === 'download' && (
-            <QrDownloadMenu slug={slug} isPro={isPro} shortUrl={shortUrl} renderMode={renderMode} />
+            <>
+              {dirty && (
+                <p className="text-[11px] text-amber-700 rounded-lg bg-amber-50 border border-amber-100 px-3 py-2">
+                  Los kits de impresión usan el estilo guardado. Pulsa Guardar en Diseño para
+                  actualizarlos.
+                </p>
+              )}
+              <QrDownloadMenu
+                slug={slug}
+                isPro={isPro}
+                shortUrl={shortUrl}
+                styleConfig={styleConfig}
+              />
+            </>
           )}
 
           {tab === 'stats' && <QrAnalyticsPanel slug={slug} isPro={isPro} />}

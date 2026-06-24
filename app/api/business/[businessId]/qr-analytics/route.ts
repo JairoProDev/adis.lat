@@ -19,7 +19,11 @@ export async function GET(
   if (!profile) return NextResponse.json({ error: 'No encontrado' }, { status: 404 });
 
   const role = await getBusinessMemberRole(user.id, profile.id);
-  if (profile.user_id !== user.id && !role) {
+  const isOwner = profile.user_id === user.id;
+  const canView =
+    isOwner ||
+    (role && ['owner', 'admin', 'editor', 'viewer'].includes(role));
+  if (!canView) {
     return NextResponse.json({ error: 'Sin permiso' }, { status: 403 });
   }
 

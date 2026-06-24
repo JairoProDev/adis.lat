@@ -23,7 +23,7 @@ interface QrPreviewProps {
 const MODE_LABELS: Record<QrRenderMode, string> = {
   visual: 'Logo integrado',
   branded: 'Con logo',
-  classic: 'Cuadrado',
+  classic: 'Básico',
 };
 
 export default function QrPreview({
