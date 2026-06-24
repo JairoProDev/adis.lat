@@ -14,7 +14,7 @@ import BusinessCartDrawer from '@/components/business/public/BusinessCartDrawer'
 import BusinessJsonLd from '@/components/business/public/BusinessJsonLd';
 import BlockRendererEngine from '@/components/business/public/BlockRendererEngine';
 import CommerceDock from '@/components/business/public/CommerceDock';
-import StorefrontChrome from '@/components/business/public/StorefrontChrome';
+import { usesWireframeLayout } from '@/lib/profile/adapters/business-adapter';
 import BuscadisDiscovery from '@/components/business/public/BuscadisDiscovery';
 import { businessThemeStyle, businessThemeClassName } from '@/lib/business/public-utils';
 import { normalizeProfileBlocks } from '@/lib/business/blocks/normalize';
@@ -138,8 +138,15 @@ export default function BusinessProfileShellV2({
   );
   const showEditControls = Boolean(canManageProfile && isEditor);
   const showMarketplaceChrome = false;
-  const showCommerceDock = (isStorefront || isEditor) && !isPreviewMode;
-  const dockBottomPad = showCommerceDock ? 'pb-24' : '';
+  const showCommerceDock =
+    (isStorefront || isEditor) &&
+    !isPreviewMode &&
+    !usesWireframeLayout(profile ?? {});
+  const showWireframeSticky =
+    (isStorefront || isEditor) &&
+    !isPreviewMode &&
+    usesWireframeLayout(profile ?? {});
+  const dockBottomPad = showCommerceDock || showWireframeSticky ? 'pb-24' : '';
 
   const templateId = profile?.template_id || 'modern_tabs';
   const template = getTemplateById(templateId);
@@ -245,8 +252,6 @@ export default function BusinessProfileShellV2({
         <BusinessJsonLd profile={profile} products={adisos.slice(0, 5)} aggregate={reviewAggregate} />
       )}
 
-      {isStorefront && <StorefrontChrome businessName={profile.name} />}
-
       <BlockRendererEngine
         ctx={blockCtx}
         isOwner={isOwner}
@@ -260,6 +265,7 @@ export default function BusinessProfileShellV2({
         onEditPart={onEditPart}
         onOpenEditor={onOpenEditor}
         onOpenQr={() => setQrModalOpen(true)}
+        onWhatsappClick={handleWhatsappClick}
         ctaPlacement={template.ctaPlacement}
       />
 

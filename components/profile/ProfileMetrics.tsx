@@ -1,0 +1,72 @@
+'use client';
+
+import type { ProfileMetricValue } from '@buscadis/profile-engine';
+import {
+  IconEye,
+  IconHeart,
+  IconShoppingCart,
+  IconStar,
+  IconStore,
+  IconUsers,
+} from '@/components/Icons';
+import { cn } from '@/lib/utils';
+
+function formatMetric(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1).replace(/\.0$/, '')}k`;
+  return String(n);
+}
+
+function MetricIcon({ metricKey }: { metricKey: string }) {
+  const size = 18;
+  switch (metricKey) {
+    case 'interactions':
+    case 'views':
+      return <IconEye size={size} />;
+    case 'sales':
+      return <IconShoppingCart size={size} />;
+    case 'clients':
+    case 'followers':
+      return <IconUsers size={size} />;
+    case 'reviews':
+      return <IconStar size={size} />;
+    case 'products':
+    case 'content_count':
+      return <IconStore size={size} />;
+    default:
+      return <IconHeart size={size} />;
+  }
+}
+
+interface ProfileMetricsProps {
+  metrics: ProfileMetricValue[];
+  className?: string;
+}
+
+export default function ProfileMetrics({ metrics, className }: ProfileMetricsProps) {
+  if (!metrics.length) return null;
+  const shown = metrics.slice(0, 3);
+
+  return (
+    <div
+      className={cn(
+        'flex items-center gap-4 sm:gap-6 flex-1 min-w-0 pb-1',
+        className
+      )}
+    >
+      {shown.map((m) => (
+        <div key={m.key} className="flex flex-col items-center min-w-[4.5rem]">
+          <div className="flex items-center gap-1 text-[var(--text-primary)] font-bold text-sm sm:text-base">
+            <span className="text-[var(--brand-color)]">
+              <MetricIcon metricKey={m.key} />
+            </span>
+            <span>{formatMetric(m.value)}</span>
+          </div>
+          <span className="text-[10px] sm:text-xs text-[var(--text-tertiary)] font-medium mt-0.5 text-center">
+            {m.label}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}

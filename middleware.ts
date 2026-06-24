@@ -5,13 +5,32 @@ const LEGACY_QR_HOSTS = new Set(['market.adis.lat', 'www.adis.lat', 'adis.lat'])
 
 export function middleware(req: NextRequest) {
   const host = req.headers.get('host')?.split(':')[0] ?? '';
-  if (!LEGACY_QR_HOSTS.has(host)) return NextResponse.next();
-
-  const canonical = 'https://www.buscadis.com';
   const { pathname, search } = req.nextUrl;
-  return NextResponse.redirect(`${canonical}${pathname}${search}`, 308);
+
+  if (LEGACY_QR_HOSTS.has(host)) {
+    const canonical = 'https://www.buscadis.com';
+    return NextResponse.redirect(`${canonical}${pathname}${search}`, 308);
+  }
+
+  // Canonical @username URLs
+  const atMatch = pathname.match(/^\/@([^/]+)\/?$/);
+  if (atMatch) {
+    const slug = atMatch[1];
+    const url = req.nextUrl.clone();
+    url.pathname = `/negocio/${slug}`;
+    return NextResponse.rewrite(url);
+  }
+
+  // Legacy /p/slug → /@slug
+  const pMatch = pathname.match(/^\/p\/([^/]+)\/?$/);
+  if (pMatch) {
+    const slug = pMatch[1];
+    return NextResponse.redirect(new URL(`/@${slug}${search}`, req.url), 308);
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/q/:path*', '/p/:path*', '/api/business/:path*'],
+  matcher: ['/q/:path*', '/p/:path*', '/@:path*', '/api/business/:path*'],
 };

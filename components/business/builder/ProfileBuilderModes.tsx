@@ -23,6 +23,7 @@ import { DEFAULT_PROFILE_BLOCKS, PROFILE_THEME_PRESETS } from '@/lib/business/pr
 import TemplateGallery from './TemplateGallery';
 import BlockInspector from './BlockInspector';
 import CustomBlocksEditor from './CustomBlocksEditor';
+import ProfileLayoutStyleEditor from './ProfileLayoutStyleEditor';
 import UnifiedAssistant from '@/components/business/editor/UnifiedAssistant';
 import { cn } from '@/lib/utils';
 import { trackBlockReordered, trackThemeChanged, trackBuilderModeChanged } from '@/lib/business/profile-analytics';
@@ -245,6 +246,8 @@ export default function ProfileBuilderModes({
               ))}
             </div>
           </div>
+
+          <ProfileLayoutStyleEditor profile={profile} onUpdate={onUpdate} />
 
           <div className="flex items-start gap-2 rounded-xl bg-blue-50 border border-blue-100 px-3 py-2.5 text-xs text-blue-800">
             <IconEye size={16} className="shrink-0 mt-0.5 text-blue-500" />

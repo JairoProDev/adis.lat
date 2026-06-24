@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import type { BusinessProfile } from '@/types/business';
 import { profileIsOrphan } from '@/lib/business/social-display';
 import { IconEdit, IconMegaphone } from '@/components/Icons';
+import { getBusinessProfilePath } from '@/lib/seo/business-metadata';
 import { cn } from '@/lib/utils';
 
 interface BusinessOwnerBannerProps {
@@ -64,7 +65,7 @@ export default function BusinessOwnerBanner({
 
   if (!orphan) return null;
 
-  const loginHref = `/login?returnTo=${encodeURIComponent(`/p/${slug}`)}`;
+  const loginHref = `/login?returnTo=${encodeURIComponent(getBusinessProfilePath(slug))}`;
 
   const handleClaim = async () => {
     if (!slug || claiming) return;

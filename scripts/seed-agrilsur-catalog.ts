@@ -304,7 +304,7 @@ async function main() {
     is_published: true,
     published_at: new Date().toISOString(),
     config: {
-      buscadis_profile_url: `https://buscadis.com/p/${seed.business.slug}`,
+      buscadis_profile_url: `https://buscadis.com/@${seed.business.slug}`,
       canonical_url: seed.business.publicadis_site_url,
       app_origin: 'https://agrilsur.vercel.app',
       base_path: '/p/agrilsur',
@@ -319,7 +319,7 @@ async function main() {
     else console.log('✓ Sitio Publicadis registrado');
   }
 
-  console.log(`\nListo. Perfil: https://buscadis.com/p/${seed.business.slug}`);
+  console.log(`\nListo. Perfil: https://buscadis.com/@${seed.business.slug}`);
   console.log(`Sitio pro (proxy): ${seed.business.publicadis_site_url} → ${seed.business.publicadis_external_url}`);
 }
 

@@ -1,5 +1,7 @@
 'use client';
 
+import { getBusinessProfilePath } from '@/lib/seo/business-metadata';
+
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { IconDownload, IconShareAlt } from '@/components/Icons';
@@ -25,7 +27,7 @@ export default function BusinessShareTools({
   const encoded = encodeURIComponent(slug);
   const profileUrl =
     typeof window !== 'undefined'
-      ? `${window.location.origin}/p/${slug}`
+      ? `${window.location.origin}${getBusinessProfilePath(slug)}`
       : getBusinessCanonicalUrl(slug);
 
   const copyLink = async () => {

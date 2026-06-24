@@ -5,9 +5,11 @@ import { resolveThemeTokens, themeFontClass } from '@/lib/business/theme-tokens'
 import type { ProfileThemePreset } from '@/types/business';
 import { buildBusinessThemeVars } from '@/lib/business/theme-css-vars';
 
+import { getBusinessProfilePath } from '@/lib/seo/business-metadata';
+
 export function getBusinessCanonicalUrl(slug: string): string {
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://buscadis.com').replace(/\/$/, '');
-  return `${siteUrl}/p/${slug}`;
+  return `${siteUrl}${getBusinessProfilePath(slug)}`;
 }
 
 export function getWhatsappUrl(

@@ -156,7 +156,7 @@ function buildSocialLinks(seed: CatalogSeedFile['business']) {
 
   links.push({
     network: 'custom',
-    url: `https://buscadis.com/p/${seed.slug}`,
+    url: `https://buscadis.com/@${seed.slug}`,
     label: 'Perfil Buscadis',
   });
 
@@ -374,7 +374,7 @@ async function main() {
     published_at: new Date().toISOString(),
     config: {
       hero_image: seed.business.banner_file || 'catalog-chocolate-dark-fresa-70cacao-50g.jpg',
-      buscadis_profile_url: `https://buscadis.com/p/${seed.business.slug}`,
+      buscadis_profile_url: `https://buscadis.com/@${seed.business.slug}`,
       canonical_url: seed.business.publicadis_site_url,
     },
   };
@@ -393,7 +393,7 @@ async function main() {
   }
 
   console.log('\nListo.');
-  console.log(`Perfil Buscadis: https://buscadis.com/p/${seed.business.slug}`);
+  console.log(`Perfil Buscadis: https://buscadis.com/@${seed.business.slug}`);
   console.log(`Sitio Publicadis: ${seed.business.publicadis_site_url}`);
   if (reservedEmail && !ownerUserId) {
     console.log(`Asignación pendiente: ${reservedEmail} (al crear cuenta)`);

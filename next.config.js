@@ -94,7 +94,7 @@ const nextConfig = {
     }
     return { beforeFiles: [] };
   },
-  transpilePackages: ['@imgly/background-removal', 'onnxruntime-web'],
+  transpilePackages: ['@buscadis/profile-engine', '@imgly/background-removal', 'onnxruntime-web'],
   webpack: (config, { isServer }) => {
     // Si estamos en el cliente, ignoramos onnxruntime-node
     if (!isServer) {

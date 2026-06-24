@@ -1,3 +1,59 @@
+export type LocationDisplayLevel =
+    | 'address'
+    | 'district'
+    | 'city'
+    | 'region'
+    | 'country';
+
+export interface StoryHighlight {
+    id: string;
+    title: string;
+    cover_url?: string;
+    link_url?: string;
+}
+
+export interface BannerConfig {
+    mode: 'image' | 'text' | 'canvas';
+    imageUrl?: string;
+    text?: {
+        content: string;
+        font?: string;
+        color?: string;
+        align?: 'left' | 'center' | 'right';
+        size?: 'sm' | 'md' | 'lg' | 'xl';
+    };
+    fadeBottom?: boolean;
+    cta?: {
+        label: string;
+        action: 'whatsapp' | 'link' | 'cart' | 'contact';
+        href?: string;
+        style?: 'solid' | 'outline' | 'ghost';
+    };
+}
+
+export interface ProfileLayoutSchema {
+    structureTemplateId: string;
+    styleSkinId: string;
+    background?: { type: 'color' | 'gradient' | 'image'; value: string };
+    slots: Array<{
+        id: string;
+        component: string;
+        visible: boolean;
+        order: number;
+        variant?: string;
+        config?: Record<string, unknown>;
+    }>;
+}
+
+export interface ProfileStyleSchema {
+    skinId: string;
+    overrides?: Record<string, Record<string, unknown>>;
+}
+
+export interface MetricsConfig {
+    keys: Array<'interactions' | 'sales' | 'clients' | 'followers' | 'content_count' | 'reviews' | 'views' | 'products'>;
+}
+
 export interface SocialLink {
     network: 'facebook' | 'instagram' | 'tiktok' | 'twitter' | 'linkedin' | 'custom';
     url: string;
@@ -127,6 +183,14 @@ export interface BusinessProfile {
 
     /** Email reserved for automatic ownership on signup (ADIS pre-provisioned pages). */
     pending_owner_email?: string | null;
+
+    profile_layout?: ProfileLayoutSchema | null;
+    profile_style?: ProfileStyleSchema | null;
+    banner_config?: BannerConfig | null;
+    metrics_config?: MetricsConfig | null;
+    story_highlights?: StoryHighlight[];
+    profile_hashtags?: string[];
+    location_display_level?: LocationDisplayLevel;
 
     created_at: string;
     updated_at: string;

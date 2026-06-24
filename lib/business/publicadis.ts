@@ -1,4 +1,5 @@
 import type { BusinessProfile } from '@/types/business';
+import { getBusinessProfilePath } from '@/lib/seo/business-metadata';
 
 const DEFAULT_PUBLICADIS_ORIGIN =
   process.env.NEXT_PUBLIC_PUBLICADIS_URL || 'https://publicadis.com';
@@ -44,7 +45,7 @@ export function getPublicadisSiteUrl(
 /** URL canónica del perfil Buscadis (linktree). */
 export function getBuscadisProfileUrl(profile: Partial<BusinessProfile>): string | null {
   if (!profile.slug) return null;
-  return `${DEFAULT_BUSCADIS_ORIGIN.replace(/\/$/, '')}/p/${profile.slug}`;
+  return `${DEFAULT_BUSCADIS_ORIGIN.replace(/\/$/, '')}${getBusinessProfilePath(profile.slug)}`;
 }
 
 export function hasPublicadisSite(profile: Partial<BusinessProfile>): boolean {

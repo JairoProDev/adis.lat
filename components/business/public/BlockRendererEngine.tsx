@@ -8,6 +8,8 @@ import { getTemplateById } from '@/lib/business/templates/registry';
 import type { CtaPlacement } from '@/lib/business/templates/registry';
 import BusinessTabShell from '@/components/business/public/shells/BusinessTabShell';
 import BusinessScrollShell from '@/components/business/public/shells/BusinessScrollShell';
+import ProfileWireframeShell from '@/components/profile/ProfileWireframeShell';
+import { usesWireframeLayout } from '@/lib/profile/adapters/business-adapter';
 
 interface BlockRendererEngineProps {
   ctx: BlockRenderContext;
@@ -24,6 +26,7 @@ interface BlockRendererEngineProps {
   onEditPart?: (part: string) => void;
   onOpenEditor?: () => void;
   onOpenQr?: () => void;
+  onWhatsappClick?: () => void;
   ctaPlacement?: CtaPlacement;
 }
 
@@ -42,6 +45,7 @@ export default function BlockRendererEngine({
   onEditPart,
   onOpenEditor,
   onOpenQr,
+  onWhatsappClick,
   ctaPlacement = 'sticky_bar',
 }: BlockRendererEngineProps) {
   const template = getTemplateById(ctx.profile.template_id || 'modern_tabs');
@@ -79,7 +83,21 @@ export default function BlockRendererEngine({
     onEditPart,
     onOpenEditor,
     onOpenQr,
+    onWhatsappClick,
   };
+
+  const renderBlockFn = (block: Parameters<typeof renderProfileBlock>[0]) =>
+    renderProfileBlock(block, ctx, heroVariant, { hideStickyCta });
+
+  if (usesWireframeLayout(ctx.profile)) {
+    return (
+      <ProfileWireframeShell
+        ctx={ctx}
+        renderBlock={renderBlockFn}
+        {...shellProps}
+      />
+    );
+  }
 
   if (template.paradigm === 'scroll') {
     return (

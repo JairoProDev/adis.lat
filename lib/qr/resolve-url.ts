@@ -6,6 +6,8 @@
  * Dominio corto opcional: NEXT_PUBLIC_QR_SHORT_DOMAIN solo cuando esté en Vercel/DNS.
  */
 
+import { getBusinessProfilePath } from '@/lib/seo/business-metadata';
+
 /** Origen canónico con despliegue verificado (Vercel). */
 export const PRODUCTION_CANONICAL_ORIGIN = 'https://www.buscadis.com';
 
@@ -93,7 +95,7 @@ export function getQrTargetUrl(shortCode: string): string {
 
 /** URL canónica del perfil tras redirect desde /q/{code}. */
 export function getProfileRedirectUrl(slug: string, fromQr = true): string {
-  const base = `${getCanonicalSiteOrigin()}/p/${slug}`;
+  const base = `${getCanonicalSiteOrigin()}${getBusinessProfilePath(slug)}`;
   if (!fromQr) return base;
   const params = new URLSearchParams({
     utm_source: 'qr',

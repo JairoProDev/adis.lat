@@ -68,14 +68,14 @@ export function buildBusinessShareDescription(profile: {
 }
 
 export function getBusinessProfilePath(slug: string): string {
-  return `/p/${slug}`;
+  return `/@${slug}`;
 }
 
 export function getBusinessProfileShareUrl(slug: string): string {
   return `${getSiteUrl()}${getBusinessProfilePath(slug)}`;
 }
 
-/** OG/Twitter al compartir buscadis.com/p/{slug} — prioriza marca del negocio. */
+/** OG/Twitter al compartir buscadis.com/@{slug} — prioriza marca del negocio. */
 export function buildBusinessShareMetadata(
   profile: Pick<
     BusinessProfile,
