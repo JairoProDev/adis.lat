@@ -236,7 +236,7 @@ export default function ProfileWireframeShell({
         )}
 
         <div className="max-w-6xl mx-auto px-4 relative z-10">
-          <div className="flex items-end gap-4 sm:gap-5 -mt-[3.25rem] sm:-mt-16 pt-1">
+          <div className="flex items-end gap-4 sm:gap-5 -mt-[3rem] sm:-mt-14 pt-1">
             <ProfileAvatar entity={entity} className="relative z-20" />
             {isSlotVisible(presentation.layout, 'profile_metrics') && entity.metrics && (
               <ProfileMetrics metrics={entity.metrics} className="flex-1 min-w-0 pb-0.5" />

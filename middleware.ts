@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { normalizeBusinessSlug } from '@/lib/business/normalize-slug';
 
 /** Hosts legacy sin app propia → mismo origen canónico (QR impresos antiguos). */
 const LEGACY_QR_HOSTS = new Set(['market.adis.lat', 'www.adis.lat', 'adis.lat']);
@@ -12,16 +13,27 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(`${canonical}${pathname}${search}`, 308);
   }
 
-  // Legacy /p/slug → /@slug (perfiles @handle usan rewrite en next.config.js)
-  const pMatch = pathname.match(/^\/p\/([^/]+)\/?$/);
+  // Legacy /p/slug → /@slug (URL canónica)
+  const pMatch = pathname.match(/^\/p\/([^/?#]+)\/?$/);
   if (pMatch) {
-    const slug = pMatch[1];
-    return NextResponse.redirect(new URL(`/@${slug}${search}`, req.url), 308);
+    const slug = normalizeBusinessSlug(pMatch[1]);
+    if (slug) {
+      return NextResponse.redirect(new URL(`/@${slug}${search}`, req.url), 308);
+    }
+  }
+
+  // /@slug → app interna /negocio/slug (rewrite; el rewrite de next.config no es fiable con @ en prod)
+  const atMatch = pathname.match(/^\/@([^/?#]+)\/?$/);
+  if (atMatch) {
+    const slug = normalizeBusinessSlug(atMatch[1]);
+    if (slug) {
+      return NextResponse.rewrite(new URL(`/negocio/${encodeURIComponent(slug)}${search}`, req.url));
+    }
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/q/:path*', '/p/:path*', '/api/business/:path*'],
+  matcher: ['/p/:path*', '/@:path*', '/api/business/:path*'],
 };

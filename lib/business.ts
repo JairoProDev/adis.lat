@@ -3,6 +3,7 @@ import type { Adiso, Categoria } from '@/types';
 import { BusinessProfile } from '@/types/business';
 import type { BusinessMemberRole, BusinessWithRole } from './business-access';
 import { normalizeBusinessProfile } from '@/lib/business/normalize-profile';
+import { normalizeBusinessSlug } from '@/lib/business/normalize-slug';
 import { compareRecientesFeed, isCatalogProduct } from '@/lib/feed/ranking';
 
 export const BUSINESS_TABLE = 'business_profiles';
@@ -128,10 +129,13 @@ export async function getBusinessProfileByIdForUser(
 export async function getBusinessProfileBySlug(slug: string): Promise<BusinessProfile | null> {
     if (!supabase) return null;
 
+    const normalized = normalizeBusinessSlug(slug);
+    if (!normalized) return null;
+
     const { data, error } = await supabase
         .from(BUSINESS_TABLE)
         .select('*')
-        .eq('slug', slug)
+        .eq('slug', normalized)
         .single();
 
     if (error) {

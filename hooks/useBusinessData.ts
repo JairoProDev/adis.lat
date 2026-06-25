@@ -22,6 +22,7 @@ import { idbClearCatalogPdf } from '@/lib/catalog-pdf';
 import { prefetchCatalogProductImages } from '@/lib/catalog-image-prefetch';
 import { useNetworkStatus } from './useNetworkStatus';
 import { normalizeBusinessProfile } from '@/lib/business/normalize-profile';
+import { normalizeBusinessSlug } from '@/lib/business/normalize-slug';
 
 function enrichBusinessProfile(profile: BusinessProfile): BusinessProfile {
   const normalized = normalizeBusinessProfile(profile);
@@ -55,6 +56,7 @@ async function persistCatalog(businessId: string, publishedOnly: any[]): Promise
 }
 
 export function useBusinessData(slug: string, isOwner: boolean) {
+  const normalizedSlug = normalizeBusinessSlug(slug);
   const { isOnline, justCameOnline } = useNetworkStatus();
   const revalidatingRef = useRef(false);
   const businessRef = useRef<BusinessProfile | null>(null);
@@ -76,7 +78,7 @@ export function useBusinessData(slug: string, isOwner: boolean) {
     let cancelled = false;
 
     (async () => {
-      const cachedBusiness = cacheGet<BusinessProfile>(CacheKeys.businessProfile(slug), true);
+      const cachedBusiness = cacheGet<BusinessProfile>(CacheKeys.businessProfile(normalizedSlug), true);
       if (!cachedBusiness) {
         if (!cancelled) {
           setHydrated(true);
@@ -114,16 +116,16 @@ export function useBusinessData(slug: string, isOwner: boolean) {
     return () => {
       cancelled = true;
     };
-  }, [slug]);
+  }, [normalizedSlug]);
 
   const fetchBusinessProfile = useCallback(async (): Promise<BusinessProfile | null | 'skip'> => {
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       return 'skip';
     }
     try {
-      const profileData = await getBusinessProfileBySlug(slug);
+      const profileData = await getBusinessProfileBySlug(normalizedSlug);
       if (profileData) {
-        cacheSet(CacheKeys.businessProfile(slug), profileData, CACHE_TTL.BUSINESS_PROFILE);
+        cacheSet(CacheKeys.businessProfile(normalizedSlug), profileData, CACHE_TTL.BUSINESS_PROFILE);
         if (profileData.logo_url) {
           queueMicrotask(() => {
             const im = new Image();
@@ -137,7 +139,7 @@ export function useBusinessData(slug: string, isOwner: boolean) {
       console.error('[useBusinessData] Error fetching profile:', e);
       return 'skip';
     }
-  }, [slug]);
+  }, [normalizedSlug]);
 
   /** null = error/offline, no sobrescribir catálogo en pantalla */
   const fetchCatalog = useCallback(
@@ -212,7 +214,7 @@ export function useBusinessData(slug: string, isOwner: boolean) {
         const profileResult = await fetchBusinessProfile();
 
         let profileData: BusinessProfile | null =
-          businessRef.current || cacheGet<BusinessProfile>(CacheKeys.businessProfile(slug), true);
+          businessRef.current || cacheGet<BusinessProfile>(CacheKeys.businessProfile(normalizedSlug), true);
 
         if (profileResult === 'skip') {
           // Mantener perfil en caché
@@ -270,7 +272,7 @@ export function useBusinessData(slug: string, isOwner: boolean) {
         }
       }
     },
-    [fetchBusinessProfile, fetchCatalog, isOwner, slug, applyCatalogToState]
+    [fetchBusinessProfile, fetchCatalog, isOwner, normalizedSlug, applyCatalogToState]
   );
 
   const reloadCatalog = useCallback(
@@ -286,7 +288,7 @@ export function useBusinessData(slug: string, isOwner: boolean) {
   );
 
   useEffect(() => {
-    if (!hydrated || !slug) return;
+    if (!hydrated || !normalizedSlug) return;
 
     if (state.business) {
       if (isOnline) {
@@ -296,13 +298,13 @@ export function useBusinessData(slug: string, isOwner: boolean) {
       loadData(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hydrated, slug]);
+  }, [hydrated, normalizedSlug]);
 
   useEffect(() => {
-    if (justCameOnline && slug && hydrated) {
+    if (justCameOnline && normalizedSlug && hydrated) {
       loadData(true);
     }
-  }, [justCameOnline, slug, hydrated, loadData]);
+  }, [justCameOnline, normalizedSlug, hydrated, loadData]);
 
   useEffect(() => {
     if (!state.business?.id || !isOnline) return;
@@ -320,11 +322,11 @@ export function useBusinessData(slug: string, isOwner: boolean) {
         if (!prev.business) return prev;
         const updated = updater(prev.business);
         businessRef.current = updated;
-        cacheSet(CacheKeys.businessProfile(slug), updated, CACHE_TTL.BUSINESS_PROFILE);
+        cacheSet(CacheKeys.businessProfile(normalizedSlug), updated, CACHE_TTL.BUSINESS_PROFILE);
         return { ...prev, business: updated };
       });
     },
-    [slug]
+    [normalizedSlug]
   );
 
   useEffect(() => {

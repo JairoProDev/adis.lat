@@ -11,6 +11,7 @@ import { createClient } from '@supabase/supabase-js';
 import { buildBusinessShareMetadata } from '@/lib/seo/business-metadata';
 import { buildAdisoMetadata } from '@/lib/seo/adiso-metadata';
 import { withDefaultShareImage } from '@/lib/seo/og-image';
+import { normalizeBusinessSlug } from '@/lib/business/normalize-slug';
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://buscadis.com').replace(/\/$/, '');
 
@@ -73,10 +74,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
     // Format 3: /[business_slug] (Length 1)
 
     if (slug.length === 1) {
-        let targetSlug = decodeURIComponent(slug[0]);
-        if (targetSlug.startsWith('@')) {
-            targetSlug = targetSlug.slice(1);
-        }
+        const targetSlug = normalizeBusinessSlug(slug[0]);
         if (isReservedBusinessSlug(targetSlug)) {
             notFound();
         }
@@ -147,14 +145,7 @@ export default async function Page(props: PageProps) {
     let isLegacy = false;
 
     if (slug.length === 1) {
-        // Custom static landings live in public/{slug}/ (see next.config.js rewrites)
-        let businessSlug = decodeURIComponent(slug[0]);
-        if (businessSlug.startsWith('@')) {
-            businessSlug = businessSlug.slice(1);
-        }
-        if (businessSlug.toLowerCase() === 'villachaco') {
-            notFound();
-        }
+        const businessSlug = normalizeBusinessSlug(slug[0]);
         if (isReservedBusinessSlug(businessSlug)) {
             notFound();
         }

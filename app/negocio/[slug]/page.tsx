@@ -21,6 +21,7 @@ import { updateBusinessProfile, listBusinessProfilesForUser } from '@/lib/busine
 import { type BusinessWithRole } from '@/lib/business-access';
 import { saveBusinessViaAPI, publishBusinessViaAPI } from '@/lib/business-api';
 import { useDebounce } from '@/hooks/useDebounce';
+import { normalizeBusinessSlug } from '@/lib/business/normalize-slug';
 
 export default function PublicBusinessPage({
     params,
@@ -29,7 +30,7 @@ export default function PublicBusinessPage({
     params: { slug: string };
     searchParams: { [key: string]: string | string[] | undefined };
 }) {
-    const slug = decodeURIComponent(params.slug);
+    const slug = normalizeBusinessSlug(params.slug);
     const { user } = useAuth();
     const { profile, isPlatformAdmin } = useUser();
     const { success, error: showError } = useToast();

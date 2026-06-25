@@ -77,69 +77,82 @@ export default function ProfileHeroOverlap({
 
   return (
     <div className={cn('relative w-full', className)}>
-      <div className="relative w-full h-[180px] sm:h-[200px] md:h-[220px] overflow-hidden bg-gradient-to-br from-[var(--brand-color)] via-[var(--brand-color)] to-[var(--brand-accent)] border-b border-[var(--border-subtle)]">
-        {hasImage && imageUrl ? (
-          <img src={imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
-        ) : banner.mode === 'text' && banner.text?.content ? (
-          <div
-            className={cn(
-              'absolute inset-0 flex items-center justify-center px-8',
-              banner.text.align === 'left' && 'justify-start',
-              banner.text.align === 'right' && 'justify-end'
-            )}
-          >
-            <p
+      <div className="max-w-[1100px] mx-auto px-4 pt-2 sm:pt-3">
+        <div
+          className={cn(
+            'relative w-full overflow-hidden bg-gradient-to-br from-[var(--brand-color)] via-[var(--brand-color)] to-[var(--brand-accent)] shadow-sm',
+            'h-[160px] sm:h-[180px] md:h-[200px] rounded-2xl md:rounded-3xl'
+          )}
+        >
+          {hasImage && imageUrl ? (
+            <>
+              <img src={imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+              <div
+                className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-black/20"
+                aria-hidden
+              />
+            </>
+          ) : banner.mode === 'text' && banner.text?.content ? (
+            <div
               className={cn(
-                'font-bold text-white drop-shadow-lg max-w-lg',
-                TEXT_SIZE[banner.text.size || 'lg']
+                'absolute inset-0 flex items-center justify-center px-8',
+                banner.text.align === 'left' && 'justify-start',
+                banner.text.align === 'right' && 'justify-end'
               )}
-              style={{ color: banner.text.color || undefined }}
             >
-              {banner.text.content}
-            </p>
-          </div>
-        ) : null}
-
-        {showEditControls && onEditBanner && (
-          <button
-            type="button"
-            onClick={onEditBanner}
-            className="absolute top-3 right-3 z-30 px-3 py-1.5 rounded-lg bg-black/50 text-white text-xs font-bold backdrop-blur-sm hover:bg-black/65 transition-colors"
-          >
-            Cambiar banner
-          </button>
-        )}
-
-        {banner.fadeBottom === true && (
-          <div
-            className="absolute bottom-0 inset-x-0 h-24 bg-gradient-to-t from-[var(--bg-secondary)] to-transparent pointer-events-none"
-            aria-hidden
-          />
-        )}
-
-        {cta && (ctaHref || cta.action === 'cart') && (
-          <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-20">
-            {ctaHref ? (
-              <a
-                href={ctaHref}
-                target={cta.action === 'whatsapp' ? '_blank' : undefined}
-                rel={cta.action === 'whatsapp' ? 'noreferrer' : undefined}
-                onClick={onBannerCtaClick}
-                className="inline-flex items-center px-3 py-2 sm:px-4 rounded-xl bg-white/95 text-slate-900 text-xs sm:text-sm font-bold shadow-lg hover:bg-white transition-colors"
+              <p
+                className={cn(
+                  'font-bold text-white drop-shadow-lg max-w-lg',
+                  TEXT_SIZE[banner.text.size || 'lg']
+                )}
+                style={{ color: banner.text.color || undefined }}
               >
-                {cta.label || 'Contactar'}
-              </a>
-            ) : (
-              <button
-                type="button"
-                onClick={onBannerCtaClick}
-                className="inline-flex items-center px-3 py-2 rounded-xl bg-white/95 text-slate-900 text-xs sm:text-sm font-bold shadow-lg"
-              >
-                {cta.label || 'Ver más'}
-              </button>
-            )}
-          </div>
-        )}
+                {banner.text.content}
+              </p>
+            </div>
+          ) : null}
+
+          {showEditControls && onEditBanner && (
+            <button
+              type="button"
+              onClick={onEditBanner}
+              className="absolute top-3 right-3 z-30 px-3 py-1.5 rounded-lg bg-black/50 text-white text-xs font-bold backdrop-blur-sm hover:bg-black/65 transition-colors"
+            >
+              Cambiar banner
+            </button>
+          )}
+
+          {banner.fadeBottom === true && (
+            <div
+              className="absolute bottom-0 inset-x-0 h-16 bg-gradient-to-t from-[var(--bg-secondary)] to-transparent pointer-events-none rounded-b-2xl md:rounded-b-3xl"
+              aria-hidden
+            />
+          )}
+
+          {cta && (ctaHref || cta.action === 'cart') && (
+            <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-20">
+              {ctaHref ? (
+                <a
+                  href={ctaHref}
+                  target={cta.action === 'whatsapp' ? '_blank' : undefined}
+                  rel={cta.action === 'whatsapp' ? 'noreferrer' : undefined}
+                  onClick={onBannerCtaClick}
+                  className="inline-flex items-center px-3 py-2 sm:px-4 rounded-xl bg-white/95 text-slate-900 text-xs sm:text-sm font-bold shadow-lg hover:bg-white transition-colors"
+                >
+                  {cta.label || 'Contactar'}
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  onClick={onBannerCtaClick}
+                  className="inline-flex items-center px-3 py-2 rounded-xl bg-white/95 text-slate-900 text-xs sm:text-sm font-bold shadow-lg"
+                >
+                  {cta.label || 'Ver más'}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {!bannerOnly && (

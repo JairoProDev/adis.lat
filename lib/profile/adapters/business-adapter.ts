@@ -128,6 +128,6 @@ export function resolveBusinessProfileStyle(
 
 export function usesWireframeLayout(profile: Partial<BusinessProfile>): boolean {
   const layout = profile.profile_layout as EngineLayoutSchema | null | undefined;
-  if (!layout?.structureTemplateId) return true;
-  return ['social_wireframe_v1', 'minimal_identity'].includes(layout.structureTemplateId);
+  if (layout?.structureTemplateId === 'legacy_tabs') return false;
+  return true;
 }
