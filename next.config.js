@@ -57,7 +57,22 @@ const nextConfig = {
     ];
   },
   async redirects() {
+    const playStoreUrl =
+      process.env.PLAY_STORE_ANDROID_URL ||
+      'https://play.google.com/store/apps/details?id=com.adisplatforms.buscadis';
+
     const redirects = [
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'app.buscadis.com' }],
+        destination: playStoreUrl,
+        permanent: false,
+      },
+      {
+        source: '/app',
+        destination: playStoreUrl,
+        permanent: false,
+      },
       {
         source: '/negocio/:slug',
         destination: '/@:slug',
