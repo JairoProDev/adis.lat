@@ -1,6 +1,7 @@
 import type { BusinessProfile, CustomBlock, SocialLink } from '@/types/business';
 import { normalizeSocialLinks } from '@/lib/business/normalize-profile';
 import { getPublicadisSiteUrl, getBuscadisProfileUrl } from '@/lib/business/publicadis';
+import { getWhatsappUrl } from '@/lib/business/public-utils';
 
 const NETWORK_LABELS: Record<SocialLink['network'], string> = {
   instagram: 'Instagram',
@@ -11,6 +12,33 @@ const NETWORK_LABELS: Record<SocialLink['network'], string> = {
   custom: 'Enlace',
 };
 
+const MESSAGING_PATTERNS = [
+  'wa.me',
+  'whatsapp.com',
+  'api.whatsapp',
+  't.me',
+  'telegram.me',
+  'telegram.org',
+  'm.me',
+  'messenger.com',
+  'fb-messenger',
+] as const;
+
+const SOCIAL_URL_PATTERNS: { key: SocialBrandKey; patterns: string[] }[] = [
+  { key: 'whatsapp', patterns: ['wa.me', 'whatsapp.com', 'api.whatsapp'] },
+  { key: 'telegram', patterns: ['t.me', 'telegram.me', 'telegram.org'] },
+  { key: 'messenger', patterns: ['m.me', 'messenger.com', 'fb-messenger'] },
+  { key: 'instagram', patterns: ['instagram.com', 'instagr.am'] },
+  { key: 'facebook', patterns: ['facebook.com', 'fb.com', 'fb.me'] },
+  { key: 'tiktok', patterns: ['tiktok.com'] },
+  { key: 'linkedin', patterns: ['linkedin.com'] },
+  { key: 'youtube', patterns: ['youtube.com', 'youtu.be'] },
+  { key: 'twitter', patterns: ['twitter.com', 'x.com'] },
+  { key: 'pinterest', patterns: ['pinterest.com', 'pin.it'] },
+  { key: 'threads', patterns: ['threads.net'] },
+  { key: 'spotify', patterns: ['spotify.com', 'open.spotify.com'] },
+];
+
 function normalizeUrlKey(url: string): string {
   try {
     const u = new URL(url.trim());
@@ -20,6 +48,15 @@ function normalizeUrlKey(url: string): string {
   } catch {
     return url.trim().toLowerCase();
   }
+}
+
+function urlMatches(url: string, patterns: string[]): boolean {
+  const lower = url.toLowerCase();
+  return patterns.some((p) => lower.includes(p));
+}
+
+function isMessagingUrl(url: string): boolean {
+  return urlMatches(url, [...MESSAGING_PATTERNS]);
 }
 
 function getPrimaryWebsiteUrl(profile: Partial<BusinessProfile>): string | null {
@@ -33,9 +70,12 @@ function getPrimaryWebsiteUrl(profile: Partial<BusinessProfile>): string | null 
     const site = links.find(
       (l) =>
         l.url?.trim() &&
+        !isMessagingUrl(l.url) &&
+        !urlMatches(l.url, ['instagram.com', 'facebook.com', 'tiktok.com', 'linkedin.com', 'twitter.com', 'x.com']) &&
         (l.label?.toLowerCase().includes('sitio') ||
           l.label?.toLowerCase().includes('website') ||
-          (l.network === 'custom' && !l.url.includes('publicadis.com')))
+          l.label?.toLowerCase().includes('página web') ||
+          (l.network === 'custom' && !l.url.includes('publicadis.com') && !l.url.includes('buscadis.com')))
     );
     if (site?.url) return site.url.trim();
   }
@@ -61,12 +101,22 @@ export function getHeroSocialLinks(profile: Partial<BusinessProfile>): SocialLin
     if (isDuplicateActionBarLink(link.url, profile)) return false;
     const label = (link.label || '').toLowerCase();
     if (label.includes('buscadis')) return false;
-    if (label.includes('sitio web') || label.includes('website')) return false;
+    if (label.includes('sitio web') || label.includes('website') || label.includes('página web')) {
+      return false;
+    }
+    if (label.includes('publicadis') && link.url.includes('publicadis.com')) return false;
     return true;
   });
 }
 
-/** Strip del wireframe: sitio web primero, luego redes sociales (sin duplicados) */
+function buildWhatsappLink(profile: Partial<BusinessProfile>): SocialLink | null {
+  const phone = profile.contact_whatsapp?.trim();
+  if (!phone) return null;
+  const url = getWhatsappUrl(phone, profile.name || 'Negocio');
+  return { network: 'custom', url, label: 'WhatsApp' };
+}
+
+/** Strip del wireframe: web, WhatsApp, luego redes (sin duplicados). */
 export function getWireframeSocialLinks(profile: Partial<BusinessProfile>): SocialLink[] {
   const links: SocialLink[] = [];
   const seen = new Set<string>();
@@ -87,103 +137,172 @@ export function getWireframeSocialLinks(profile: Partial<BusinessProfile>): Soci
     add({ network: 'custom', url: publicadis, label: 'Página Web' });
   }
 
+  const whatsapp = buildWhatsappLink(profile);
+  if (whatsapp) add(whatsapp);
+
   for (const link of getHeroSocialLinks(profile)) {
     const key = normalizeUrlKey(link.url);
     if (seen.has(key)) continue;
     if (link.url?.includes('publicadis.com') && publicadis) continue;
+    if (link.url?.includes('buscadis.com')) continue;
     add(link);
   }
 
   return links;
 }
 
-export function socialLinkLabel(link: SocialLink): string {
-  if (link.label?.trim()) {
-    const raw = link.label.trim();
-    const lower = raw.toLowerCase();
-    if (lower === 'sitio web' || lower === 'website' || lower.includes('página web')) {
-      return 'Página Web';
-    }
-    return raw;
-  }
-  if (isWebsiteLink(link)) return 'Página Web';
-  return NETWORK_LABELS[link.network] || 'Enlace';
-}
-
-function isWebsiteLink(link: SocialLink): boolean {
-  const label = (link.label || '').toLowerCase();
-  return (
-    label.includes('sitio') ||
-    label.includes('website') ||
-    label.includes('página web') ||
-    (link.network === 'custom' &&
-      !link.url.includes('instagram') &&
-      !link.url.includes('facebook') &&
-      !link.url.includes('tiktok') &&
-      !link.url.includes('linkedin') &&
-      !link.url.includes('twitter') &&
-      !link.url.includes('x.com'))
-  );
-}
-
 export type SocialBrandKey =
   | 'website'
+  | 'whatsapp'
+  | 'telegram'
+  | 'messenger'
   | 'instagram'
   | 'facebook'
   | 'tiktok'
   | 'twitter'
   | 'linkedin'
   | 'youtube'
+  | 'pinterest'
+  | 'threads'
+  | 'spotify'
   | 'custom';
 
+const BRAND_LABELS: Record<SocialBrandKey, string> = {
+  website: 'Página Web',
+  whatsapp: 'WhatsApp',
+  telegram: 'Telegram',
+  messenger: 'Messenger',
+  instagram: 'Instagram',
+  facebook: 'Facebook',
+  tiktok: 'TikTok',
+  twitter: 'X',
+  linkedin: 'LinkedIn',
+  youtube: 'YouTube',
+  pinterest: 'Pinterest',
+  threads: 'Threads',
+  spotify: 'Spotify',
+  custom: 'Enlace',
+};
+
+function isWebsiteLink(link: SocialLink): boolean {
+  const brand = detectBrandFromUrl(link.url);
+  if (brand && brand !== 'website') return false;
+  const label = (link.label || '').toLowerCase();
+  if (label.includes('sitio') || label.includes('website') || label.includes('página web')) {
+    return true;
+  }
+  return (
+    link.network === 'custom' &&
+    !isMessagingUrl(link.url) &&
+    !SOCIAL_URL_PATTERNS.some(({ key, patterns }) => key !== 'website' && urlMatches(link.url, patterns))
+  );
+}
+
+function detectBrandFromUrl(url: string): SocialBrandKey | null {
+  const lower = url.toLowerCase();
+  for (const { key, patterns } of SOCIAL_URL_PATTERNS) {
+    if (urlMatches(lower, patterns)) return key;
+  }
+  return null;
+}
+
 export function getSocialBrandKey(link: SocialLink): SocialBrandKey {
-  const url = link.url.toLowerCase();
-  if (url.includes('instagram')) return 'instagram';
-  if (url.includes('facebook') || url.includes('fb.com')) return 'facebook';
-  if (url.includes('tiktok')) return 'tiktok';
-  if (url.includes('linkedin')) return 'linkedin';
-  if (url.includes('youtube') || url.includes('youtu.be')) return 'youtube';
-  if (url.includes('twitter') || url.includes('x.com')) return 'twitter';
+  if (link.network && link.network !== 'custom' && link.network in NETWORK_LABELS) {
+    const fromNetwork = link.network as Exclude<SocialLink['network'], 'custom'>;
+    if (fromNetwork === 'twitter') return 'twitter';
+    return fromNetwork as SocialBrandKey;
+  }
+
+  const fromUrl = detectBrandFromUrl(link.url);
+  if (fromUrl) return fromUrl;
+
+  const label = (link.label || '').toLowerCase();
+  if (label.includes('whatsapp')) return 'whatsapp';
+  if (label.includes('telegram')) return 'telegram';
+  if (label.includes('messenger')) return 'messenger';
+
   if (isWebsiteLink(link)) return 'website';
   return 'custom';
 }
 
-/** Clases Tailwind estáticas (bg/text/border + hover invertido). */
-export const SOCIAL_BRAND_BUTTON_CLASS: Record<
-  SocialBrandKey,
-  { base: string; hover: string }
-> = {
+export function socialLinkLabel(link: SocialLink): string {
+  const brand = getSocialBrandKey(link);
+  const custom = link.label?.trim();
+
+  if (custom) {
+    const lower = custom.toLowerCase();
+    if (lower === 'sitio web' || lower === 'website' || lower.includes('página web')) {
+      return 'Página Web';
+    }
+    if (lower.includes('whatsapp')) return 'WhatsApp';
+    if (lower.includes('telegram')) return 'Telegram';
+    if (lower.includes('messenger')) return 'Messenger';
+    if (brand !== 'custom' && BRAND_LABELS[brand]) return BRAND_LABELS[brand];
+    return custom;
+  }
+
+  return BRAND_LABELS[brand] || NETWORK_LABELS[link.network] || 'Enlace';
+}
+
+/**
+ * Estilo outline en reposo (legible sobre fondo claro) y relleno de marca al hover.
+ */
+export const SOCIAL_BRAND_BUTTON_CLASS: Record<SocialBrandKey, { base: string; hover: string }> = {
   website: {
-    base: 'bg-slate-800 text-white border-slate-800',
-    hover: 'hover:bg-white hover:text-slate-800 hover:border-slate-800',
+    base: 'bg-white text-slate-800 border-2 border-slate-700 shadow-sm',
+    hover: 'hover:bg-slate-800 hover:text-white hover:border-slate-800',
+  },
+  whatsapp: {
+    base: 'bg-white text-[#128C7E] border-2 border-[#25D366] shadow-sm',
+    hover: 'hover:bg-[#25D366] hover:text-white hover:border-[#25D366]',
+  },
+  telegram: {
+    base: 'bg-white text-[#229ED9] border-2 border-[#229ED9] shadow-sm',
+    hover: 'hover:bg-[#229ED9] hover:text-white hover:border-[#229ED9]',
+  },
+  messenger: {
+    base: 'bg-white text-[#0084FF] border-2 border-[#0084FF] shadow-sm',
+    hover: 'hover:bg-[#0084FF] hover:text-white hover:border-[#0084FF]',
   },
   instagram: {
-    base: 'bg-[#E1306C] text-white border-[#E1306C]',
-    hover: 'hover:bg-white hover:text-[#E1306C] hover:border-[#E1306C]',
+    base: 'bg-white text-[#C13584] border-2 border-[#E1306C] shadow-sm',
+    hover: 'hover:bg-[#E1306C] hover:text-white hover:border-[#E1306C]',
   },
   facebook: {
-    base: 'bg-[#1877F2] text-white border-[#1877F2]',
-    hover: 'hover:bg-white hover:text-[#1877F2] hover:border-[#1877F2]',
+    base: 'bg-white text-[#1877F2] border-2 border-[#1877F2] shadow-sm',
+    hover: 'hover:bg-[#1877F2] hover:text-white hover:border-[#1877F2]',
   },
   tiktok: {
-    base: 'bg-[#010101] text-white border-[#010101]',
-    hover: 'hover:bg-white hover:text-[#010101] hover:border-[#010101]',
+    base: 'bg-white text-[#010101] border-2 border-[#010101] shadow-sm',
+    hover: 'hover:bg-[#010101] hover:text-white hover:border-[#010101]',
   },
   twitter: {
-    base: 'bg-[#0F1419] text-white border-[#0F1419]',
-    hover: 'hover:bg-white hover:text-[#0F1419] hover:border-[#0F1419]',
+    base: 'bg-white text-[#0F1419] border-2 border-[#0F1419] shadow-sm',
+    hover: 'hover:bg-[#0F1419] hover:text-white hover:border-[#0F1419]',
   },
   linkedin: {
-    base: 'bg-[#0A66C2] text-white border-[#0A66C2]',
-    hover: 'hover:bg-white hover:text-[#0A66C2] hover:border-[#0A66C2]',
+    base: 'bg-white text-[#0A66C2] border-2 border-[#0A66C2] shadow-sm',
+    hover: 'hover:bg-[#0A66C2] hover:text-white hover:border-[#0A66C2]',
   },
   youtube: {
-    base: 'bg-[#FF0000] text-white border-[#FF0000]',
-    hover: 'hover:bg-white hover:text-[#FF0000] hover:border-[#FF0000]',
+    base: 'bg-white text-[#FF0000] border-2 border-[#FF0000] shadow-sm',
+    hover: 'hover:bg-[#FF0000] hover:text-white hover:border-[#FF0000]',
+  },
+  pinterest: {
+    base: 'bg-white text-[#BD081C] border-2 border-[#BD081C] shadow-sm',
+    hover: 'hover:bg-[#BD081C] hover:text-white hover:border-[#BD081C]',
+  },
+  threads: {
+    base: 'bg-white text-[#101010] border-2 border-[#101010] shadow-sm',
+    hover: 'hover:bg-[#101010] hover:text-white hover:border-[#101010]',
+  },
+  spotify: {
+    base: 'bg-white text-[#1DB954] border-2 border-[#1DB954] shadow-sm',
+    hover: 'hover:bg-[#1DB954] hover:text-white hover:border-[#1DB954]',
   },
   custom: {
-    base: 'bg-[var(--brand-color)] text-white border-[var(--brand-color)]',
-    hover: 'hover:bg-white hover:text-[var(--brand-color)] hover:border-[var(--brand-color)]',
+    base: 'bg-white text-[var(--brand-color)] border-2 border-[var(--brand-color)] shadow-sm',
+    hover: 'hover:bg-[var(--brand-color)] hover:text-white hover:border-[var(--brand-color)]',
   },
 };
 

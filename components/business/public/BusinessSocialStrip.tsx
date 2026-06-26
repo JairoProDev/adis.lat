@@ -8,7 +8,7 @@ import {
   SOCIAL_BRAND_BUTTON_CLASS,
   socialLinkLabel,
 } from '@/lib/business/social-display';
-import { getSocialIcon } from './social-icons';
+import { getSocialIconByBrand } from './social-icons';
 import { cn } from '@/lib/utils';
 
 interface BusinessSocialStripProps {
@@ -41,9 +41,10 @@ export default function BusinessSocialStrip({
     >
       {links.map((link, index) => {
         const label = socialLinkLabel(link);
+        const brand = getSocialBrandKey(link);
 
         if (isWireframe) {
-          const brand = SOCIAL_BRAND_BUTTON_CLASS[getSocialBrandKey(link)];
+          const styles = SOCIAL_BRAND_BUTTON_CLASS[brand];
           return (
             <a
               key={`${link.url}-${index}`}
@@ -51,15 +52,15 @@ export default function BusinessSocialStrip({
               target="_blank"
               rel="noopener noreferrer"
               className={cn(
-                'flex flex-col items-center justify-center gap-1 min-w-[5.5rem] sm:min-w-0',
-                'md:flex-row md:gap-2.5 rounded-xl border px-3 py-2.5 md:py-2 md:px-4',
-                'text-[11px] sm:text-xs font-bold transition-colors shadow-sm',
-                brand.base,
-                brand.hover
+                'group flex flex-col items-center justify-center gap-1 min-w-[5.5rem] sm:min-w-0',
+                'md:flex-row md:gap-2.5 rounded-xl px-3 py-2.5 md:py-2 md:px-4',
+                'text-[11px] sm:text-xs font-bold transition-all duration-200',
+                styles.base,
+                styles.hover
               )}
             >
-              <span className="shrink-0 flex items-center justify-center">
-                {getSocialIcon(link.url, { size: 20 })}
+              <span className="shrink-0 flex items-center justify-center text-current">
+                {getSocialIconByBrand(brand, 20)}
               </span>
               <span className="text-center md:text-left leading-tight max-w-[88px] md:max-w-none truncate">
                 {label}
@@ -79,7 +80,7 @@ export default function BusinessSocialStrip({
               aria-label={label}
               className="flex items-center justify-center rounded-full border border-[var(--border-subtle)] bg-[var(--bg-primary)]/90 text-[var(--text-secondary)] shadow-sm transition-all hover:border-[var(--brand-color)] hover:text-[var(--brand-color)] hover:scale-105 h-10 w-10"
             >
-              {getSocialIcon(link.url, { size: 18 })}
+              {getSocialIconByBrand(brand, 18)}
             </a>
           );
         }
@@ -92,7 +93,7 @@ export default function BusinessSocialStrip({
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 rounded-full border border-[var(--border-subtle)] bg-[var(--bg-primary)]/90 px-3 py-1.5 text-xs font-semibold text-[var(--text-secondary)] shadow-sm transition-all hover:border-[var(--brand-color)] hover:text-[var(--brand-color)]"
           >
-            <span className="shrink-0">{getSocialIcon(link.url)}</span>
+            <span className="shrink-0">{getSocialIconByBrand(brand)}</span>
             <span className="truncate max-w-[140px]">{label}</span>
           </a>
         );
