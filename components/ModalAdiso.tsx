@@ -50,6 +50,8 @@ import {
 } from './Icons';
 import { Categoria, UbicacionDetallada } from '@/types';
 import { getAdisoUrl } from '@/lib/url';
+import Link from 'next/link';
+import { getBusinessProfilePath } from '@/lib/seo/business-metadata';
 import { FIELD_QUESTIONS, type RevealField } from '@/lib/interactions/field-reveal';
 import {
   pickSocialBadge,
@@ -88,6 +90,7 @@ interface ModalAdisoProps {
   puedeSiguiente: boolean;
   dentroSidebar?: boolean; // Indica si está dentro del sidebar (sin overlay)
   preservarUrlQuery?: boolean; // Evita replaceState a URL SEO en navegación SPA (home/chat)
+  modoPagina?: boolean; // Página SEO dedicada (sin overlay ni sidebar del marketplace)
   onEditar?: (adiso: Adiso) => void; // Callback para editar adiso
   onEliminar?: (adisoId: string) => void; // Callback para eliminar adiso
   onSuccess?: (message: string) => void; // Callback para mensajes de éxito
@@ -199,6 +202,7 @@ export default function ModalAdiso({
   puedeSiguiente,
   dentroSidebar = false,
   preservarUrlQuery = false,
+  modoPagina = false,
   onEditar,
   onEliminar,
   onSuccess,
@@ -228,6 +232,8 @@ export default function ModalAdiso({
   const [mostrarPromocionar, setMostrarPromocionar] = useState(false);
   const esPropietario = Boolean(user?.id && (adiso.usuario_id === user.id || adiso.user_id === user.id));
   const sellerName = getSellerDisplayName(adiso);
+  const businessSlug = (adiso.privateData as { business_slug?: string } | undefined)?.business_slug;
+  const flexibleImage = dentroSidebar || modoPagina;
   const socialBadge = pickSocialBadge({
     ...adiso,
     vistas: vistasLocales,
@@ -304,13 +310,13 @@ export default function ModalAdiso({
   // Actualizar URL del navegador al abrir adiso (SEO Friendly)
   useEffect(() => {
     // No actualizar URL en sidebar ni en SPA home (preserva ?adiso=ID)
-    if (adiso && !dentroSidebar && !preservarUrlQuery) {
+    if (adiso && !dentroSidebar && !preservarUrlQuery && !modoPagina) {
       const seoUrl = getAdisoUrl(adiso);
       if (typeof window !== 'undefined' && window.location.pathname !== seoUrl && !window.location.pathname.includes('/admin')) {
         window.history.replaceState(null, '', seoUrl);
       }
     }
-  }, [adiso, dentroSidebar, preservarUrlQuery]);
+  }, [adiso, dentroSidebar, preservarUrlQuery, modoPagina]);
 
 
   useEffect(() => {
@@ -768,12 +774,12 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              ...(dentroSidebar
-                ? { minHeight: '200px', maxHeight: 'min(58vh, 560px)' }
+              ...(flexibleImage
+                ? { minHeight: '200px', maxHeight: modoPagina ? 'min(70vh, 640px)' : 'min(58vh, 560px)' }
                 : { height: '280px' }),
             }}
           >
-            {dentroSidebar ? (
+            {flexibleImage ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={imagenesGaleria[galleryIndex]}
@@ -781,7 +787,7 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
                 style={{
                   width: '100%',
                   height: 'auto',
-                  maxHeight: 'min(58vh, 560px)',
+                  maxHeight: modoPagina ? 'min(70vh, 640px)' : 'min(58vh, 560px)',
                   objectFit: 'contain',
                   display: 'block',
                 }}
@@ -902,9 +908,31 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
             Con un plan pago las respuestas pueden ser automáticas e instantáneas.
           </p>
         )}
-        {sellerName && (
-          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-            Publicado por <strong>{sellerName}</strong>
+        {(sellerName || businessSlug) && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px' }}>
+            {adiso.vendedor?.avatarUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={adiso.vendedor.avatarUrl}
+                alt=""
+                style={{ width: 36, height: 36, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }}
+              />
+            )}
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+              <span style={{ display: 'block', fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Publicado por
+              </span>
+              {businessSlug ? (
+                <Link
+                  href={getBusinessProfilePath(businessSlug)}
+                  style={{ fontWeight: 700, color: 'var(--brand-blue)', textDecoration: 'none' }}
+                >
+                  {sellerName || businessSlug}
+                </Link>
+              ) : (
+                <strong style={{ color: 'var(--text-primary)' }}>{sellerName}</strong>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -940,6 +968,55 @@ Ref: ${adiso.edicionNumero || adiso.id}`;
       )}
     </div>
   );
+
+  // --- STANDALONE SEO PAGE ---
+  if (modoPagina) {
+    return (
+      <>
+        <div className="mx-auto w-full max-w-3xl">
+          <div
+            className="sticky z-[900] border-b border-[var(--border-color)] bg-[var(--bg-primary)]/95 backdrop-blur-md"
+            style={{ top: '72px' }}
+          >
+            <div className="flex items-center justify-between gap-3 px-4 py-3">
+              <button
+                type="button"
+                onClick={onCerrar}
+                className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-semibold text-[var(--text-secondary)] transition-colors hover:bg-[var(--hover-bg)] active:bg-[var(--bg-secondary)]"
+              >
+                <IconArrowLeft size={18} />
+                Volver
+              </button>
+              <ActionButtons />
+            </div>
+          </div>
+
+          <div className="px-4 py-5">
+            <ContentBody />
+          </div>
+
+          <div className="px-4 pb-8">
+            <ContactFooter />
+          </div>
+        </div>
+
+        {imagenAmpliada && (
+          <ImageLightbox url={imagenAmpliada.url} onClose={() => setImagenAmpliada(null)} />
+        )}
+
+        {mostrarPromocionar && (
+          <PromoteAdisoModal
+            adiso={adiso}
+            onClose={() => setMostrarPromocionar(false)}
+            onPromoted={(tier) => {
+              setPromotionTier(tier);
+              setMostrarPromocionar(false);
+            }}
+          />
+        )}
+      </>
+    );
+  }
 
   // --- MOBILE SHEET VIEW ---
   if (!isDesktop && !dentroSidebar) {

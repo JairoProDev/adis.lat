@@ -296,78 +296,92 @@ export async function getBusinessCatalog(businessProfileId: string): Promise<any
     return data || [];
 }
 
-export async function getBusinessProductAsAdiso(productId: string): Promise<any | null> {
+export async function getBusinessProductAsAdiso(productId: string): Promise<Adiso | null> {
     if (!supabase) return null;
 
     try {
-        // Fetch product and business profile
         const { data: product, error } = await supabase
             .from('catalog_products')
             .select(`
                 *,
                 business_profiles (
                     id,
+                    user_id,
                     name,
                     slug,
                     contact_phone,
                     contact_whatsapp,
                     contact_address,
                     contact_email,
-                    logo_url
+                    logo_url,
+                    is_verified,
+                    is_published
                 )
             `)
             .eq('id', productId)
             .single();
 
         if (error || !product) {
-            // Try fetching by slug if not UUID
-            if (error?.code === '22P02') return null; // Invalid UUID
+            if (error?.code === '22P02') return null;
             return null;
         }
 
-        const business = product.business_profiles;
+        if (product.status !== 'published') return null;
 
-        // Map to Adiso
-        // Note: Using 'any' return type temporarily to match Adiso interface looseness or just return mapped object
-        // The consumer expects Adiso-like object
-        return {
-            id: product.id,
-            titulo: product.title,
-            descripcion: product.description,
-            precio: product.price,
-            imagenesUrls: Array.isArray(product.images)
-                ? product.images.map((img: any) => typeof img === 'string' ? img : img.url)
-                : [],
-            imagenUrl: Array.isArray(product.images) && product.images.length > 0
-                ? (typeof product.images[0] === 'string' ? product.images[0] : product.images[0].url)
-                : '',
-            categoria: product.category || 'Otros',
-            ubicacion: business?.contact_address || 'Ubicación no especificada',
-            usuarioId: product.user_id,
-            slug: product.id, // Or product.slug if exists
+        const profile = Array.isArray(product.business_profiles)
+            ? product.business_profiles[0]
+            : product.business_profiles;
+        if (profile?.is_published === false) return null;
 
-            // Extra context for UI
-            business: {
-                id: business?.id,
-                name: business?.name,
-                slug: business?.slug,
-                logoUrl: business?.logo_url,
-                whatsapp: business?.contact_whatsapp
-            },
-
-            // Required Adiso fields (mocked/default)
-            fechaPublicacion: product.created_at,
-            horaPublicacion: new Date(product.created_at).toLocaleTimeString(),
-            contacto: business?.contact_whatsapp || business?.contact_phone || '',
-            vistas: product.view_count || 0,
-            contactos: product.click_count || 0,
-            estaActivo: product.status === 'published'
-        };
-
+        return catalogProductToAdiso(product);
     } catch (e) {
         console.error('Error fetching business product:', e);
         return null;
     }
+}
+
+/** Productos publicados del mismo negocio (recomendaciones en página SEO). */
+export async function getCatalogProductsByBusinessSlug(
+    slug: string,
+    options?: { excludeId?: string; limit?: number },
+): Promise<Adiso[]> {
+    if (!supabase) return [];
+
+    const profile = await getBusinessProfileBySlug(slug);
+    if (!profile || profile.is_published === false) return [];
+
+    let query = supabase
+        .from('catalog_products')
+        .select(`
+            *,
+            business_profiles (
+                id,
+                user_id,
+                name,
+                slug,
+                logo_url,
+                contact_phone,
+                contact_whatsapp,
+                contact_email,
+                contact_address,
+                is_verified,
+                is_published
+            )
+        `)
+        .eq('business_profile_id', profile.id)
+        .eq('status', 'published')
+        .order('updated_at', { ascending: false })
+        .limit(options?.limit ?? 8);
+
+    const { data, error } = await query;
+    if (error) {
+        console.error('Error fetching catalog by business slug:', error);
+        return [];
+    }
+
+    return (data || [])
+        .filter((p) => p.id !== options?.excludeId)
+        .map(catalogProductToAdiso);
 }
 
 const MARKETPLACE_CATEGORIES: Categoria[] = [
